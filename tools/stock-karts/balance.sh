@@ -7,12 +7,17 @@
 #   tools/stock-karts/balance.sh
 #   tools/stock-karts/balance.sh superbike chopper launchpad_loop
 # JOBS sets how many copies run at once (8 to start with).
+# BALANCE_WEATHER selects the weather; results are kept separately for each.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
 GODOT="tools/godot/Godot_v4.7.2-stable_linux.x86_64"
 JOBS="${JOBS:-8}"
-OUT="$PWD/build/balance"
+BALANCE_WEATHER="${BALANCE_WEATHER:-clear}"
+case "$BALANCE_WEATHER" in clear|rain|snow|fog|storm|dust) ;; *) echo "Unknown weather: $BALANCE_WEATHER" >&2; exit 1 ;; esac
+export BALANCE_WEATHER
+OUT="$PWD/build/balance/$BALANCE_WEATHER"
+export BALANCE_KEPT="$OUT/results.json"
 mkdir -p "$OUT"
 rm -f "$OUT"/part_*.json "$OUT"/log_*.txt
 
@@ -31,6 +36,7 @@ if [ ${#vehicles[@]} -eq 0 ]; then
 	done
 fi
 
+pids=()
 # Dealt out in turn, so each copy gets a mix of slow and quick ones.
 for ((i = 0; i < JOBS; i++)); do
 	group=()
@@ -39,7 +45,12 @@ for ((i = 0; i < JOBS; i++)); do
 	done
 	[ ${#group[@]} -gt 0 ] || continue
 	BALANCE_OUT="$OUT/part_$i.json" timeout 3600 "$GODOT" --headless --fixed-fps 60 --path . res://tools/stock-karts/balance.tscn -- "${group[@]}" "${courses[@]}" > "$OUT/log_$i.txt" 2>&1 &
+	pids+=("$!")
 done
-wait
+status=0
+for pid in "${pids[@]}"; do
+	wait "$pid" || status=1
+done
+[ "$status" -eq 0 ] || { echo "A balance worker failed; see $OUT" >&2; exit 1; }
 grep -h "reset\. \|gave up" "$OUT"/log_*.txt || true
 python3 tools/stock-karts/balance_table.py "$OUT"/part_*.json

@@ -3,7 +3,7 @@ extends Node
 ## Pictures of the race as the player sees it, with the AI driving, in the
 ## weather and at the time of day asked for. It needs a screen, and saves in
 ## build/shots.
-##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/race_shots.tscn -- peach_pit rain night [name]
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/race_shots.tscn -- peach_pit rain night [name] [seconds ...]
 
 const OUT := "res://build/shots"
 ## When to take them, in seconds of race time.
@@ -18,6 +18,7 @@ func _ready() -> void:
 	var weather: String = args[1] if args.size() > 1 else "rain"
 	var time: String = args[2] if args.size() > 2 else "night"
 	var name: String = args[3] if args.size() > 3 else "%s_%s_%s" % [course, weather, time]
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	seed(1)
 	host = Node.new()
@@ -41,9 +42,12 @@ func _ready() -> void:
 	race.player.ai = driver
 	race.player.kart.controls = driver.controls
 	DirAccess.make_dir_recursive_absolute(OUT)
-	for i in AT.size():
-		while race.time < AT[i]:
+	var moments: Array = AT if args.size() <= 4 else Array(args.slice(4)).map(func(value): return float(value))
+	for i in moments.size():
+		while race.time < moments[i]:
 			await get_tree().process_frame
+		# Also works with --disable-render-loop for fast software-rendered shots.
+		RenderingServer.force_draw.call_deferred()
 		await RenderingServer.frame_post_draw
 		get_viewport().get_texture().get_image().save_png("%s/race_%s_%d.png" % [OUT, name, i + 1])
 	print("saved race_%s" % name)

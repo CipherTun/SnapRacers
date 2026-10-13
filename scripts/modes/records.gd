@@ -3,7 +3,8 @@ extends RefCounted
 
 ## Your best times and trophies, kept on the phone between launches.
 ##
-## Time trials keep the best race time and the best single lap on each course.
+## Time trials keep the best race time and the best single lap on each course,
+## in clear daytime outdoors or any conditions indoors. Existing records stay.
 ## Grand Prix cups keep the best place you've finished them in, at each
 ## difficulty.
 
@@ -34,7 +35,9 @@ static func best_lap(track_id: String) -> float:
 
 
 ## Keeps these if they're records. Returns [new best time, new best lap].
-static func add_time(track_id: String, time: float, lap: float) -> Array:
+static func add_time(track_id: String, time: float, lap: float, conditions: Conditions = null) -> Array:
+	if conditions != null and not conditions.records_allowed():
+		return [false, false]
 	var better_time := time > 0.0 and (best_time(track_id) <= 0.0 or time < best_time(track_id))
 	var better_lap := lap > 0.0 and (best_lap(track_id) <= 0.0 or lap < best_lap(track_id))
 	if better_time:

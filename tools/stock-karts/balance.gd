@@ -6,7 +6,8 @@ extends Node
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tools/stock-karts/balance.tscn
 ## Name karts or courses after -- to only do those, like -- rocket peach_pit.
 ## With BALANCE_OUT set it also writes the times there, for balance.sh, which
-## runs several of these at once and puts their times together.
+## runs several of these at once and puts their times together. BALANCE_WEATHER
+## selects the weather (clear by default); daytime and seed 12345 stay fixed.
 
 const COURSES := ["peach_pit", "foundry_flats", "launchpad_loop", "dune_drift"]
 const LAPS := 2
@@ -21,6 +22,15 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
+	var weather := OS.get_environment("BALANCE_WEATHER")
+	weather = "clear" if weather == "" else weather
+	if not Conditions.WEATHERS.has(weather):
+		push_error("Unknown balance weather: " + weather)
+		get_tree().quit(1)
+		return
+	Game.settings.set_value("race", "weather", weather)
+	Game.settings.set_value("race", "time", "day")
+	Records.use_file("user://balance_records_%s.cfg" % OS.get_process_id())
 	var only: Array = OS.get_cmdline_user_args()
 	# Any of the game's courses can be named, not just the usual four.
 	var named: Array = only.filter(func(o): return o in Tracks.all())
@@ -65,6 +75,7 @@ func _ready() -> void:
 func _time(key: String, course: String) -> Array:
 	Game.settings.set_value("race", "kart", key)
 	Game.mode = Game.MODE_TIME_TRIAL
+	seed(12345) # Same race seed and puddle layout for each vehicle.
 	Game.show_race(Game.TRACKS + "/" + course + ".json")
 	var race: Race = null
 	while race == null:

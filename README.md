@@ -20,11 +20,15 @@ Dan
 
 <table>
   <tr>
-    <td align="center"><img src="screenshots/race.png" width="400" alt="A race at Peach Pit"></td>
+    <td align="center"><img src="screenshots/race.png" width="400" alt="Racing at Coral Cove in the Island Cup"></td>
     <td align="center"><img src="screenshots/garage.png" width="400" alt="The garage"></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/cups.png" width="400" alt="The Grand Prix cups"></td>
+    <td align="center"><img src="screenshots/rain-night.png" width="400" alt="Rain and course lighting at night at Peach Pit"></td>
+    <td align="center"><img src="screenshots/snow.png" width="400" alt="Snow racing at Frostbite Forest"></td>
+  </tr>
+  <tr>
+    <td align="center"><img src="screenshots/cups.png" width="400" alt="All nine Grand Prix cups"></td>
     <td align="center"><img src="screenshots/karts.png" width="400" alt="The kart picker"></td>
   </tr>
   <tr>
@@ -180,7 +184,7 @@ Each race has its weather and time of day, picked beside the AI's level or left 
 - **Snow:** snow covers the ground and everything on it. The road's been cleared but it's wet and slippery.
 - **Fog** hides the distance, a **thunderstorm** brings heavy rain with lightning and thunder, and on sandy courses a **dust storm** turns everything tan.
 - **Lights:** lamp posts line every outdoor course and come on by themselves when it's dark, and so do the lights on a kart. Headlights light the road ahead and tail lights shine when you brake.
-- Left to chance, it suits the course: snowy courses mostly snow, deserts get dust storms and never rain, and beaches are mostly sunny. Halls are always the same. A time trial left to chance is a clear day, so records stay fair.
+- Left to chance, it suits the course: snowy courses mostly snow, deserts get dust storms and never rain, and beaches are mostly sunny. Halls are always the same. A time trial left to chance is a clear day. Only clear daytime runs count toward records outdoors; indoor runs always count. Other conditions still show your race and lap times.
 - The AI drives to suit, and online everyone races in the same weather with the same puddles.
 
 ### Graphics

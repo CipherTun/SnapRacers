@@ -32,7 +32,37 @@ static func solid_shapes(damage: WorldDamage, group: int) -> int:
 	return damage.groups[group].shapes.filter(func(s): return is_instance_valid(s) and not s.disabled and s.is_inside_tree()).size()
 
 
+## Read the same original transform that the rubble shader uses.
+static func pattern_transform(damage: WorldDamage, kind: String, index: int) -> Transform3D:
+	var data: Image = damage._pattern_images[kind]
+	var columns: Array[Vector3] = []
+	for x in 4:
+		var value := data.get_pixel(x, index)
+		columns.append(Vector3(value.r, value.g, value.b))
+	return Transform3D(Basis(columns[0], columns[1], columns[2]), columns[3])
+
+
 func _ready() -> void:
+	print("-- Rubble patterns")
+	var fragments := WorldDamage.new(SceneryKit.new())
+	add_child(fragments)
+	var original := Transform3D(Basis.from_euler(Vector3(0.2, 0.7, -0.3)), Vector3(12.3, 4.7, -8.1)).scaled_local(Vector3(0.7, 1.1, 0.4))
+	for kind in WorldDamage.KINDS:
+		fragments._fly(kind, original, Props.RED, SceneryKit.WINDOWS, Vector3.ZERO)
+	await frames(2)
+	for piece in fragments._rubble:
+		var kind: String = piece[1]
+		var anchored := pattern_transform(fragments, kind, piece[2])
+		check(anchored.is_equal_approx(original), kind + " keeps its original pattern position, rotation and scale")
+		var body: RigidBody3D = piece[0]
+		body.transform = Transform3D(Basis.from_euler(Vector3(1.4, -0.3, 2.1)), Vector3(-5, 8, 2))
+		fragments._draw_rubble(piece)
+		var drawn: Transform3D = fragments._rubble_draw[kind].multimesh.get_instance_transform(piece[2])
+		check(not drawn.is_equal_approx(original) and pattern_transform(fragments, kind, piece[2]).is_equal_approx(anchored), kind + " moves and tumbles without moving its pattern coordinates")
+		fragments._settle(piece)
+		check(pattern_transform(fragments, kind, piece[2]).is_equal_approx(anchored), kind + " keeps the pattern after settling")
+	fragments.queue_free()
+	await frames(2)
 	print("-- Breaking")
 	var kit := SceneryKit.new()
 	var rng := RandomNumberGenerator.new()

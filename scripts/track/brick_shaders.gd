@@ -200,11 +200,15 @@ const BLOCK := """
 shader_type spatial;
 varying vec3 world;
 varying vec3 world_normal;
+varying vec3 pattern_position;
+varying vec3 pattern_normal;
 varying flat float pattern;
 """ + COMMON + """
 void vertex() {
 	world = (MODEL_MATRIX * vec4(VERTEX, 1.0)).xyz;
 	world_normal = normalize((MODEL_MATRIX * vec4(NORMAL, 0.0)).xyz);
+	pattern_position = world;
+	pattern_normal = world_normal;
 	pattern = INSTANCE_CUSTOM.x;
 }
 
@@ -212,38 +216,38 @@ void fragment() {
 	vec3 col = pow(COLOR.rgb, vec3(2.2));
 	float rough = 0.8;
 	float spec = 0.25;
-	bool top = world_normal.y > 0.7;
-	bool side = !top && world_normal.y > -0.7;
-	float across = abs(world_normal.x) > abs(world_normal.z) ? world.z : world.x;
+	bool top = pattern_normal.y > 0.7;
+	bool side = !top && pattern_normal.y > -0.7;
+	float across = abs(pattern_normal.x) > abs(pattern_normal.z) ? pattern_position.z : pattern_position.x;
 	if (pattern < 0.5) {
 		if (top) {
-			col = studs(world.xz, col);
+			col = studs(pattern_position.xz, col);
 		} else if (side) {
 			// Staggered courses of 1x2 bricks.
-			float course = floor(world.y / 0.3);
+			float course = floor(pattern_position.y / 0.3);
 			float along = across + mod(course, 2.0) * 0.25;
 			col *= 0.95 + 0.08 * hash(vec2(course, floor(along / 0.5)));
-			float s = max(seam(world.y, 0.3, 0.012), seam(along, 0.5, 0.012));
+			float s = max(seam(pattern_position.y, 0.3, 0.012), seam(along, 0.5, 0.012));
 			col *= 1.0 - 0.45 * s;
 		}
 	} else if (pattern < 1.5) {
 		if (side) {
 			// A window every metre across and every 1.5 m up.
-			vec2 cell = vec2(fract(across), fract(world.y / 1.5));
+			vec2 cell = vec2(fract(across), fract(pattern_position.y / 1.5));
 			float glass = step(0.18, cell.x) * step(cell.x, 0.82) * step(0.25, cell.y) * step(cell.y, 0.85);
-			vec3 pane = pow(vec3(0.32, 0.45, 0.58), vec3(2.2)) * (0.8 + 0.4 * hash(floor(vec2(across, world.y / 1.5))));
+			vec3 pane = pow(vec3(0.32, 0.45, 0.58), vec3(2.2)) * (0.8 + 0.4 * hash(floor(vec2(across, pattern_position.y / 1.5))));
 			col = mix(col, pane, glass);
 			rough = mix(rough, 0.2, glass);
 			spec = mix(spec, 0.6, glass);
 			// At night some of them have the lights on inside.
-			float home = step(0.55, hash(floor(vec2(across, world.y / 1.5)) + 3.7));
+			float home = step(0.55, hash(floor(vec2(across, pattern_position.y / 1.5)) + 3.7));
 			EMISSION += vec3(1.0, 0.72, 0.4) * 0.8 * glass * home * lamps_on;
 		}
 	} else if (pattern < 2.5) {
-		col *= 1.0 - 0.3 * max(seam(across, 1.0, 0.012), seam(world.y, 1.0, 0.012));
+		col *= 1.0 - 0.3 * max(seam(across, 1.0, 0.012), seam(pattern_position.y, 1.0, 0.012));
 		rough = 0.5;
 	} else if (pattern < 3.5) {
-		float flicker = 0.8 + 0.2 * sin(TIME * 2.0 + world.x * 0.4 + world.z * 0.3);
+		float flicker = 0.8 + 0.2 * sin(TIME * 2.0 + pattern_position.x * 0.4 + pattern_position.z * 0.3);
 		EMISSION = col * 1.6 * flicker;
 		rough = 0.9;
 	} else if (pattern > 5.5) {
@@ -255,7 +259,7 @@ void fragment() {
 		// Plain plastic, for parts that move.
 		rough = 0.5;
 	} else {
-		float wave = sin(world.x * 0.6 + TIME * 0.8) * sin(world.z * 0.5 - TIME * 0.6);
+		float wave = sin(pattern_position.x * 0.6 + TIME * 0.8) * sin(pattern_position.z * 0.5 - TIME * 0.6);
 		col *= 0.85 + 0.15 * wave;
 		rough = 0.12;
 		spec = 0.6;
@@ -271,3 +275,20 @@ void fragment() {
 	SPECULAR = spec;
 }
 """
+
+
+## Rubble keeps the world-aligned pattern it had before breaking off. Store
+## its original transform in a texture so all fragments still share a batch.
+static func rubble_code() -> String:
+	return BLOCK.replace("varying vec3 world;", """
+uniform sampler2D pattern_transforms : filter_nearest, repeat_disable;
+varying vec3 world;
+""").replace("pattern_position = world;\n\tpattern_normal = world_normal;", """
+	mat4 original = mat4(
+		texelFetch(pattern_transforms, ivec2(0, INSTANCE_ID), 0),
+		texelFetch(pattern_transforms, ivec2(1, INSTANCE_ID), 0),
+		texelFetch(pattern_transforms, ivec2(2, INSTANCE_ID), 0),
+		texelFetch(pattern_transforms, ivec2(3, INSTANCE_ID), 0));
+	pattern_position = (original * vec4(VERTEX, 1.0)).xyz;
+	pattern_normal = normalize((original * vec4(NORMAL, 0.0)).xyz);
+""")

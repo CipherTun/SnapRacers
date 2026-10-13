@@ -55,6 +55,10 @@ var _instances := {}
 var _scenery := {}
 var _rubble_draw := {}
 var _rubble_used := {}
+var _pattern_images := {}
+var _pattern_textures := {}
+var _patterns_dirty := {}
+static var _rubble_shader: Shader
 ## Every piece of rubble: [body or null, kind, index, size].
 var _rubble: Array = []
 var _moving: Array = []
@@ -92,6 +96,17 @@ func _init(kit: SceneryKit) -> void:
 		for i in list.size():
 			_place(multi, i, list[i][0], list[i][1], list[i][2])
 		_rubble_draw[kind] = _batch(kind, ROOM_FOR_RUBBLE)
+		if _rubble_shader == null:
+			_rubble_shader = Shader.new()
+			_rubble_shader.code = BrickShaders.rubble_code()
+		var patterns := Image.create(4, ROOM_FOR_RUBBLE, false, Image.FORMAT_RGBAF)
+		var texture := ImageTexture.create_from_image(patterns)
+		_pattern_images[kind] = patterns
+		_pattern_textures[kind] = texture
+		var material := ShaderMaterial.new()
+		material.shader = _rubble_shader
+		material.set_shader_parameter("pattern_transforms", texture)
+		_rubble_draw[kind].material_override = material
 		_rubble_draw[kind].multimesh.visible_instance_count = 0
 		_rubble_used[kind] = 0
 	if not kit.soft.is_empty():
@@ -402,6 +417,14 @@ func _fly(kind: String, where: Transform3D, colour: Color, surface: int, velocit
 	_rubble_used[kind] = used + 1
 	multi.visible_instance_count = used + 1
 	_place(multi, used, where, colour, surface)
+	# Capture the pattern once; moving and settling only change the draw transform.
+	var original := global_transform * where
+	var patterns: Image = _pattern_images[kind]
+	for column in 3:
+		var axis := original.basis[column]
+		patterns.set_pixel(column, used, Color(axis.x, axis.y, axis.z, 0.0))
+	patterns.set_pixel(3, used, Color(original.origin.x, original.origin.y, original.origin.z, 1.0))
+	_patterns_dirty[kind] = true
 	var size := where.basis.get_scale()
 	var body := RigidBody3D.new()
 	body.collision_layer = Kart.LAYER_RUBBLE
@@ -456,6 +479,10 @@ func _draw_rubble(piece: Array) -> void:
 
 ## Turns, swings and bobs the moving parts.
 func _process(delta: float) -> void:
+	# Upload once per batch after a hit, rather than once for every fragment.
+	for kind in _patterns_dirty:
+		_pattern_textures[kind].update(_pattern_images[kind])
+	_patterns_dirty.clear()
 	if _movers.is_empty():
 		return
 	_clock += delta

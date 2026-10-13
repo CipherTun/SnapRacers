@@ -164,3 +164,8 @@ func describe() -> String:
 	if indoor:
 		return "Indoors"
 	return "%s, %s" % [WEATHER_NAMES[weather], TIME_NAMES[time].to_lower()]
+
+
+## Outdoor records use one set of conditions; halls are unaffected by weather.
+func records_allowed() -> bool:
+	return indoor or (weather == "clear" and time == "day")

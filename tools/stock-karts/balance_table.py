@@ -13,7 +13,7 @@ import statistics
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-KEPT = os.path.join(HERE, "last_balance.json")
+KEPT = os.environ.get("BALANCE_KEPT", os.path.join(HERE, "last_balance.json"))
 COURSES = ["peach_pit", "foundry_flats", "launchpad_loop", "dune_drift"]
 
 

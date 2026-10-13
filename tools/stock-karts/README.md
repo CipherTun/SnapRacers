@@ -26,11 +26,13 @@ DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tools/stock-karts/report.gd
 ```
 
-`balance.sh` is the quick way to balance them. It runs several copies of `balance.tscn` at once, each timing a few of them, and puts their times together with the last full run's (kept in `last_balance.json`). Then it shows how each compares with the middle of the field, with the ones it just timed starred. All of them take about 5 minutes. Name some to only time those, and the rest keep their last times. Name courses to only do those. `JOBS` sets how many copies run at once.
+`balance.sh` is the quick way to balance them. It runs several copies of `balance.tscn` at once, each timing a few of them, and puts their times together with the last run in the same weather (kept in `build/balance/<weather>/results.json`). Then it shows how each compares with the middle of the field, with the ones it just timed starred. All of them take about 5 minutes. Name some to only time those, and the rest keep their last times. Name courses to only do those. `JOBS` sets how many copies run at once. `BALANCE_WEATHER` picks clear (the default), rain, snow, fog, storm or dust; each has separate results and logs. All runs use daytime and reset the random seed before each race, so every vehicle gets the same conditions and puddle layout. The old `last_balance.json` is retained as a historical dry baseline.
 
 ```
 tools/stock-karts/balance.sh
 tools/stock-karts/balance.sh superbike chopper launchpad_loop
+BALANCE_WEATHER=rain tools/stock-karts/balance.sh
+BALANCE_WEATHER=snow tools/stock-karts/balance.sh
 ```
 
 `balance.tscn` times every kart for two laps on four courses (twisty Peach Pit, fast Foundry Flats, Launchpad Loop with its loop and Dune Drift) with the AI driving, and shows how each one compares with the middle of the field. I keep them all within about 10% of each other overall, while each is still best or worst at something. On its own it does them one at a time, which takes about an hour and a half. Name karts or courses after `--` to only do those, and set `RACE_DEBUG=1` to see why a kart was reset.
@@ -44,3 +46,5 @@ tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . 
 ```
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tools/stock-karts/handling.gd
 ```
+
+After full clear, rain and snow runs, `python3 tools/stock-karts/weather_report.py` compares every vehicle against the field in each weather and lists the raw two-lap times and resets. The latest comparison is in [weather_balance.md](weather_balance.md).

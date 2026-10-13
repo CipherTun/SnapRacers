@@ -192,6 +192,23 @@ func _time_trial() -> void:
 	var again := race.player.hud._results.find_children("*", "Button", true, false).map(func(b): return b.text)
 	check(again == ["Try again", "Other course", "Menu"], "with the right choices %s" % [again])
 
+	for weather in Conditions.WEATHERS:
+		for time in Conditions.TIMES:
+			var conditions := Conditions.resolve("temperate", weather, time, 1)
+			if conditions.records_allowed():
+				continue
+			check(Records.add_time("peach_pit", 90.0, 20.0, conditions) == [false, false], "%s at %s cannot replace clear daytime records" % [weather, time])
+	check(is_equal_approx(Records.best_time("peach_pit"), 120.75) and is_equal_approx(Records.best_lap("peach_pit"), 38.0), "ineligible runs leave saved records untouched")
+	race.conditions = Conditions.resolve("temperate", "rain", "night", 1)
+	p.finish_time = 90.0
+	race._player_finished(race.player)
+	cells = race.player.hud._results_list.get_children().map(func(c): return c.text)
+	check(race.new_records == [false, false] and cells.has("Clear daytime only") and not cells.has("Course record"), "wet trial results explain why the time does not count")
+	var indoor := Conditions.from_dict({"indoor": true, "weather": "snow", "time": "night"})
+	check(Records.add_time("indoor_test", 90.0, 20.0, indoor) == [true, true], "indoor courses always allow records")
+	Records.use_file(RECORDS)
+	check(is_equal_approx(Records.best_time("peach_pit"), 120.75), "eligible records survive a reload")
+
 
 func _practice() -> void:
 	print("-- Practice")
