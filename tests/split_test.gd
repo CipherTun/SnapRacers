@@ -146,7 +146,7 @@ func check_race(race: Race, mode: String) -> void:
 	# Each player's own keys and controller. Player 2's go key is changed to
 	# G, and a pretend controller is given to player 2.
 	var settings := Game.settings
-	var had: Variant = settings.get_value("bindings", "player_2", null)
+	var had: Variant = settings.get_value("bindings", "player_2") if settings.has_section_key("bindings", "player_2") else null
 	InputBindings.set_key(settings, 1, "go", KEY_G)
 	await _key(KEY_G, true)
 	check(second.input.controls.throttle == 1.0 and race.player.input.controls.throttle == 0.0, "player 2's own key drives them and not player 1")

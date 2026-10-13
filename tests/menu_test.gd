@@ -381,7 +381,7 @@ func _controls_page() -> void:
 		return
 	var page: ControlsPage = pages[0]
 	var settings := Game.settings
-	var had: Variant = settings.get_value("bindings", "player_2", null)
+	var had: Variant = settings.get_value("bindings", "player_2") if settings.has_section_key("bindings", "player_2") else null
 	page._person = 1
 	page._wait(["key", "reset", 0])
 	var key := InputEventKey.new()

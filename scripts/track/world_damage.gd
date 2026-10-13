@@ -99,7 +99,7 @@ func _init(kit: SceneryKit) -> void:
 		if _rubble_shader == null:
 			_rubble_shader = Shader.new()
 			_rubble_shader.code = BrickShaders.rubble_code()
-		var patterns := Image.create(4, ROOM_FOR_RUBBLE, false, Image.FORMAT_RGBAF)
+		var patterns := Image.create_empty(4, ROOM_FOR_RUBBLE, false, Image.FORMAT_RGBAF)
 		var texture := ImageTexture.create_from_image(patterns)
 		_pattern_images[kind] = patterns
 		_pattern_textures[kind] = texture
