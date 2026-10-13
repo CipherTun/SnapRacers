@@ -25,6 +25,7 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
+	Game.settings.set_value("controls", "player_1", "buttons")
 	Game.settings.set_value("race", "weather", weather)
 	Game.settings.set_value("race", "time", time)
 	Game.racing_alone = true
