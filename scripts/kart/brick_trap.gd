@@ -14,6 +14,8 @@ extends StaticBody3D
 ## over it as if it isn't there ("trap").
 
 const LIFETIME := 15.0
+## Clear space between the kart's tail and the nearest edge of the patch.
+const DROP_GAP := 0.5
 ## For each kind: how far across it reaches, the grip and drag on it, and how
 ## many pieces are scattered over it.
 const KINDS := {
@@ -30,7 +32,9 @@ var _age := 0.0
 ## A trap on the ground just behind this kart.
 static func drop_behind(from: Kart, what := "marbles") -> BrickTrap:
 	var trap := BrickTrap.new(what)
-	var behind := from.global_position + from.global_basis.z * 2.6
+	# The entire patch must clear the kart, including long builds and rear wheels.
+	var distance: float = from.rear_bumper_point().z + KINDS[trap.kind].radius + DROP_GAP
+	var behind := from.global_position + from.global_basis.z * distance
 	# Down onto whatever's under that spot, lying flat on it.
 	var space := from.get_world_3d().direct_space_state
 	var query := PhysicsRayQueryParameters3D.create(behind + Vector3.UP * 2.0, behind + Vector3.DOWN * 4.0, Kart.LAYER_WORLD)
