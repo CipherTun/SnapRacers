@@ -2,15 +2,16 @@ class_name CourseMap
 extends Control
 
 ## A little map of the course in the corner of the race, faded so it doesn't
-## get in the way, with your kart marked on it. Tapping it goes through its
-## modes (see MODES), and each player's is remembered.
+## get in the way, with your kart and dimmer CPU dots marked on it. Tapping
+## it goes through its modes (see MODES), and each player's is remembered.
 ##
 ## With two on one phone there's one map between them, bigger, on the line
 ## between their halves, with each of them marked in their own colour (see
 ## `players`). It has no close up, since that follows one kart.
 
-## The whole course with you on it, the same with everyone on it, a close
-## up that turns with you, and hidden down to a small button.
+## The whole course with you and the CPU on it, the same with every other
+## human player too, a close up that turns with you, and hidden down to a
+## small button.
 const MODES := ["outline", "everyone", "close", "hidden"]
 const NAMES := {"outline": "Map", "everyone": "Map with everyone", "close": "Close up map", "hidden": "Map hidden"}
 const SIZE := 190.0
@@ -21,6 +22,7 @@ const LINE := Color(1.0, 1.0, 1.0, 0.6)
 const EDGE := Color(0.0, 0.0, 0.0, 0.45)
 const YOU := Color("#f2cd37")
 const OTHERS := Color(1.0, 1.0, 1.0, 0.85)
+const CPU := Color(1.0, 1.0, 1.0, 0.6)
 ## The dark square behind the map, so the course stands out over the race.
 const BACKING := Color(0.0, 0.0, 0.0, 0.2)
 
@@ -29,6 +31,7 @@ signal changed(mode: String)
 var track: TrackPath
 var you: Kart
 var karts: Array[Kart] = []
+var cpu_karts: Array[Kart] = []
 ## For a map two people share: their karts, each marked in its colour, as
 ## [kart, colour].
 var players: Array = []
@@ -104,10 +107,13 @@ func _draw() -> void:
 	var tick := (to_map * (_line[0] + Vector2(track.start.basis.x.x, track.start.basis.x.z) * 12.0)) - start
 	draw_line(start - tick * thick, start + tick * thick, Color.WHITE, 3.0 * thick, true)
 	var marked: Array = players.map(func(p): return p[0])
-	if mode == "everyone":
-		for kart in karts:
-			if is_instance_valid(kart) and kart != you and not marked.has(kart):
-				draw_circle(to_map * Vector2(kart.global_position.x, kart.global_position.z), 4.5 * thick, OTHERS)
+	# Draw opponents first so the brighter human markers stay on top.
+	for kart in karts:
+		if not is_instance_valid(kart) or kart == you or marked.has(kart):
+			continue
+		var cpu := cpu_karts.has(kart)
+		if cpu or mode == "everyone":
+			draw_circle(to_map * Vector2(kart.global_position.x, kart.global_position.z), 4.5 * thick, CPU if cpu else OTHERS)
 	for player in players:
 		var kart: Kart = player[0]
 		if is_instance_valid(kart):

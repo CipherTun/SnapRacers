@@ -50,6 +50,8 @@ class Racer:
 	var offset := 0.0
 	var ai: AIDriver
 	var player := false
+	## Whether this entrant is CPU-controlled, including on another online host.
+	var cpu := false
 	## A person's view of the race, which is theirs alone in split screen.
 	var hud: RaceHud
 	var camera: RaceCamera
@@ -174,6 +176,7 @@ func _ready() -> void:
 			if entry.human == 0:
 				player = racer
 			continue
+		racer.cpu = true
 		racer.ai = AIDriver.new()
 		racer.ai.kart = racer.kart
 		racer.ai.track = track
@@ -269,6 +272,7 @@ func _ready_online() -> void:
 	for slot in entries.size():
 		var entry: Dictionary = entries[slot]
 		var racer := _add_racer(entry.name, KartDesign.from_dict(entry.kart), slot, CharacterDesign.from_dict(entry.driver))
+		racer.cpu = bool(entry.get("ai", false))
 		var owner := int(entry.owner)
 		if entry.get("human", false) and owner == me:
 			racer.player = true
@@ -423,6 +427,7 @@ func _add_shared_map(root: Control) -> void:
 	var map := CourseMap.new()
 	map.track = track
 	map.karts.assign(racers.map(func(r): return r.kart))
+	map.cpu_karts.assign(racers.filter(func(r): return r.cpu).map(func(r): return r.kart))
 	for i in humans.size():
 		map.players.append([humans[i].kart, KartPicker.PLAYER_COLOURS[mini(i, KartPicker.PLAYER_COLOURS.size() - 1)]])
 	map.across = SHARED_MAP * (2.0 if split == Game.FACE_TO_FACE else 1.0)

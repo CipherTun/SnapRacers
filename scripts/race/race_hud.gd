@@ -107,6 +107,7 @@ func _ready() -> void:
 		map.track = race.track
 		map.you = me.kart
 		map.karts.assign(race.racers.map(func(r): return r.kart))
+		map.cpu_karts.assign(race.racers.filter(func(r): return r.cpu).map(func(r): return r.kart))
 		map.mode = Game.map_view(person)
 		map.changed.connect(func(mode: String) -> void:
 			Game.set_map_view(person, mode)

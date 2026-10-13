@@ -55,6 +55,7 @@ func _ready() -> void:
 	# next time.
 	var map: CourseMap = race.player.hud.map
 	var was_map := Game.map_view(0)
+	check(map.cpu_karts.is_empty(), "a practice player driven by the test AI still has a human map marker")
 	check(map != null and map.mode == was_map and map.track == race.track, "there's a map of the course in the corner (%s)" % was_map)
 	var tap := InputEventMouseButton.new()
 	tap.button_index = MOUSE_BUTTON_LEFT

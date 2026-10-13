@@ -70,6 +70,7 @@ func check_race(race: Race, mode: String) -> void:
 	var maps := race.find_children("*", "CourseMap", true, false)
 	check(maps.size() == 1 and maps[0].shared() and maps[0].players.size() == 2, "there's one map, shared, with a dot for each player (%d)" % maps.size())
 	check(race.humans.all(func(h): return h.hud.map == maps[0]), "and both players' menus change it")
+	check(maps[0].cpu_karts.size() == Race.KARTS - 2 and race.humans.all(func(h): return not maps[0].cpu_karts.has(h.kart)), "the shared map also has all six CPU karts, separate from its player markers")
 	check(maps[0].across > CourseMap.SIZE, "bigger than one player's (%d)" % maps[0].across)
 	var views := race.find_children("*", "SubViewport", true, false)
 	check(views.size() == 2, "each has a view of their own (%d)" % views.size())
