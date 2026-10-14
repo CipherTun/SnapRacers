@@ -1,0 +1,13 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Loading took 871 ms
+  Easy: 52.1 s
+Loading took 715 ms
+  Normal: 49.3 s
+Loading took 635 ms
+  Hard: 48.6 s
+Loading took 480 ms
+  Expert: 48.2 s
+  ok    each level laps quicker than the one before
+  ok    and Easy is well behind Expert (8.3%)
+All difficulty checks passed.
