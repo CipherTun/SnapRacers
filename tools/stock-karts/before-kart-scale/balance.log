@@ -1,0 +1,116 @@
+Godot Engine v4.7.2.stable.official.ed1daf0bf - https://godotengine.org
+
+Loading took 626 ms
+brick_tank     peach_pit        89.7 s, laps [45.2, 44.6], 0 resets
+Loading took 655 ms
+bruiser        peach_pit        96.7 s, laps [48.7, 48.0], 0 resets
+Loading took 572 ms
+classic        peach_pit        94.1 s, laps [47.4, 46.7], 0 resets
+Loading took 443 ms
+downforce      peach_pit        91.9 s, laps [46.2, 45.7], 0 resets
+Loading took 604 ms
+featherlight   peach_pit        98.6 s, laps [49.6, 48.9], 0 resets
+Loading took 553 ms
+hot_rod        peach_pit        89.1 s, laps [44.9, 44.2], 0 resets
+Loading took 457 ms
+monster        peach_pit        95.7 s, laps [48.1, 47.5], 0 resets
+Loading took 686 ms
+mudlark        peach_pit        97.0 s, laps [48.9, 48.1], 0 resets
+Loading took 549 ms
+rocket         peach_pit        89.8 s, laps [45.7, 44.2], 0 resets
+Loading took 571 ms
+six_wheeler    peach_pit        91.6 s, laps [46.1, 45.5], 0 resets
+Loading took 583 ms
+slingshot      peach_pit        89.9 s, laps [45.1, 44.8], 0 resets
+Loading took 654 ms
+soapbox        peach_pit        100.3 s, laps [50.6, 49.7], 0 resets
+Loading took 547 ms
+sparky         peach_pit        96.9 s, laps [48.7, 48.2], 0 resets
+Loading took 651 ms
+starter        peach_pit        96.3 s, laps [48.4, 47.9], 0 resets
+Loading took 701 ms
+streamliner    peach_pit        98.2 s, laps [49.5, 48.7], 0 resets
+Loading took 517 ms
+trike          peach_pit        97.0 s, laps [48.8, 48.2], 0 resets
+Loading took 647 ms
+brick_tank     foundry_flats    109.3 s, laps [54.9, 54.5], 0 resets
+Loading took 626 ms
+bruiser        foundry_flats    117.1 s, laps [58.8, 58.4], 0 resets
+Loading took 563 ms
+classic        foundry_flats    115.0 s, laps [57.6, 57.4], 0 resets
+Loading took 614 ms
+downforce      foundry_flats    110.7 s, laps [55.5, 55.2], 0 resets
+Loading took 570 ms
+featherlight   foundry_flats    123.7 s, laps [61.9, 61.8], 0 resets
+Loading took 790 ms
+hot_rod        foundry_flats    112.0 s, laps [56.3, 55.8], 0 resets
+Loading took 664 ms
+monster        foundry_flats    116.3 s, laps [58.3, 58.0], 0 resets
+Loading took 686 ms
+mudlark        foundry_flats    124.1 s, laps [60.5, 63.6], 1 resets
+Loading took 744 ms
+rocket         foundry_flats    108.2 s, laps [54.6, 53.6], 0 resets
+Loading took 682 ms
+six_wheeler    foundry_flats    112.7 s, laps [56.5, 56.2], 0 resets
+Loading took 683 ms
+slingshot      foundry_flats    116.3 s, laps [58.3, 58.0], 0 resets
+Loading took 777 ms
+soapbox        foundry_flats    126.3 s, laps [63.3, 62.9], 0 resets
+Loading took 476 ms
+sparky         foundry_flats    122.6 s, laps [60.1, 62.5], 1 resets
+Loading took 624 ms
+starter        foundry_flats    121.4 s, laps [62.7, 58.8], 1 resets
+Loading took 498 ms
+streamliner    foundry_flats    125.0 s, laps [62.6, 62.4], 0 resets
+Loading took 603 ms
+trike          foundry_flats    119.1 s, laps [59.8, 59.3], 0 resets
+Loading took 469 ms
+brick_tank     launchpad_loop   87.9 s, laps [44.3, 43.6], 0 resets
+Loading took 431 ms
+bruiser        launchpad_loop   93.8 s, laps [47.2, 46.6], 0 resets
+Loading took 451 ms
+classic        launchpad_loop   91.0 s, laps [45.9, 45.2], 0 resets
+Loading took 636 ms
+downforce      launchpad_loop   89.0 s, laps [44.8, 44.3], 0 resets
+Loading took 523 ms
+featherlight   launchpad_loop   97.5 s, laps [49.1, 48.4], 0 resets
+Loading took 565 ms
+hot_rod        launchpad_loop   86.7 s, laps [43.9, 42.8], 0 resets
+Loading took 589 ms
+monster        launchpad_loop   94.0 s, laps [48.1, 45.9], 1 resets
+Loading took 605 ms
+mudlark        launchpad_loop   95.1 s, laps [47.7, 47.3], 0 resets
+Loading took 612 ms
+rocket         launchpad_loop   87.8 s, laps [44.7, 43.0], 0 resets
+Loading took 629 ms
+six_wheeler    launchpad_loop   88.8 s, laps [44.8, 44.0], 0 resets
+Loading took 495 ms
+slingshot      launchpad_loop   91.7 s, laps [46.2, 45.5], 2 resets
+Loading took 563 ms
+soapbox        launchpad_loop   100.2 s, laps [49.5, 50.8], 1 resets
+Loading took 602 ms
+sparky         launchpad_loop   93.9 s, laps [47.2, 46.7], 0 resets
+Loading took 646 ms
+starter        launchpad_loop   93.4 s, laps [46.7, 46.6], 0 resets
+Loading took 639 ms
+streamliner    launchpad_loop   104.2 s, laps [49.8, 54.4], 2 resets
+Loading took 636 ms
+trike          launchpad_loop   111.0 s, laps [47.7, 63.3], 4 resets
+
+kart           peach_pit        foundry_flats    launchpad_loop   overall
+brick_tank        -6.8%            -6.7%            -6.3%            -6.6%
+bruiser           +0.4%            +0.0%            +0.0%            +0.1%
+classic           -2.3%            -1.8%            -2.9%            -2.3%
+downforce         -4.6%            -5.5%            -5.0%            -5.0%
+featherlight      +2.4%            +5.6%            +3.9%            +4.0%
+hot_rod           -7.4%            -4.4%            -7.5%            -6.4%
+monster           -0.7%            -0.7%            +0.3%            -0.4%
+mudlark           +0.7%            +5.9%            +1.4%            +2.7%
+rocket            -6.7%            -7.7%            -6.4%            -6.9%
+six_wheeler       -4.8%            -3.8%            -5.3%            -4.6%
+slingshot         -6.6%            -0.7%            -2.2%            -3.2%
+soapbox           +4.1%            +7.8%            +6.9%            +6.3%
+sparky            +0.6%            +4.7%            +0.1%            +1.8%
+starter           +0.0%            +3.7%            -0.4%            +1.1%
+streamliner       +2.0%            +6.7%           +11.1%            +6.6%
+trike             +0.8%            +1.7%           +18.3%            +6.9%
