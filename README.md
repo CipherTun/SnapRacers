@@ -193,7 +193,7 @@ Slower phones can turn the graphics down in Settings, under Display. Medium and 
 
 ### Controllers and keys
 
-Everything works with a controller or the keys as well as touch: the menus, races, the garage, the driver screen and the track editor. In Settings each player picks their own controller, and sets their own keys and buttons by tapping one and pressing the new one. To type a name with a controller, press A on the box for a keyboard on the screen. X deletes, Y is a space and Start is done.
+Everything works with a controller or the keys as well as touch: the menus, races, the garage, the driver screen and the track editor. In Settings each player picks their own controller, and sets their own keys and buttons by tapping one and pressing the new one. Power-ups are on RB and LB to start with. A Switch controller's buttons go by what's printed on them, and you can pick the Xbox or Switch layout in Settings. To type a name with a controller, press A on the box for a keyboard on the screen. X deletes, Y is a space and Start is done.
 
 ### Online
 
