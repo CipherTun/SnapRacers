@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cnsuw7gnpl02i"
+path="res://.godot/imported/stud_skin.obj-e9e61deb054387626e7103f18dc38085.mesh"
+
+[deps]
+
+files=["res://.godot/imported/stud_skin.obj-e9e61deb054387626e7103f18dc38085.mesh"]
+
+source_file="res://characters/meshes/stud_skin.obj"
+dest_files=["res://.godot/imported/stud_skin.obj-e9e61deb054387626e7103f18dc38085.mesh", "res://.godot/imported/stud_skin.obj-e9e61deb054387626e7103f18dc38085.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

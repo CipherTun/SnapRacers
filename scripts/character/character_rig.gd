@@ -10,6 +10,11 @@ extends Node3D
 ## It's a little cuter than a toy figure, with a bigger head, more rounded
 ## blocks, shiny plastic and a face with big shiny eyes and rosy cheeks.
 ##
+## The bare figure (hips, legs, torso, neck, arms, hands and the stud on the
+## head) is modelled in tools/characters, which writes its numbers to
+## data/characters/figure.json; the constants here have to match them. Once
+## built, each bone's pieces are baked into one mesh (see CharacterMesh).
+##
 ## It moves the way a brick figure does. The legs only hinge at the hips, so sitting
 ## they stick straight out in front. The arms are rigid with a fixed bend at
 ## the elbow and only swing at the shoulder, and the hands twist at the wrist.
@@ -46,20 +51,29 @@ const LEG_X := 0.095
 const LEG_LENGTH := 0.3
 const FEET_BELOW := LEG_LENGTH
 
-# The arm goes straight down from the shoulder to the elbow, then the forearm
-# bends forward and a little inward, and the hand is past the wrist.
+# The arm goes down from the shoulder to the elbow, a little out to follow
+# the torso's side, then the forearm bends forward and a little inward, and
+# the hand is past the wrist. The wrist is where a straight upper arm with
+# the forearm bent by ELBOW_BEND and FOREARM_IN puts it.
 const SHOULDER_Y := HIPS_TOP + TORSO_HEIGHT - 0.045
+const SHOULDER_OUT := 0.038
 const UPPER_ARM := 0.14
 const FOREARM := 0.12
 const ELBOW_BEND := deg_to_rad(35.0)
 const FOREARM_IN := 0.25
+const ELBOW_OUT := 0.03
 const HAND_SIZE := 0.045
+## Where the hands rest, standing and sitting, left then right.
+const STANDING_REST: Array[Vector3] = [Vector3(-0.2, 0.2, -0.3), Vector3(0.2, 0.2, -0.3)]
+const SEATED_REST: Array[Vector3] = [Vector3(-0.15, 0.19, -0.2), Vector3(0.15, 0.19, -0.2)]
 ## Astride, how far the legs swing down from straight out in front, and how
 ## far the upper body leans forward.
 const ASTRIDE_LEGS := deg_to_rad(25.0)
 const ASTRIDE_LEAN := deg_to_rad(30.0)
 ## How far the arms can swing out to the sides, astride.
 const MOST_SPREAD := deg_to_rad(60.0)
+## The bones, each baked into one mesh.
+const BONES := ["hips", "legs", "upper", "head", "arm_l", "arm_r", "hand_l", "hand_r"]
 ## Where domes over the head (hair, helmets and hoods) start, which is where
 ## the flat top of the head starts to round over, above the eyebrows.
 const DOME_BASE := HEAD_HEIGHT * 0.5 - 0.035
@@ -70,10 +84,14 @@ var seated := true
 ## Set it before the rig goes into the scene.
 var recline := 0.0
 var astride := false
+## Off leaves every piece its own mesh, for tests that look at the pieces.
+var bake := true
 
 var _head: Node3D
 ## Everything above the hips, which leans back with `recline`.
 var _upper: Node3D
+## The legs, which swing down astride. Otherwise it's the rig itself.
+var _legs: Node3D
 ## A grip asked for before the rig was built, to do once it is.
 var _early_grip := []
 ## The render layer (counting from 1) the head and headgear are drawn on, so
@@ -178,12 +196,10 @@ func grip(left: Vector3, right: Vector3, left_along := Vector3.BACK, right_along
 ## Rests the hands on the thighs when sitting, or down by the sides when
 ## standing.
 func rest_hands() -> void:
-	# Standing, the arms swing a little forward so the hands hang just in
-	# front of the hips instead of going into them.
-	if seated:
-		grip(Vector3(-0.15, 0.19, -0.2), Vector3(0.15, 0.19, -0.2), Vector3.FORWARD, Vector3.FORWARD)
-	else:
-		grip(Vector3(-0.2, -0.1, -0.3), Vector3(0.2, -0.1, -0.3), Vector3.FORWARD, Vector3.FORWARD)
+	# Standing, the arms swing forward so the hands are out in front, clear
+	# of the torso.
+	var rest := SEATED_REST if seated else STANDING_REST
+	grip(rest[0], rest[1], Vector3.FORWARD, Vector3.FORWARD)
 	if _upper != null:
 		for side in 2:
 			_rest_swing[side] = _swing_of(side)
@@ -367,7 +383,7 @@ func _shoulder_x() -> float:
 	var half_top := TORSO_BOTTOM_WIDTH * TORSO_TAPER * 0.5
 	var half_bottom := TORSO_BOTTOM_WIDTH * 0.5
 	var at := lerpf(half_bottom, half_top, (SHOULDER_Y - HIPS_TOP) / TORSO_HEIGHT)
-	return at + 0.038
+	return at + SHOULDER_OUT
 
 
 ## Swings the arm about its shoulder, and only that way, to the angle that
@@ -417,32 +433,126 @@ func _set_swing(side: int, angle: float, along: Vector3) -> void:
 
 
 func _forearm_dir(side: int) -> Vector3:
+	return (wrist(side) - elbow(side)).normalized()
+
+
+## The elbow, in the arm's own space (its origin is the shoulder).
+static func elbow(side: int) -> Vector3:
+	return Vector3(ELBOW_OUT * (-1.0 if side == 0 else 1.0), -UPPER_ARM, 0.0)
+
+
+## The wrist, in the arm's own space.
+static func wrist(side: int) -> Vector3:
 	var sign := -1.0 if side == 0 else 1.0
-	return Vector3(-sign * FOREARM_IN, -cos(ELBOW_BEND), -sin(ELBOW_BEND)).normalized()
+	var bent := Vector3(-sign * FOREARM_IN, -cos(ELBOW_BEND), -sin(ELBOW_BEND)).normalized()
+	return Vector3(0.0, -UPPER_ARM, 0.0) + bent * FOREARM
+
+
+## Where the arm's middle runs, in the arm's own space: the top of the
+## shoulder, the elbow, where the forearm turns in and the end of the
+## forearm, the way tools/characters models it.
+static func arm_path(side: int) -> PackedVector3Array:
+	var sign := -1.0 if side == 0 else 1.0
+	var e := elbow(side)
+	var w := wrist(side)
+	var mid := e + (w - e) * 0.6
+	mid.x = e.x
+	return PackedVector3Array([Vector3(0.017 * sign, -0.004, 0.0), e, mid, w - (w - e).normalized() * 0.013])
+
+
+## Where the figure's numbers in data/characters/figure.json don't match the
+## rig's, which means the meshes were made for another rig.
+static func figure_mismatches() -> Array[String]:
+	var mine := {
+		"HIPS_TOP": HIPS_TOP, "TORSO_HEIGHT": TORSO_HEIGHT, "TORSO_BOTTOM_WIDTH": TORSO_BOTTOM_WIDTH,
+		"TORSO_TAPER": TORSO_TAPER, "TORSO_DEPTH": TORSO_DEPTH, "NECK_Y": NECK_Y, "HEAD_RADIUS": HEAD_RADIUS,
+		"HEAD_HEIGHT": HEAD_HEIGHT, "HEAD_SCALE": HEAD_SCALE, "LEG_X": LEG_X, "LEG_LENGTH": LEG_LENGTH,
+		"SHOULDER_Y": SHOULDER_Y, "SHOULDER_OUT": SHOULDER_OUT, "UPPER_ARM": UPPER_ARM, "FOREARM": FOREARM,
+		"ELBOW_BEND": rad_to_deg(ELBOW_BEND), "FOREARM_IN": FOREARM_IN, "ELBOW_OUT": ELBOW_OUT,
+		"HAND_SIZE": HAND_SIZE, "ASTRIDE_LEGS": rad_to_deg(ASTRIDE_LEGS), "ASTRIDE_LEAN": rad_to_deg(ASTRIDE_LEAN),
+		"MOST_SPREAD": rad_to_deg(MOST_SPREAD),
+	}
+	var theirs := CharacterMesh.figure()
+	var out: Array[String] = []
+	for name in mine:
+		if not theirs.has(name) or absf(float(theirs[name]) - mine[name]) > 0.0001:
+			out.append("%s: %s here, %s in figure.json" % [name, mine[name], theirs.get(name, "nothing")])
+	for name in ["STANDING_REST", "SEATED_REST"]:
+		var rest: Array[Vector3] = STANDING_REST if name == "STANDING_REST" else SEATED_REST
+		var listed: Array = theirs.get(name, [])
+		for side in 2:
+			if listed.size() != 2 or Vector3(listed[side][0], listed[side][1], listed[side][2]).distance_to(rest[side]) > 0.0001:
+				out.append("%s doesn't match figure.json" % name)
+				break
+	return out
 
 
 # Building.
 
 func _build() -> void:
-	var before := get_child_count()
-	LegLooks.build(self)
+	_legs = self
 	if astride:
 		# The legs, but not the hips, swing down about the hip.
 		var hip := Vector3(0.0, HIPS_TOP * 0.5, 0.0)
 		var down := Basis(Vector3.RIGHT, -ASTRIDE_LEGS)
-		var legs := Node3D.new()
-		legs.transform = Transform3D(down, hip - down * hip)
-		var made := get_children().slice(before + 1)
-		add_child(legs)
-		for node in made:
-			node.reparent(legs, false)
-	TorsoLooks.build(self)
-	# The neck post the head sits on.
-	add(_upper, MeshKit.rounded_cylinder(0.05, 0.03, 0.006, 20), design.skin(), Vector3(0.0, NECK_Y, 0.0))
-	NeckLooks.build(self)
-	BackLooks.build(self)
+		_legs = Node3D.new()
+		_legs.transform = Transform3D(down, hip - down * hip)
+		add_child(_legs)
 	_build_head()
 	_build_arms()
+	var bones := _bones()
+	var key := "%s %s %s" % [JSON.stringify(design.to_dict()), seated, astride]
+	var baked := CharacterMesh.kept(key) if bake else {}
+	if baked.is_empty():
+		LegLooks.build(self)
+		TorsoLooks.build(self)
+		# The neck post the head sits on.
+		_add_figure("neck", _upper, {"skin": design.skin()})
+		NeckLooks.build(self)
+		BackLooks.build(self)
+		_dress_head()
+		for side in 2:
+			ArmLooks.build(self, _arm[side], _hand[side], side)
+		if not bake:
+			return
+		var skip: Array = bones.values()
+		for bone in bones:
+			baked[bone] = CharacterMesh.bake(bones[bone], skip)
+		CharacterMesh.keep(key, baked)
+	for bone in bones:
+		if baked.get(bone) != null:
+			var node := MeshInstance3D.new()
+			node.name = "Baked"
+			node.mesh = baked[bone]
+			bones[bone].add_child(node)
+
+
+## The nodes each bone's pieces go on. Without astride the legs are on the
+## rig with the hips.
+func _bones() -> Dictionary:
+	var out := { "hips": self, "upper": _upper, "head": _head, "arm_l": _arm[0], "arm_r": _arm[1], "hand_l": _hand[0], "hand_r": _hand[1] }
+	if _legs != self:
+		out["legs"] = _legs
+	return out
+
+
+## The legs, which swing down astride. Their pieces go on here.
+func legs() -> Node3D:
+	return _legs
+
+
+## Adds a piece of the bare figure made in tools/characters to `parent`, with
+## a colour for each of its regions. Regions not given aren't added.
+func _add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := false, metallic := 0.0) -> void:
+	var regions := CharacterMesh.figure_regions(piece, sitting)
+	for region in colours:
+		if regions.has(region):
+			add(parent, regions[region], colours[region], Vector3.ZERO, Basis.IDENTITY, metallic)
+
+
+## Adds a figure piece, for the looks.
+func add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := false, metallic := 0.0) -> void:
+	_add_figure(piece, parent, colours, sitting, metallic)
 
 
 ## The head, which turns to look where the kart's going.
@@ -460,14 +570,20 @@ func _build_head() -> void:
 	_head.position = Vector3(0.0, HEAD_Y, 0.0)
 	_head.scale = Vector3.ONE * HEAD_SCALE
 	_upper.add_child(_head)
+	# The head itself stays out of the bake, since its face is painted.
 	_face = MeshInstance3D.new()
 	_face.mesh = MeshKit.rounded_cylinder(HEAD_RADIUS, HEAD_HEIGHT, 0.035, 40)
 	_face.material_override = _face_material()
+	_face.set_meta("unbaked", true)
 	_head.add_child(_face)
+
+
+## What's on the head: the stud, hair, facial hair and headgear.
+func _dress_head() -> void:
 	var covered := HeadgearLooks.covers_top(design.style_of("headgear"))
 	# The stud on top shows when there's nothing over it.
 	if design.style_of("hair") == "none" and not covered:
-		add(_head, MeshKit.rounded_cylinder(0.06, 0.045, 0.01, 24), design.skin(), Vector3(0.0, HEAD_HEIGHT * 0.5 + 0.018, 0.0))
+		_add_figure("stud", _head, {"skin": design.skin()})
 	HairLooks.build(self, covered)
 	HairLooks.build_beard(self)
 	HeadgearLooks.build(self)
@@ -509,7 +625,7 @@ static func _new_face_material(image: Image) -> StandardMaterial3D:
 	material.albedo_texture = ImageTexture.create_from_image(image)
 	material.roughness = 0.45
 	material.metallic_specular = 0.4
-	_make_toy(material)
+	make_toy(material)
 	return material
 
 
@@ -551,13 +667,9 @@ func _build_arms() -> void:
 		_upper.add_child(arm)
 		var hand := Node3D.new()
 		_upper.add_child(hand)
-		var dir := _forearm_dir(side)
-		var elbow := Vector3(0.0, -UPPER_ARM, 0.0)
-		var wrist := elbow + dir * FOREARM
-		ArmLooks.build(self, arm, hand, side, elbow, wrist, dir)
 		_arm.append(arm)
 		_hand.append(hand)
-		_grip_local.append(wrist + dir * HAND_SIZE)
+		_grip_local.append(wrist(side) + _forearm_dir(side) * HAND_SIZE)
 
 
 # Helpers the looks are made with.
@@ -574,13 +686,13 @@ static func mat(colour: Color, metallic := 0.0) -> StandardMaterial3D:
 			m.albedo_color = colour
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
-		_make_toy(m)
+		make_toy(m)
 		_materials[key] = m
 	return _materials[key]
 
 
 ## Toy plastic, with a clear shiny coat and a soft glow around the edges.
-static func _make_toy(m: StandardMaterial3D) -> void:
+static func make_toy(m: StandardMaterial3D) -> void:
 	m.rim_enabled = true
 	m.rim = 0.25
 	m.rim_tint = 0.5

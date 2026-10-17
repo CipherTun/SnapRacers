@@ -22,7 +22,11 @@ static func build(rig: CharacterRig) -> void:
 	var thin := d.has("legs", "thin")
 	var width := 0.13 if thin else 0.17
 	var R := CharacterRig
-	rig.add(rig, MeshKit.rounded_box(Vector3(0.38, R.HIPS_TOP, R.TORSO_DEPTH), 0.026), c, Vector3(0.0, R.HIPS_TOP * 0.5, 0.0), Basis.IDENTITY, shine)
+	var legs := rig.legs()
+	rig.add_figure("hips", rig, {"main": c}, false, shine)
+	# Thin legs and flares are still made here. The rest use the figure's
+	# legs, made in tools/characters, coloured band by band.
+	var figure := not thin and not d.has("legs", "flares")
 
 	# The lengths of each leg, from the hip down, as [share, colour].
 	var lengths := [[1.0, c]]
@@ -45,74 +49,99 @@ static func build(rig: CharacterRig) -> void:
 	if d.has("legs", "claws"):
 		foot_size = Vector3(width + 0.03, 0.08, 0.13)
 
+	if figure:
+		# The figure's toe, as a box.
+		foot_size = Vector3(0.158, 0.062, 0.115)
 	for sign: float in [-1.0, 1.0]:
 		var x: float = R.LEG_X * sign
+		if figure:
+			_figure_leg(rig, legs, "leg_l" if sign < 0.0 else "leg_r", lengths, foot, shine)
 		var start := 0.0
-		for k in lengths.size():
+		for k in (lengths.size() if not figure else 0):
 			var share: float = lengths[k][0]
 			var colour: Color = lengths[k][1]
 			var length: float = R.LEG_LENGTH * share
 			# Flares get wider toward the bottom.
 			var w := width * (1.18 if d.has("legs", "flares") and k == lengths.size() - 1 else 1.0)
 			if d.has("legs", "flares") and lengths.size() == 1:
-				_segment(rig, x, start, length * 0.6, width, c, shine)
-				_segment(rig, x, start + length * 0.6, length * 0.4, width * 1.2, c, shine)
+				_segment(rig, legs, x, start, length * 0.6, width, c, shine)
+				_segment(rig, legs, x, start + length * 0.6, length * 0.4, width * 1.2, c, shine)
 			else:
-				_segment(rig, x, start, length + (0.01 if k < lengths.size() - 1 else 0.0), w * (0.97 if k > 0 else 1.0), colour, shine)
+				_segment(rig, legs, x, start, length + (0.01 if k < lengths.size() - 1 else 0.0), w * (0.97 if k > 0 else 1.0), colour, shine)
 			start += length
 		# The foot, turned up when sitting and forward when standing.
 		var foot_at := Vector3(x, 0.13 + foot_size.z * 0.5 - 0.03, -R.LEG_LENGTH + foot_size.y * 0.5) if rig.seated else Vector3(x, -R.LEG_LENGTH + foot_size.y * 0.5, -0.065 - foot_size.z * 0.5 + 0.03)
+		if figure:
+			foot_at = Vector3(x, 0.065 + 0.0775, -R.LEG_LENGTH + 0.031) if rig.seated else Vector3(x, -R.LEG_LENGTH + 0.031, -0.0775)
 		var foot_shape := Vector3(foot_size.x, foot_size.z, foot_size.y) if rig.seated else foot_size
-		rig.add(rig, MeshKit.rounded_box(foot_shape, 0.02), foot, foot_at, Basis.IDENTITY, shine)
+		if not figure:
+			rig.add(legs, MeshKit.rounded_box(foot_shape, 0.02), foot, foot_at, Basis.IDENTITY, shine)
 		if d.has("legs", "claws"):
 			for k in 3:
 				var cx := x + (k - 1) * 0.045
 				var tip := Vector3(cx, foot_at.y + foot_shape.y * 0.5 + 0.01, foot_at.z) if rig.seated else Vector3(cx, foot_at.y - 0.01, foot_at.z - foot_shape.z * 0.5 - 0.012)
 				var pointing := Vector3.UP if rig.seated else Vector3.FORWARD
-				rig.add(rig, rig.cylinder(0.0, 0.016, 0.04, 8), WHITE, tip, CharacterRig.pointing(pointing))
-		_prints(rig, x, width, c, sign)
+				rig.add(legs, rig.cylinder(0.0, 0.016, 0.04, 8), WHITE, tip, CharacterRig.pointing(pointing))
+		_prints(rig, legs, x, width, c, sign)
 		if d.has("legs", "pads"):
 			var pad := Vector3(x, 0.14, -R.LEG_LENGTH * 0.55) if rig.seated else Vector3(x, -R.LEG_LENGTH * 0.55, -0.075)
 			var pad_shape := Vector3(width * 0.8, 0.02, 0.09) if rig.seated else Vector3(width * 0.8, 0.09, 0.02)
-			rig.add(rig, rig.box(pad_shape, 0.008), c.lightened(0.3), pad, Basis.IDENTITY, 0.6)
+			rig.add(legs, rig.box(pad_shape, 0.008), c.lightened(0.3), pad, Basis.IDENTITY, 0.6)
 		if metal:
 			var bolt := Vector3(x + 0.086 * sign, 0.065, -R.LEG_LENGTH * 0.5) if rig.seated else Vector3(x + 0.086 * sign, -R.LEG_LENGTH * 0.5, 0.0)
-			rig.add(rig, rig.cylinder(0.02, 0.02, 0.01, 12), c.lightened(0.4), bolt, Basis(Vector3.BACK, PI * 0.5), 0.7)
+			rig.add(legs, rig.cylinder(0.02, 0.02, 0.01, 12), c.lightened(0.4), bolt, Basis(Vector3.BACK, PI * 0.5), 0.7)
 
 	match d.setting("legs", "skirt", ""):
 		"long":
-			_skirt(rig, c, 0.36 if rig.seated else 0.35, 0.235)
+			_skirt(rig, legs, c, 0.36 if rig.seated else 0.35, 0.235)
 		"short", "kilt":
-			_skirt(rig, c, 0.2 if rig.seated else 0.18, 0.215)
+			_skirt(rig, legs, c, 0.2 if rig.seated else 0.18, 0.215)
 			if d.setting("legs", "skirt", "") == "kilt":
-				_kilt(rig, c)
+				_kilt(rig, legs, c)
 	if d.setting("legs", "print", "") == "jeans":
 		for sign: float in [-1.0, 1.0]:
 			rig.print_on(rig, Vector2(0.05, 0.035), c.lightened(0.25), Vector3(0.11 * sign, R.HIPS_TOP * 0.5, -R.TORSO_DEPTH * 0.5 - 0.002))
 
 
+## One of the figure's legs, its bands coloured by `lengths` (as [share,
+## colour] from the hip down) and its foot in `foot`.
+static func _figure_leg(rig: CharacterRig, legs: Node3D, piece: String, lengths: Array, foot: Color, shine: float) -> void:
+	# The bands end at these shares of the leg, as tools/characters cuts them.
+	var ends := [0.4, 0.55, 0.65, 1.0]
+	var colours := {"foot": foot}
+	for k in ends.size():
+		var middle: float = (ends[k] + (ends[k - 1] if k > 0 else 0.0)) * 0.5
+		var reached := 0.0
+		for length in lengths:
+			reached += length[0]
+			if middle < reached:
+				colours["b%d" % k] = length[1]
+				break
+	rig.add_figure(piece, legs, colours, rig.seated, shine)
+
+
 ## One length of a leg, `start` from the hip and `length` long.
-static func _segment(rig: CharacterRig, x: float, start: float, length: float, width: float, colour: Color, shine: float) -> void:
+static func _segment(rig: CharacterRig, legs: Node3D, x: float, start: float, length: float, width: float, colour: Color, shine: float) -> void:
 	if rig.seated:
-		rig.add(rig, MeshKit.rounded_box(Vector3(width, 0.13, length), 0.034), colour, Vector3(x, 0.065, -start - length * 0.5), Basis.IDENTITY, shine)
+		rig.add(legs, MeshKit.rounded_box(Vector3(width, 0.13, length), 0.034), colour, Vector3(x, 0.065, -start - length * 0.5), Basis.IDENTITY, shine)
 	else:
 		# A hairline gap under the hips, like a toy figure's, so the two
 		# don't flicker where they meet.
 		var gap := 0.004 if start == 0.0 else 0.0
-		rig.add(rig, MeshKit.rounded_box(Vector3(width, length - gap, 0.13), 0.034), colour, Vector3(x, -start - length * 0.5 - gap * 0.5, 0.0), Basis.IDENTITY, shine)
+		rig.add(legs, MeshKit.rounded_box(Vector3(width, length - gap, 0.13), 0.034), colour, Vector3(x, -start - length * 0.5 - gap * 0.5, 0.0), Basis.IDENTITY, shine)
 
 
 ## Stripes, turn-ups and the like printed on the front of a leg.
-static func _prints(rig: CharacterRig, x: float, width: float, c: Color, sign: float) -> void:
+static func _prints(rig: CharacterRig, legs: Node3D, x: float, width: float, c: Color, sign: float) -> void:
 	var R := CharacterRig
 	var along := R.LEG_LENGTH
 	var front := func(at: float, size: Vector2, colour: Color, sideways := 0.0) -> void:
 		# A print `at` down the leg from the hip, on the front (the top, when
 		# sitting).
 		if rig.seated:
-			rig.print_on(rig, size, colour, Vector3(x + sideways, 0.133, -at), Basis(Vector3.RIGHT, -PI * 0.5))
+			rig.print_on(legs, size, colour, Vector3(x + sideways, 0.133, -at), Basis(Vector3.RIGHT, -PI * 0.5))
 		else:
-			rig.print_on(rig, size, colour, Vector3(x + sideways, -at, -0.068))
+			rig.print_on(legs, size, colour, Vector3(x + sideways, -at, -0.068))
 	match rig.design.setting("legs", "print", ""):
 		"jeans":
 			front.call(along * 0.5, Vector2(0.006, along * 0.9), c.lightened(0.3), width * 0.3 * sign)
@@ -128,23 +157,23 @@ static func _prints(rig: CharacterRig, x: float, width: float, c: Color, sign: f
 
 ## A skirt or gown over the legs, `length` long. Standing it's a bell from the
 ## hips. Sitting it drapes over the legs out in front.
-static func _skirt(rig: CharacterRig, c: Color, length: float, radius: float) -> void:
+static func _skirt(rig: CharacterRig, legs: Node3D, c: Color, length: float, radius: float) -> void:
 	var R := CharacterRig
 	if rig.seated:
-		rig.add(rig, MeshKit.rounded_box(Vector3(0.4, 0.15, length), 0.03), c, Vector3(0.0, 0.07, -length * 0.5 + 0.08))
+		rig.add(legs, MeshKit.rounded_box(Vector3(0.4, 0.15, length), 0.03), c, Vector3(0.0, 0.07, -length * 0.5 + 0.08))
 	else:
-		rig.add(rig, rig.cylinder(0.2, radius, length, 28), c, Vector3(0.0, R.HIPS_TOP - length * 0.5, -0.01))
+		rig.add(legs, rig.cylinder(0.2, radius, length, 28), c, Vector3(0.0, R.HIPS_TOP - length * 0.5, -0.01))
 
 
 ## Pleats and a pouch on a kilt.
-static func _kilt(rig: CharacterRig, c: Color) -> void:
+static func _kilt(rig: CharacterRig, legs: Node3D, c: Color) -> void:
 	var R := CharacterRig
 	if rig.seated:
 		for k in 5:
-			rig.print_on(rig, Vector2(0.006, 0.12), c.darkened(0.35), Vector3(-0.14 + k * 0.07, 0.148, -0.02), Basis(Vector3.RIGHT, -PI * 0.5))
-		rig.add(rig, rig.box(Vector3(0.07, 0.03, 0.08), 0.01), Color("#6b4430"), Vector3(0.0, 0.16, 0.0))
+			rig.print_on(legs, Vector2(0.006, 0.12), c.darkened(0.35), Vector3(-0.14 + k * 0.07, 0.148, -0.02), Basis(Vector3.RIGHT, -PI * 0.5))
+		rig.add(legs, rig.box(Vector3(0.07, 0.03, 0.08), 0.01), Color("#6b4430"), Vector3(0.0, 0.16, 0.0))
 	else:
 		for k in 7:
 			var a := -0.9 + k * 0.3
-			rig.print_on(rig, Vector2(0.006, 0.1), c.darkened(0.35), Vector3(sin(a) * 0.21, R.HIPS_TOP * 0.5 - 0.03, -cos(a) * 0.21), Basis(Vector3.UP, -a))
-		rig.add(rig, rig.box(Vector3(0.07, 0.08, 0.03), 0.01), Color("#6b4430"), Vector3(0.0, -0.02, -0.22))
+			rig.print_on(legs, Vector2(0.006, 0.1), c.darkened(0.35), Vector3(sin(a) * 0.21, R.HIPS_TOP * 0.5 - 0.03, -cos(a) * 0.21), Basis(Vector3.UP, -a))
+		rig.add(legs, rig.box(Vector3(0.07, 0.08, 0.03), 0.01), Color("#6b4430"), Vector3(0.0, -0.02, -0.22))

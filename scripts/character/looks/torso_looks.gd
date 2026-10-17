@@ -1,8 +1,9 @@
 class_name TorsoLooks
 extends RefCounted
 
-## The torso, a flat fronted block narrower at the shoulders, in the torso's
-## colour, with its style printed on the front the way a toy figure's is.
+## The torso, a flat fronted block narrower at the shoulders with its sides
+## bowing out a little and a collar round the neck, in the torso's colour,
+## with its style printed on the front the way a toy figure's is.
 ## Anything raised, like a belt buckle or a control panel, sits on the surface
 ## and never sinks into it.
 
@@ -18,7 +19,8 @@ static func build(rig: CharacterRig) -> void:
 	var R := CharacterRig
 	var up := rig.upper()
 	var shine := 0.35 if style in ["armour", "robot"] else 0.0
-	rig.add(up, MeshKit.rounded_box(Vector3(R.TORSO_BOTTOM_WIDTH, R.TORSO_HEIGHT, R.TORSO_DEPTH), 0.026, R.TORSO_TAPER), c, Vector3(0.0, R.TORSO_Y, 0.0), Basis.IDENTITY, shine)
+	# The torso itself, with its collar, is made in tools/characters.
+	rig.add_figure("torso", up, {"main": c}, false, shine)
 	var light := c.lightened(0.45)
 	var dark := c.darkened(0.4)
 	var ink := WHITE if c.get_luminance() < 0.5 else Color("#1b1b1b")

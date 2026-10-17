@@ -1,0 +1,242 @@
+{
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot.",
+	"figure": {
+		"hips": {
+			"bone": "legs",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"main": "res://characters/meshes/hips_main.obj"
+			},
+			"box": [
+				-0.19,
+				0.0,
+				-0.1,
+				0.19,
+				0.08,
+				0.1
+			]
+		},
+		"leg_l": {
+			"bone": "legs",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"b0": "res://characters/meshes/leg_l_b0.obj",
+				"b1": "res://characters/meshes/leg_l_b1.obj",
+				"b2": "res://characters/meshes/leg_l_b2.obj",
+				"b3": "res://characters/meshes/leg_l_b3.obj",
+				"foot": "res://characters/meshes/leg_l_foot.obj"
+			},
+			"box": [
+				-0.18,
+				-0.3,
+				-0.135,
+				-0.01,
+				-0.004,
+				0.065
+			],
+			"seated": {
+				"regions": {
+					"b0": "res://characters/meshes/leg_l_seated_b0.obj",
+					"b1": "res://characters/meshes/leg_l_seated_b1.obj",
+					"b2": "res://characters/meshes/leg_l_seated_b2.obj",
+					"b3": "res://characters/meshes/leg_l_seated_b3.obj",
+					"foot": "res://characters/meshes/leg_l_seated_foot.obj"
+				},
+				"box": [
+					-0.1784,
+					-0.0,
+					-0.3,
+					-0.0116,
+					0.2,
+					-0.0948
+				]
+			}
+		},
+		"leg_r": {
+			"bone": "legs",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"b0": "res://characters/meshes/leg_r_b0.obj",
+				"b1": "res://characters/meshes/leg_r_b1.obj",
+				"b2": "res://characters/meshes/leg_r_b2.obj",
+				"b3": "res://characters/meshes/leg_r_b3.obj",
+				"foot": "res://characters/meshes/leg_r_foot.obj"
+			},
+			"box": [
+				0.01,
+				-0.3,
+				-0.135,
+				0.18,
+				-0.004,
+				0.065
+			],
+			"seated": {
+				"regions": {
+					"b0": "res://characters/meshes/leg_r_seated_b0.obj",
+					"b1": "res://characters/meshes/leg_r_seated_b1.obj",
+					"b2": "res://characters/meshes/leg_r_seated_b2.obj",
+					"b3": "res://characters/meshes/leg_r_seated_b3.obj",
+					"foot": "res://characters/meshes/leg_r_seated_foot.obj"
+				},
+				"box": [
+					0.0116,
+					-0.0,
+					-0.3,
+					0.1784,
+					0.2,
+					-0.0948
+				]
+			}
+		},
+		"torso": {
+			"bone": "upper",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"main": "res://characters/meshes/torso_main.obj"
+			},
+			"box": [
+				-0.1992,
+				0.08,
+				-0.1,
+				0.1992,
+				0.426,
+				0.1
+			]
+		},
+		"neck": {
+			"bone": "upper",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"skin": "res://characters/meshes/neck_skin.obj"
+			},
+			"box": [
+				-0.043,
+				0.42,
+				-0.043,
+				0.043,
+				0.45,
+				0.043
+			]
+		},
+		"stud": {
+			"bone": "head",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"skin": "res://characters/meshes/stud_skin.obj"
+			},
+			"box": [
+				-0.054,
+				0.098,
+				-0.054,
+				0.054,
+				0.134,
+				0.054
+			]
+		},
+		"arm_l": {
+			"bone": "arm_l",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"shoulder": "res://characters/meshes/arm_l_shoulder.obj",
+				"upper": "res://characters/meshes/arm_l_upper.obj",
+				"fore": "res://characters/meshes/arm_l_fore.obj"
+			},
+			"box": [
+				-0.072,
+				-0.2498,
+				-0.0902,
+				0.0543,
+				0.043,
+				0.047
+			]
+		},
+		"hand_l": {
+			"bone": "hand_l",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"main": "res://characters/meshes/hand_l_main.obj"
+			},
+			"box": [
+				-0.042,
+				-0.0322,
+				-0.0215,
+				0.042,
+				0.075,
+				0.0215
+			]
+		},
+		"arm_r": {
+			"bone": "arm_r",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"shoulder": "res://characters/meshes/arm_r_shoulder.obj",
+				"upper": "res://characters/meshes/arm_r_upper.obj",
+				"fore": "res://characters/meshes/arm_r_fore.obj"
+			},
+			"box": [
+				-0.0543,
+				-0.2498,
+				-0.0902,
+				0.072,
+				0.043,
+				0.047
+			]
+		},
+		"hand_r": {
+			"bone": "hand_r",
+			"offset": [
+				0.0,
+				0.0,
+				0.0
+			],
+			"regions": {
+				"main": "res://characters/meshes/hand_r_main.obj"
+			},
+			"box": [
+				-0.042,
+				-0.0322,
+				-0.0215,
+				0.042,
+				0.075,
+				0.0215
+			]
+		}
+	},
+	"styles": {}
+}

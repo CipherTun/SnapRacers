@@ -1,0 +1,83 @@
+{
+	"_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
+	"figure": {
+		"HIPS_TOP": 0.08,
+		"TORSO_HEIGHT": 0.34,
+		"TORSO_BOTTOM_WIDTH": 0.4,
+		"TORSO_TAPER": 0.78,
+		"TORSO_DEPTH": 0.2,
+		"NECK_Y": 0.435,
+		"HEAD_RADIUS": 0.12,
+		"HEAD_HEIGHT": 0.2,
+		"HEAD_SCALE": 1.2,
+		"LEG_X": 0.095,
+		"LEG_LENGTH": 0.3,
+		"SHOULDER_Y": 0.375,
+		"SHOULDER_OUT": 0.038,
+		"UPPER_ARM": 0.14,
+		"FOREARM": 0.12,
+		"ELBOW_BEND": 35.0,
+		"FOREARM_IN": 0.25,
+		"ELBOW_OUT": 0.03,
+		"HAND_SIZE": 0.045,
+		"ASTRIDE_LEGS": 25.0,
+		"ASTRIDE_LEAN": 30.0,
+		"MOST_SPREAD": 60.0,
+		"STANDING_REST": [
+			[
+				-0.2,
+				0.2,
+				-0.3
+			],
+			[
+				0.2,
+				0.2,
+				-0.3
+			]
+		],
+		"SEATED_REST": [
+			[
+				-0.15,
+				0.19,
+				-0.2
+			],
+			[
+				0.15,
+				0.19,
+				-0.2
+			]
+		]
+	},
+	"limit_cm3": 0.05,
+	"poses": [
+		"standing, hands resting",
+		"standing, arms swaying -0.06",
+		"standing, arms swaying +0.06",
+		"seated, hands resting",
+		"seated, arms swung 45 degrees",
+		"seated, arms swung 60 degrees",
+		"seated, arms swung 75 degrees",
+		"seated, arms swung 90 degrees",
+		"seated, arms swung 105 degrees",
+		"seated, arms swung 120 degrees",
+		"astride, arms swung 55 degrees",
+		"astride, arms swung 75 degrees",
+		"astride, arms swung 100 degrees",
+		"cheering"
+	],
+	"worst_cm3": 0.0096,
+	"overlaps": [
+		{
+			"pose": "seated, hands resting",
+			"a": "leg_l",
+			"b": "hand_l",
+			"cm3": 0.0096
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "leg_r",
+			"b": "hand_r",
+			"cm3": 0.0096
+		}
+	]
+}

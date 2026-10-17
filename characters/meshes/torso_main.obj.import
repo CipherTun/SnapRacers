@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cubr4l4vim8ey"
+path="res://.godot/imported/torso_main.obj-9776dd10916765cd39a1bd66b405e795.mesh"
+
+[deps]
+
+files=["res://.godot/imported/torso_main.obj-9776dd10916765cd39a1bd66b405e795.mesh"]
+
+source_file="res://characters/meshes/torso_main.obj"
+dest_files=["res://.godot/imported/torso_main.obj-9776dd10916765cd39a1bd66b405e795.mesh", "res://.godot/imported/torso_main.obj-9776dd10916765cd39a1bd66b405e795.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -1,7 +1,9 @@
 extends SceneTree
 
-## Builds every driver piece, checks the roster, and checks that drivers
-## really do hold the steering wheel and follow it around.
+## Builds every driver piece, baked a mesh a bone, checks the figure made in
+## tools/characters matches the rig and doesn't clip, checks the roster, and
+## checks that drivers really do hold the steering wheel and follow it
+## around.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/character_test.gd
 
@@ -90,8 +92,44 @@ class Runner:
 	func _ready() -> void:
 		add_child(TestTrack.new())
 
-		# Every style of every piece builds, sitting and standing.
+		# The meshes made in tools/characters are for this rig, and they all
+		# loaded with something in them.
+		var mismatches := CharacterRig.figure_mismatches()
+		check(mismatches.is_empty(), "figure.json matches the rig %s" % [mismatches])
+		var empty := []
+		var figure: Dictionary = CharacterMesh.made().get("figure", {})
+		for piece in figure:
+			for sitting in [false, true]:
+				var regions := CharacterMesh.figure_regions(piece, sitting)
+				for region in regions:
+					var mesh: Mesh = regions[region]
+					if mesh == null or mesh.get_surface_count() == 0 or mesh.get_aabb().size.length() < 0.01:
+						empty.append("%s %s" % [piece, region])
+		check(figure.size() >= 10 and empty.is_empty(), "the figure's %d pieces all load %s" % [figure.size(), empty])
+
+		# How far the figure's pieces go into each other in the rig's poses,
+		# measured in tools/characters on the real meshes.
+		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
+		var fresh: bool = typeof(report) == TYPE_DICTIONARY
+		if fresh:
+			var made_for: Dictionary = report.get("figure", {})
+			for name in CharacterMesh.figure():
+				if name != "_comment" and str(made_for.get(name)) != str(CharacterMesh.figure()[name]):
+					fresh = false
+		check(fresh, "the clipping report is for this figure")
+		if fresh:
+			var clips := []
+			for overlap in report.overlaps:
+				if overlap.cm3 > report.limit_cm3:
+					clips.append("%s: %s into %s %.2f cm3" % [overlap.pose, overlap.a, overlap.b, overlap.cm3])
+			check(clips.is_empty() and report.poses.size() >= 10, "nothing clips in %d poses (worst %.3f cm3) %s" % [report.poses.size(), report.worst_cm3, clips])
+
+		# Every style of every piece builds, sitting and standing, baked into
+		# a mesh a bone, with the face on its own.
 		var built := 0
+		var most_calls := 0
+		var bones_short := []
+		var started := Time.get_ticks_usec()
 		for slot in CharacterDesign.SLOTS:
 			for style in CharacterDesign.styles(slot):
 				var who := CharacterDesign.load_file("res://data/characters/roster/racer.json")
@@ -99,12 +137,53 @@ class Runner:
 				for sitting in [true, false]:
 					var rig := CharacterRig.new(who, sitting)
 					add_child(rig)
-					built += 1 if rig.find_children("*", "MeshInstance3D", true, false).size() > 10 else 0
+					var meshes := rig.find_children("*", "MeshInstance3D", true, false)
+					var calls := 0
+					for node in meshes:
+						calls += node.mesh.get_surface_count()
+					most_calls = maxi(most_calls, calls)
+					var on := {}
+					for node in meshes:
+						if node.name == "Baked":
+							on[node.get_parent()] = true
+					var wanted := [rig, rig.upper(), rig.head(), rig._arm[0], rig._arm[1], rig._hand[0], rig._hand[1]]
+					var all_on := wanted.all(func(n): return on.has(n))
+					if meshes.size() <= 9 and all_on:
+						built += 1
+					elif bones_short.size() < 5:
+						bones_short.append("%s %s (%d meshes)" % [slot, style, meshes.size()])
 					rig.queue_free()
 		var styles := 0
 		for slot in CharacterDesign.SLOTS:
 			styles += CharacterDesign.styles(slot).size()
-		check(built == styles * 2, "every piece builds, sitting and standing (%d of %d)" % [built, styles * 2])
+		check(built == styles * 2, "every piece builds sitting and standing, a mesh a bone (%d of %d) %s" % [built, styles * 2, bones_short])
+		check(most_calls <= 24, "a driver is at most %d surfaces to draw" % most_calls)
+		print("  (built %d drivers in %.0f ms, %.1f ms each)" % [styles * 2, (Time.get_ticks_usec() - started) / 1000.0, (Time.get_ticks_usec() - started) / 1000.0 / (styles * 2)])
+
+		# The same driver again is the same bake, not a new one.
+		var again_who := CharacterDesign.load_file("res://data/characters/roster/racer.json")
+		var first := CharacterRig.new(again_who, true)
+		add_child(first)
+		var second := CharacterRig.new(again_who.duplicate_design(), true)
+		add_child(second)
+		check(first.upper().get_node("Baked").mesh == second.upper().get_node("Baked").mesh, "a driver built twice is baked once")
+		# Astride, the legs are a bone of their own, swung down.
+		var rider := CharacterRig.new(again_who, true)
+		rider.astride = true
+		add_child(rider)
+		check(rider.legs() != rider and rider.legs().has_node("Baked") and rider.has_node("Baked"), "astride, the legs are baked on their own bone")
+		for r in [first, second, rider]:
+			r.queue_free()
+
+		# Every driver on the roster builds.
+		var roster_ok := 0
+		var roster_files := DirAccess.get_files_at("res://data/characters/roster")
+		for file in roster_files:
+			var rig := CharacterRig.new(CharacterDesign.load_file("res://data/characters/roster/" + file), true)
+			add_child(rig)
+			roster_ok += 1 if rig.upper().has_node("Baked") else 0
+			rig.queue_free()
+		check(roster_ok == roster_files.size(), "every driver on the roster builds (%d)" % roster_ok)
 
 		# Every piece of headgear, hair, neckwear and backwear is joined on, to
 		# the head or the torso or to another piece that is. Nothing floats.
@@ -117,6 +196,7 @@ class Runner:
 				who.set_piece("headgear", "none")
 				who.set_piece(slot, style)
 				var rig := CharacterRig.new(who, false)
+				rig.bake = false
 				add_child(rig)
 				var loose := loose_headgear(rig) if slot in ["headgear", "hair"] else loose_on_torso(rig)
 				if loose > 0:
