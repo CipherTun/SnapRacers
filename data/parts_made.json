@@ -26158,7 +26158,7 @@
 					"at": [
 						60.0,
 						44.0,
-						50.0
+						90.0
 					],
 					"axis": [
 						0,
@@ -26171,7 +26171,7 @@
 					"at": [
 						80.0,
 						44.0,
-						50.0
+						90.0
 					],
 					"axis": [
 						0,
@@ -26230,8 +26230,16 @@
 					10.0,
 					40.0,
 					90.0,
+					28.0,
+					64.0
+				],
+				[
+					50.0,
+					10.0,
+					80.0,
+					90.0,
 					44.0,
-					60.0
+					100.0
 				],
 				[
 					40.0,
@@ -26244,15 +26252,15 @@
 				[
 					48.0,
 					28.0,
-					58.0,
+					44.0,
 					92.0,
 					42.0,
-					100.0
+					80.0
 				],
 				[
 					50.0,
 					28.0,
-					96.0,
+					100.0,
 					90.0,
 					48.0,
 					150.0
@@ -26263,7 +26271,7 @@
 				"color": "#9aa0a6",
 				"finish": "metal"
 			},
-			"about": "A quad's frame with the engine and saddle in it and an axle across each end. Put quad wheels on the ends of the axles, bike bars on the post and fenders over the wheels.",
+			"about": "A quad's frame with the engine and saddle in it and an axle across each end. Put quad wheels on the ends of the axles, quad bars on the post and fenders over the wheels.",
 			"seat_box": [
 				52.0,
 				40.0,
@@ -27704,6 +27712,73 @@
 			"mass": 5.0,
 			"strength": 1400.0,
 			"about": "A wide body for the back of the trike frame, over the frame's tail and between the back wheels, with studs on top. It hangs on the back axle."
+		},
+		"b_quad_bars": {
+			"name": "Quad bars",
+			"kind": "steering",
+			"group": "bike",
+			"size": [
+				2,
+				4,
+				1
+			],
+			"fine_size": [
+				40.0,
+				28.0,
+				20.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/b_quad_bars.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					4.0,
+					0.0,
+					0.0,
+					36.0,
+					8.0,
+					20.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_quad_bars_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"about": "Short bars for a quad, on the post in front of its saddle.",
+			"style": "bikebars",
+			"control": 1.15,
+			"grip_reach": 0.13999999999999999,
+			"mass": 0.53,
+			"strength": 488.0
 		}
 	}
 }

@@ -47,7 +47,7 @@ class Runner:
 			design.parts.append(KartDesign.placed_entry(p[0], Transform3D(Basis.IDENTITY, p[1])))
 		return design
 
-	## A quad from its frame, four quad wheels, bike bars and fenders, in the
+	## A quad from its frame, four quad wheels, quad bars and fenders, in the
 	## fine unit.
 	static func quad() -> KartDesign:
 		var parts := []
@@ -57,7 +57,7 @@ class Runner:
 			["w_quad", [270, 0, 172.4], 2],
 			["w_quad", [130, 0, 257.6], 0],
 			["w_quad", [270, 0, 302.4], 2],
-			["b_bars", [160, 60, 160], 0],
+			["b_quad_bars", [180, 60, 200], 0],
 			["b_quad_fender_front", [130, 32, 120], 0],
 			["b_quad_fender_back", [130, 32, 250], 0],
 		]:

@@ -1477,7 +1477,7 @@ Q_DECK = 44
 def quad_frame():
     """A quad's frame in one piece, with the engine, tank and saddle in it
     and an axle across each end for four wheels. Fenders go on the decks at
-    each end and bike bars on the post in front of the tank."""
+    each end and quad bars on the post just in front of the saddle."""
     low = 16
     parts, trim, solids = [], [], []
 
@@ -1487,16 +1487,17 @@ def quad_frame():
 
     block(44, low, 0, 96, 26, Q_L)                  # the pan along the bottom
     block(40, 26, 0, 100, Q_DECK, 40)               # front deck
-    block(50, 26, 40, 90, 60, 60)                   # post for the bars
+    block(50, 26, 40, 90, Q_DECK, 64)               # under the tank
+    block(50, 26, 80, 90, 60, 100)                  # post for the bars
     block(40, 26, 150, 100, Q_DECK, Q_L)            # back deck
-    parts.append(box(*_f(48, Q_DECK - 2, 58, 92, 58, 100), edge=0.03))  # tank
-    solids.append([48, Q_DECK, 58, 92, 58, 100])
+    parts.append(box(*_f(48, Q_DECK - 2, 44, 92, 58, 84), edge=0.03))  # tank
+    solids.append([48, Q_DECK, 44, 92, 58, 80])
     seat = 64
     parts.append(profile_x([(z * FINE, y * FINE) for z, y in [(96, Q_DECK - 2), (96, 56), (104, seat), (144, seat), (150, 58), (150, Q_DECK - 2)]], 50 * FINE, 90 * FINE))
-    solids.append([50, Q_DECK, 96, 90, seat, 150])
+    solids.append([50, Q_DECK, 100, 90, seat, 150])
     front_studs = [(x, z) for x in (50, 70, 90) for z in (10, 30)]
     back_studs = [(x, z) for x in (50, 70, 90) for z in (160, 180)]
-    bar_studs = [(60, 50), (80, 50)]
+    bar_studs = [(60, 90), (80, 90)]
     for x, z in front_studs + back_studs:
         parts.append(cylinder(STUD_RADIUS, STUD_HEIGHT, "y", tuple(_f(x, Q_DECK - 0.08, z)), 12))
     for x, z in bar_studs:
@@ -1524,9 +1525,24 @@ def quad_frame():
     con, solids, seat_box = _shifted(con, solids, seat_box, low)
     shift = [0, -low * FINE, 0]
     return Part("b_quad_frame", "Quad frame", "seat", "bike", (Q_W * FINE, (hi - low) * FINE, Q_L * FINE), union(parts).translate(shift), con, BLACK,
-                about="A quad's frame with the engine and saddle in it and an axle across each end. Put quad wheels on the ends of the axles, bike bars on the post and fenders over the wheels.",
+                about="A quad's frame with the engine and saddle in it and an axle across each end. Put quad wheels on the ends of the axles, quad bars on the post and fenders over the wheels.",
                 trim=(union(trim).translate(shift), METAL, "metal"), solids=solids, seat_box=seat_box, engine_twin="engine_twin",
                 aero={"front": 0.7, "back": 0.8, "side": 0.8}, power=7000.0, max_force=1500.0, astride=True, driver_height=7, control=1.05, recline=0)
+
+@part
+def quad_bars():
+    """A quad's bars: a short riser straight up from the post in front of the
+    saddle to a bar with a grip at each end, where a seated rider's hands
+    land. They turn about the riser."""
+    bar = 24
+    parts = [box(*_f(4, 0, 0, 36, 8, 20), edge=0.012)]
+    parts.append(_tube((20, 6, 10), (20, bar, 15), 2.6))
+    parts.append(_tube((13, bar, 15), (27, bar, 15), 2.2))
+    grips = [_tube((20 + d * 6, bar, 15), (20 + d * 17, bar, 15), 3.2) for d in (-1, 1)]
+    con = sockets([(0, 0), (1, 0)])
+    return Part("b_quad_bars", "Quad bars", "steering", "bike", (40 * FINE, (bar + 4) * FINE, 20 * FINE), union(parts), con, METAL, finish="metal",
+                about="Short bars for a quad, on the post in front of its saddle.", style="bikebars", control=1.15, grip_reach=11.2 * FINE,
+                trim=(union(grips), BLACK, "plastic"), solids=[[4 * FINE, 0, 0, 36 * FINE, 8 * FINE, 20 * FINE]])
 
 
 def _quad_fender(id, name, style):
