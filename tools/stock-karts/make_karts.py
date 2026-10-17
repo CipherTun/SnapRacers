@@ -464,35 +464,22 @@ T = racer(k, "w_kart_wide", "w_slick", 3, 12, arches=0, width=4)
     .add("d_rear_wing_8", 6, T + 3, 13, colour=RED))
 
 
-def arches(k, T, axles, colour, caps=None, sides=None, lights=None):
-    """Big arches 2 wide over each pair of wheels of a slim racer() chassis
-    (width 4, arches 2), `axles` being where its axle plates start, with
-    smooth tiles on their studded ends. Ends that meet share a 2×2 tile. A
-    gap between two arches gets a plate reaching out under the chassis and a
-    brick 2×2 in `sides` on it, level with the arch ends. `lights` puts
-    round lights that colour on the front corners. racer() has the
-    front arch's back plates reach into the gap's first row already."""
-    ends = []
+def arches(k, T, axles, colour, sides=None, part="p_arch_2x6_smooth"):
+    """Smooth arches 2 wide over each pair of wheels of a slim racer()
+    chassis (width 4, arches 2), `axles` being where its axle plates start.
+    A gap between two arches gets a plate reaching out under the chassis and
+    a brick 2×2 in `sides` on it, with a tile level with the arch ends.
+    racer() has the front arch's back plates reach into the gap's first row
+    already."""
     for a in axles:
-        k.pair("p_arch_2x6", 6, T, a - 2, colour=colour)
-        ends += [a - 2, a + 3]
-    caps = caps or colour
-    for z in sorted(set(ends)):
-        if z - 1 in ends:
-            continue
-        if lights and z == ends[0]:
-            k.pair("d_light_1x1", 6, T + 4, z, colour=lights).pair("p_tile_1x1", 7, T + 4, z, colour=caps)
-        elif z + 1 in ends:
-            k.pair("p_tile_2x2", 6, T + 4, z, colour=caps)
-        else:
-            k.pair("p_tile_1x2", 6, T + 4, z, rot=1, colour=caps)
+        k.pair(part, 6, T, a - 2, colour=colour)
     if sides:
         z = axles[0] + 4
         assert axles[1] - 2 - z == 2, "the gap between arches has to be 2 long"
         (k.pair("p_plate_1x4", 6, T - 2, z + 1, rot=1, colour=DARK)
             .pair("p_plate_1x2", 6, T - 1, z + 1, rot=1, colour=DARK)
             .pair("p_brick_2x2", 6, T, z, colour=sides)
-            .pair("p_tile_2x2", 6, T + 3, z, colour=caps))
+            .pair("p_tile_2x2", 6, T + 3, z, colour=sides))
 
 
 # 18. A muscle car, low and long with black stripes nose to tail.
@@ -515,38 +502,44 @@ arches(k, T, (3, 11), ORANGE, sides=ORANGE)
 
 # 19. A stock car for the oval, a cab in the middle and a number on the roof.
 k = kart("oval_ace", "Oval Ace", "A stock car built for long fast bends, with a roof over the driver and a spoiler on the boot. Steady and easy to drive.")
-T = racer(k, "w_racing", "w_racing", 3, 10, width=4)
-arches(k, T, (3, 11), BLUE, sides=BLUE)
+T = racer(k, "w_racing", "w_racing", 3, 8, width=4)
+arches(k, T, (3, 9), BLUE, part="p_arch_2x6_yellow_stripe")
 (k.add("p_plate_4x4", 8, T, 1, colour=BLUE)
     .add("p_curve_4x4", 8, T + 1, 1, colour=BLUE)
-    .add("p_tile_1x1", 8, T + 4, 4, colour=YELLOW).add("p_tile_1x1", 11, T + 4, 4, colour=YELLOW)
-    .add("p_tile_1x2", 9, T + 4, 4, rot=1, colour=BLUE)
+    .add("p_tile_1x4", 8, T + 4, 4, rot=1, colour=BLUE)
     .pair("p_brick_1x6", 8, T, 5, colour=BLUE)
     .add("steering_wheel", 9, T, 6)
     .add("s_racing_seat", 9, T, 7)
     .add("p_cab_4x6", 8, T + 3, 5, colour=BLUE)
     .add("p_round_tile_2x2", 9, T + 9, 7, colour=WHITE)
-    .pair("p_brick_1x4", 8, T, 11, colour=BLUE)
-    .add("engine_big", 9, T, 11, colour=SILVER)
-    .add("p_brick_1x2", 9, T, 14, rot=1, colour=BLUE)
-    .pair("p_tile_1x2", 8, T + 3, 11, colour=YELLOW)
-    .add("p_tile_2x2", 9, T + 3, 11, colour=BLUE)
-    .add("d_spoiler", 8, T + 3, 13, colour=YELLOW))
+    .pair("p_brick_1x2", 8, T, 11, colour=BLUE)
+    .add("engine_small", 9, T, 11, colour=SILVER)
+    .add("p_plate_2x4", 8, T + 3, 11, rot=1, colour=BLUE)
+    .add("p_tile_1x4", 8, T + 4, 11, rot=1, colour=BLUE)
+    .add("d_front_wing_8x2", 6, T + 4, 12, colour=YELLOW))
 
-# 20. A little go-kart, open frame, side pods and the engine behind the seat.
-k = kart("kart_kid", "Kart Kid", "A proper little go-kart, light and nippy with the engine right behind the seat. Easy to learn on.")
+# 20. A little go-kart: an open frame, a small nose, side pods and the
+# engine beside the seat.
+k = kart("kart_kid", "Kart Kid", "A proper little go-kart, light and nippy with the engine beside the seat. Easy to learn on.")
 T = racer(k, "w_kart", "w_kart_wide", 1, 10, arches=0, width=4)
-(k.add("p_curve_4x4", 8, T, 0, colour=KART_GREEN)
-    .add("p_tile_1x1", 8, T + 3, 3, colour=KART_GREEN)
-    .add("p_tile_1x1", 9, T + 3, 3, colour=YELLOW)
-    .add("p_tile_1x2", 10, T + 3, 3, rot=1, colour=KART_GREEN)
-    .add("p_plate_2x8", 6, T - 2, 6, rot=1, colour=KART_GREEN)
-    .pair("p_tile_2x4", 6, T - 1, 4, colour=KART_GREEN)
+(k.add("p_curve_2x4", 9, T, 0, colour=KART_GREEN)
+    .add("p_tile_1x2", 9, T + 3, 3, rot=1, colour=YELLOW)
     .add("steering_wheel", 9, T, 4)
+    .add("p_tile_1x2", 9, T, 5, rot=1, colour=DARK)
+    .pair("p_tile_1x4", 8, T, 4, colour=DARK)
+    .pair("p_tile_1x2", 8, T, 8, colour=DARK)
+    .add("p_tile_2x2", 9, T, 8, colour=DARK)
+    .add("p_tile_1x4", 8, T, 10, rot=1, colour=DARK)
     .add("s_bucket_seat", 9, T, 6, colour=DARK)
-    .add("engine_small", 9, T, 8, colour=SILVER))
+    .pair("p_plate_2x3", 6, T - 2, 4, rot=1, colour=KART_GREEN)
+    .add("p_plate_2x8", 6, T - 2, 6, rot=1, colour=KART_GREEN)
+    .add("p_tile_2x2", 6, T - 1, 4, colour=KART_GREEN)
+    .add("engine_small", 6, T - 1, 6, colour=SILVER)
+    .add("p_tile_2x2", 6, T + 2, 6, colour=SILVER)
+    .add("p_tile_2x4", 12, T - 1, 4, colour=KART_GREEN))
 
-# 21. A rally car in white with red and blue stripes and lamps on the bonnet.
+# 21. A rally car in white with red and blue stripes, lamps on the bonnet,
+# a light pod on the roof and mud flaps.
 k = kart("gravel_rat", "Gravel Rat", "A rally car on knobbly tires with four lamps on the bonnet. At home on dirt and gravel and fine on the road too.")
 T = racer(k, "w_offroad", "w_offroad", 3, 8, width=4)
 arches(k, T, (3, 9), WHITE)
@@ -560,31 +553,33 @@ arches(k, T, (3, 9), WHITE)
     .add("steering_wheel", 9, T, 6)
     .add("s_racing_seat", 9, T, 7)
     .add("p_cab_4x6", 8, T + 3, 5, colour=WHITE)
-    .add("p_tile_2x2", 9, T + 9, 7, colour=SILVER)
+    .add("d_spotlights", 9, T + 9, 7, colour=WHITE)
+    .add("p_tile_1x2", 9, T + 9, 8, rot=1, colour=BLUE)
     .pair("p_brick_1x2", 8, T, 11, colour=WHITE)
     .add("engine_small", 9, T, 11, colour=SILVER)
     .add("p_tile_1x2", 8, T + 3, 11, colour=WHITE).add("p_tile_1x2", 11, T + 3, 11, colour=WHITE)
     .add("p_tile_1x2", 9, T + 3, 11, colour=RED).add("p_tile_1x2", 10, T + 3, 11, colour=BLUE))
+# The flaps hang from the arch plates under the chassis, behind each wheel.
+for z in (6, 12):
+    k.pair_fine("d_mud_flap", 6 * STUD, (T - 2) * PLATE - 12, z * STUD, colour=RED)
 
-# 22. An endurance racer, pinched in the middle under a bubble.
-k = kart("night_shift", "Night Shift", "An endurance racer with the driver lying down under a bubble and a long tail up to a wide wing. Fast and smooth, and it doesn't mind a long race.")
+# 22. An endurance racer, pinched in the middle under a bubble, with a lime
+# stripe nose to tail.
+k = kart("night_shift", "Night Shift", "An endurance racer with the driver lying down under a bubble and a wide wing over the gearbox. Fast and smooth, and it doesn't mind a long race.")
 T = racer(k, "w_racing", "w_racing", 3, 10, width=4)
-arches(k, T, (3, 11), BLUE, caps=DARK, lights=YELLOW)
+arches(k, T, (3, 11), BLUE)
 (k.add("p_plate_4x4", 8, T, 1, colour=BLUE)
-    .add("p_curve_4x4", 8, T + 1, 1, colour=BLUE)
-    .add("p_tile_1x1", 8, T + 4, 4, colour=BLUE).add("p_tile_1x1", 11, T + 4, 4, colour=BLUE)
-    .add("p_tile_1x2", 9, T + 4, 4, rot=1, colour=LIME)
+    .add("p_bonnet_4x4_lime_stripe", 8, T + 1, 1, colour=BLUE)
     .add("p_brick_1x1", 8, T, 5, colour=BLUE).add("p_brick_1x1", 11, T, 5, colour=BLUE)
     .add("p_brick_1x1", 8, T, 10, colour=BLUE).add("p_brick_1x1", 11, T, 10, colour=BLUE)
     .add("d_canopy", 8, T + 3, 5)
     .add("racing_wheel", 9, T, 6)
     .add("s_lay_down_seat", 9, T, 7)
-    .pair("p_brick_1x4", 8, T, 11, colour=BLUE)
-    .add("engine_small", 9, T, 11, colour=DARK)
-    .add("p_curve_4x4", 8, T + 3, 11, colour=BLUE)
-    .add("p_tile_1x4", 8, T + 6, 14, rot=1, colour=BLUE)
+    .add("p_plate_4x4", 8, T, 11, colour=BLUE)
+    .add("p_bonnet_4x4_lime_stripe", 8, T + 1, 11, rot=2, colour=BLUE)
     .add("p_plate_2x3", 9, T - 3, 14, colour=DARK)
-    .add("d_rear_wing_8", 6, T - 2, 15, colour=DARK))
+    .add("engine_small", 9, T - 2, 15, colour=DARK)
+    .add("d_rear_wing_8", 6, T + 1, 15, colour=DARK))
 
 
 # Bikes and trikes, built the way toy motorbikes are: a frame in one piece
