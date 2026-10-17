@@ -461,35 +461,45 @@ def _revolve_x(points, at, sides=36):
     return solid.rotate([0, 90, 0]).translate(list(at))
 
 
-def _wheel(id, name, radius, width, rim_radius, grip, rolling, offroad=0.0, lugs=0, color=LIGHT_GREY, about=""):
+def _wheel(id, name, radius, width, rim_radius, grip, rolling, offroad=0.0, lugs=0, color=LIGHT_GREY, about="", deep=None, finish="plastic", shoulder=None, **stats):
+    """A wheel. `deep` is (lugs round, how tall, half their length) for a
+    chunky tread whose tops reach `radius`, with the tire under them."""
     w = width
-    cx = (w * 0.5, radius, radius)
-    shoulder = min(0.06, w * 0.25)
-    tire = [(0.0, rim_radius * 0.92), (0.0, radius - shoulder), (shoulder * 0.4, radius - shoulder * 0.2), (shoulder, radius),
-            (w - shoulder, radius), (w - shoulder * 0.4, radius - shoulder * 0.2), (w, radius - shoulder), (w, rim_radius * 0.92)]
+    body = radius - deep[1] if deep else radius
+    shoulder = shoulder or min(0.06, w * 0.25)
+    tire = [(0.0, rim_radius * 0.92), (0.0, body - shoulder), (shoulder * 0.4, body - shoulder * 0.2), (shoulder, body),
+            (w - shoulder, body), (w - shoulder * 0.4, body - shoulder * 0.2), (w, body - shoulder), (w, rim_radius * 0.92)]
     tire_solid = _revolve_x(tire, (0.0, radius, radius))
     if lugs:
         tire_solid = union([tire_solid] + _lugs(lugs, radius, w))
+    if deep:
+        tire_solid = union([tire_solid] + _lugs(deep[0], body, w, deep[1] + 0.03, deep[2], 0.03, radius))
     hub = HOLE + 0.02
     rim = [(0.004, hub), (0.004, rim_radius * 0.6), (w * 0.3, rim_radius * 0.75), (w * 0.3, rim_radius), (w - 0.004, rim_radius), (w - 0.004, hub)]
     rim_solid = _revolve_x(rim, (0.0, radius, radius), 28)
     con = [c("hub", (0.0, radius, radius), (1, 0, 0), w)]
-    stats = {"radius": radius, "width": w, "grip": grip, "rolling": rolling, "trim": (tire_solid, TYRE, "plastic")}
+    stats.update({"radius": radius, "width": w, "grip": grip, "rolling": rolling, "trim": (tire_solid, TYRE, "plastic")})
     if offroad:
         stats["offroad"] = offroad
     if about:
         stats["about"] = about
+    if finish != "plastic":
+        stats["finish"] = finish
     return Part(id, name, "wheel", "wheels", (w, 2 * radius, 2 * radius), rim_solid, con, color, **stats)
 
 
-def _lugs(n, radius, w):
+def _lugs(n, radius, w, height=0.06, half=0.045, sink=0.035, centre=None):
+    """Two staggered rings of tread blocks round a tire of this radius,
+    `height` tall from `sink` under its surface, on a wheel whose middle is
+    `centre` high and back (the radius if not given)."""
+    centre = radius if centre is None else centre
     out = []
     for k in range(n):
         for side in (0, 1):
             a = (k + 0.5 * side) * 360.0 / n
             x0 = 0.01 + side * w * 0.5
-            lug = box(x0, radius - 0.035, -0.045, x0 + w * 0.45, radius + 0.025, 0.045, edge=0.006)
-            out.append(lug.rotate([a, 0, 0]).translate([0, radius, radius]))
+            lug = box(x0, radius - sink, -half, x0 + w * 0.45, radius - sink + height, half, edge=0.006)
+            out.append(lug.rotate([a, 0, 0]).translate([0, centre, centre]))
     return out
 
 
@@ -502,6 +512,20 @@ part(lambda: _wheel("w_offroad", "Off-road wheel", 0.42, 0.4, 0.25, 1.05, 0.03, 
 part(lambda: _wheel("w_moto", "Motorbike wheel", 0.45, 0.2, 0.34, 0.95, 0.014, color=BLACK))
 part(lambda: _wheel("w_moto_trail", "Trail bike wheel", 0.45, 0.22, 0.32, 0.88, 0.02, offroad=0.5, lugs=16, color=RED))
 part(lambda: _wheel("w_scooter", "Scooter wheel", 0.3, 0.18, 0.2, 0.95, 0.016, color=WHITE))
+# Wheels for the bigger stock vehicles. Their weight and strength go by
+# their size, like the first wheels.
+part(lambda: _wheel("w_drag_slick", "Dragster slick", 0.5, 0.6, 0.28, 1.5, 0.03, offroad=-0.35, color=METAL, finish="metal", mass=9.0, strength=1400.0,
+                    about="A huge soft slick for the back of a dragster. It grips the road like nothing else, and is hopeless on grass."))
+# The dragster front wheel is as small as a wheel can be on an axle plate
+# and still leave two plates under the plate.
+part(lambda: _wheel("w_drag_front", "Dragster front wheel", 0.26, 0.12, 0.2, 0.9, 0.01, color=METAL, finish="metal", mass=1.2, strength=900.0,
+                    about="Tiny and thin, for the front of a dragster. It rolls easily but barely grips."))
+part(lambda: _wheel("w_monster", "Monster truck wheel", 0.6, 0.7, 0.32, 1.2, 0.042, offroad=0.75, color=LIGHT_GREY, deep=(16, 0.07, 0.075), shoulder=0.09,
+                    mass=16.0, strength=1700.0, about="Huge, with deep tread. It climbs over anything, but lifts the truck up high where it rolls in corners."))
+part(lambda: _wheel("w_truck", "Truck tire", 0.45, 0.5, 0.26, 1.1, 0.032, offroad=0.65, color=WHITE, deep=(16, 0.045, 0.055), shoulder=0.07,
+                    mass=8.0, strength=1450.0, about="A chunky knobbly tire for trucks. Good on dirt and grass, a little slow on the road."))
+part(lambda: _wheel("w_quad", "Quad wheel", 0.28, 0.4, 0.17, 1.1, 0.03, offroad=0.6, color=WHITE, deep=(12, 0.04, 0.045), shoulder=0.09,
+                    mass=4.5, strength=1250.0, about="Small, fat and knobbly, for quads. It grips well on dirt."))
 
 
 @part
@@ -1272,3 +1296,155 @@ def canopy():
     return Part("d_canopy", "Canopy", "screen", "details", (w, h, l), union([shell.translate([0, PLATE * 0.5, 0]), rim]), sockets(cells), GLASS, finish="glass",
                 aero={"front": 0.35, "back": 0.6, "side": 0.6},
                 solids=[[0, 0, 0, w, PLATE * 0.5, 0.06], [0, 0, l - 0.06, w, PLATE * 0.5, l], [0, 0, 0, 0.06, PLATE * 0.5, l], [w - 0.06, 0, 0, w, PLATE * 0.5, l]])
+
+
+# Engines and mechanical parts for the bigger stock vehicles.
+
+def _rods(points, r):
+    """Tubes joining the points one after another, like a bent pipe."""
+    return union([_capsule(points[k], points[k + 1], r) for k in range(len(points) - 1)])
+
+
+@part
+def blower_v8():
+    """A V8 with a supercharger and an air scoop on top, for hot rods and
+    muscle cars. The block is painted and the rocker covers, blower, scoop
+    and pulleys are chrome."""
+    w, l, h = 3 * STUD, 4 * STUD, 0.7
+    from manifold3d import Manifold
+    mid = w * 0.5
+    base = box(0.02, 0.0, 0.03, w - 0.02, 0.08, l - 0.03, edge=0.01)
+    block = box(0.13, 0.06, 0.06, w - 0.13, 0.3, l - 0.06, edge=0.03)
+    manifold = box(mid - 0.12, 0.26, 0.12, mid + 0.12, 0.4, l - 0.12, edge=0.02)
+
+    def cover(sign):
+        c = box(-0.08, -0.045, 0.08, 0.08, 0.045, l - 0.08, edge=0.03).rotate([0, 0, -35 * sign])
+        return c.translate([mid + sign * 0.2, 0.31, 0])
+
+    blower = box(mid - 0.16, 0.38, 0.1, mid + 0.16, 0.56, l - 0.14, edge=0.035)
+    ribs = union([box(mid - 0.165, y, 0.14, mid + 0.165, y + 0.015, l - 0.18, edge=0.004) for y in (0.42, 0.46, 0.5)])
+    hat = box(mid - 0.12, 0.55, 0.22, mid + 0.12, 0.58, l - 0.26, edge=0.01)
+    scoop = profile_x([(0.2, 0.57), (0.22, h), (0.3, h), (l - 0.25, 0.6), (l - 0.25, 0.57)], mid - 0.1, mid + 0.1)
+    mouth = box(mid - 0.075, 0.6, 0.15, mid + 0.075, h - 0.025, 0.36, edge=0)
+    pulleys = union([cylinder(0.075, 0.05, "-z", (mid, 0.47, 0.1), 20), cylinder(0.09, 0.04, "-z", (mid, 0.17, 0.06), 20),
+                     box(mid - 0.04, 0.17, 0.035, mid + 0.04, 0.47, 0.055, edge=0.01)])
+    painted = union([base, block, manifold])
+    chrome = union([cover(1), cover(-1), blower, ribs, hat, scoop - mouth, pulleys])
+    return Part("e_blower_v8", "Blower V8", "engine", "engines", (w, h, l), painted, sockets(grid_cells(3, 4)), RED,
+                trim=(chrome, METAL, "metal"), sound="engine_v8", power=18000.0, max_force=2300.0, mass=52.0, strength=1500.0,
+                about="A V8 with a blower on top. A huge shove off the line and lots of power, but it's heavy.",
+                solids=[[0, 0, 0, w, 0.4, l], [mid - 0.16, 0.4, 0.04, mid + 0.16, h, l - 0.14]])
+
+
+@part
+def open_exhausts():
+    """Four short chrome pipes on a plate 1×4, sweeping up and back, to go
+    beside an engine. Use one each side."""
+    w, l, h = STUD, 4 * STUD, 0.36
+    plate = box(0, 0, 0, w, PLATE, l)
+    pipes = []
+    for k in range(4):
+        z = 0.08 + k * 0.21
+        pipe = _capsule((w * 0.5, PLATE, z), (w * 0.5, h - 0.04, z + 0.16), 0.035)
+        end = cylinder(0.024, 0.2, "y", (0, 0, 0), 12).rotate([45, 0, 0]).translate([w * 0.5, h - 0.04, z + 0.16])
+        pipes.append(pipe - end)
+    return Part("d_open_exhausts", "Open exhaust pipes", "body", "details", (w, h, l), union([plate] + pipes), sockets(grid_cells(1, 4)), METAL, finish="metal",
+                aero={"front": 0.6, "back": 0.8}, mass=1.2, strength=500.0)
+
+
+@part
+def exhaust_stack():
+    """A tall chrome exhaust stack for a big rig, on a plate 1×2, with a
+    pipe in along the bottom and a slanted top."""
+    w, l, h = STUD, 2 * STUD, 1.3
+    plate = box(0, 0, 0, w, PLATE, l)
+    stack = cylinder(0.07, h - PLATE, "y", (w * 0.5, PLATE, 0.375), 20)
+    stack = stack - box(-1, 0, -1, 1, 1, 1, edge=0).rotate([-25, 0, 0]).translate([0, h - 0.05, 0.375])
+    stack = stack - cylinder(0.05, 0.5, "y", (w * 0.5, h - 0.4, 0.375), 16)
+    elbow = _rods([(w * 0.5, 0.17, 0.06), (w * 0.5, 0.17, 0.32), (w * 0.5, 0.25, 0.375)], 0.055)
+    shield = cylinder(0.085, 0.36, "y", (w * 0.5, 0.45, 0.375), 20)
+    clamps = union([cylinder(0.09, 0.03, "y", (w * 0.5, y, 0.375), 20) for y in (0.42, 0.82)])
+    return Part("d_exhaust_stack", "Exhaust stack", "body", "details", (w, h, l), union([plate, stack, elbow, shield, clamps]), sockets(grid_cells(1, 2)), METAL,
+                finish="metal", aero={"front": 0.6, "back": 0.8}, mass=1.5, strength=600.0,
+                solids=[[0, 0, 0, w, PLATE, l], [0, PLATE, STUD, w, h, l], [0, PLATE, 0, w, 0.26, STUD]])
+
+
+TUBE = 0.035  # radius of a cage or bar tube
+
+
+@part
+def roll_hoop():
+    """A roll hoop 4 wide to go behind the driver, with braces back down to
+    its feet."""
+    w, l, h = 4 * STUD, 2 * STUD, 0.86
+    feet = [box(x, 0, 0, x + STUD, PLATE, l) for x in (0.0, w - STUD)]
+    top = h - TUBE
+    hoop = _rods([(STUD * 0.5, PLATE, 0.14), (STUD * 0.5, top - 0.12, 0.14), (STUD * 0.5 + 0.1, top, 0.14),
+                  (w - STUD * 0.5 - 0.1, top, 0.14), (w - STUD * 0.5, top - 0.12, 0.14), (w - STUD * 0.5, PLATE, 0.14)], TUBE)
+    braces = [_capsule((x, top - 0.14, 0.14), (x, PLATE, l - 0.1), TUBE) for x in (STUD * 0.5, w - STUD * 0.5)]
+    cells = [(i, k) for i in (0, 3) for k in range(2)]
+    return Part("d_roll_hoop", "Roll hoop", "body", "details", (w, h, l), union(feet + [hoop] + braces), sockets(cells), BLACK,
+                aero={"front": 0.5, "back": 0.8}, mass=1.5, strength=1200.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, PLATE, 0.08, STUD, h, l], [w - STUD, PLATE, 0.08, w, h, l], [0, h - 0.1, 0.08, w, h, 0.22]])
+
+
+@part
+def roll_cage():
+    """A dune buggy's roll cage 6×7, open all round, over the seat and
+    steering. Pillars lean back from the front feet to the roof, and down to
+    the back feet, with a cross brace behind. A plate across the front of
+    the roof takes lights."""
+    roof = 1.08
+    w, l, h = 6 * STUD, 7 * STUD, roof + PLATE
+    zf, za, zb, zr = STUD * 0.5, 0.75, 1.25, l - STUD * 0.5
+    sides = []
+    for x in (STUD * 0.5, w - STUD * 0.5):
+        sides.append(_rods([(x, PLATE, zf), (x, roof - 0.06, za - 0.04), (x, roof, za + 0.06), (x, roof, zb - 0.06), (x, roof - 0.06, zb + 0.04), (x, PLATE, zr)], TUBE))
+    x0, x1 = STUD * 0.5, w - STUD * 0.5
+    bars = [_capsule((x0, roof, za + 0.06), (x1, roof, za + 0.06), TUBE), _capsule((x0, roof, zb - 0.06), (x1, roof, zb - 0.06), TUBE),
+            _capsule((x0, roof - 0.06, zb + 0.04), (x1, PLATE + 0.1, zr), TUBE), _capsule((x1, roof - 0.06, zb + 0.04), (x0, PLATE + 0.1, zr), TUBE)]
+    feet = [box(x, 0, z, x + STUD, PLATE, z + STUD) for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
+    lights = [(i, 3) for i in range(1, 5)]
+    plate = union([box(STUD, roof, 3 * STUD, 5 * STUD, roof + PLATE, 4 * STUD), studs(lights, roof + PLATE)])
+    cells = [(i, k) for i in (0, 5) for k in (0, 6)]
+    tube = [[0, PLATE, 0, STUD, roof + TUBE, l], [w - STUD, PLATE, 0, w, roof + TUBE, l]]
+    return Part("d_roll_cage", "Roll cage", "body", "details", (w, h, l), union(sides + bars + feet + [plate]), sockets(cells) + top_studs(lights, roof + PLATE), BLACK,
+                aero={"front": 0.5, "back": 0.8}, mass=4.0, strength=1800.0,
+                solids=[[x, 0, z, x + STUD, PLATE, z + STUD] for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
+                + tube + [[STUD, roof - TUBE, za, w - STUD, h, zb], [STUD, PLATE + 0.05, zb + 0.1, w - STUD, roof, zr]])
+
+
+@part
+def bull_bar():
+    """A tubular bull bar 6 wide for the front of a truck. Its two tabs
+    press onto the front row of studs and the bars hang down in front."""
+    w, l, h = 6 * STUD, 2 * STUD, 0.6
+    tab_y = 0.2
+    tabs = [union([box(x, tab_y, STUD, x + STUD, tab_y + PLATE, l), _capsule((x + STUD * 0.5, tab_y + 0.05, STUD + 0.05), (x + STUD * 0.5, tab_y + 0.05, STUD * 0.5), TUBE)])
+            for x in (STUD, 4 * STUD)]
+    z = STUD * 0.5
+    ups = [_capsule((x, 0.04, z), (x, h - 0.05, z), TUBE + 0.005) for x in (1.5 * STUD, 4.5 * STUD)]
+    hoop = _rods([(0.06, 0.18, z), (0.08, 0.42, z), (0.22, h - TUBE - 0.01, z), (w - 0.22, h - TUBE - 0.01, z), (w - 0.08, 0.42, z), (w - 0.06, 0.18, z)], TUBE)
+    bars = [_capsule((0.06, 0.18, z), (w - 0.06, 0.18, z), TUBE), _capsule((1.5 * STUD, 0.36, z), (4.5 * STUD, 0.36, z), TUBE)]
+    cells = [(1, 1), (4, 1)]
+    return Part("d_bull_bar", "Bull bar", "body", "details", (w, h, l), union(tabs + ups + [hoop] + bars), sockets(cells, tab_y), METAL, finish="metal",
+                aero={"front": 0.5, "back": 0.8}, mass=2.5, strength=2200.0,
+                solids=[[STUD, tab_y, STUD, 2 * STUD, tab_y + PLATE, l], [4 * STUD, tab_y, STUD, 5 * STUD, tab_y + PLATE, l], [0, 0, 0, w, h, STUD]])
+
+
+@part
+def wheelie_bar():
+    """A dragster's wheelie bar: a plate 2×1 that sits on the back of the
+    chassis, with two rails sloping back and down to a pair of little
+    rollers that stop it flipping over."""
+    w, l, h = 2 * STUD, 7 * STUD, 0.3
+    top = 0.2
+    plate = box(0, top, 0, w, top + PLATE, STUD)
+    zr = l - 0.08
+    rails = [_capsule((x, top + 0.03, 0.15), (x, 0.08, zr), 0.025) for x in (0.12, w - 0.12)]
+    braces = [_capsule((0.12, 0.08 + (top - 0.05) * t, 0.15 + (zr - 0.15) * (1 - t)), (w - 0.12, 0.08 + (top - 0.05) * t, 0.15 + (zr - 0.15) * (1 - t)), 0.018) for t in (0.3, 0.65)]
+    axle = cylinder(0.02, w - 0.02, "x", (0.01, 0.07, zr), 10)
+    rollers = union([cylinder(0.07, 0.07, "x", (x, 0.07, zr), 18) for x in (0.002, w - 0.072)])
+    return Part("d_wheelie_bar", "Wheelie bar", "body", "details", (w, h, l), union([plate, axle] + rails + braces) - rollers, sockets(grid_cells(2, 1), top), METAL,
+                finish="metal", trim=(rollers, TYRE, "plastic"), aero={"front": 0.5, "back": 0.8}, mass=1.5, strength=700.0,
+                solids=[[0, top, 0, w, h, STUD], [0, 0, STUD, w, top + 0.05, l]])

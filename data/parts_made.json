@@ -24921,6 +24921,1064 @@
 			},
 			"mass": 0.9,
 			"strength": 550.0
+		},
+		"w_drag_slick": {
+			"name": "Dragster slick",
+			"kind": "wheel",
+			"group": "wheels",
+			"size": [
+				3,
+				10,
+				4
+			],
+			"fine_size": [
+				48.0,
+				80.0,
+				80.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/w_drag_slick.obj",
+			"connectors": [
+				{
+					"type": "hub",
+					"at": [
+						0.0,
+						40.0,
+						40.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 48.0
+				}
+			],
+			"finish": "metal",
+			"trim": {
+				"mesh": "res://parts/meshes/w_drag_slick_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"mass": 9.0,
+			"strength": 1400.0,
+			"radius": 0.5,
+			"width": 0.6,
+			"grip": 1.5,
+			"rolling": 0.03,
+			"offroad": -0.35,
+			"about": "A huge soft slick for the back of a dragster. It grips the road like nothing else, and is hopeless on grass."
+		},
+		"w_drag_front": {
+			"name": "Dragster front wheel",
+			"kind": "wheel",
+			"group": "wheels",
+			"size": [
+				1,
+				6,
+				3
+			],
+			"fine_size": [
+				9.6,
+				41.6,
+				41.6
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/w_drag_front.obj",
+			"connectors": [
+				{
+					"type": "hub",
+					"at": [
+						0.0,
+						20.8,
+						20.8
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 9.6
+				}
+			],
+			"finish": "metal",
+			"trim": {
+				"mesh": "res://parts/meshes/w_drag_front_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"mass": 1.2,
+			"strength": 900.0,
+			"radius": 0.26,
+			"width": 0.12,
+			"grip": 0.9,
+			"rolling": 0.01,
+			"about": "Tiny and thin, for the front of a dragster. It rolls easily but barely grips."
+		},
+		"w_monster": {
+			"name": "Monster truck wheel",
+			"kind": "wheel",
+			"group": "wheels",
+			"size": [
+				3,
+				12,
+				5
+			],
+			"fine_size": [
+				56.0,
+				96.0,
+				96.0
+			],
+			"color": "#a3a2a4",
+			"mesh": "res://parts/meshes/w_monster.obj",
+			"connectors": [
+				{
+					"type": "hub",
+					"at": [
+						0.0,
+						48.0,
+						48.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 56.0
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/w_monster_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"mass": 16.0,
+			"strength": 1700.0,
+			"radius": 0.6,
+			"width": 0.7,
+			"grip": 1.2,
+			"rolling": 0.042,
+			"offroad": 0.75,
+			"about": "Huge, with deep tread. It climbs over anything, but lifts the truck up high where it rolls in corners."
+		},
+		"w_truck": {
+			"name": "Truck tire",
+			"kind": "wheel",
+			"group": "wheels",
+			"size": [
+				2,
+				9,
+				4
+			],
+			"fine_size": [
+				40.0,
+				72.0,
+				72.0
+			],
+			"color": "#f2f3f2",
+			"mesh": "res://parts/meshes/w_truck.obj",
+			"connectors": [
+				{
+					"type": "hub",
+					"at": [
+						0.0,
+						36.0,
+						36.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 40.0
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/w_truck_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"mass": 8.0,
+			"strength": 1450.0,
+			"radius": 0.45,
+			"width": 0.5,
+			"grip": 1.1,
+			"rolling": 0.032,
+			"offroad": 0.65,
+			"about": "A chunky knobbly tire for trucks. Good on dirt and grass, a little slow on the road."
+		},
+		"w_quad": {
+			"name": "Quad wheel",
+			"kind": "wheel",
+			"group": "wheels",
+			"size": [
+				2,
+				6,
+				3
+			],
+			"fine_size": [
+				32.0,
+				44.8,
+				44.8
+			],
+			"color": "#f2f3f2",
+			"mesh": "res://parts/meshes/w_quad.obj",
+			"connectors": [
+				{
+					"type": "hub",
+					"at": [
+						0.0,
+						22.4,
+						22.4
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 32.0
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/w_quad_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"mass": 4.5,
+			"strength": 1250.0,
+			"radius": 0.28,
+			"width": 0.4,
+			"grip": 1.1,
+			"rolling": 0.03,
+			"offroad": 0.6,
+			"about": "Small, fat and knobbly, for quads. It grips well on dirt."
+		},
+		"e_blower_v8": {
+			"name": "Blower V8",
+			"kind": "engine",
+			"group": "engines",
+			"size": [
+				3,
+				7,
+				4
+			],
+			"fine_size": [
+				60.0,
+				56.0,
+				80.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/e_blower_v8.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					60.0,
+					32.0,
+					80.0
+				],
+				[
+					17.2,
+					32.0,
+					3.2,
+					42.8,
+					56.0,
+					68.8
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/e_blower_v8_trim.obj",
+				"color": "#9aa0a6",
+				"finish": "metal"
+			},
+			"sound": "engine_v8",
+			"power": 18000.0,
+			"max_force": 2300.0,
+			"mass": 52.0,
+			"strength": 1500.0,
+			"about": "A V8 with a blower on top. A huge shove off the line and lots of power, but it's heavy."
+		},
+		"d_open_exhausts": {
+			"name": "Open exhaust pipes",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				1,
+				4,
+				4
+			],
+			"fine_size": [
+				20.0,
+				28.8,
+				80.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/d_open_exhausts.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"aero": {
+				"front": 0.6,
+				"back": 0.8
+			},
+			"mass": 1.2,
+			"strength": 500.0
+		},
+		"d_exhaust_stack": {
+			"name": "Exhaust stack",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				1,
+				13,
+				2
+			],
+			"fine_size": [
+				20.0,
+				104.0,
+				40.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/d_exhaust_stack.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					40.0
+				],
+				[
+					0.0,
+					8.0,
+					20.0,
+					20.0,
+					104.0,
+					40.0
+				],
+				[
+					0.0,
+					8.0,
+					0.0,
+					20.0,
+					20.8,
+					20.0
+				]
+			],
+			"aero": {
+				"front": 0.6,
+				"back": 0.8
+			},
+			"mass": 1.5,
+			"strength": 600.0
+		},
+		"d_roll_hoop": {
+			"name": "Roll hoop",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				4,
+				9,
+				2
+			],
+			"fine_size": [
+				80.0,
+				68.8,
+				40.0
+			],
+			"color": "#1b2a34",
+			"mesh": "res://parts/meshes/d_roll_hoop.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					40.0
+				],
+				[
+					60.0,
+					0.0,
+					0.0,
+					80.0,
+					8.0,
+					40.0
+				],
+				[
+					0.0,
+					8.0,
+					6.4,
+					20.0,
+					68.8,
+					40.0
+				],
+				[
+					60.0,
+					8.0,
+					6.4,
+					80.0,
+					68.8,
+					40.0
+				],
+				[
+					0.0,
+					60.8,
+					6.4,
+					80.0,
+					68.8,
+					17.6
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.8
+			},
+			"mass": 1.5,
+			"strength": 1200.0
+		},
+		"d_roll_cage": {
+			"name": "Roll cage",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				6,
+				12,
+				7
+			],
+			"fine_size": [
+				120.0,
+				94.4,
+				140.0
+			],
+			"color": "#1b2a34",
+			"mesh": "res://parts/meshes/d_roll_cage.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						130.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						110.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						110.0,
+						0.0,
+						130.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						94.4,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						94.4,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						94.4,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						94.4,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					20.0
+				],
+				[
+					0.0,
+					0.0,
+					120.0,
+					20.0,
+					8.0,
+					140.0
+				],
+				[
+					100.0,
+					0.0,
+					0.0,
+					120.0,
+					8.0,
+					20.0
+				],
+				[
+					100.0,
+					0.0,
+					120.0,
+					120.0,
+					8.0,
+					140.0
+				],
+				[
+					0.0,
+					8.0,
+					0.0,
+					20.0,
+					89.2,
+					140.0
+				],
+				[
+					100.0,
+					8.0,
+					0.0,
+					120.0,
+					89.2,
+					140.0
+				],
+				[
+					20.0,
+					83.6,
+					60.0,
+					100.0,
+					94.4,
+					100.0
+				],
+				[
+					20.0,
+					12.0,
+					108.0,
+					100.0,
+					86.4,
+					130.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.8
+			},
+			"mass": 4.0,
+			"strength": 1800.0
+		},
+		"d_bull_bar": {
+			"name": "Bull bar",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				6,
+				6,
+				2
+			],
+			"fine_size": [
+				120.0,
+				48.0,
+				40.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/d_bull_bar.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						16.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						16.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					20.0,
+					16.0,
+					20.0,
+					40.0,
+					24.0,
+					40.0
+				],
+				[
+					80.0,
+					16.0,
+					20.0,
+					100.0,
+					24.0,
+					40.0
+				],
+				[
+					0.0,
+					0.0,
+					0.0,
+					120.0,
+					48.0,
+					20.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.8
+			},
+			"mass": 2.5,
+			"strength": 2200.0
+		},
+		"d_wheelie_bar": {
+			"name": "Wheelie bar",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				2,
+				3,
+				7
+			],
+			"fine_size": [
+				40.0,
+				24.0,
+				140.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/d_wheelie_bar.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						16.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						16.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					0.0,
+					16.0,
+					0.0,
+					40.0,
+					24.0,
+					20.0
+				],
+				[
+					0.0,
+					0.0,
+					20.0,
+					40.0,
+					20.0,
+					140.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/d_wheelie_bar_trim.obj",
+				"color": "#202020",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.8
+			},
+			"mass": 1.5,
+			"strength": 700.0
 		}
 	}
 }
