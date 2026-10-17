@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."
 import beards  # noqa: E402
 import figure as F  # noqa: E402
 import hair  # noqa: E402
+import headgear  # noqa: E402
 import necks  # noqa: E402
 from kit import save_obj, union  # noqa: E402
 from manifold3d import CrossSection, JoinType, Manifold  # noqa: E402
@@ -361,11 +362,41 @@ def make():
     biggest = max(sizes, key=lambda k: sizes[k][0])
     print("hair and facial hair: %d triangles in all, the biggest %s at %d" % (total, biggest, sizes[biggest][0]))
 
-    clipping(solids, style_solids)
+    # Headgear, on the head. Hats over cut hair are also kept out of the band
+    # the cut hair fills; what's worn on the hair is fitted to each hairdo.
+    styles["headgear"] = {}
+    gear = {}
+    hat_keepout = head_keepout + Manifold.cylinder(0.3, headgear.INNER - 0.0005, headgear.INNER - 0.0005, 64).rotate([-90.0, 0.0, 0.0]).translate([0.0, headgear.BAND_TOP - 0.3, 0.0])
+    bare = head_local(0.0, 40) + stud()
+    gear_sizes = {}
+    for style, make_style in headgear.STYLES.items():
+        mode = headgear.HAIR[style]
+        keep = hat_keepout if mode == "cut" else head_keepout
+        regions = {k: (v - keep).simplify(0.0016) for k, v in make_style().items()}
+        whole = union(list(regions.values()))
+        entry = {"bone": "head", "hair": mode, "regions": save_regions("headgear_" + style, regions, made), "box": box_of(regions.values())}
+        fits = {}
+        if mode == "full":
+            kind = headgear.FIT[style]
+            fits["none"] = headgear.fit_to(whole, bare, kind)
+            for h in hair.STYLES:
+                fits[h] = headgear.fit_to(whole, bare + style_solids["hair " + h], kind)
+            missing = [k for k, v in fits.items() if v is None]
+            if missing:
+                raise SystemExit("headgear %s doesn't fit on %s" % (style, missing))
+            entry["fit"] = {k: [round(float(x), 4) for x in v] for k, v in fits.items()}
+        styles["headgear"][style] = entry
+        gear[style] = (whole, fits)
+        gear_sizes[style] = sum(v.num_tri() for v in regions.values())
+        print("made headgear", style, mode, gear_sizes[style], "triangles")
+    biggest = max(gear_sizes, key=gear_sizes.get)
+    print("headgear: %d triangles in all, the biggest %s at %d" % (sum(gear_sizes.values()), biggest, gear_sizes[biggest]))
+
+    clipping(solids, style_solids, gear)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that.",
-        "colours": necks.COLOURS,
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'), and for the full hair 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
+        "colours": dict(necks.COLOURS, **headgear.COLOURS),
         "figure": pieces,
         "styles": styles,
     }
@@ -426,7 +457,7 @@ def _boxes_meet(a, b):
     return all(ba[i] <= bb[i + 3] and bb[i] <= ba[i + 3] for i in range(3))
 
 
-def head_clipping(head_styles, solids, neck_styles, poses, report):
+def head_clipping(head_styles, solids, neck_styles, poses, report, still_checks=True):
     """Hair and facial hair against the head, the stud, the face and each
     other on the head, and against the neck, the torso, every neck piece and
     the arms and hands as the head turns in every pose."""
@@ -439,12 +470,12 @@ def head_clipping(head_styles, solids, neck_styles, poses, report):
             report.append({"pose": pose, "a": a, "b": b, "cm3": round(volume, 4)})
 
     still = {"head": head_local(0.0, 40), "stud": stud(), "face": face_zone(), "features": features()}
-    for style, solid in head_styles.items():
+    for style, solid in (head_styles.items() if still_checks else ()):
         slot = style.split(" ")[0]
         for b in ("head", "stud", "face" if slot == "hair" else "features"):
             note("any pose", style, b, (solid ^ still[b]).volume() * 1e6)
     hairs = [k for k in head_styles if k.startswith("hair ")]
-    for beard in [k for k in head_styles if k.startswith("facial_hair ")]:
+    for beard in [k for k in head_styles if k.startswith("facial_hair ") and still_checks]:
         for h in hairs:
             if _boxes_meet(head_styles[beard], head_styles[h]):
                 note("any pose", beard, h, (head_styles[beard] ^ head_styles[h]).volume() * 1e6)
@@ -478,7 +509,68 @@ def head_clipping(head_styles, solids, neck_styles, poses, report):
     return worst
 
 
-def clipping(solids, style_solids):
+def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report):
+    """Headgear against the head, the stud and the face, the hair shown under
+    it (each hairdo's cut version under a hat, each full hairdo under what's
+    fitted to it), the raised facial hair, and as the head turns, against
+    the torso, the neck pieces and the arms and hands in every pose. Also
+    where a hat leaves the cut hair's top edge showing."""
+    worst = 0.0
+
+    def note(pose, a, b, volume):
+        nonlocal worst
+        worst = max(worst, volume)
+        if volume > 0.001:
+            report.append({"pose": pose, "a": a, "b": b, "cm3": round(volume, 4)})
+
+    still = {"head": head_local(0.0, 40), "stud": stud(), "face": face_zone()}
+    hairs = [k[5:] for k in head_styles if k.startswith("hair ") and not k.endswith(" cut")]
+    beards_made = [k for k in head_styles if k.startswith("facial_hair ")]
+    checked = {}
+    bare_spots = []
+    tops = {}
+    moving = {}
+    for style, (whole, fits) in gear.items():
+        name = "headgear " + style
+        mode = headgear.HAIR[style]
+        if mode == "full":
+            worn = {h: headgear.placed(whole, fits[h]) for h in ["none"] + hairs}
+        else:
+            worn = {"": whole}
+        for key, solid in worn.items():
+            label = name if key == "" else "%s on %s" % (name, key)
+            for b in ("head", "stud", "face"):
+                note("any pose", label, b, (solid ^ still[b]).volume() * 1e6)
+            for beard in beards_made:
+                if _boxes_meet(solid, head_styles[beard]):
+                    note("any pose", label, beard, (solid ^ head_styles[beard]).volume() * 1e6)
+        if mode == "cut":
+            reach = headgear.hat_reach(whole)
+            checked[style] = []
+            for h in hairs:
+                cut = head_styles["hair %s cut" % h]
+                checked[style].append("hair %s cut" % h)
+                if _boxes_meet(whole, cut):
+                    note("any pose", name, "hair %s cut" % h, (whole ^ cut).volume() * 1e6)
+                if h not in tops:
+                    tops[h] = headgear.hair_tops(cut)
+                missed = headgear.uncovered(reach, tops[h])
+                if missed:
+                    bare_spots.append({"headgear": style, "hair": h, "degrees": missed})
+        elif mode == "full":
+            checked[style] = []
+            for h in hairs:
+                checked[style].append("hair " + h)
+                note("any pose", "%s on %s" % (name, h), "hair " + h, (worn[h] ^ head_styles["hair " + h]).volume() * 1e6)
+        else:
+            checked[style] = []
+        moving[name] = union(list(worn.values()))
+    # As the head turns, every way it's worn at once.
+    worst = max(worst, head_clipping(moving, solids, neck_styles, poses, report, still_checks=False))
+    return worst, checked, bare_spots
+
+
+def clipping(solids, style_solids, gear):
     poses = []
 
     def rest(targets, astride=False):
@@ -523,12 +615,16 @@ def clipping(solids, style_solids):
             if volume > 0.001:
                 report.append({"pose": name, "a": a, "b": b, "cm3": round(volume, 4)})
     worst = max(worst, head_clipping(head_styles, solids, style_solids, poses, report))
+    gear_worst, checked, bare_spots = headgear_clipping(gear, head_styles, solids, style_solids, poses, report)
+    worst = max(worst, gear_worst)
     data = {
-        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
+        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head.",
         "figure": json.load(open(F.OUT)),
         "limit_cm3": LIMIT_CM3,
         "poses": [p[0] for p in poses],
-        "styles": sorted(list(style_solids) + list(head_styles)),
+        "styles": sorted(list(style_solids) + list(head_styles) + ["headgear " + k for k in gear]),
+        "headgear_hair": checked,
+        "uncovered": bare_spots,
         "worst_cm3": round(worst, 4),
         "overlaps": report,
     }
@@ -537,6 +633,8 @@ def clipping(solids, style_solids):
         json.dump(data, f, indent="\t")
         f.write("\n")
     print("clipping: worst %.4f cm3 over %d poses" % (worst, len(poses)))
+    for u in bare_spots:
+        print("  UNCOVERED %s over hair %s at %s" % (u["headgear"], u["hair"], u["degrees"]))
     for r in report:
         flag = "CLIPS" if r["cm3"] > LIMIT_CM3 else "touch"
         print("  %s %-34s %s / %s %.4f cm3" % (flag, r["pose"], r["a"], r["b"], r["cm3"]))

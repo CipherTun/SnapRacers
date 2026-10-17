@@ -7,7 +7,8 @@ extends SceneTree
 ## build/shots/characters.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
 ## Add --out=/some/folder to save them there as well, and --only=necks,faces
-## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos)
+## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos,
+## headgear, headgear_hair, headgear_karts)
 ## for just those sheets.
 
 const OUT := "res://build/shots/characters"
@@ -144,6 +145,12 @@ func _run() -> void:
 		await _facial_hair()
 	if wanted("combos"):
 		await _combos()
+	if wanted("headgear"):
+		await _headgear()
+	if wanted("headgear_hair"):
+		await _headgear_hair()
+	if wanted("headgear_karts"):
+		await _headgear_karts()
 	if wanted("closeup"):
 		await _closeup()
 	quit()
@@ -302,6 +309,75 @@ func _combos() -> void:
 			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.55, 0.0)
 		shots.append(await snap("%s, %s" % pair, seat + Vector3(-0.8, 0.35, -1.0).normalized() * 2.6, seat))
 	save(sheet(shots, 4, TILE), "combos.png")
+
+
+## A colour for each piece of headgear on the sheets.
+const GEAR_COLOURS := {"crown": "#c9a227", "tiara": "#c8ccd0", "mushroom": "#c4281c", "cowboy": "#a0703c", "top_hat": "#2b2b2b", "wizard": "#4b3a8f", "pirate": "#2b2b2b", "viking": "#9aa0a6", "beanie": "#4b9f4a", "cap": "#0d69ab", "hard_hat": "#f2cd37", "dino_hood": "#4b9f4a", "aviator": "#7a4a2a", "horns": "#c4281c", "party": "#d86cb0", "beret": "#c4281c", "headband": "#f2f2f2"}
+
+
+func _gear(design: CharacterDesign, style: String) -> void:
+	design.set_piece("headgear", style, Color(GEAR_COLOURS.get(style, "#c4281c")))
+
+
+## Every piece of headgear on short hair, from the front three quarters and
+## from behind.
+func _headgear() -> void:
+	var front := []
+	var back := []
+	var middle := Vector3(0.0, 0.97, 0.0)
+	for style in CharacterDesign.styles("headgear"):
+		var design := bare()
+		design.set_piece("hair", "short", Color("#6b4430"))
+		_gear(design, style)
+		rig(design, false)
+		front.append(await snap(style, middle + Vector3(-0.6, 0.25, -1.0).normalized() * 1.9, middle))
+		back.append(await snap(style + " behind", middle + Vector3(0.7, 0.3, 1.0).normalized() * 1.9, middle))
+	save(sheet(front, 6, TILE), "headgear.png")
+	save(sheet(back, 6, TILE), "headgear_back.png")
+
+
+## A few pieces of headgear on each of the tall or long hairdos.
+func _headgear_hair() -> void:
+	var size := Vector2i(320, 370)
+	_view.size = size
+	DisplayServer.window_set_size(size)
+	var gear := ["none", "cap", "beanie", "cowboy", "crown", "top_hat", "headband", "tiara", "party", "horns"]
+	var middle := Vector3(0.0, 0.95, 0.0)
+	var shots := []
+	for hair in ["afro", "mohawk", "spiky", "bun", "pigtails", "ponytail", "long", "princess"]:
+		for style in gear:
+			var design := bare()
+			design.set_piece("hair", hair, Color("#6b4430"))
+			_gear(design, style)
+			rig(design, false)
+			shots.append(await snap("%s, %s" % [hair, style], middle + Vector3(-0.6, 0.25, -1.0).normalized() * 1.85, middle))
+	save(sheet(shots, gear.size(), size), "headgear_hair.png")
+	_view.size = TILE
+	DisplayServer.window_set_size(TILE)
+
+
+## A few pieces of headgear on drivers in karts, with the head turned.
+func _headgear_karts() -> void:
+	var shots := []
+	var looks := [["racing_helmet", "long"], ["cowboy", "afro"], ["crown", "princess"], ["party", "mohawk"], ["viking", "braids"], ["headband", "ponytail"], ["wizard", "long"], ["pirate", "bun"]]
+	for look in looks:
+		var design := bare()
+		design.set_piece("hair", look[1], Color("#c47a3a"))
+		_gear(design, look[0])
+		design.set_piece("torso", "racing_suit", Color("#c4281c"))
+		clear()
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/classic.json"), design)
+		_stand.add_child(model)
+		await process_frame
+		var seat := Vector3(0.0, 0.6, 0.0)
+		var found := model.find_children("*", "CharacterRig", true, false)
+		if not found.is_empty():
+			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.55, 0.0)
+			(found[0] as CharacterRig).look(1.0 if shots.size() % 2 == 0 else -1.0)
+		for frame in 30:
+			await process_frame
+		shots.append(await snap("%s, %s" % look, seat + Vector3(-0.8, 0.35, -1.0).normalized() * 2.6, seat))
+	save(sheet(shots, 4, TILE), "headgear_karts.png")
 
 
 func _closeup() -> void:

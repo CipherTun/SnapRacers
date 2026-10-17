@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that.",
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'), and for the full hair 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
 	"colours": {
 		"white": [
 			"#f2f2f2",
@@ -39,6 +39,26 @@
 		],
 		"grey": [
 			"#9aa0a6",
+			0.0
+		],
+		"glass": [
+			"#a8dcf4a6",
+			0.0
+		],
+		"velvet": [
+			"#9c1f2e",
+			0.0
+		],
+		"ivory": [
+			"#efe6c8",
+			0.0
+		],
+		"red": [
+			"#c4281c",
+			0.0
+		],
+		"blue": [
+			"#0d69ab",
 			0.0
 		]
 	},
@@ -688,7 +708,7 @@
 						-0.1409,
 						-0.06,
 						-0.0394,
-						0.1409,
+						0.1408,
 						0.05,
 						0.1401
 					],
@@ -1065,12 +1085,12 @@
 						"main": "res://characters/meshes/hair_mohawk_cut_main.obj"
 					},
 					"box": [
-						-0.026,
+						-0.0239,
 						-0.001,
 						0.121,
-						0.026,
+						0.0239,
 						0.05,
-						0.2033
+						0.1757
 					],
 					"top": 0.05,
 					"radius": 0.14
@@ -1605,7 +1625,7 @@
 					"box": [
 						-0.156,
 						-0.105,
-						-0.0439,
+						-0.0429,
 						0.156,
 						0.05,
 						0.158
@@ -1745,7 +1765,7 @@
 					"box": [
 						-0.1572,
 						-0.1049,
-						-0.0433,
+						-0.0428,
 						0.1572,
 						0.05,
 						0.1519
@@ -1886,7 +1906,7 @@
 						-0.0382,
 						0.134,
 						0.05,
-						0.251
+						0.2438
 					],
 					"top": 0.05,
 					"radius": 0.14
@@ -2303,12 +2323,12 @@
 						"main": "res://characters/meshes/hair_afro_cut_main.obj"
 					},
 					"box": [
-						-0.177,
+						-0.1623,
 						-0.0377,
-						-0.0372,
-						0.177,
+						-0.0307,
+						0.1623,
 						0.05,
-						0.202
+						0.1771
 					],
 					"top": 0.05,
 					"radius": 0.14
@@ -2427,10 +2447,10 @@
 						"main": "res://characters/meshes/hair_curly_cut_main.obj"
 					},
 					"box": [
-						-0.1409,
+						-0.1408,
 						-0.055,
 						-0.0393,
-						0.1408,
+						0.1407,
 						0.05,
 						0.1401
 					],
@@ -2520,7 +2540,7 @@
 						-0.0246,
 						0.14,
 						0.05,
-						0.1464
+						0.1438
 					],
 					"top": 0.05,
 					"radius": 0.14
@@ -3045,7 +3065,7 @@
 						"main": "res://characters/meshes/hair_fringe_cut_main.obj"
 					},
 					"box": [
-						-0.141,
+						-0.1409,
 						-0.06,
 						-0.0394,
 						0.1409,
@@ -3114,6 +3134,846 @@
 					0.0519,
 					-0.0428
 				]
+			}
+		},
+		"headgear": {
+			"racing_helmet": {
+				"bone": "head",
+				"hair": "hidden",
+				"regions": {
+					"main": "res://characters/meshes/headgear_racing_helmet_main.obj",
+					"white": "res://characters/meshes/headgear_racing_helmet_white.obj",
+					"glass": "res://characters/meshes/headgear_racing_helmet_glass.obj"
+				},
+				"box": [
+					-0.1615,
+					-0.085,
+					-0.181,
+					0.1615,
+					0.186,
+					0.1635
+				]
+			},
+			"open_helmet": {
+				"bone": "head",
+				"hair": "hidden",
+				"regions": {
+					"main": "res://characters/meshes/headgear_open_helmet_main.obj",
+					"ink": "res://characters/meshes/headgear_open_helmet_ink.obj",
+					"glass": "res://characters/meshes/headgear_open_helmet_glass.obj"
+				},
+				"box": [
+					-0.1546,
+					-0.05,
+					-0.167,
+					0.1546,
+					0.181,
+					0.155
+				]
+			},
+			"cap": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_cap_main.obj",
+					"dark": "res://characters/meshes/headgear_cap_dark.obj"
+				},
+				"box": [
+					-0.1559,
+					0.044,
+					-0.23,
+					0.1559,
+					0.187,
+					0.1567
+				]
+			},
+			"beanie": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_beanie_main.obj",
+					"dark": "res://characters/meshes/headgear_beanie_dark.obj",
+					"white": "res://characters/meshes/headgear_beanie_white.obj"
+				},
+				"box": [
+					-0.1588,
+					0.043,
+					-0.156,
+					0.1588,
+					0.263,
+					0.162
+				]
+			},
+			"hard_hat": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_hard_hat_main.obj",
+					"light": "res://characters/meshes/headgear_hard_hat_light.obj"
+				},
+				"box": [
+					-0.176,
+					0.046,
+					-0.2,
+					0.176,
+					0.218,
+					0.19
+				]
+			},
+			"headband": {
+				"bone": "head",
+				"hair": "full",
+				"regions": {
+					"main": "res://characters/meshes/headgear_headband_main.obj",
+					"ink": "res://characters/meshes/headgear_headband_ink.obj",
+					"glass": "res://characters/meshes/headgear_headband_glass.obj"
+				},
+				"box": [
+					-0.132,
+					0.07,
+					-0.1515,
+					0.132,
+					0.1173,
+					0.134
+				],
+				"fit": {
+					"none": [
+						1.0,
+						1.0,
+						0.0,
+						0.0
+					],
+					"short": [
+						1.0636,
+						1.0,
+						0.05,
+						0.0
+					],
+					"spiky": [
+						1.0583,
+						1.0,
+						0.05,
+						0.0
+					],
+					"flat_top": [
+						1.1365,
+						1.0,
+						0.0,
+						0.0
+					],
+					"mohawk": [
+						1.398,
+						1.0,
+						0.0,
+						0.03
+					],
+					"quiff": [
+						1.1472,
+						1.0,
+						0.0,
+						0.0
+					],
+					"side_part": [
+						1.1952,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bob": [
+						1.1205,
+						1.0,
+						0.05,
+						0.0
+					],
+					"long": [
+						1.1525,
+						1.0,
+						0.05,
+						0.0
+					],
+					"wavy": [
+						1.1739,
+						1.0,
+						0.05,
+						0.01
+					],
+					"ponytail": [
+						1.0,
+						1.0,
+						0.05,
+						0.0
+					],
+					"pigtails": [
+						1.1668,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bun": [
+						1.1276,
+						1.0,
+						0.0,
+						0.0
+					],
+					"afro": [
+						1.5848,
+						1.0,
+						0.0,
+						0.025
+					],
+					"curly": [
+						1.229,
+						1.0,
+						0.0,
+						0.01
+					],
+					"bowl": [
+						1.1294,
+						1.0,
+						0.05,
+						0.0
+					],
+					"princess": [
+						1.245,
+						1.0,
+						0.0,
+						0.0
+					],
+					"messy": [
+						1.1668,
+						1.0,
+						0.0,
+						0.0
+					],
+					"braids": [
+						1.0636,
+						1.0,
+						0.05,
+						0.0
+					],
+					"fringe": [
+						1.2877,
+						1.0,
+						0.0,
+						0.0
+					]
+				}
+			},
+			"top_hat": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_top_hat_main.obj",
+					"dark": "res://characters/meshes/headgear_top_hat_dark.obj"
+				},
+				"box": [
+					-0.19,
+					0.045,
+					-0.2,
+					0.19,
+					0.31,
+					0.2
+				]
+			},
+			"crown": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_crown_main.obj",
+					"velvet": "res://characters/meshes/headgear_crown_velvet.obj",
+					"red": "res://characters/meshes/headgear_crown_red.obj",
+					"gem": "res://characters/meshes/headgear_crown_gem.obj"
+				},
+				"box": [
+					-0.1576,
+					0.042,
+					-0.1379,
+					0.1576,
+					0.18,
+					0.158
+				]
+			},
+			"tiara": {
+				"bone": "head",
+				"hair": "full",
+				"regions": {
+					"main": "res://characters/meshes/headgear_tiara_main.obj",
+					"gem": "res://characters/meshes/headgear_tiara_gem.obj",
+					"pink": "res://characters/meshes/headgear_tiara_pink.obj"
+				},
+				"box": [
+					-0.1263,
+					0.074,
+					-0.131,
+					0.1263,
+					0.12,
+					-0.0364
+				],
+				"fit": {
+					"none": [
+						1.0,
+						1.0,
+						0.0,
+						0.0
+					],
+					"short": [
+						1.0476,
+						1.0,
+						0.05,
+						0.0
+					],
+					"spiky": [
+						1.0422,
+						1.0,
+						0.05,
+						0.0
+					],
+					"flat_top": [
+						1.1365,
+						1.0,
+						0.0,
+						0.0
+					],
+					"mohawk": [
+						1.0636,
+						1.0,
+						0.0,
+						0.0
+					],
+					"quiff": [
+						1.0867,
+						1.0,
+						0.03,
+						0.0
+					],
+					"side_part": [
+						1.2824,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bob": [
+						1.0885,
+						1.0,
+						0.05,
+						0.0
+					],
+					"long": [
+						1.117,
+						1.0,
+						0.05,
+						0.0
+					],
+					"wavy": [
+						1.117,
+						1.0,
+						0.05,
+						0.0
+					],
+					"ponytail": [
+						1.0,
+						1.0,
+						0.05,
+						0.0
+					],
+					"pigtails": [
+						1.0476,
+						1.0,
+						0.05,
+						0.0
+					],
+					"bun": [
+						1.0209,
+						1.0,
+						0.05,
+						0.0
+					],
+					"afro": [
+						1.4781,
+						1.0,
+						0.0,
+						0.0
+					],
+					"curly": [
+						1.1774,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bowl": [
+						1.1134,
+						1.0,
+						0.05,
+						0.0
+					],
+					"princess": [
+						1.1774,
+						1.0,
+						0.03,
+						0.0
+					],
+					"messy": [
+						1.1774,
+						1.0,
+						0.0,
+						0.0
+					],
+					"braids": [
+						1.0476,
+						1.0,
+						0.05,
+						0.0
+					],
+					"fringe": [
+						1.3447,
+						1.0,
+						0.0,
+						0.0
+					]
+				}
+			},
+			"mushroom": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_mushroom_main.obj",
+					"white": "res://characters/meshes/headgear_mushroom_white.obj"
+				},
+				"box": [
+					-0.2004,
+					0.044,
+					-0.2004,
+					0.2004,
+					0.226,
+					0.2004
+				]
+			},
+			"dino_hood": {
+				"bone": "head",
+				"hair": "hidden",
+				"regions": {
+					"main": "res://characters/meshes/headgear_dino_hood_main.obj",
+					"dark": "res://characters/meshes/headgear_dino_hood_dark.obj",
+					"white": "res://characters/meshes/headgear_dino_hood_white.obj",
+					"ink": "res://characters/meshes/headgear_dino_hood_ink.obj"
+				},
+				"box": [
+					-0.1643,
+					-0.09,
+					-0.1563,
+					0.1643,
+					0.202,
+					0.21
+				]
+			},
+			"cowboy": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_cowboy_main.obj",
+					"dark": "res://characters/meshes/headgear_cowboy_dark.obj"
+				},
+				"box": [
+					-0.219,
+					0.046,
+					-0.232,
+					0.219,
+					0.2158,
+					0.232
+				]
+			},
+			"viking": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_viking_main.obj",
+					"dark": "res://characters/meshes/headgear_viking_dark.obj",
+					"ivory": "res://characters/meshes/headgear_viking_ivory.obj"
+				},
+				"box": [
+					-0.2565,
+					0.043,
+					-0.162,
+					0.2565,
+					0.2095,
+					0.162
+				]
+			},
+			"pirate": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_pirate_main.obj",
+					"white": "res://characters/meshes/headgear_pirate_white.obj"
+				},
+				"box": [
+					-0.2044,
+					0.045,
+					-0.236,
+					0.2044,
+					0.1918,
+					0.186
+				]
+			},
+			"wizard": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_wizard_main.obj",
+					"gold": "res://characters/meshes/headgear_wizard_gold.obj"
+				},
+				"box": [
+					-0.2216,
+					0.045,
+					-0.225,
+					0.2216,
+					0.442,
+					0.225
+				]
+			},
+			"bandana": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_bandana_main.obj",
+					"white": "res://characters/meshes/headgear_bandana_white.obj"
+				},
+				"box": [
+					-0.1577,
+					0.046,
+					-0.153,
+					0.1577,
+					0.158,
+					0.215
+				]
+			},
+			"aviator": {
+				"bone": "head",
+				"hair": "hidden",
+				"regions": {
+					"main": "res://characters/meshes/headgear_aviator_main.obj",
+					"ink": "res://characters/meshes/headgear_aviator_ink.obj",
+					"glass": "res://characters/meshes/headgear_aviator_glass.obj"
+				},
+				"box": [
+					-0.1526,
+					-0.07,
+					-0.165,
+					0.1526,
+					0.178,
+					0.153
+				]
+			},
+			"propeller": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_propeller_main.obj",
+					"yellow": "res://characters/meshes/headgear_propeller_yellow.obj",
+					"grey": "res://characters/meshes/headgear_propeller_grey.obj",
+					"red": "res://characters/meshes/headgear_propeller_red.obj",
+					"blue": "res://characters/meshes/headgear_propeller_blue.obj"
+				},
+				"box": [
+					-0.1559,
+					0.044,
+					-0.1514,
+					0.1559,
+					0.22,
+					0.1567
+				]
+			},
+			"party": {
+				"bone": "head",
+				"hair": "full",
+				"regions": {
+					"main": "res://characters/meshes/headgear_party_main.obj",
+					"white": "res://characters/meshes/headgear_party_white.obj"
+				},
+				"box": [
+					-0.0624,
+					0.1263,
+					-0.076,
+					0.0887,
+					0.338,
+					0.076
+				],
+				"fit": {
+					"none": [
+						1.0,
+						1.0,
+						0.0003,
+						0.0
+					],
+					"short": [
+						1.0,
+						1.0,
+						0.0291,
+						0.0
+					],
+					"spiky": [
+						1.0,
+						1.0,
+						0.0873,
+						0.0
+					],
+					"flat_top": [
+						1.0,
+						1.0,
+						0.0476,
+						0.0
+					],
+					"mohawk": [
+						1.0,
+						1.0,
+						0.0775,
+						0.0
+					],
+					"quiff": [
+						1.0,
+						1.0,
+						0.0623,
+						0.0
+					],
+					"side_part": [
+						1.0,
+						1.0,
+						0.0511,
+						0.0
+					],
+					"bob": [
+						1.0,
+						1.0,
+						0.0297,
+						0.0
+					],
+					"long": [
+						1.0,
+						1.0,
+						0.0301,
+						0.0
+					],
+					"wavy": [
+						1.0,
+						1.0,
+						0.0301,
+						0.0
+					],
+					"ponytail": [
+						1.0,
+						1.0,
+						0.0226,
+						0.0
+					],
+					"pigtails": [
+						1.0,
+						1.0,
+						0.0306,
+						0.0
+					],
+					"bun": [
+						1.0,
+						1.0,
+						0.109,
+						0.0
+					],
+					"afro": [
+						1.0,
+						1.0,
+						0.1052,
+						0.0
+					],
+					"curly": [
+						1.0,
+						1.0,
+						0.0408,
+						0.0
+					],
+					"bowl": [
+						1.0,
+						1.0,
+						0.029,
+						0.0
+					],
+					"princess": [
+						1.0,
+						1.0,
+						0.0323,
+						0.0
+					],
+					"messy": [
+						1.0,
+						1.0,
+						0.0707,
+						0.0
+					],
+					"braids": [
+						1.0,
+						1.0,
+						0.0291,
+						0.0
+					],
+					"fringe": [
+						1.0,
+						1.0,
+						0.0272,
+						0.0
+					]
+				}
+			},
+			"beret": {
+				"bone": "head",
+				"hair": "cut",
+				"regions": {
+					"main": "res://characters/meshes/headgear_beret_main.obj",
+					"dark": "res://characters/meshes/headgear_beret_dark.obj"
+				},
+				"box": [
+					-0.1563,
+					0.043,
+					-0.1775,
+					0.2028,
+					0.2035,
+					0.1815
+				]
+			},
+			"horns": {
+				"bone": "head",
+				"hair": "full",
+				"regions": {
+					"main": "res://characters/meshes/headgear_horns_main.obj",
+					"dark": "res://characters/meshes/headgear_horns_dark.obj"
+				},
+				"box": [
+					-0.2343,
+					0.064,
+					-0.133,
+					0.2343,
+					0.161,
+					0.133
+				],
+				"fit": {
+					"none": [
+						1.0,
+						1.0,
+						0.0,
+						0.0
+					],
+					"short": [
+						1.165,
+						1.0,
+						0.0,
+						0.0
+					],
+					"spiky": [
+						1.0583,
+						1.0,
+						0.05,
+						0.0
+					],
+					"flat_top": [
+						1.1365,
+						1.0,
+						0.0,
+						0.0
+					],
+					"mohawk": [
+						1.398,
+						1.0,
+						0.0,
+						0.03
+					],
+					"quiff": [
+						1.0351,
+						1.0,
+						0.05,
+						0.0
+					],
+					"side_part": [
+						1.1721,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bob": [
+						1.1223,
+						1.0,
+						0.05,
+						0.0
+					],
+					"long": [
+						1.1543,
+						1.0,
+						0.05,
+						0.0
+					],
+					"wavy": [
+						1.1757,
+						1.0,
+						0.05,
+						0.01
+					],
+					"ponytail": [
+						1.0,
+						1.0,
+						0.05,
+						0.0
+					],
+					"pigtails": [
+						1.1668,
+						1.0,
+						0.0,
+						0.0
+					],
+					"bun": [
+						1.1276,
+						1.0,
+						0.0,
+						0.0
+					],
+					"afro": [
+						1.583,
+						1.0,
+						0.0,
+						0.025
+					],
+					"curly": [
+						1.2219,
+						1.0,
+						0.0,
+						0.01
+					],
+					"bowl": [
+						1.1294,
+						1.0,
+						0.05,
+						0.0
+					],
+					"princess": [
+						1.245,
+						1.0,
+						0.0,
+						0.0
+					],
+					"messy": [
+						1.1668,
+						1.0,
+						0.0,
+						0.0
+					],
+					"braids": [
+						1.165,
+						1.0,
+						0.0,
+						0.0
+					],
+					"fringe": [
+						1.2753,
+						1.0,
+						0.0,
+						0.0
+					]
+				}
 			}
 		}
 	}

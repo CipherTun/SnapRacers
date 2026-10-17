@@ -304,8 +304,7 @@
 	"headgear": {
 		"none": {
 			"name": "Nothing",
-			"mass": 0.0,
-			"covers": false
+			"mass": 0.0
 		},
 		"racing_helmet": {
 			"name": "Racing helmet",
@@ -329,8 +328,7 @@
 		},
 		"headband": {
 			"name": "Headband and goggles",
-			"mass": 0.5,
-			"covers": false
+			"mass": 0.5
 		},
 		"top_hat": {
 			"name": "Top hat",
@@ -338,13 +336,11 @@
 		},
 		"crown": {
 			"name": "Crown",
-			"mass": 1.2,
-			"covers": false
+			"mass": 1.2
 		},
 		"tiara": {
 			"name": "Tiara",
-			"mass": 0.4,
-			"covers": false
+			"mass": 0.4
 		},
 		"mushroom": {
 			"name": "Spotted mushroom hat",
@@ -384,8 +380,7 @@
 		},
 		"party": {
 			"name": "Party hat",
-			"mass": 0.2,
-			"covers": false
+			"mass": 0.2
 		},
 		"beret": {
 			"name": "Beret",
@@ -393,8 +388,7 @@
 		},
 		"horns": {
 			"name": "Horns",
-			"mass": 0.6,
-			"covers": false
+			"mass": 0.6
 		}
 	},
 	"neck": {

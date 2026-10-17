@@ -12,8 +12,9 @@ head, so it clears the shoulders and what's around the neck however far
 the head turns.
 
 Each style also has a cut version for under a hat: what's below CUT_Y,
-kept within CUT_RADIUS for CUT_BAND under that, so a hat whose rim comes
-down to CUT_Y and fits over CUT_RADIUS covers its top edge.
+kept within CUT_RADIUS for CUT_BAND under that and sloping out below, so a
+hat whose rim comes down to CUT_Y and fits over CUT_RADIUS covers its top
+edge.
 """
 
 import math
@@ -36,6 +37,8 @@ BEARD_TOP = 0.052
 CUT_Y = 0.05
 CUT_RADIUS = R0 + 0.02
 CUT_BAND = 0.012
+# Under the band the cut hair can reach out by as much as it drops.
+SLOPE = 0.1
 # Lobes are this smooth.
 SEG = 16
 
@@ -392,11 +395,13 @@ STYLES = {
 
 def cut(regions):
     """The cut version for under a hat: what's below CUT_Y, kept in to
-    CUT_RADIUS over the top CUT_BAND."""
+    CUT_RADIUS over the top CUT_BAND, and sloping out from there, so hair
+    wider than that (like an afro) bulges out under the hat's edge."""
     below = Manifold.cube([1.0, 1.0, 1.0]).translate([-0.5, CUT_Y - 1.0, -0.5])
     rim = Manifold.cylinder(CUT_BAND + 0.001, CUT_RADIUS, CUT_RADIUS, 48).rotate([-90.0, 0.0, 0.0]).translate([0.0, CUT_Y - CUT_BAND, 0.0])
-    low = Manifold.cube([1.0, 1.0, 1.0]).translate([-0.5, CUT_Y - CUT_BAND - 1.0, -0.5])
-    keep = below ^ (rim + low)
+    slope = Manifold.cylinder(SLOPE, CUT_RADIUS + SLOPE, CUT_RADIUS, 48).rotate([-90.0, 0.0, 0.0]).translate([0.0, CUT_Y - CUT_BAND - SLOPE, 0.0])
+    low = Manifold.cube([1.0, 1.0, 1.0]).translate([-0.5, CUT_Y - CUT_BAND - SLOPE - 1.0 + 0.0005, -0.5])
+    keep = below ^ (rim + slope + low)
     return {k: v ^ keep for k, v in regions.items()}
 
 

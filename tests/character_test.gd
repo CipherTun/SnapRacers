@@ -144,6 +144,27 @@ class Runner:
 		check(missing.is_empty() and CharacterDesign.styles("hair").size() >= 20 and CharacterDesign.styles("facial_hair").size() >= 20,
 				"every hairdo, its cut version and the raised facial hair are made and load %s" % [missing])
 
+		# Every piece of headgear is made in tools/characters and loads, says
+		# what hair shows under it, and what's worn on the hair fits every
+		# hairdo.
+		missing = []
+		for style in CharacterDesign.styles("headgear"):
+			if style == "none":
+				continue
+			var entry := CharacterMesh.style("headgear", style)
+			var regions: Dictionary = entry.get("regions", {})
+			if regions.is_empty() or not entry.get("hair", "") in ["cut", "hidden", "full"]:
+				missing.append(style)
+			for region in regions:
+				var mesh := CharacterMesh.mesh(regions[region])
+				if mesh == null or mesh.get_surface_count() == 0:
+					missing.append("%s %s" % [style, region])
+			if entry.get("hair", "") == "full":
+				for hair in CharacterDesign.styles("hair"):
+					if not entry.get("fit", {}).has(hair):
+						missing.append("%s on %s" % [style, hair])
+		check(missing.is_empty() and CharacterDesign.styles("headgear").size() >= 20, "every piece of headgear is made and loads %s" % [missing])
+
 		# How far the figure's pieces go into each other in the rig's poses,
 		# measured in tools/characters on the real meshes.
 		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
@@ -175,6 +196,25 @@ class Runner:
 						if not report.get("styles", []).has(name):
 							unchecked.append(name)
 			check(unchecked.is_empty(), "the clipping report checks every hairdo, cut version and raised facial hair %s" % [unchecked])
+			# Every piece of headgear against every hairdo it shows: the cut
+			# version under a hat, the full one under what's worn on the hair.
+			unchecked = []
+			var checked: Dictionary = report.get("headgear_hair", {})
+			for style in CharacterMesh.made().get("styles", {}).get("headgear", {}):
+				if not report.get("styles", []).has("headgear " + style):
+					unchecked.append(style)
+				var under := HeadgearLooks.hair_under(style)
+				if under == "hidden":
+					continue
+				for hair in CharacterMesh.made().styles.hair:
+					var name: String = "hair %s cut" % hair if under == "cut" else "hair " + hair
+					if not checked.get(style, []).has(name):
+						unchecked.append("%s / %s" % [style, name])
+			check(unchecked.is_empty(), "the clipping report checks every headgear against every hairdo under it %s" % [unchecked])
+			var showing := []
+			for spot in report.get("uncovered", []):
+				showing.append("%s over %s at %s" % [spot.headgear, spot.hair, spot.degrees])
+			check(report.has("uncovered") and showing.is_empty(), "every hat covers the top edge of the cut hair under it %s" % [showing])
 
 		# Every style of every piece builds, sitting and standing, baked into
 		# a mesh a bone, with the face on its own.
