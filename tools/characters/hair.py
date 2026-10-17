@@ -284,13 +284,14 @@ def ponytail():
 
 
 def pigtails():
+    """Two bunches tied high on the sides of the crown, sticking up and out."""
     base = cap(face_line(0.08, -0.02, -0.05))
     main, part = parting(base, 0.0, -0.2, 0.15)
     tails, ties = [], []
     for s in (-1.0, 1.0):
-        pts = [around(0.13, 120.0 * s, y) for y in (0.05, 0.015, -0.025, -0.055)]
-        tail = chain(pts, [0.026, 0.026, 0.022, 0.015], 8)
-        tail, tie = band(tail, pts[0] + np.array([0.0, -0.012, 0.0]), (0.0, 1.0, 0.0), 0.007)
+        pts = [np.array([0.1 * s, 0.14, 0.02]), np.array([0.145 * s, 0.17, 0.025]), np.array([0.18 * s, 0.19, 0.03])]
+        tail = chain(pts, [0.026, 0.03, 0.02], 10)
+        tail, tie = band(tail, pts[0] + np.array([0.012 * s, 0.008, 0.0]), (s, 0.6, 0.0), 0.007)
         tails.append(tail)
         ties.append(tie)
     return {"main": main + union(tails), "dark": union(ties)}
