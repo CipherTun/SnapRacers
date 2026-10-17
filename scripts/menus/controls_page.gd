@@ -33,6 +33,23 @@ func _ready() -> void:
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.visible = false
 	add_child(_prompt)
+	if not owners_only and Game.controllers != null:
+		add_child(MenuStyle.heading("Button layout"))
+		var layouts := HBoxContainer.new()
+		layouts.add_theme_constant_override("separation", 10)
+		add_child(layouts)
+		var buttons := {}
+		for kind in Controllers.LAYOUTS:
+			var button := MenuStyle.button(Controllers.LAYOUT_NAMES[kind], func() -> void:
+				Game.controllers.set_layout(kind)
+				Game.save_settings()
+				for other in buttons:
+					MenuStyle.mark(buttons[other], other == kind)
+				_show())
+			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			MenuStyle.mark(button, kind == Game.controllers.layout())
+			buttons[kind] = button
+			layouts.add_child(button)
 	if owners_only:
 		if Game.controllers != null:
 			Game.controllers.changed.connect(_show)
@@ -98,6 +115,7 @@ func _show() -> void:
 		label.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
 		_grid.add_child(label)
 	var settings := Game.settings
+	var switch := Game.controllers != null and Game.controllers.is_switch(Game.controllers.device_of(_person))
 	for action in InputBindings.ACTIONS:
 		var name := Label.new()
 		name.text = InputBindings.NAMES[action]
@@ -114,7 +132,7 @@ func _show() -> void:
 			_grid.add_child(_cell(InputBindings.key_name(InputBindings.key(settings, _person, action)), ["key", action, 0]))
 		var pads := InputBindings.pad(settings, _person, action)
 		for slot in InputBindings.PAD_SLOTS:
-			_grid.add_child(_cell(InputBindings.pad_name(pads[slot]) if slot < pads.size() else "None", ["pad", action, slot]))
+			_grid.add_child(_cell(InputBindings.pad_name(pads[slot], switch) if slot < pads.size() else "None", ["pad", action, slot]))
 
 
 func _cell(text: String, what: Array) -> Button:

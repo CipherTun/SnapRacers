@@ -184,5 +184,19 @@ func _ready() -> void:
 	await frames(3)
 	Game.controllers._on_connection(0, false)
 
+	# With the Switch layout everything after the window sees A and B, and X
+	# and Y, swapped, going by what's printed on the controller.
+	Controllers.swapped[0] = true
+	var seen := []
+	var listen := func(event: InputEvent) -> void:
+		if event is InputEventJoypadButton and event.pressed:
+			seen.append(event.button_index)
+	get_tree().root.window_input.connect(listen)
+	await pad(JOY_BUTTON_Y)
+	await pad(JOY_BUTTON_B)
+	check(seen == [JOY_BUTTON_X, JOY_BUTTON_A], "with the Switch layout Y comes through as X and B as A (%s)" % [seen])
+	get_tree().root.window_input.disconnect(listen)
+	Controllers.swapped.clear()
+
 	print("All focus checks passed." if failures == 0 else "%d focus checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)

@@ -36,9 +36,9 @@ const DEFAULT_PAD := {
 	"left": [[AXIS, JOY_AXIS_LEFT_X, -1], [BUTTON, JOY_BUTTON_DPAD_LEFT, 1]],
 	"right": [[AXIS, JOY_AXIS_LEFT_X, 1], [BUTTON, JOY_BUTTON_DPAD_RIGHT, 1]],
 	"reset": [[BUTTON, JOY_BUTTON_Y, 1]],
-	"gadget_1": [[BUTTON, JOY_BUTTON_X, 1]],
-	"gadget_2": [[BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1]],
-	"look_back": [[BUTTON, JOY_BUTTON_LEFT_SHOULDER, 1]],
+	"gadget_1": [[BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1]],
+	"gadget_2": [[BUTTON, JOY_BUTTON_LEFT_SHOULDER, 1]],
+	"look_back": [[BUTTON, JOY_BUTTON_X, 1]],
 	"view": [[BUTTON, JOY_BUTTON_BACK, 1]],
 	"menu": [[BUTTON, JOY_BUTTON_START, 1]],
 }
@@ -49,6 +49,13 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_BACK: "Back", JOY_BUTTON_START: "Start", JOY_BUTTON_GUIDE: "Home",
 	JOY_BUTTON_LEFT_STICK: "Left stick in", JOY_BUTTON_RIGHT_STICK: "Right stick in",
 	JOY_BUTTON_DPAD_UP: "D-pad up", JOY_BUTTON_DPAD_DOWN: "D-pad down", JOY_BUTTON_DPAD_LEFT: "D-pad left", JOY_BUTTON_DPAD_RIGHT: "D-pad right",
+}
+## A Switch controller's names where they're different, with the triggers
+## as -1 less their axis.
+const SWITCH_NAMES := {
+	JOY_BUTTON_LEFT_SHOULDER: "L", JOY_BUTTON_RIGHT_SHOULDER: "R",
+	JOY_BUTTON_BACK: "-", JOY_BUTTON_START: "+",
+	-1 - JOY_AXIS_TRIGGER_LEFT: "ZL", -1 - JOY_AXIS_TRIGGER_RIGHT: "ZR",
 }
 const AXIS_NAMES := {
 	JOY_AXIS_LEFT_X: ["Left stick left", "Left stick right"], JOY_AXIS_LEFT_Y: ["Left stick up", "Left stick down"],
@@ -65,12 +72,17 @@ static func key(settings: ConfigFile, person: int, action: String) -> Key:
 	return DEFAULT_KEYS[mini(person, 1)].get(action, KEY_NONE)
 
 
-## The things on a controller for an action, as [kind, index, way].
+## The things on a controller for an action, as [kind, index, way]. A
+## default that the player has since given to another action is left out.
 static func pad(settings: ConfigFile, person: int, action: String) -> Array:
 	var saved: Dictionary = settings.get_value("bindings", _section(person), {})
 	if saved.has(action) and saved[action].has("pad"):
 		return saved[action].pad
-	return DEFAULT_PAD.get(action, [])
+	var taken := []
+	for other in saved:
+		if saved[other].has("pad"):
+			taken.append_array(saved[other].pad)
+	return DEFAULT_PAD.get(action, []).filter(func(input: Array) -> bool: return not taken.has(input))
 
 
 static func set_key(settings: ConfigFile, person: int, action: String, code: Key) -> void:
@@ -120,7 +132,7 @@ static func input_strength(input: Array, joypad: int) -> float:
 	if input.size() < 3:
 		return 0.0
 	if input[0] == BUTTON:
-		return 1.0 if Input.is_joy_button_pressed(joypad, input[1]) else 0.0
+		return 1.0 if Input.is_joy_button_pressed(joypad, Controllers.button(joypad, input[1]) as JoyButton) else 0.0
 	var value := Input.get_joy_axis(joypad, input[1]) * float(input[2])
 	if value <= DEADZONE:
 		return 0.0
@@ -156,11 +168,16 @@ static func key_name(code: Key) -> String:
 	return OS.get_keycode_string(code)
 
 
-## What to call a button, stick or trigger, for the settings.
-static func pad_name(input: Array) -> String:
+## What to call a button, stick or trigger, for the settings, by what's
+## printed on a Switch controller with `switch`.
+static func pad_name(input: Array, switch := false) -> String:
 	if input.size() < 3:
 		return "None"
 	if input[0] == BUTTON:
+		if switch and SWITCH_NAMES.has(input[1]):
+			return SWITCH_NAMES[input[1]]
 		return BUTTON_NAMES.get(input[1], "Button %d" % input[1])
+	if switch and SWITCH_NAMES.has(-1 - input[1]):
+		return SWITCH_NAMES[-1 - input[1]]
 	var names: Array = AXIS_NAMES.get(input[1], ["Axis %d -" % input[1], "Axis %d +" % input[1]])
 	return names[1 if input[2] > 0 else 0]

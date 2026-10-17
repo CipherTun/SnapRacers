@@ -146,6 +146,10 @@ const SPIKE_EVERY := 1.0
 const SHIELD_TIME := 4.0
 ## How long a ghost goes through karts, bricks and traps.
 const GHOST_TIME := 3.0
+## A ghost and its driver fade to half see-through over this many seconds at
+## the start, and back at the end.
+const GHOST_FADE := 0.35
+const GHOST_SEE_THROUGH := 0.5
 ## How long lightning slows the karts it hits, and how much of their push
 ## they keep meanwhile.
 const ZAP_TIME := 2.0
@@ -377,6 +381,13 @@ var held_uses: Array[int] = [0, 0]
 var pickups := 0
 var boost_left := 0.0
 var ghost_left := 0.0
+## The materials swapped for see-through copies while a ghost, each as
+## [mesh, surface or -1 for its override, the original, the copy].
+var _ghost_looks: Array = []
+## See-through copies of materials, by the original, shared between meshes.
+var _ghost_copies: Dictionary = {}
+## How far a ghost has faded in, 0 to 1.
+var _ghost_fade := 0.0
 var zapped_left := 0.0
 var shield_left := 0.0
 ## The tow rope it's on the end of, if any (see TowRope).
@@ -708,6 +719,8 @@ func _assemble() -> void:
 			_driven_count += 1
 		if w.steered:
 			_steered_count += 1
+	if ghost_left > 0.0:
+		_find_ghost_looks()
 
 
 ## The part's collision shapes: its box, or for a modelled part with gaps in
@@ -1659,8 +1672,9 @@ func use_gadget(slot: int) -> bool:
 
 ## Goes through karts, bricks and traps for a while, see-through.
 func start_ghost() -> void:
+	if ghost_left <= 0.0:
+		_set_ghostly(true)
 	ghost_left = GHOST_TIME
-	_set_ghostly(true)
 
 
 ## Shoved by a shockwave from `from`, harder the closer it is, and knocked
@@ -1693,13 +1707,84 @@ func _ghost_tick(delta: float) -> void:
 	ghost_left = maxf(ghost_left - delta, 0.0)
 	if ghost_left <= 0.0:
 		_set_ghostly(false)
+		return
+	# It turns solid again over the last moment, so it's whole when it ends.
+	_ghost_fade = move_toward(_ghost_fade, 1.0 if ghost_left > GHOST_FADE else 0.0, delta / GHOST_FADE)
+	_see_through(GHOST_SEE_THROUGH * _ghost_fade)
 
 
 func _set_ghostly(on: bool) -> void:
 	collision_layer = 0 if on else LAYER_KARTS
 	collision_mask = LAYER_WORLD if on else LAYER_WORLD | LAYER_KARTS | LAYER_HAZARD | LAYER_RUBBLE
-	for mesh in find_children("*", "GeometryInstance3D", true, false):
-		mesh.transparency = 0.6 if on else 0.0
+	if on:
+		_find_ghost_looks()
+	else:
+		_ghost_fade = 0.0
+		for look in _ghost_looks:
+			if is_instance_valid(look[0]) and _material_of(look[0], look[1]) == look[3]:
+				_set_material_of(look[0], look[1], _put_back(look[0], look[1], look[2]))
+		_ghost_looks.clear()
+		_ghost_copies.clear()
+
+
+## Every mesh of the kart and driver, to be made see-through. A kart rebuilt
+## while it's a ghost needs this again, since its meshes are new.
+func _find_ghost_looks() -> void:
+	_ghost_looks.clear()
+	for node in find_children("*", "MeshInstance3D", true, false) + find_children("*", "MultiMeshInstance3D", true, false):
+		if node.material_override != null:
+			_ghost_looks.append([node, -1, null, null])
+		elif node is MeshInstance3D and node.mesh != null:
+			for i in node.mesh.get_surface_count():
+				_ghost_looks.append([node, i, null, null])
+
+
+## How see-through the kart and driver are, 0 to 1. The renderer phones use
+## ignores a mesh's own transparency, so each material is swapped for a
+## see-through copy. A material the kart changes meanwhile, like the driver's
+## face, is swapped again.
+func _see_through(amount: float) -> void:
+	for look in _ghost_looks:
+		if not is_instance_valid(look[0]):
+			continue
+		var node: GeometryInstance3D = look[0]
+		var now: Material = _material_of(node, look[1])
+		if now != look[3]:
+			if not now is BaseMaterial3D:
+				continue
+			look[2] = now
+			if not _ghost_copies.has(now):
+				var copy: BaseMaterial3D = now.duplicate()
+				if copy.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+					copy.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+				elif copy.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+					continue
+				_ghost_copies[now] = copy
+			look[3] = _ghost_copies[now]
+			_set_material_of(node, look[1], look[3])
+	for original in _ghost_copies:
+		_ghost_copies[original].albedo_color.a = original.albedo_color.a * (1.0 - amount)
+
+
+static func _material_of(node: GeometryInstance3D, surface: int) -> Material:
+	if surface == -1:
+		return node.material_override
+	return node.get_surface_override_material(surface) if node.get_surface_override_material(surface) != null else node.get_active_material(surface)
+
+
+## What goes back on a surface after a ghost: nothing if it was the mesh's own
+## material, so the mesh's shows again.
+static func _put_back(node: GeometryInstance3D, surface: int, original: Material) -> Material:
+	if surface != -1 and original == node.mesh.surface_get_material(surface):
+		return null
+	return original
+
+
+static func _set_material_of(node: GeometryInstance3D, surface: int, material: Material) -> void:
+	if surface == -1:
+		node.material_override = material
+	else:
+		node.set_surface_override_material(surface, material)
 
 
 ## Whether this point in the world hit the front of this kart where its ram

@@ -84,6 +84,17 @@ func _camera_hole() -> void:
 		check(under.is_empty(), "with a camera hole %s, no button's under it %s" % [spot, under])
 		if spot == "partway down the left":
 			check(ui._drawer.size.y > drawer_height * 0.95, "and the drawer wraps around it instead of getting shorter")
+			# The tabs stay put going from one category to another.
+			var first: Array = ui._rail.map(func(t: Control) -> float: return t.global_position.y)
+			var moved := []
+			for i in ui.CATEGORIES.size():
+				for j in [i, 0]:
+					ui._show_category(j)
+					await frames(40)
+					var now: Array = ui._rail.map(func(t: Control) -> float: return t.global_position.y)
+					if now != first:
+						moved.append("%s %s" % [ui.CATEGORIES[j][0], now])
+			check(moved.is_empty(), "and the tabs don't move between categories (first %s) %s" % [first, moved])
 	SafeArea.pretend = []
 	safe.refit()
 	await frames(8)
@@ -170,8 +181,7 @@ func _bank() -> void:
 
 
 ## A part goes anywhere it fits, joined on or not, but the kart can't go out
-## until everything's joined. A new kart starts empty with the base plate in
-## hand.
+## until everything's joined. A new kart starts empty with nothing in hand.
 func _loose_and_new(parts: int) -> void:
 	var away := Vector3i(0, 0, 0)
 	garage.start_placing("brick_2x2", Basis.IDENTITY, null, away)
@@ -189,7 +199,8 @@ func _loose_and_new(parts: int) -> void:
 	garage.ui.new_pressed.emit()
 	await frames(2)
 	check(garage.design.parts.is_empty(), "a new kart starts empty")
-	check(garage._holding == Garage.BASE_PART and garage._ghost_ok, "with the base plate in hand, ready to put down")
+	check(garage._holding == "" and garage._ghost == null, "with nothing in hand")
+	garage.start_placing("p_plate_6x10", Basis.IDENTITY, null, Vector3i.ZERO)
 	garage.place()
 	garage.cancel()
 	check(garage.design.parts.size() == 1, "and it goes down")

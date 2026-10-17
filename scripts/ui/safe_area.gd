@@ -163,9 +163,6 @@ func refit() -> void:
 	_again = true
 	while _again and is_inside_tree():
 		_again = false
-		for box in _gaps:
-			if is_instance_valid(_gaps[box]):
-				_gaps[box].custom_minimum_size = Vector2.ZERO
 		for margin in _pads:
 			if is_instance_valid(margin):
 				var sides: Array = _pads[margin]
@@ -192,8 +189,7 @@ func refit() -> void:
 		for box in _flows:
 			await get_tree().process_frame
 			if is_instance_valid(box):
-				for hole in now:
-					_make_room(box, hole.grow(CLEAR))
+				_make_room(box, now)
 	_fitting = false
 
 
@@ -216,33 +212,57 @@ func _widen(margin: MarginContainer, hole: Rect2) -> void:
 	margin.add_theme_constant_override(side, maxi(margin.get_theme_constant(side), ceili(need)))
 
 
-## Opens a gap in a box where the hole is.
-func _make_room(box: BoxContainer, hole: Rect2) -> void:
+## Opens a gap in a box where a hole is, or closes it with none. Each child
+## is measured where it would be with no gap, so the gap lands in the same
+## place however the box was laid out before.
+func _make_room(box: BoxContainer, holes: Array[Rect2]) -> void:
+	var gap: Control = _gaps.get(box)
+	if gap != null and not is_instance_valid(gap):
+		gap = null
 	if not box.is_visible_in_tree():
 		return
 	var vertical := box is VBoxContainer
 	var from: int = _flow_from[box]
+	var between := float(box.get_theme_constant("separation"))
+	# Where each child starts with no gap, added up from the box's start.
+	var along := box.get_global_rect().position
 	for child in box.get_children():
-		if child == _gaps.get(box) or not child is Control or not child.visible or child.get_index() < from:
+		if child == gap or not child is Control or not child.visible:
 			continue
-		var rect: Rect2 = child.get_global_rect()
-		if not rect.intersects(hole):
-			continue
-		var gap: Control = _gaps.get(box)
-		if gap == null or not is_instance_valid(gap):
-			gap = Control.new()
-			gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
-			box.add_child(gap)
-			_gaps[box] = gap
-		box.move_child(gap, child.get_index())
-		# The gap takes up the room the child would have had under the hole,
-		# less the space the box already puts between them.
-		var between := float(box.get_theme_constant("separation"))
+		var rect := Rect2(child.get_global_rect().position, child.size)
 		if vertical:
-			gap.custom_minimum_size = Vector2(0.0, maxf(hole.end.y - rect.position.y - between, 0.0))
+			rect.position.y = along.y
+			along.y += child.size.y + between
 		else:
-			gap.custom_minimum_size = Vector2(maxf(hole.end.x - rect.position.x - between, 0.0), 0.0)
-		return
+			rect.position.x = along.x
+			along.x += child.size.x + between
+		if child.get_index() < from:
+			continue
+		for h in holes:
+			var hole := h.grow(CLEAR)
+			if not rect.intersects(hole):
+				continue
+			if gap == null:
+				gap = Control.new()
+				gap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+				box.add_child(gap)
+				_gaps[box] = gap
+			# Moving the gap from before the child shifts the child down one.
+			var at := child.get_index()
+			if gap.get_parent() == box and gap.get_index() < at:
+				at -= 1
+			box.move_child(gap, at)
+			gap.visible = true
+			# The gap takes up the room the child would have had under the
+			# hole, less the space the box puts between them.
+			if vertical:
+				gap.custom_minimum_size = Vector2(0.0, maxf(hole.end.y - rect.position.y - between, 0.0))
+			else:
+				gap.custom_minimum_size = Vector2(maxf(hole.end.x - rect.position.x - between, 0.0), 0.0)
+			return
+	if gap != null:
+		gap.visible = false
+		gap.custom_minimum_size = Vector2.ZERO
 
 
 func _step_aside(control: Control, hole: Rect2, screen: Rect2) -> void:

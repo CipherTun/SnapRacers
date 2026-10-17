@@ -395,7 +395,7 @@ func _controls_page() -> void:
 	shoulder.pressed = true
 	page._input(shoulder)
 	check(InputBindings.pad(settings, 1, "gadget_1")[0] == [InputBindings.BUTTON, JOY_BUTTON_LEFT_SHOULDER, 1], "and power-up 1 can go on LB")
-	check(InputBindings.pad(settings, 1, "look_back")[0] == [InputBindings.BUTTON, JOY_BUTTON_X, 1], "which gives look back the X it had, so nothing's lost")
+	check(InputBindings.pad(settings, 1, "gadget_2")[0] == [InputBindings.BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1], "which gives power-up 2 the RB it had, so nothing's lost")
 	page._wait(["owner", "", 1])
 	var press := InputEventJoypadButton.new()
 	press.device = 30

@@ -8,8 +8,8 @@ extends Control
 ## do it ahead of time. So hidden under the splash this sets up a race, then
 ## the garage, then the driver builder, and lets each one draw for a few
 ## frames. That covers the road, grass, walls, pillars, karts with drivers, a
-## part knocked loose and the garage's see-through and picked out parts, all
-## with the sun and shadows. The race is a storm at night and then snow by
+## part knocked loose, a ghost, a cannonball, and the garage's see-through and
+## picked out parts, all with the sun and shadows. The race is a storm at night and then snow by
 ## day, so fog, rain, snow, puddles, lamps and kart lights are all drawn too.
 ## Godot keeps what it compiled, so after the first launch this is quick.
 ##
@@ -115,6 +115,9 @@ func _warm_race(weather: String, time: String) -> Node:
 	lens.position = Vector3(0.0, 1.2, 1.0)
 	kart.add_child(lens)
 	kart.add_child(HeadlightPool.new(0.0, 0.0))
+	# A ghost's see-through copies, and a cannonball with its flash and smoke.
+	kart.start_ghost()
+	race.add_child(BrickShot.fire(kart))
 	return race
 
 

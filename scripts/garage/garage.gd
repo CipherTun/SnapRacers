@@ -33,10 +33,6 @@ const DOT_COLOURS := {
 const MIN_DISTANCE := 2.0
 const MAX_DISTANCE := 16.0
 const UNDO_LIMIT := 100
-## What a new kart starts with in hand, and the kart whose base plate it
-## lines up with.
-const BASE_PART := "p_plate_6x10"
-const STARTER := "res://data/karts/stock/starter.json"
 const VIEWS := {
 	"front": [180.0, -14.0],
 	"side": [90.0, -14.0],
@@ -532,8 +528,7 @@ func select(index: int) -> void:
 		_refresh_ui()
 
 
-## A new kart starts empty, with the base plate in hand where the Starter
-## has its own, high enough for wheels underneath.
+## A new kart starts empty, with nothing in hand.
 func _new_kart() -> void:
 	_remember()
 	_stop_placing()
@@ -542,12 +537,6 @@ func _new_kart() -> void:
 	_selected = -1
 	_rebuild()
 	show_view("fit")
-	var at := KartDesign.box_place(BASE_PART, Basis.IDENTITY, Vector3i.ZERO)
-	for p in KartDesign.load_file(STARTER).parts:
-		if p.id == BASE_PART:
-			at = KartDesign.place_of(p)
-			break
-	start_placing(BASE_PART, at.basis, null, at)
 
 
 func _save() -> void:
@@ -933,7 +922,7 @@ func _screen_to_grid(direction: Vector2i) -> Vector3i:
 func _add_baseplate() -> void:
 	var size := KartDesign.BUILD_SIZE
 	var extent := Grid.to_metres(Vector3(size.x, 1, size.z))
-	var def := { "kind": "plate", "color": Color("#5d6873") }
+	var def := { "kind": "plate", "color": Color("#5d6873"), "size": Vector3i(size.x, 1, size.z) }
 	var plate := PartVisuals.make(def, extent)
 	plate.position = Vector3(extent.x * 0.5, -extent.y * 0.5, extent.z * 0.5)
 	add_child(plate)
