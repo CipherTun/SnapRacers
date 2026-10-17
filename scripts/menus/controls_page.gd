@@ -42,8 +42,10 @@ func _ready() -> void:
 		for kind in Controllers.LAYOUTS:
 			var button := MenuStyle.button(Controllers.LAYOUT_NAMES[kind], func() -> void:
 				Game.controllers.set_layout(kind)
+				Game.save_settings()
 				for other in buttons:
-					MenuStyle.mark(buttons[other], other == kind))
+					MenuStyle.mark(buttons[other], other == kind)
+				_show())
 			button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 			MenuStyle.mark(button, kind == Game.controllers.layout())
 			buttons[kind] = button

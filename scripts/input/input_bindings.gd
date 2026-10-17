@@ -72,12 +72,17 @@ static func key(settings: ConfigFile, person: int, action: String) -> Key:
 	return DEFAULT_KEYS[mini(person, 1)].get(action, KEY_NONE)
 
 
-## The things on a controller for an action, as [kind, index, way].
+## The things on a controller for an action, as [kind, index, way]. A
+## default that the player has since given to another action is left out.
 static func pad(settings: ConfigFile, person: int, action: String) -> Array:
 	var saved: Dictionary = settings.get_value("bindings", _section(person), {})
 	if saved.has(action) and saved[action].has("pad"):
 		return saved[action].pad
-	return DEFAULT_PAD.get(action, [])
+	var taken := []
+	for other in saved:
+		if saved[other].has("pad"):
+			taken.append_array(saved[other].pad)
+	return DEFAULT_PAD.get(action, []).filter(func(input: Array) -> bool: return not taken.has(input))
 
 
 static func set_key(settings: ConfigFile, person: int, action: String, code: Key) -> void:
