@@ -89,7 +89,7 @@ def _inside(outline, b, lip_at):
 INSIDE = GAP + 0.0035
 
 
-def cap(bottom, radius=0.134, top=0.138, dome=0.016, lip=0.008, corner=0.04, bulge=0.0, extra=(), step=18.0):
+def cap(bottom, radius=0.138, top=0.15, dome=0.012, lip=0.009, corner=0.05, bulge=0.003, extra=(), step=18.0):
     """The cap over the head, hollow inside: its lower edge at `bottom` (a
     number or a function of the angle round the head, 0 at the front),
     `radius` out at the sides, flat-ish on top at `top` rising by `dome` in
@@ -112,7 +112,9 @@ def cap(bottom, radius=0.134, top=0.138, dome=0.016, lip=0.008, corner=0.04, bul
         for k in range(3):
             t = math.radians(90.0 - 90.0 * k / 2)
             pts.append((r - corner + corner * math.cos(t), top - corner + corner * math.sin(t)))
-        pts.append((r + g, b + lip + (top - corner - b - lip) * 0.5))
+        # Down the side, bowed out by the bulge.
+        for k in (1, 2, 3):
+            pts.append((r + g * math.sin(math.pi * k / 4), top - corner + (b + lip - top + corner) * k / 4))
         for k in range(3):
             t = math.radians(0.0 - 90.0 * k / 2)
             pts.append((r - lip + lip * math.cos(t), b + lip + lip * math.sin(t)))
@@ -185,26 +187,26 @@ def union(parts):
     return Manifold.batch_boolean(parts, OpType.Add) if parts else Manifold()
 
 
-# The styles.
+# The styles. Each is one shell down over the sides past the ears and down
+# the back, its front edge shaped to the style.
 
 def short():
-    return {"main": cap(face_line(0.074, 0.03, -0.02))}
+    return {"main": cap(face_line(0.078, -0.025, -0.06))}
 
 
 def spiky():
-    base = cap(face_line(0.076, 0.035, -0.01), radius=0.13, top=0.148, dome=0.008)
+    """A few broad spikes with round tips rising from short hair."""
+    base = cap(face_line(0.08, -0.02, -0.055), top=0.148)
     spikes = []
-    # A few chunky spikes fanning up and out, the front ones over the brow.
-    for deg, lean, h in ((-35.0, 0.5, 0.055), (35.0, 0.5, 0.055), (-130.0, 0.7, 0.05), (130.0, 0.7, 0.05), (0.0, 0.0, 0.065)):
-        root = around(0.07 if deg else 0.0, deg, 0.145)
-        out = around(1.0, deg, 0.0) * lean if deg else np.zeros(3)
-        tip = root + (np.array([0.0, 1.0, 0.0]) + out) / np.linalg.norm(np.array([0.0, 1.0, 0.0]) + out) * h
-        spikes.append(tuft(root, tip, 0.046, 0.014, 10))
+    for deg, r, lean, h in ((0.0, 0.05, 0.45, 0.07), (-70.0, 0.075, 0.6, 0.06), (70.0, 0.075, 0.6, 0.06), (180.0, 0.06, 0.6, 0.06)):
+        root = around(r, deg, 0.14)
+        d = np.array([0.0, 1.0, 0.0]) + around(lean, deg, 0.0)
+        spikes.append(tuft(root, root + d / np.linalg.norm(d) * h, 0.05, 0.022, 12))
     return {"main": base + union(spikes)}
 
 
 def flat_top():
-    return {"main": cap(face_line(0.074, 0.02, -0.02), radius=0.134, top=0.172, dome=0.0, corner=0.022)}
+    return {"main": cap(face_line(0.076, -0.005, -0.04), radius=0.136, top=0.172, dome=0.0, corner=0.022, bulge=0.0)}
 
 
 def head_surface(direction):
@@ -225,7 +227,7 @@ def head_surface(direction):
 def mohawk():
     """A low cap over the top with one tall soft ridge from the brow to the
     back."""
-    base = cap(0.075, radius=0.128, top=0.14, dome=0.004, corner=0.03)
+    base = cap(0.075, radius=0.128, top=0.14, dome=0.004, corner=0.03, bulge=0.0)
     lobes = []
     for deg, h in ((-34.0, 0.036), (-10.0, 0.064), (20.0, 0.07), (50.0, 0.06), (80.0, 0.042)):
         t = math.radians(deg)
@@ -238,42 +240,43 @@ def mohawk():
 
 
 def quiff():
-    """Swept up into a tall soft roll at the front."""
-    top = lambda a: curve([(0.0, 0.178), (40.0, 0.168), (90.0, 0.145), (180.0, 0.136)], a)
-    corner = lambda a: curve([(0.0, 0.05), (90.0, 0.042), (180.0, 0.04)], a)
-    return {"main": cap(face_line(0.08, 0.03, -0.02), radius=lambda a: curve([(0.0, 0.142), (90.0, 0.136), (180.0, 0.134)], a), top=top, dome=0.006, corner=corner)}
+    """Short at the sides with a big roll swept up off the brow."""
+    base = cap(face_line(0.086, -0.02, -0.06), radius=0.136, top=0.146)
+    roll = lobe((0.0, 0.158, -0.082), (0.078, 0.042, 0.06), (0.0, 0.55, -1.0))
+    return {"main": base + roll}
 
 
 def side_part():
-    """Parted on the right and swept over to the left, fuller on that side."""
-    line = lambda a: curve([(-180.0, -0.02), (-90.0, 0.03), (-62.0, 0.07), (-40.0, 0.075), (0.0, 0.08), (40.0, 0.09), (62.0, 0.084), (90.0, 0.035), (180.0, -0.02)], a)
-    top = lambda a: curve([(-180.0, 0.14), (-60.0, 0.158), (0.0, 0.152), (60.0, 0.14), (180.0, 0.138)], a)
-    radius = lambda a: curve([(-180.0, 0.134), (-60.0, 0.14), (0.0, 0.138), (60.0, 0.134), (180.0, 0.134)], a)
-    main, part = parting(cap(line, radius=radius, top=top, dome=0.01), 0.045, -0.15, 0.03)
+    """Parted on the right and swept over to the left in one big wave."""
+    line = lambda a: curve([(-180.0, -0.06), (-90.0, -0.03), (-62.0, 0.068), (-30.0, 0.07), (0.0, 0.074), (40.0, 0.088), (62.0, 0.088), (90.0, -0.02), (180.0, -0.06)], a)
+    base = cap(line, top=0.148, extra=(-66.0, -62.0, -58.0, 58.0, 62.0, 66.0))
+    sweep = Manifold.batch_hull([blob((0.055, 0.156, -0.05), (0.045, 0.024, 0.05), SEG), blob((-0.07, 0.114, -0.09), (0.06, 0.03, 0.05), SEG)])
+    main, part = parting(base + sweep, 0.048, -0.15, -0.032)
     return {"main": main, "dark": part}
 
 
 def bob():
     line = face_line(0.076, -0.09, -0.095)
-    return {"main": cap(line, radius=lambda a: curve([(0.0, 0.134), (90.0, 0.14), (180.0, 0.142)], a), bulge=0.004, extra=DROP)}
+    return {"main": cap(line, radius=lambda a: curve([(0.0, 0.138), (90.0, 0.144), (180.0, 0.146)], a), bulge=0.005, extra=DROP)}
 
 
 def long_hair():
     line = face_line(0.09, LOWEST, LOWEST, 78.0)
-    base = cap(line, radius=lambda a: curve([(0.0, 0.136), (90.0, 0.148), (180.0, 0.15)], a), bulge=0.008, extra=DROP)
+    base = cap(line, radius=lambda a: curve([(0.0, 0.138), (90.0, 0.148), (180.0, 0.15)], a), bulge=0.008, extra=DROP)
     main, part = parting(base, 0.0, -0.2, -0.02)
     return {"main": main, "dark": part}
 
 
 def wavy():
     line = lambda a: face_line(0.088, LOWEST + 0.012, LOWEST + 0.012, 78.0)(a) - (0.012 * (0.5 + 0.5 * math.cos(math.radians(math.degrees(abs(a)) * 7.0))) if abs(a) > math.radians(80.0) else 0.0)
-    out = lambda a: curve([(0.0, 0.136), (90.0, 0.148), (180.0, 0.15)], a) + (0.006 * math.cos(math.radians(math.degrees(abs(a)) * 7.0)) if abs(a) > math.radians(80.0) else 0.0)
+    out = lambda a: curve([(0.0, 0.138), (90.0, 0.148), (180.0, 0.15)], a) + (0.006 * math.cos(math.radians(math.degrees(abs(a)) * 7.0)) if abs(a) > math.radians(80.0) else 0.0)
     base = cap(line, radius=out, bulge=0.006, extra=DROP, step=12.0)
     return {"main": base}
 
 
 def ponytail():
-    base = cap(face_line(0.076, 0.02, -0.03))
+    """Pulled back tight from a high hairline into a tail."""
+    base = cap(face_line(0.092, -0.025, -0.04), radius=0.134, top=0.144, bulge=0.0)
     pts = [(0.0, 0.06, 0.13), (0.0, 0.02, 0.19), (0.0, -0.04, 0.215), (0.0, -0.08, 0.205)]
     tail = chain(pts, [0.036, 0.042, 0.036, 0.022])
     tail, tie = band(tail, np.array(pts[0]) + np.array([0.0, -0.012, 0.022]), (0.0, -0.5, 1.0), 0.008)
@@ -281,11 +284,11 @@ def ponytail():
 
 
 def pigtails():
-    base = cap(face_line(0.076, 0.02, -0.02))
+    base = cap(face_line(0.08, -0.02, -0.05))
     main, part = parting(base, 0.0, -0.2, 0.15)
     tails, ties = [], []
     for s in (-1.0, 1.0):
-        pts = [(0.125 * s, 0.035, 0.06), (0.152 * s, -0.005, 0.08), (0.162 * s, -0.05, 0.085), (0.158 * s, -0.085, 0.08)]
+        pts = [(0.128 * s, 0.035, 0.06), (0.155 * s, -0.005, 0.08), (0.165 * s, -0.05, 0.085), (0.16 * s, -0.085, 0.08)]
         tail = chain(pts, [0.03, 0.032, 0.027, 0.017])
         tail, tie = band(tail, np.array(pts[0]) + np.array([0.017 * s, -0.01, 0.003]), (s, -0.6, 0.1), 0.008)
         tails.append(tail)
@@ -294,75 +297,74 @@ def pigtails():
 
 
 def bun():
-    base = cap(face_line(0.076, 0.03, -0.01))
-    knot = ball((0.0, 0.19, 0.03), 0.05, SEG)
-    knot, tie = band(knot, np.array([0.0, 0.155, 0.03]), (0.0, 1.0, 0.0), 0.007)
+    base = cap(face_line(0.084, -0.02, -0.05), radius=0.135, bulge=0.0)
+    knot = ball((0.0, 0.195, 0.03), 0.05, SEG)
+    knot, tie = band(knot, np.array([0.0, 0.16, 0.03]), (0.0, 1.0, 0.0), 0.007)
     return {"main": base + knot, "dark": tie}
 
 
 def afro():
-    """A big round cloud with a few soft bumps."""
-    base = cap(face_line(0.085, 0.0, -0.06), radius=0.17, top=0.24, dome=0.0, corner=0.11, bulge=0.006)
-    bumps = []
-    for deg, phi in ((-60.0, 65.0), (60.0, 65.0), (180.0, 65.0), (0.0, 80.0), (-120.0, 25.0), (120.0, 25.0), (180.0, -10.0), (-100.0, -20.0), (100.0, -20.0)):
-        p = math.radians(phi)
-        r, y = 0.06 + 0.092 * math.cos(p), 0.13 + 0.092 * math.sin(p)
-        if phi < 0.0:
-            r, y = 0.152, 0.13 - 0.06 * math.sin(-p) * 3.0
-        bumps.append(ball(around(r * 0.96, deg, y - 0.006), 0.056, 12))
-    return {"main": base + union(bumps)}
+    """One big round soft mass, wider than the head all round, with the face
+    left open."""
+    mass = blob((0.0, 0.09, 0.025), (0.19, 0.15, 0.19), 28)
+    corners = [ball((x * s, y, z), 0.016, 10) for s in (-1.0, 1.0) for y in (-0.4, 0.07) for x, z in ((0.126, -0.027), (0.33, -0.19), (0.33, -0.4))]
+    return {"main": mass - Manifold.batch_hull(corners)}
+
 
 def curly():
-    base = cap(face_line(0.08, 0.025, -0.02), radius=0.136)
+    base = cap(face_line(0.08, -0.02, -0.055), radius=0.138)
     curls = []
-    for deg, y in ((-35.0, 0.125), (35.0, 0.125), (-105.0, 0.11), (105.0, 0.11), (180.0, 0.105)):
-        curls.append(ball(around(0.11, deg, y - 0.005), 0.036, 10))
-    curls.append(ball((0.0, 0.14, 0.0), 0.045, 12))
+    for deg, y in ((-35.0, 0.13), (35.0, 0.13), (-110.0, 0.1), (110.0, 0.1), (180.0, 0.1)):
+        curls.append(ball(around(0.115, deg, y), 0.038, 12))
+    curls.append(ball((0.0, 0.15, 0.0), 0.045, 12))
     return {"main": base + union(curls)}
 
 
 def bowl():
-    return {"main": cap(face_line(0.07, 0.04, 0.0, 70.0), radius=0.138, lip=0.012)}
+    """A straight fringe low over the brow and the same edge all round."""
+    line = lambda a: curve([(0.0, 0.07), (FACE_ANGLE, 0.07), (90.0, 0.04), (180.0, 0.03)], a)
+    return {"main": cap(line, radius=0.15, top=0.15, corner=0.06, lip=0.016, bulge=0.004)}
 
 
 def messy():
-    base = cap(face_line(0.078, 0.03, -0.015))
+    """Short hair with three broad tufts flopping different ways."""
+    base = cap(face_line(0.08, -0.02, -0.05))
     tufts = []
-    for x, z, lx, lz, h in ((-0.05, -0.06, -0.05, -0.05, 0.04), (0.045, -0.06, 0.04, -0.06, 0.042), (0.07, 0.03, 0.07, 0.03, 0.035),
-                            (-0.065, 0.035, -0.06, 0.05, 0.035), (0.0, 0.0, 0.015, 0.01, 0.05)):
-        tufts.append(tuft((x, 0.145, z), (x + lx, 0.145 + h, z + lz), 0.04, 0.014, 8))
+    for x, z, lx, lz, h in ((-0.045, -0.05, -0.06, -0.045, 0.03), (0.04, -0.03, 0.055, -0.02, 0.04), (0.0, 0.06, 0.02, 0.06, 0.04)):
+        tufts.append(tuft((x, 0.14, z), (x + lx, 0.14 + h, z + lz), 0.05, 0.024, 12))
     return {"main": base + union(tufts)}
 
 
 def princess():
     """Long curls: long hair with big round curls at the ends."""
     line = face_line(0.088, -0.07, -0.07, 78.0)
-    base = cap(line, radius=lambda a: curve([(0.0, 0.136), (90.0, 0.146), (180.0, 0.148)], a), bulge=0.006, extra=DROP)
+    base = cap(line, radius=lambda a: curve([(0.0, 0.138), (90.0, 0.146), (180.0, 0.148)], a), bulge=0.006, extra=DROP)
     curls = []
     for deg in (-110.0, 180.0, 110.0):
         curls.append(ball(around(0.15, deg, -0.07), 0.034, 10))
-    sweep = lobe((0.03, 0.128, -0.06), (0.09, 0.028, 0.06), (-0.4, 0.3, -1.0))
+    sweep = lobe((0.03, 0.136, -0.06), (0.09, 0.028, 0.06), (-0.4, 0.3, -1.0))
     return {"main": base + union(curls) + sweep}
 
 
 def braids():
-    base = cap(face_line(0.08, 0.02, -0.03))
+    base = cap(face_line(0.08, -0.02, -0.05))
     main, part = parting(base, 0.0, -0.2, 0.15)
     plaits, ties = [], []
     for s in (-1.0, 1.0):
-        at = [around(0.142, 100.0 * s, y) for y in (0.02, -0.025, -0.07)]
-        plaits += [ball(p, 0.026, 10) for p in at]
-        plaits.append(Manifold.batch_hull([ball(at[0], 0.02, 12), ball(at[-1], 0.02, 12)]))
-        tip = around(0.142, 100.0 * s, -0.096)
-        ties.append(ball(tip, 0.014, 12))
+        at = [around(0.146, 100.0 * s, y) for y in (0.0, -0.035, -0.07)]
+        plaits += [ball(p, 0.024, 10) for p in at]
+        plaits.append(Manifold.batch_hull([ball(at[0], 0.018, 10), ball(at[-1], 0.018, 10)]))
+        tip = around(0.146, 100.0 * s, -0.094)
+        ties.append(ball(tip, 0.013, 10))
     return {"main": main + union(plaits), "dark": union(ties)}
 
 
 def fringe():
-    """A thick fringe swept across the brow, low on the right."""
-    line = lambda a: curve([(-180.0, -0.02), (-90.0, 0.03), (-62.0, 0.09), (-50.0, 0.1), (0.0, 0.085), (50.0, 0.074), (62.0, 0.07), (90.0, 0.03), (180.0, -0.02)], a)
-    radius = lambda a: curve([(-180.0, 0.134), (-70.0, 0.138), (0.0, 0.146), (50.0, 0.146), (110.0, 0.134), (180.0, 0.134)], a)
-    return {"main": cap(line, radius=radius, top=0.142, lip=0.012, bulge=0.004)}
+    """A long fringe swept across the brow from the right, down past the
+    left eye."""
+    base = cap(face_line(0.094, -0.025, -0.06), top=0.148)
+    fall = chain([around(0.128, 35.0, 0.122), around(0.134, 0.0, 0.11), around(0.134, -35.0, 0.106), around(0.13, -66.0, 0.09)], [0.03, 0.03, 0.028, 0.018], 14)
+    return {"main": base + fall}
 
 
 STYLES = {

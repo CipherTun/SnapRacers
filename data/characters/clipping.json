@@ -128,14 +128,14 @@
 		"neck tie",
 		"neck whistle"
 	],
-	"worst_cm3": 0.046,
+	"worst_cm3": 0.0216,
 	"most_turn": {
-		"facial_hair braided": 0.5,
+		"facial_hair braided": 0.15,
 		"facial_hair full": 1.3,
-		"facial_hair long": 0.5,
+		"facial_hair long": 0.15,
 		"facial_hair sideburns": 1.3,
-		"hair afro": 0.8,
-		"hair afro cut": 0.8,
+		"hair afro": 1.3,
+		"hair afro cut": 1.3,
 		"hair bob": 1.3,
 		"hair bob cut": 1.3,
 		"hair bowl": 1.3,
@@ -187,64 +187,34 @@
 			"cm3": 0.0096
 		},
 		{
-			"pose": "head turned +0.00",
-			"a": "facial_hair full",
-			"b": "neck ruff",
-			"cm3": 0.0092
+			"pose": "any pose",
+			"a": "hair bowl",
+			"b": "face",
+			"cm3": 0.0166
 		},
 		{
-			"pose": "head turned +0.00",
-			"a": "facial_hair long",
-			"b": "neck ruff",
-			"cm3": 0.0092
+			"pose": "seated, arms swung 120 degrees, head turned +1.30",
+			"a": "hair afro",
+			"b": "hand_r",
+			"cm3": 0.0216
 		},
 		{
-			"pose": "head turned +0.00",
-			"a": "facial_hair braided",
-			"b": "neck ruff",
-			"cm3": 0.0092
+			"pose": "seated, arms swung 120 degrees, head turned -1.30",
+			"a": "hair afro",
+			"b": "hand_l",
+			"cm3": 0.0216
 		},
 		{
-			"pose": "head turned +0.30",
-			"a": "facial_hair braided",
-			"b": "neck spiked_collar",
-			"cm3": 0.001
+			"pose": "seated, arms swung 120 degrees, head turned +1.30",
+			"a": "hair afro cut",
+			"b": "hand_r",
+			"cm3": 0.0216
 		},
 		{
-			"pose": "head turned -0.30",
-			"a": "facial_hair braided",
-			"b": "neck spiked_collar",
-			"cm3": 0.0014
-		},
-		{
-			"pose": "head turned +0.35",
-			"a": "facial_hair braided",
-			"b": "neck scarf",
-			"cm3": 0.046
-		},
-		{
-			"pose": "head turned +0.35",
-			"a": "facial_hair braided",
-			"b": "neck spiked_collar",
-			"cm3": 0.0392
-		},
-		{
-			"pose": "head turned -0.35",
-			"a": "facial_hair braided",
-			"b": "neck spiked_collar",
-			"cm3": 0.0439
-		},
-		{
-			"pose": "head turned +0.50",
-			"a": "facial_hair braided",
-			"b": "neck headphones",
-			"cm3": 0.0051
-		},
-		{
-			"pose": "head turned -0.50",
-			"a": "facial_hair braided",
-			"b": "neck headphones",
-			"cm3": 0.0051
+			"pose": "seated, arms swung 120 degrees, head turned -1.30",
+			"a": "hair afro cut",
+			"b": "hand_l",
+			"cm3": 0.0216
 		}
 	]
 }

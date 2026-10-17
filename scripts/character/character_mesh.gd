@@ -100,7 +100,7 @@ static func bake(bone: Node3D, skip: Array) -> ArrayMesh:
 	if surfaces.is_empty():
 		return null
 	var out := ArrayMesh.new()
-	for kind in ["plastic", "both", "metal", "glass"]:
+	for kind in ["plastic", "matte", "both", "metal", "glass"]:
 		if not surfaces.has(kind):
 			continue
 		var s: Array = surfaces[kind]
@@ -135,6 +135,8 @@ static func material(kind: String) -> Material:
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED
 	CharacterRig.make_toy(m)
+	if kind == "matte":
+		CharacterRig.make_matte(m)
 	_materials[kind] = m
 	return m
 
@@ -163,6 +165,8 @@ static func _add(arrays: Array, where: Transform3D, mat: Material, surfaces: Dic
 			kind = "metal"
 		elif mat.cull_mode == BaseMaterial3D.CULL_DISABLED:
 			kind = "both"
+		elif mat.has_meta("matte"):
+			kind = "matte"
 	if not surfaces.has(kind):
 		surfaces[kind] = [PackedVector3Array(), PackedVector3Array(), PackedColorArray(), PackedInt32Array()]
 	var s: Array = surfaces[kind]

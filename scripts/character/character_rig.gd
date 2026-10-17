@@ -573,7 +573,9 @@ func add_style(slot: String, variant := "") -> bool:
 	var parent: Node3D = bones.get(entry.get("bone", "upper"), _upper)
 	for region in shape.regions:
 		var look := CharacterMesh.region_colour(entry, region, design.color_of(slot))
-		add(parent, CharacterMesh.mesh(shape.regions[region]), look[0], Vector3.ZERO, Basis.IDENTITY, look[1])
+		var node := add(parent, CharacterMesh.mesh(shape.regions[region]), look[0], Vector3.ZERO, Basis.IDENTITY, look[1])
+		if slot in ["hair", "facial_hair"] and look[1] == 0.0:
+			node.material_override = hair_mat(look[0])
 	return true
 
 
@@ -711,6 +713,26 @@ static func mat(colour: Color, metallic := 0.0) -> StandardMaterial3D:
 		make_toy(m)
 		_materials[key] = m
 	return _materials[key]
+
+
+## Plastic for hair, with less sheen, so the top of a dark hairdo keeps
+## its colour under the lights.
+static func hair_mat(colour: Color) -> StandardMaterial3D:
+	var key := "hair %s" % colour.to_html()
+	if not _materials.has(key):
+		var m := mat(colour).duplicate() as StandardMaterial3D
+		make_matte(m)
+		_materials[key] = m
+	return _materials[key]
+
+
+## Less sheen and edge glow, for hair seen across its top.
+static func make_matte(m: StandardMaterial3D) -> void:
+	m.clearcoat_enabled = false
+	m.roughness = 0.7
+	m.metallic_specular = 0.2
+	m.rim_enabled = false
+	m.set_meta("matte", true)
 
 
 ## Toy plastic, with a clear shiny coat and a soft glow around the edges.
