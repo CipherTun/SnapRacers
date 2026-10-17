@@ -22,6 +22,7 @@ DARK_GREY = "#635f61"
 LIGHT_GREY = "#a3a2a4"
 GREEN = "#237841"
 ORANGE = "#da8540"
+LIME = "#a4bd46"
 TYRE = "#202020"
 METAL = "#9aa0a6"
 GLASS = "#8fd3f4"
@@ -710,11 +711,12 @@ def _skin(body, boxes):
     return over ^ union(boxes)
 
 
-def _bonnet(id, name, along, plates, stripes=False, stripe_colour=WHITE, lanes=None, across=6):
+def _bonnet(id, name, along, plates, stripes=False, stripe_colour=WHITE, lanes=None, across=6, top=True):
     """A bonnet `across` studs wide, curving up from a thin lip at the
     front, rounded along both sides, with a row of studs along the flat back
-    edge. With `stripes` it has two racing stripes down the middle, or a
-    stud wide in the columns `lanes`, to line up with tiles behind it."""
+    edge unless `top` is off. With `stripes` it has two racing stripes down
+    the middle, or stripes in `lanes`, each (where it starts across, how
+    wide), in studs."""
     w = across * STUD
     l = along * STUD
     h = plates * PLATE
@@ -731,11 +733,13 @@ def _bonnet(id, name, along, plates, stripes=False, stripe_colour=WHITE, lanes=N
     stats = {}
     if stripes:
         if lanes:
-            cuts = [box(x0 * STUD, 0.0, -0.1, (x0 + 1) * STUD, h + 0.1, l + 0.1, edge=0) for x0 in lanes]
+            cuts = [box(x0 * STUD, 0.0, -0.1, (x0 + n) * STUD, h + 0.1, l + 0.1, edge=0) for x0, n in lanes]
         else:
             cuts = [box(x0, 0.0, -0.1, x0 + 0.2, h + 0.1, l + 0.1, edge=0) for x0 in (w * 0.5 - 0.28, w * 0.5 + 0.08)]
         stats["trim"] = (_skin(body, cuts), stripe_colour, "plastic")
-    solid = union([body, studs(cells, h)])
+    if not top:
+        cells = []
+    solid = union([body] + ([studs(cells, h)] if cells else []))
     return Part(id, name, "body", "curves", (w, h, l), solid, sockets(grid_cells(across, along)) + top_studs(cells, h), RED,
                 aero={"front": 0.3, "back": 1.0, "side": 0.8}, **stats)
 
@@ -743,7 +747,8 @@ def _bonnet(id, name, along, plates, stripes=False, stripe_colour=WHITE, lanes=N
 part(lambda: _bonnet("p_bonnet_6x4", "Curved bonnet 6×4", 4, 2))
 part(lambda: _bonnet("p_bonnet_6x6", "Curved bonnet 6×6", 6, 3))
 part(lambda: _bonnet("p_bonnet_6x6_stripes", "Striped bonnet 6×6", 6, 3, stripes=True))
-part(lambda: _bonnet("p_bonnet_4x6_black_stripes", "Bonnet 4×6 with black stripes", 6, 3, stripes=True, stripe_colour=BLACK, lanes=(0, 3), across=4))
+part(lambda: _bonnet("p_bonnet_4x4_lime_stripe", "Smooth bonnet 4×4 with a lime stripe", 4, 3, stripes=True, stripe_colour=LIME, lanes=((1.8, 0.4),), across=4, top=False))
+part(lambda: _bonnet("p_bonnet_4x6_black_stripes", "Bonnet 4×6 with black stripes", 6, 3, stripes=True, stripe_colour=BLACK, lanes=((0, 1), (3, 1)), across=4))
 
 
 def _shell(side_pts, front_pts, w, l, t, r_side, r_front):
@@ -810,10 +815,12 @@ def truck_cab():
                 solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0.12, w, h, l]])
 
 
-def _big_arch(id, name, across):
+def _big_arch(id, name, across, smooth=False, stripe=None):
     """A big wheel arch 6 long with flat ends 4 plates high and studs on
     them, humped over the opening. The opening clears a wheel up to 0.45 m
-    across with its middle a plate or two under the arch's bottom."""
+    across with its middle a plate or two under the arch's bottom. A
+    `smooth` one has no studs on its ends, so it reads as one smooth side;
+    `stripe` runs a stripe that colour down the middle of its top."""
     w = across * STUD
     l = 6 * STUD
     base = 4 * PLATE
@@ -829,13 +836,33 @@ def _big_arch(id, name, across):
     fv = rounded(front([(0.002, -0.1), (w - 0.002, -0.1), (w - 0.002, base + hump), (0.002, base + hump)]), 0.05)
     body = push_x(sv - hole, 0.0, w) ^ push_z(fv, 0.002, l - 0.002)
     ends = [(i, k) for i in range(across) for k in (0, 5)]
-    return Part(id, name, "body", "arches", (w, base + hump, l), union([body, studs(ends, base)]), sockets(ends) + top_studs(ends, base), RED,
+    stats = {}
+    if stripe:
+        lane = box(w * 0.5 - 0.05, 0.0, -0.1, w * 0.5 + 0.05, 1.0, l + 0.1, edge=0)
+        stats["trim"] = (_skin(body, [lane]), stripe, "plastic")
+    top = [] if smooth else ends
+    solid = union([body, studs(top, base)]) if top else body
+    return Part(id, name, "body", "arches", (w, base + hump, l), solid, sockets(ends) + top_studs(top, base), RED, **stats,
                 aero={"front": 0.5, "back": 0.6, "side": 0.9}, mass=round(0.7 * across, 1), strength=500.0 + 100.0 * across,
                 solids=[[0, 0, 0, w, base, STUD], [0, 0, l - STUD, w, base, l], [0, b, STUD, w, base + hump, l - STUD]])
 
 
 part(lambda: _big_arch("p_arch_2x6", "Big wheel arch 2×6", 2))
 part(lambda: _big_arch("p_arch_3x6", "Big wheel arch 3×6", 3))
+part(lambda: _big_arch("p_arch_2x6_smooth", "Smooth wheel arch 2×6", 2, smooth=True))
+part(lambda: _big_arch("p_arch_2x6_yellow_stripe", "Smooth wheel arch 2×6 with a yellow stripe", 2, smooth=True, stripe=YELLOW))
+
+
+@part
+def mud_flap():
+    """A mud flap 2 wide hanging under a plate, to go behind a wheel. It
+    clips on by two studs along its top edge."""
+    w, h = 2 * STUD, 0.15
+    sheet = box(0.0, 0.0, 0.03, w, h, 0.07)
+    strip = box(0.0, h - 0.03, 0.0, w, h, STUD)
+    cells = [(0, 0), (1, 0)]
+    return Part("d_mud_flap", "Mud flap", "body", "details", (w, h, STUD), union([sheet, strip, studs(cells, h)]), top_studs(cells, h), RED,
+                aero={"front": 0.9, "back": 0.9}, mass=0.2, strength=300.0, solids=[[0, h - 0.03, 0, w, h, STUD], [0, 0, 0.03, w, h, 0.07]])
 
 
 @part

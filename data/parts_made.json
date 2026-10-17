@@ -28446,6 +28446,527 @@
 			},
 			"mass": 5.4,
 			"strength": 1300.0
+		},
+		"p_bonnet_4x4_lime_stripe": {
+			"name": "Smooth bonnet 4\u00d74 with a lime stripe",
+			"kind": "body",
+			"group": "curves",
+			"size": [
+				4,
+				3,
+				4
+			],
+			"fine_size": [
+				80.0,
+				24.0,
+				80.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/p_bonnet_4x4_lime_stripe.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_bonnet_4x4_lime_stripe_trim.obj",
+				"color": "#a4bd46",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.3,
+				"back": 1.0,
+				"side": 0.8
+			},
+			"mass": 3.6,
+			"strength": 1000.0
+		},
+		"p_arch_2x6_smooth": {
+			"name": "Smooth wheel arch 2\u00d76",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				2,
+				5,
+				6
+			],
+			"fine_size": [
+				40.0,
+				38.4,
+				120.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/p_arch_2x6_smooth.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					40.0,
+					32.0,
+					20.0
+				],
+				[
+					0.0,
+					0.0,
+					100.0,
+					40.0,
+					32.0,
+					120.0
+				],
+				[
+					0.0,
+					28.8,
+					20.0,
+					40.0,
+					38.4,
+					100.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 1.4,
+			"strength": 700.0
+		},
+		"p_arch_2x6_yellow_stripe": {
+			"name": "Smooth wheel arch 2\u00d76 with a yellow stripe",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				2,
+				5,
+				6
+			],
+			"fine_size": [
+				40.0,
+				38.4,
+				120.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/p_arch_2x6_yellow_stripe.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					40.0,
+					32.0,
+					20.0
+				],
+				[
+					0.0,
+					0.0,
+					100.0,
+					40.0,
+					32.0,
+					120.0
+				],
+				[
+					0.0,
+					28.8,
+					20.0,
+					40.0,
+					38.4,
+					100.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_arch_2x6_yellow_stripe_trim.obj",
+				"color": "#f2cd37",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 1.4,
+			"strength": 700.0
+		},
+		"d_mud_flap": {
+			"name": "Mud flap",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				2,
+				2,
+				1
+			],
+			"fine_size": [
+				40.0,
+				12.0,
+				20.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/d_mud_flap.obj",
+			"connectors": [
+				{
+					"type": "stud",
+					"at": [
+						10.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					9.6,
+					0.0,
+					40.0,
+					12.0,
+					20.0
+				],
+				[
+					0.0,
+					0.0,
+					2.4,
+					40.0,
+					12.0,
+					5.6
+				]
+			],
+			"aero": {
+				"front": 0.9,
+				"back": 0.9
+			},
+			"mass": 0.2,
+			"strength": 300.0
 		}
 	}
 }
