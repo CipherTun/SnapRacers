@@ -14,6 +14,14 @@ func check(ok: bool, what: String) -> void:
 		failures += 1
 
 
+## Lightning only runs in a storm outdoors, checked once both are in the tree.
+func _check_lightning(hall: WeatherEffects, clear: WeatherEffects) -> void:
+	check(not hall.is_processing(), "no lightning indoors")
+	check(not clear.is_processing(), "no lightning in clear weather")
+	hall.queue_free()
+	clear.queue_free()
+
+
 func _initialize() -> void:
 	var a := Conditions.resolve("orchard", Conditions.RANDOM, Conditions.RANDOM, 1234)
 	var b := Conditions.resolve("orchard", Conditions.RANDOM, Conditions.RANDOM, 1234)
@@ -33,6 +41,12 @@ func _initialize() -> void:
 	check(counts.malta.get("clear", 0) > 350, "beaches are mostly sunny %s" % [counts.malta])
 	check(counts.orchard.size() >= 4, "and anywhere else gets a mix %s" % [counts.orchard])
 	check(counts.hall_red.get("indoor", 0) == 500, "halls are always indoors and lit")
+	var hall := Conditions.resolve("hall_red", "storm", "night", 1234)
+	var hall_weather := WeatherEffects.new(hall, null)
+	var clear_weather := WeatherEffects.new(Conditions.resolve("orchard", "clear", "day", 1234), null)
+	root.add_child(hall_weather)
+	root.add_child(clear_weather)
+	_check_lightning.call_deferred(hall_weather, clear_weather)
 
 	var picked := Conditions.resolve("desert", "snow", "night", 7)
 	check(picked.weather == "snow" and picked.time == "night", "a picked weather and time stick, even ones that don't suit the course")

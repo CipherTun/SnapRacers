@@ -21,6 +21,8 @@ var _next_flash := 0.0
 ## Time since the flash began, or below 0 between flashes.
 var _flashing := -1.0
 var _thunder_in := -1.0
+## Only a storm has lightning.
+var _storm := false
 
 
 func _init(conditions: Conditions, lights: SkyAndSun.Lights) -> void:
@@ -40,9 +42,14 @@ func _init(conditions: Conditions, lights: SkyAndSun.Lights) -> void:
 		sound.finished.connect(sound.play)
 		add_child(sound)
 	if conditions.weather == "storm" and lights != null:
+		_storm = true
 		_next_flash = _rng.randf_range(FLASH_EVERY[0], FLASH_EVERY[1]) * 0.5
-	else:
-		set_process(false)
+
+
+## Godot turns processing on when the node joins the tree, so it's turned off
+## here rather than in _init.
+func _ready() -> void:
+	set_process(_storm)
 
 
 func _process(delta: float) -> void:
