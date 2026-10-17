@@ -164,6 +164,59 @@ def chassis(k, front, back, z0, length, colour, extra_front=()):
     return (level + 2 * PLATE) / PLATE
 
 
+def racer(k, front, back, z0, length, colour=DARK, arches=2):
+    """The new racers' black chassis: an axle plate at the front and back
+    with the wheels on their pins out at the corners, and 6 wide plates along
+    the top, levelled like chassis(). Arches mount by their end cells, so
+    `arches` (2 or 3, how wide they are) puts plates out beside the chassis
+    under both ends of an arch 6 long centred on each wheel: one under the
+    chassis reaching out, and one on it at chassis level. 0 leaves them off,
+    for open wheels. Returns the top of the chassis, in plates."""
+    assert not arches or length >= 8, "arches need a chassis 8 or more long"
+    level = max(radius(front), radius(back)) - 4
+    for wheel, z in ((front, z0), (back, z0 + length - 2)):
+        base = radius(wheel) - 4
+        assert (level - base) % PLATE == 0, "%s and %s aren't whole plates apart" % (front, back)
+        k.fine("p_kart_axle_plate", 6 * STUD, base, z * STUD, colour=colour)
+        k.pair_fine(wheel, 7 * STUD - turned_size(wheel, 0)[0], 0, z * STUD + STUD - fine_size(wheel)[2] / 2)
+        y = base + PLATE
+        while y < level + PLATE - 0.01:
+            k.fine("p_plate_2x6", 7 * STUD, y, z * STUD, rot=1, colour=colour)
+            y += PLATE
+        if arches:
+            # An arch 6 long sits centred on the wheel, so its end cells are
+            # 2 studs before the axle plate and 1 after it.
+            for end in (z - 2, z + 3):
+                k.pair_fine("p_plate_1x%d" % (2 * arches), (7 - arches) * STUD, level, end * STUD, rot=1, colour=colour)
+                k.pair_fine("p_plate_1x%d" % arches, (7 - arches) * STUD, level + PLATE, end * STUD, rot=1, colour=colour)
+    start = z0 - 2 if arches else z0
+    end = z0 + length + 2 if arches else z0 + length
+    if end - start <= 12:
+        k.fine("p_plate_6x%d" % (end - start), 7 * STUD, level + PLATE, start * STUD, colour=colour)
+    else:
+        # Two plates 6 to 12 long, butted together. Plates side by side
+        # don't join, so the join goes over the middle of an axle plate,
+        # or a 2×2 plate under it holds them together.
+        axles = (z0, z0 + length - 2)
+        for first in range(6, 13, 2):
+            seam = start + first
+            if not 6 <= end - seam <= 12:
+                continue
+            on_axle = any(seam == a + 1 for a in axles)
+            # Wide arches' plates under the chassis reach the middle too.
+            rows = [(a, 2) for a in axles] + ([(r, 1) for a in axles for r in (a - 2, a + 3)] if arches == 3 else [])
+            clear = all(seam + 1 <= r or seam - 1 >= r + n for r, n in rows)
+            if on_axle or clear:
+                break
+        else:
+            raise ValueError("no way to join a chassis %d long" % (end - start))
+        k.fine("p_plate_6x%d" % first, 7 * STUD, level + PLATE, start * STUD, colour=colour)
+        k.fine("p_plate_6x%d" % (end - seam), 7 * STUD, level + PLATE, seam * STUD, colour=colour)
+        if not on_axle:
+            k.fine("p_plate_2x2", 9 * STUD, level, (seam - 1) * STUD, colour=colour)
+    return (level + 2 * PLATE) / PLATE
+
+
 # 1. The one everyone starts with.
 k = kart("starter", "Starter", "A bit of everything. It's a good kart to learn on and to build from.")
 T = chassis(k, "w_kart", "w_kart_wide", 7, 10, SILVER)
@@ -371,6 +424,22 @@ T = chassis(k, "wheel_big", "wheel_big", 5, 12, TAN)
     .add("s_lay_down_seat", 9, T, 11)
     .add("engine_rotary", 11, T, 13)
     .add("p_curve_2x2", 9, T, 15, rot=2, colour=RED))
+
+
+# 17. A formula racer, open wheels and wings.
+k = kart("redline", "Redline", "A formula racer with open wheels, wings at both ends and a little engine behind the driver. Light and quick through the fast corners.")
+T = racer(k, "w_kart_wide", "w_slick", 3, 12, arches=0)
+(k.add("d_front_wing_8x2", 6, T - 1, 0, colour=WHITE)
+    .add("p_nose_cone_2x6", 9, T, 0, colour=RED)
+    .pair("p_curve_2x6", 7, T, 3, colour=RED)
+    .add("steering_wheel", 9, T, 6)
+    .add("s_racing_seat", 9, T, 7)
+    .add("d_roll_hoop", 8, T, 9, colour=SILVER)
+    .pair("p_tile_1x2", 7, T, 9, colour=RED)
+    .add("engine_small", 9, T, 11)
+    .add("p_curve_2x2", 9, T + 3, 11, rot=2, colour=RED)
+    .pair("p_pinstripe_2x4", 7, T, 11, colour=RED)
+    .add("d_rear_wing_8", 6, T, 13, colour=DARK))
 
 
 # Bikes and trikes, built the way toy motorbikes are: a frame in one piece
