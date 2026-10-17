@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
+	"_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
 	"figure": {
 		"HIPS_TOP": 0.08,
 		"TORSO_HEIGHT": 0.34,
@@ -64,6 +64,27 @@
 		"astride, arms swung 75 degrees",
 		"astride, arms swung 100 degrees",
 		"cheering"
+	],
+	"styles": [
+		"neck beads",
+		"neck bell",
+		"neck big_bow",
+		"neck bow_tie",
+		"neck brooch",
+		"neck choker",
+		"neck gold_chain",
+		"neck headphones",
+		"neck lei",
+		"neck long_scarf",
+		"neck medal",
+		"neck neckerchief",
+		"neck pass",
+		"neck pearls",
+		"neck ruff",
+		"neck scarf",
+		"neck spiked_collar",
+		"neck tie",
+		"neck whistle"
 	],
 	"worst_cm3": 0.0096,
 	"overlaps": [

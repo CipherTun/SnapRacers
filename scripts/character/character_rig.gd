@@ -555,6 +555,21 @@ func add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := f
 	_add_figure(piece, parent, colours, sitting, metallic)
 
 
+## Adds the style worn in `slot` as made in tools/characters, if it's made
+## there, on the node for its bone. Returns whether it was.
+func add_style(slot: String) -> bool:
+	var entry := CharacterMesh.style(slot, design.style_of(slot))
+	if entry.is_empty():
+		return false
+	var bones := _bones()
+	bones["legs"] = _legs
+	var parent: Node3D = bones.get(entry.get("bone", "upper"), _upper)
+	for region in entry.regions:
+		var look := CharacterMesh.region_colour(entry, region, design.color_of(slot))
+		add(parent, CharacterMesh.mesh(entry.regions[region]), look[0], Vector3.ZERO, Basis.IDENTITY, look[1])
+	return true
+
+
 ## The head, which turns to look where the kart's going.
 func head() -> Node3D:
 	return _head

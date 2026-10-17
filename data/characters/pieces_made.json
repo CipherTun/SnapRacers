@@ -1,5 +1,47 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot.",
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic.",
+	"colours": {
+		"white": [
+			"#f2f2f2",
+			0.0
+		],
+		"gold": [
+			"#c9a227",
+			0.6
+		],
+		"silver": [
+			"#c8ccd0",
+			0.6
+		],
+		"ink": [
+			"#3c3f44",
+			0.0
+		],
+		"gem": [
+			"#3a8dde",
+			0.0
+		],
+		"yellow": [
+			"#f2cd37",
+			0.0
+		],
+		"pink": [
+			"#d86cb0",
+			0.0
+		],
+		"green": [
+			"#4b9f4a",
+			0.0
+		],
+		"orange": [
+			"#e8782b",
+			0.0
+		],
+		"grey": [
+			"#9aa0a6",
+			0.0
+		]
+	},
 	"figure": {
 		"hips": {
 			"bone": "legs",
@@ -238,5 +280,300 @@
 			]
 		}
 	},
-	"styles": {}
+	"styles": {
+		"neck": {
+			"scarf": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_scarf_main.obj",
+					"dark": "res://characters/meshes/neck_scarf_dark.obj"
+				},
+				"box": [
+					-0.121,
+					0.27,
+					-0.134,
+					0.121,
+					0.448,
+					0.121
+				]
+			},
+			"long_scarf": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_long_scarf_main.obj",
+					"dark": "res://characters/meshes/neck_long_scarf_dark.obj"
+				},
+				"box": [
+					-0.121,
+					0.18,
+					-0.134,
+					0.121,
+					0.448,
+					0.121
+				]
+			},
+			"tie": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_tie_main.obj",
+					"dark": "res://characters/meshes/neck_tie_dark.obj"
+				},
+				"box": [
+					-0.025,
+					0.205,
+					-0.116,
+					0.025,
+					0.424,
+					-0.098
+				]
+			},
+			"bow_tie": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_bow_tie_main.obj",
+					"dark": "res://characters/meshes/neck_bow_tie_dark.obj"
+				},
+				"box": [
+					-0.052,
+					0.384,
+					-0.123,
+					0.052,
+					0.426,
+					-0.102
+				]
+			},
+			"neckerchief": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_neckerchief_main.obj",
+					"white": "res://characters/meshes/neck_neckerchief_white.obj"
+				},
+				"box": [
+					-0.07,
+					0.305,
+					-0.127,
+					0.07,
+					0.444,
+					0.064
+				]
+			},
+			"medal": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_medal_main.obj",
+					"gold": "res://characters/meshes/neck_medal_gold.obj"
+				},
+				"box": [
+					-0.0853,
+					0.255,
+					-0.115,
+					0.0853,
+					0.426,
+					0.087
+				]
+			},
+			"beads": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_beads_main.obj",
+					"light": "res://characters/meshes/neck_beads_light.obj"
+				},
+				"box": [
+					-0.0942,
+					0.3285,
+					-0.125,
+					0.0939,
+					0.445,
+					0.0948
+				]
+			},
+			"pearls": {
+				"bone": "upper",
+				"regions": {
+					"white": "res://characters/meshes/neck_pearls_white.obj"
+				},
+				"box": [
+					-0.0909,
+					0.3115,
+					-0.119,
+					0.091,
+					0.439,
+					0.0923
+				]
+			},
+			"spiked_collar": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_spiked_collar_main.obj",
+					"silver": "res://characters/meshes/neck_spiked_collar_silver.obj"
+				},
+				"box": [
+					-0.1434,
+					0.422,
+					-0.1434,
+					0.1434,
+					0.439,
+					0.1434
+				]
+			},
+			"ruff": {
+				"bone": "upper",
+				"regions": {
+					"white": "res://characters/meshes/neck_ruff_white.obj"
+				},
+				"box": [
+					-0.126,
+					0.4225,
+					-0.1251,
+					0.126,
+					0.4455,
+					0.1251
+				]
+			},
+			"whistle": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_whistle_main.obj",
+					"silver": "res://characters/meshes/neck_whistle_silver.obj"
+				},
+				"box": [
+					-0.0803,
+					0.308,
+					-0.126,
+					0.0803,
+					0.43,
+					0.082
+				]
+			},
+			"pass": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_pass_main.obj",
+					"white": "res://characters/meshes/neck_pass_white.obj",
+					"silver": "res://characters/meshes/neck_pass_silver.obj",
+					"grey": "res://characters/meshes/neck_pass_grey.obj",
+					"ink": "res://characters/meshes/neck_pass_ink.obj"
+				},
+				"box": [
+					-0.0803,
+					0.25,
+					-0.11,
+					0.0803,
+					0.43,
+					0.082
+				]
+			},
+			"gold_chain": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_gold_chain_main.obj"
+				},
+				"box": [
+					-0.0826,
+					0.296,
+					-0.1117,
+					0.0827,
+					0.4317,
+					0.0828
+				],
+				"metallic": 0.6
+			},
+			"brooch": {
+				"bone": "upper",
+				"regions": {
+					"gold": "res://characters/meshes/neck_brooch_gold.obj",
+					"main": "res://characters/meshes/neck_brooch_main.obj"
+				},
+				"box": [
+					-0.0285,
+					0.3565,
+					-0.117,
+					0.0285,
+					0.4135,
+					-0.102
+				]
+			},
+			"lei": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_lei_main.obj",
+					"yellow": "res://characters/meshes/neck_lei_yellow.obj",
+					"white": "res://characters/meshes/neck_lei_white.obj",
+					"pink": "res://characters/meshes/neck_lei_pink.obj",
+					"orange": "res://characters/meshes/neck_lei_orange.obj",
+					"green": "res://characters/meshes/neck_lei_green.obj"
+				},
+				"box": [
+					-0.1074,
+					0.3444,
+					-0.115,
+					0.1079,
+					0.435,
+					0.1075
+				]
+			},
+			"headphones": {
+				"bone": "upper",
+				"regions": {
+					"ink": "res://characters/meshes/neck_headphones_ink.obj",
+					"main": "res://characters/meshes/neck_headphones_main.obj"
+				},
+				"box": [
+					-0.1,
+					0.368,
+					-0.124,
+					0.1,
+					0.434,
+					0.094
+				]
+			},
+			"choker": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_choker_main.obj",
+					"gold": "res://characters/meshes/neck_choker_gold.obj",
+					"gem": "res://characters/meshes/neck_choker_gem.obj"
+				},
+				"box": [
+					-0.104,
+					0.387,
+					-0.118,
+					0.104,
+					0.433,
+					0.104
+				]
+			},
+			"bell": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_bell_main.obj",
+					"gold": "res://characters/meshes/neck_bell_gold.obj",
+					"ink": "res://characters/meshes/neck_bell_ink.obj"
+				},
+				"box": [
+					-0.112,
+					0.363,
+					-0.144,
+					0.112,
+					0.438,
+					0.112
+				]
+			},
+			"big_bow": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/neck_big_bow_main.obj",
+					"dark": "res://characters/meshes/neck_big_bow_dark.obj"
+				},
+				"box": [
+					-0.078,
+					0.311,
+					-0.129,
+					0.078,
+					0.425,
+					-0.102
+				]
+			}
+		}
+	}
 }

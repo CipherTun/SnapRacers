@@ -24,60 +24,15 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "parts"))
 
 import figure as F  # noqa: E402
+import necks  # noqa: E402
 from kit import save_obj, union  # noqa: E402
 from manifold3d import CrossSection, JoinType, Manifold  # noqa: E402
+from shapes import GAP, SEGMENTS, apply, ball, rbox, soft_slab, tube  # noqa: E402
 
 GAME = F.GAME
 MESHES = "characters/meshes"
 OUT = os.path.join(GAME, "data", "characters", "pieces_made.json")
 CLIPPING = os.path.join(GAME, "data", "characters", "clipping.json")
-# A hairline gap between pieces that sit against each other.
-GAP = 0.002
-SEGMENTS = 28
-
-
-def rbox(x0, y0, z0, x1, y1, z1, r):
-    """A box from one corner to the other with all its edges rounded by r."""
-    r = min(r, (x1 - x0) * 0.49, (y1 - y0) * 0.49, (z1 - z0) * 0.49)
-    ball = Manifold.sphere(r, 16)
-    return Manifold.batch_hull([ball.translate([x, y, z]) for x in (x0 + r, x1 - r) for y in (y0 + r, y1 - r) for z in (z0 + r, z1 - r)])
-
-
-def tube(p0, p1, r0, r1, sides=SEGMENTS):
-    """A cone from p0 to p1, radius r0 at p0 and r1 at p1."""
-    p0, p1 = np.asarray(p0, float), np.asarray(p1, float)
-    d = p1 - p0
-    length = float(np.linalg.norm(d))
-    z = d / length
-    x = np.cross([0.0, 1.0, 0.0] if abs(z[1]) < 0.9 else [1.0, 0.0, 0.0], z)
-    x /= np.linalg.norm(x)
-    y = np.cross(z, x)
-    m = np.column_stack([x, y, z, p0])
-    return Manifold.cylinder(length, r0, r1, sides).transform(m)
-
-
-def ball(at, r):
-    return Manifold.sphere(r, SEGMENTS).translate(list(at))
-
-
-def soft_slab(section, depth, r, steps=6):
-    """A front view cross-section pushed back `depth`, centred on z = 0, with
-    its front and back edges rounded by r. The section has to be convex."""
-    layers = []
-    for k in range(steps + 1):
-        a = math.pi * 0.5 * k / steps
-        inset = r * (1.0 - math.cos(a))
-        half = depth * 0.5 - r + r * math.sin(a)
-        s = section.offset(-inset, JoinType.Round, 2.0, 48) if inset > 1e-6 else section
-        for z in (-half, half):
-            layers.append(s.extrude(1e-5).translate([0.0, 0.0, z]))
-    return Manifold.batch_hull(layers)
-
-
-def apply(solid, m):
-    return solid.transform(np.asarray(m, float))
-
-
 # The pieces of the bare figure.
 
 def hips():
@@ -109,21 +64,39 @@ def torso_section():
     return (shoulders ^ cut) + (lower - cut)
 
 
-def torso():
-    body = soft_slab(torso_section(), F.TORSO_DEPTH, 0.03)
+def torso(grow=0.0):
+    """The torso, or with `grow` the space around it pieces are kept out of."""
+    section = torso_section()
+    if grow > 0.0:
+        section = section.offset(grow, JoinType.Round, 2.0, 32)
+    body = soft_slab(section, F.TORSO_DEPTH + grow * 2.0, 0.03 + grow)
     top = F.HIPS_TOP + F.TORSO_HEIGHT
     # The round collar the neck sits in, moulded into the top.
     collar = CrossSection([[(0.046, -0.004), (0.068, -0.004), (0.068, 0.006), (0.046, 0.006)]])
     collar = collar.offset(-0.003, JoinType.Round, 2.0, 24).offset(0.003, JoinType.Round, 2.0, 24)
+    if grow > 0.0:
+        collar = collar.offset(grow, JoinType.Round, 2.0, 24)
     ring = collar.revolve(SEGMENTS * 2).rotate([-90.0, 0.0, 0.0]).translate([0.0, top, 0.0])
     return body + ring
 
 
-def neck():
+def neck(grow=0.0):
     """A slim post in the collar, which the head sits on."""
     top = F.HIPS_TOP + F.TORSO_HEIGHT
     head_bottom = F.NECK_Y + 0.015
-    return Manifold.cylinder(head_bottom - top, 0.043, 0.043, SEGMENTS * 2).rotate([-90.0, 0.0, 0.0]).translate([0.0, top, 0.0])
+    r = 0.043 + grow
+    return Manifold.cylinder(head_bottom - top, r, r, SEGMENTS * 2).rotate([-90.0, 0.0, 0.0]).translate([0.0, top, 0.0])
+
+
+def head(grow=0.0):
+    """The head the game makes (MeshKit.rounded_cylinder, scaled up), in the
+    upper body's space, for keeping pieces out of it. It's round, so turning
+    doesn't move it."""
+    r, h, edge = F.HEAD_RADIUS * F.HEAD_SCALE + grow, F.HEAD_HEIGHT * F.HEAD_SCALE + grow * 2.0, 0.035 * F.HEAD_SCALE + grow
+    section = CrossSection([[(-r, -h * 0.5), (r, -h * 0.5), (r, h * 0.5), (-r, h * 0.5)]])
+    section = section.offset(-edge, JoinType.Round, 2.0, 32).offset(edge, JoinType.Round, 2.0, 32)
+    section = section ^ CrossSection.square([1.0, 1.0]).translate([0.0, -0.5])
+    return section.revolve(SEGMENTS * 2).rotate([-90.0, 0.0, 0.0]).translate([0.0, F.HEAD_Y, 0.0])
 
 
 def stud():
@@ -297,16 +270,31 @@ def make():
         piece("arm_" + suffix, "arm_" + suffix, arm_regions(side, arm(side)))
         piece("hand_" + suffix, "hand_" + suffix, {"main": hand(side)})
 
+    # What's worn, by slot and style. Each is cut back from the figure's
+    # pieces on its bone, a hairline off them.
+    styles = {"neck": {}}
+    style_solids = {}
+    upper_keepout = torso(GAP) + neck(GAP) + head(GAP)
+    for style, make_style in necks.STYLES.items():
+        regions = {k: v - upper_keepout for k, v in make_style().items()}
+        entry = {"bone": "upper", "regions": save_regions("neck_" + style, regions, made), "box": box_of(regions.values())}
+        if style in necks.METAL:
+            entry["metallic"] = necks.METAL[style]
+        styles["neck"][style] = entry
+        style_solids["neck " + style] = union(list(regions.values()))
+        print("made neck", style)
+
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot.",
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic.",
+        "colours": necks.COLOURS,
         "figure": pieces,
-        "styles": {},
+        "styles": styles,
     }
     with open(OUT, "w") as f:
         json.dump(data, f, indent="\t")
         f.write("\n")
     print("%d pieces, %d triangles in all" % (len(pieces), made[0]))
-    clipping(solids)
+    clipping(solids, style_solids)
 
 
 # Clipping.
@@ -343,7 +331,13 @@ PAIRS = [
 ]
 
 
-def clipping(solids):
+# What each worn style is checked against: the pieces on its own bone, which
+# don't move against it, and the ones that swing past it.
+STYLE_STILL = {"neck": ["torso", "neck", "head"]}
+STYLE_MOVING = {"neck": ["arm_l", "arm_r", "hand_l", "hand_r"]}
+
+
+def clipping(solids, style_solids):
     poses = []
 
     def rest(targets, astride=False):
@@ -365,18 +359,32 @@ def clipping(solids):
 
     report = []
     worst = 0.0
+    still = dict(solids)
+    still["head"] = head()
+    for style, solid in style_solids.items():
+        for b in STYLE_STILL[style.split(" ")[0]]:
+            volume = (solid ^ still[b]).volume() * 1e6
+            worst = max(worst, volume)
+            if volume > 0.001:
+                report.append({"pose": "any pose", "a": style, "b": b, "cm3": round(volume, 4)})
     for name, seated, astride, swings, along in poses:
         placed = posed(solids, seated, astride, swings, along)
-        for a, b in PAIRS:
+        pairs = list(PAIRS)
+        lean = F.upper_lean(-math.radians(F.ASTRIDE_LEAN) if astride else 0.0)
+        for style, solid in style_solids.items():
+            placed[style] = apply(solid, lean)
+            pairs += [(style, b) for b in STYLE_MOVING[style.split(" ")[0]]]
+        for a, b in pairs:
             volume = (placed[a] ^ placed[b]).volume() * 1e6
             worst = max(worst, volume)
             if volume > 0.001:
                 report.append({"pose": name, "a": a, "b": b, "cm3": round(volume, 4)})
     data = {
-        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
+        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
         "figure": json.load(open(F.OUT)),
         "limit_cm3": LIMIT_CM3,
         "poses": [p[0] for p in poses],
+        "styles": sorted(style_solids),
         "worst_cm3": round(worst, 4),
         "overlaps": report,
     }

@@ -107,6 +107,21 @@ class Runner:
 						empty.append("%s %s" % [piece, region])
 		check(figure.size() >= 10 and empty.is_empty(), "the figure's %d pieces all load %s" % [figure.size(), empty])
 
+		# Every neck piece is made in tools/characters, and its meshes load.
+		var missing := []
+		for style in CharacterDesign.styles("neck"):
+			if style == "none":
+				continue
+			var entry := CharacterMesh.style("neck", style)
+			if entry.is_empty():
+				missing.append(style)
+				continue
+			for region in entry.regions:
+				var mesh := CharacterMesh.mesh(entry.regions[region])
+				if mesh == null or mesh.get_surface_count() == 0:
+					missing.append("%s %s" % [style, region])
+		check(missing.is_empty(), "every neck piece is made and loads %s" % [missing])
+
 		# How far the figure's pieces go into each other in the rig's poses,
 		# measured in tools/characters on the real meshes.
 		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
@@ -123,6 +138,11 @@ class Runner:
 				if overlap.cm3 > report.limit_cm3:
 					clips.append("%s: %s into %s %.2f cm3" % [overlap.pose, overlap.a, overlap.b, overlap.cm3])
 			check(clips.is_empty() and report.poses.size() >= 10, "nothing clips in %d poses (worst %.3f cm3) %s" % [report.poses.size(), report.worst_cm3, clips])
+			var unchecked := []
+			for style in CharacterMesh.made().get("styles", {}).get("neck", {}):
+				if not report.get("styles", []).has("neck " + style):
+					unchecked.append(style)
+			check(unchecked.is_empty(), "the clipping report checks every neck piece %s" % [unchecked])
 
 		# Every style of every piece builds, sitting and standing, baked into
 		# a mesh a bone, with the face on its own.

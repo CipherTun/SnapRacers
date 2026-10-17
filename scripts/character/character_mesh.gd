@@ -48,6 +48,27 @@ static func figure_regions(piece: String, seated := false) -> Dictionary:
 	return out
 
 
+## A style made in tools/characters, like a neck piece, or an empty one
+## when that style isn't made there.
+static func style(slot: String, name: String) -> Dictionary:
+	return made().get("styles", {}).get(slot, {}).get(name, {})
+
+
+## The colour and shine of a style's region, for a piece in `colour`. Main is
+## the piece's own colour, dark and light are shades of it and the rest are
+## fixed, from pieces_made.json.
+static func region_colour(entry: Dictionary, region: String, colour: Color) -> Array:
+	match region:
+		"main":
+			return [colour, float(entry.get("metallic", 0.0))]
+		"dark":
+			return [colour.darkened(0.3), 0.0]
+		"light":
+			return [colour.lightened(0.4), 0.0]
+	var fixed: Array = made().get("colours", {}).get(region, ["#ff00ff", 0.0])
+	return [Color(fixed[0]), float(fixed[1])]
+
+
 static func mesh(path: String) -> Mesh:
 	if not _meshes.has(path):
 		_meshes[path] = load(path)

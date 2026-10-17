@@ -6,13 +6,15 @@ extends SceneTree
 ## judge the shine. Like the other shots it needs a screen, and saves in
 ## build/shots/characters.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
-## Add --out=/some/folder to save them there as well.
+## Add --out=/some/folder to save them there as well, and --only=necks,faces
+## (any of figure, looks, closeup, necks, faces) for just those sheets.
 
 const OUT := "res://build/shots/characters"
 const TILE := Vector2i(480, 560)
 const COLUMNS := 4
 
 var _out_too := ""
+var _only: Array = []
 var _view: SubViewport
 var _camera: Camera3D
 var _stand: Node3D
@@ -24,6 +26,8 @@ func _initialize() -> void:
 	for arg in OS.get_cmdline_user_args():
 		if arg.begins_with("--out="):
 			_out_too = arg.substr(6)
+		elif arg.begins_with("--only="):
+			_only = arg.substr(7).split(",")
 	DisplayServer.window_set_size(TILE)
 	_view = SubViewport.new()
 	_view.size = TILE
@@ -117,8 +121,29 @@ func rig(design: CharacterDesign, sitting: bool, astride := false) -> CharacterR
 	return r
 
 
+func wanted(sheet_name: String) -> bool:
+	return _only.is_empty() or _only.has(sheet_name)
+
+
+const VIEWS := {"front": Vector3(0, 0.15, -1), "side": Vector3(-1, 0.1, 0), "three quarter": Vector3(-0.8, 0.35, -1), "back": Vector3(0.3, 0.25, 1)}
+
+
 func _run() -> void:
-	var views := {"front": Vector3(0, 0.15, -1), "side": Vector3(-1, 0.1, 0), "three quarter": Vector3(-0.8, 0.35, -1), "back": Vector3(0.3, 0.25, 1)}
+	if wanted("figure"):
+		await _figure()
+	if wanted("looks"):
+		await _looks()
+	if wanted("necks"):
+		await _necks()
+	if wanted("faces"):
+		await _faces()
+	if wanted("closeup"):
+		await _closeup()
+	quit()
+
+
+func _figure() -> void:
+	var views := VIEWS
 	var shots := []
 	rig(bare(), false)
 	var middle := Vector3(0.0, 0.52, 0.0)
@@ -144,8 +169,12 @@ func _run() -> void:
 		shots.append(await snap("on the %s" % kart, seat + Vector3(-0.9, 0.35, -1.0).normalized() * 4.4, seat))
 	save(sheet(shots, COLUMNS, TILE), "figure.png")
 
+
+func _looks() -> void:
+	var views := VIEWS
+	var middle := Vector3.ZERO
+	var shots := []
 	# A few looks, to check the colour bands and the old pieces on the figure.
-	shots = []
 	var looks := [
 		["short sleeves, shorts", {"arms": "short_sleeves", "legs": "shorts", "torso": "racing_suit"}],
 		["boots, rolled sleeves", {"arms": "rolled", "legs": "boots", "torso": "jacket"}],
@@ -166,15 +195,48 @@ func _run() -> void:
 		shots.append(await snap(look[0], middle + views["three quarter"].normalized() * 3.0, middle))
 	save(sheet(shots, COLUMNS, TILE), "looks.png")
 
+
+## Every neck piece, from the front three quarters standing and from the side
+## sitting with the arms up as if on a wheel.
+func _necks() -> void:
+	var shots := []
+	var side := []
+	for style in CharacterDesign.styles("neck"):
+		var design := bare()
+		design.set_piece("neck", style, Color("#c9a227") if style == "gold_chain" else Color("#c4281c"))
+		rig(design, false)
+		var middle := Vector3(0.0, 0.78, 0.0)
+		shots.append(await snap(style, middle + Vector3(-0.45, 0.2, -1.0).normalized() * 1.5, middle))
+		var sitting := rig(design, true)
+		sitting.grip(Vector3(-0.17, 0.42, -0.42), Vector3(0.17, 0.42, -0.42))
+		middle = Vector3(0.0, 0.42, -0.05)
+		side.append(await snap(style + " sitting", middle + Vector3(-1.0, 0.3, 0.2).normalized() * 1.7, middle))
+	save(sheet(shots, 5, TILE), "necks.png")
+	save(sheet(side, 5, TILE), "necks_side.png")
+
+
+## Every face close up, and one big.
+func _faces() -> void:
+	var shots := []
+	for style in CharacterDesign.styles("head"):
+		var design := bare()
+		design.set_piece("head", style, design.skin())
+		rig(design, false)
+		var middle := Vector3(0.0, 0.88, 0.0)
+		shots.append(await snap(style, middle + Vector3(-0.2, 0.05, -1.0).normalized() * 1.25, middle))
+	save(sheet(shots, 6, TILE), "faces.png")
+
+
+func _closeup() -> void:
+	var shots := []
+	var middle := Vector3.ZERO
 	# Close up, lit like the driver screen, to judge the shine.
 	_view.size = Vector2i(900, 900)
 	DisplayServer.window_set_size(_view.size)
 	_label.text = ""
-	shots = []
 	var r := rig(bare(), false)
 	r.rotation.y = PI * 0.8
 	shots.append(await snap("", Vector3(0.0, 1.0, 2.0), Vector3(0.0, 0.72, 0.0)))
 	r.rotation.y = PI
 	shots.append(await snap("", Vector3(0.0, 0.62, 1.6), Vector3(0.0, 0.42, 0.0)))
 	save(sheet(shots, 2, _view.size), "closeup.png")
-	quit()

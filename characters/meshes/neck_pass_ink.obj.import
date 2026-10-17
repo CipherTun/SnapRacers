@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dvau0k8pmlfhy"
+path="res://.godot/imported/neck_pass_ink.obj-a3a29aa9097ade0f0df766c6e36cad0f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/neck_pass_ink.obj-a3a29aa9097ade0f0df766c6e36cad0f.mesh"]
+
+source_file="res://characters/meshes/neck_pass_ink.obj"
+dest_files=["res://.godot/imported/neck_pass_ink.obj-a3a29aa9097ade0f0df766c6e36cad0f.mesh", "res://.godot/imported/neck_pass_ink.obj-a3a29aa9097ade0f0df766c6e36cad0f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
