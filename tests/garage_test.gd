@@ -84,6 +84,17 @@ func _camera_hole() -> void:
 		check(under.is_empty(), "with a camera hole %s, no button's under it %s" % [spot, under])
 		if spot == "partway down the left":
 			check(ui._drawer.size.y > drawer_height * 0.95, "and the drawer wraps around it instead of getting shorter")
+			# The tabs stay put going from one category to another.
+			var first: Array = ui._rail.map(func(t: Control) -> float: return t.global_position.y)
+			var moved := []
+			for i in ui.CATEGORIES.size():
+				for j in [i, 0]:
+					ui._show_category(j)
+					await frames(40)
+					var now: Array = ui._rail.map(func(t: Control) -> float: return t.global_position.y)
+					if now != first:
+						moved.append("%s %s" % [ui.CATEGORIES[j][0], now])
+			check(moved.is_empty(), "and the tabs don't move between categories (first %s) %s" % [first, moved])
 	SafeArea.pretend = []
 	safe.refit()
 	await frames(8)
