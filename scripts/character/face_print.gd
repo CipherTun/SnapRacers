@@ -312,7 +312,7 @@ static func _extras(extras: Array, under: bool) -> Array:
 
 ## Facial hair, printed under the face's features in its own colour. Sideburns
 ## and the beard part of full, long and braided beards are raised pieces
-## instead (see HairLooks).
+## instead, made in tools/characters/beards.py.
 static func _beard(style: String, c: Color) -> Array:
 	var out := []
 	var moustache := func(width: float, depth: float, y := -0.008) -> Array:

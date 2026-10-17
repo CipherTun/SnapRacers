@@ -4,8 +4,8 @@ extends Node3D
 ## A driver's model, built from a CharacterDesign, and the thing that poses it.
 ## It's a brick figure, with a round head with its face printed on, a flat fronted
 ## torso that's narrower at the shoulders, hips, two leg blocks with feet
-## sticking out the front and short arms with C shaped hands. What each piece
-## looks like is in scripts/character/looks, one file for each kind.
+## sticking out the front and short arms with C shaped hands. Every piece is
+## modelled in tools/characters and listed in data/characters/pieces_made.json.
 ##
 ## It's a little cuter than a toy figure, with a bigger head, more rounded
 ## blocks, shiny plastic and a face with big shiny eyes and rosy cheeks.
@@ -74,9 +74,8 @@ const ASTRIDE_LEAN := deg_to_rad(30.0)
 const MOST_SPREAD := deg_to_rad(60.0)
 ## The bones, each baked into one mesh.
 const BONES := ["hips", "legs", "upper", "head", "arm_l", "arm_r", "hand_l", "hand_r"]
-## Where domes over the head (hair, helmets and hoods) start, which is where
-## the flat top of the head starts to round over, above the eyebrows.
-const DOME_BASE := HEAD_HEIGHT * 0.5 - 0.035
+## Leaning back further than this (in radians) wears the reclined back piece.
+const RECLINED := 0.7
 
 var design: CharacterDesign
 var seated := true
@@ -504,15 +503,20 @@ func _build() -> void:
 	var key := "%s %s %s" % [JSON.stringify(design.to_dict()), seated, astride]
 	var baked := CharacterMesh.kept(key) if bake else {}
 	if baked.is_empty():
-		LegLooks.build(self)
-		TorsoLooks.build(self)
+		var pose := "astride" if astride else ("seated" if seated else "standing")
+		_wear("legs")
+		_wear("legs", pose + "_l")
+		_wear("legs", pose + "_r")
+		_wear("torso")
 		# The neck post the head sits on.
 		_add_figure("neck", _upper, {"skin": design.skin()})
-		NeckLooks.build(self)
-		BackLooks.build(self)
+		_wear("neck")
+		_wear("back", back_variant())
 		_dress_head()
-		for side in 2:
-			ArmLooks.build(self, _arm[side], _hand[side], side)
+		_wear("arms")
+		_wear("arms", "arm_r")
+		_wear("arms", "hand_l")
+		_wear("arms", "hand_r")
 		if not bake:
 			return
 		var skip: Array = bones.values()
@@ -550,9 +554,10 @@ func _add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := 
 			add(parent, regions[region], colours[region], Vector3.ZERO, Basis.IDENTITY, metallic)
 
 
-## Adds a figure piece, for the looks.
-func add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := false, metallic := 0.0) -> void:
-	_add_figure(piece, parent, colours, sitting, metallic)
+## Adds the style worn in `slot` (see add_style), unless it's "none".
+func _wear(slot: String, variant := "", place := Transform3D.IDENTITY) -> void:
+	if design.style_of(slot) != "none" and not add_style(slot, variant, place):
+		push_warning("No %s made for %s" % [slot, design.style_of(slot)])
 
 
 ## Adds the style worn in `slot` as made in tools/characters, if it's made
@@ -600,15 +605,52 @@ func _build_head() -> void:
 
 
 ## What's on the head: the stud, hair, facial hair and headgear.
+## Under a hat that covers the top of the head, hair has a cut version that
+## only comes up to the hat's rim. Printed facial hair is on the face (see
+## FacePrint), so only the raised kind is added.
 func _dress_head() -> void:
-	var under := HeadgearLooks.hair_under(design.style_of("headgear"))
+	var headgear := design.style_of("headgear")
+	var hair := design.style_of("hair")
+	var under := hair_under(headgear)
 	# The stud on top shows when there's nothing over it.
-	if design.style_of("hair") == "none" and under == "full":
+	if hair == "none" and under == "full":
 		_add_figure("stud", _head, {"skin": design.skin()})
 	if under != "hidden":
-		HairLooks.build(self, under == "cut")
-	HairLooks.build_beard(self)
-	HeadgearLooks.build(self)
+		_wear("hair", "cut" if under == "cut" else "")
+	if not CharacterMesh.style("facial_hair", design.style_of("facial_hair")).is_empty():
+		_wear("facial_hair")
+	if headgear == "none":
+		return
+	# Bands worn on the hair are made for each hairdo. Other headgear worn on
+	# the hair, like a party hat, is placed to fit it.
+	if CharacterMesh.style("headgear", headgear).has("on_" + hair):
+		_wear("headgear", "on_" + hair)
+	else:
+		_wear("headgear", "", headgear_fit(headgear, hair))
+
+
+## What hair shows under this headgear: "cut", "hidden" or "full". Hats have
+## the cut hair under them, helmets and hoods hide it, and what's worn on the
+## hair has the full hair.
+static func hair_under(headgear: String) -> String:
+	return str(CharacterMesh.style("headgear", headgear).get("hair", "full"))
+
+
+## Where headgear worn on the hair goes for this hairdo, in the head's space.
+static func headgear_fit(headgear: String, hair: String) -> Transform3D:
+	var fits: Dictionary = CharacterMesh.style("headgear", headgear).get("fit", {})
+	var f: Array = fits.get(hair, fits.get("none", [1.0, 1.0, 0.0, 0.0]))
+	return Transform3D(Basis.from_scale(Vector3(f[0], f[1], f[0])), Vector3(0.0, f[2], f[3]))
+
+
+## Which shape of the back piece the rig wears: its own standing, or the one
+## made for sitting, lying back or riding astride.
+func back_variant() -> String:
+	if astride:
+		return "astride"
+	if not seated:
+		return ""
+	return "reclined" if recline > RECLINED else "seated"
 
 
 ## The head's material, with the face and any facial hair printed on, in a mood
@@ -694,7 +736,7 @@ func _build_arms() -> void:
 		_grip_local.append(wrist(side) + _forearm_dir(side) * HAND_SIZE)
 
 
-# Helpers the looks are made with.
+# Materials.
 
 ## The shiny toy plastic the driver's made of, in a colour.
 static func mat(colour: Color, metallic := 0.0) -> StandardMaterial3D:
@@ -752,99 +794,3 @@ func add(parent: Node3D, mesh: Mesh, colour: Color, at := Vector3.ZERO, turn := 
 	node.transform = Transform3D(turn, at)
 	parent.add_child(node)
 	return node
-
-
-## A flat piece of printing on a surface, made as a thin rounded tile.
-func print_on(parent: Node3D, size: Vector2, colour: Color, at: Vector3, turn := Basis.IDENTITY) -> MeshInstance3D:
-	return add(parent, MeshKit.rounded_box(Vector3(size.x, size.y, 0.006), 0.003), colour, at, turn)
-
-
-## A box with rounded edges. Rounding a thin box pulls its corners out into
-## spikes, so thin ones (like bands and straps) are left square.
-func box(size: Vector3, round := 0.01) -> Mesh:
-	var thinnest := minf(size.x, minf(size.y, size.z))
-	if thinnest < 0.02:
-		var plain := BoxMesh.new()
-		plain.size = size
-		return plain
-	return MeshKit.rounded_box(size, minf(round, thinnest * 0.3))
-
-
-func sphere(radius: float, height := -1.0) -> SphereMesh:
-	var s := SphereMesh.new()
-	s.radius = radius
-	s.height = radius * 2.0 if height < 0.0 else height
-	s.radial_segments = 20
-	s.rings = 10
-	return s
-
-
-func cylinder(top: float, bottom: float, height: float, sides := 20) -> CylinderMesh:
-	var c := CylinderMesh.new()
-	c.top_radius = top
-	c.bottom_radius = bottom
-	c.height = height
-	c.radial_segments = sides
-	c.rings = 1
-	return c
-
-
-func ring(inner: float, outer: float) -> TorusMesh:
-	var t := TorusMesh.new()
-	t.inner_radius = inner
-	t.outer_radius = outer
-	t.rings = 32
-	t.ring_segments = 10
-	return t
-
-
-## A basis that points +Y along `direction`.
-static func pointing(direction: Vector3) -> Basis:
-	var y := direction.normalized()
-	var x := Vector3.RIGHT if absf(y.dot(Vector3.RIGHT)) < 0.9 else Vector3.FORWARD
-	x = (x - y * x.dot(y)).normalized()
-	return Basis(x, y, x.cross(y))
-
-
-## A shell around the head, `extra` out from it, with a dome over the top
-## (unless `dome` is false) and a band that comes down to `bottom` from `from`
-## to `to` (radians, 0 at the front, going around toward the right), up to
-## `band_top`. Helmets, hoods and hair are made of these.
-func shell(colour: Color, extra: float, from: float, to: float, bottom: float, dome := true, band_top := DOME_BASE, metallic := 0.0) -> void:
-	var r := HEAD_RADIUS + extra
-	var material := mat(colour, metallic).duplicate() as StandardMaterial3D
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED
-	var meshes := []
-	if dome:
-		var outline := PackedVector2Array()
-		for i in 9:
-			var a := PI * 0.5 * i / 8.0
-			outline.append(Vector2(r * cos(a), DOME_BASE + dome_height(extra) * sin(a)))
-		meshes.append(MeshKit.lathe(outline, 40))
-	if bottom < band_top:
-		meshes.append(MeshKit.lathe(PackedVector2Array([Vector2(r - 0.004, bottom), Vector2(r, bottom + minf(0.03, band_top - bottom)), Vector2(r, band_top)]), 40, from, to))
-	for mesh in meshes:
-		var node := MeshInstance3D.new()
-		node.mesh = mesh
-		node.material_override = material
-		_head.add_child(node)
-
-
-## How far out from the middle of the head a dome made by shell() is at this
-## height, for putting things on the front of it.
-static func shell_radius(extra: float, height: float) -> float:
-	var up := clampf((height - DOME_BASE) / dome_height(extra), 0.0, 1.0)
-	return (HEAD_RADIUS + extra) * cos(asin(up))
-
-
-## How tall a dome made by shell() is, from DOME_BASE to its top.
-static func dome_height(extra: float) -> float:
-	return 0.08 + extra * 0.5
-
-
-## Goggles on the front of whatever's `out` from the middle of the head at
-## this height (the head, a band or a helmet), sitting on it, not in it.
-func goggles(height: float, out: float = HEAD_RADIUS) -> void:
-	for s in [-1.0, 1.0]:
-		add(_head, ring(0.022, 0.033), Color("#3c3f44"), Vector3(0.036 * s, height, -out - 0.008), Basis(Vector3.RIGHT, PI * 0.5), 0.5)
-		add(_head, cylinder(0.023, 0.023, 0.008, 16), Color(Color("#8fd3f4"), 0.75), Vector3(0.036 * s, height, -out - 0.01), Basis(Vector3.RIGHT, PI * 0.5), 0.4)

@@ -244,8 +244,8 @@ class Runner:
 			var rig := CharacterRig.new(CharacterDesign.new(), way[0])
 			rig.astride = way[1]
 			rig.recline = way[2]
-			if BackLooks.variant(rig) != way[3]:
-				wearing.append("%s wanted, %s worn" % [way[3], BackLooks.variant(rig)])
+			if rig.back_variant() != way[3]:
+				wearing.append("%s wanted, %s worn" % [way[3], rig.back_variant()])
 			rig.free()
 		check(wearing.is_empty(), "the rig wears the back piece's shape for how it sits %s" % [wearing])
 
@@ -306,7 +306,7 @@ class Runner:
 			for style in CharacterMesh.made().get("styles", {}).get("headgear", {}):
 				if not report.get("styles", []).has("headgear " + style):
 					unchecked.append(style)
-				var under := HeadgearLooks.hair_under(style)
+				var under := CharacterRig.hair_under(style)
 				if under == "hidden":
 					continue
 				for hair in CharacterMesh.made().styles.hair:

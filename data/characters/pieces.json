@@ -1,5 +1,5 @@
 {
-	"_comment": "Every piece a driver can be built from. Mass is in kg and adds up to the driver's weight, which sets their class and how the kart handles with them in it. The shapes are made in scripts/character/looks, one file for each kind of piece, by style name. Faces and facial hair are printed on the head in scripts/character/face_print.gd. Hair has its own colours. A hat that covers the top of the head hides the top of the hair and leaves what hangs below it.",
+	"_comment": "Every piece a driver can be built from. Mass is in kg and adds up to the driver's weight, which sets their class and how the kart handles with them in it. The shapes are modelled in tools/characters, by style name, and listed in pieces_made.json. Faces and most facial hair are printed on the head in scripts/character/face_print.gd. Hair has its own colours. A hat that covers the top of the head hides the top of the hair and leaves what hangs below it.",
 	"palette": [
 		"#f2cd37",
 		"#f5c8a8",
