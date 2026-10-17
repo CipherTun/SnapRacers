@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://c61avs1pxkxbc"
+path="res://.godot/imported/d_front_wing_8x2.obj-93969777f802705b267d33408b2a0204.mesh"
+
+[deps]
+
+files=["res://.godot/imported/d_front_wing_8x2.obj-93969777f802705b267d33408b2a0204.mesh"]
+
+source_file="res://parts/meshes/d_front_wing_8x2.obj"
+dest_files=["res://.godot/imported/d_front_wing_8x2.obj-93969777f802705b267d33408b2a0204.mesh", "res://.godot/imported/d_front_wing_8x2.obj-93969777f802705b267d33408b2a0204.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

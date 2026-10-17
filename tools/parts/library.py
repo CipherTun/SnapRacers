@@ -10,7 +10,7 @@ scripts/parts/connectors.gd for which types go together.
 
 import math
 
-from kit import BRICK, EDGE, FINE, PLATE, STUD, STUD_HEIGHT, STUD_RADIUS, box, cut, cylinder, grid_cells, plan_y, profile_x, studs, union
+from kit import BRICK, EDGE, FINE, PLATE, STUD, STUD_HEIGHT, STUD_RADIUS, box, cut, cylinder, front, grid_cells, plan_y, profile_x, push_x, push_z, rounded, side, studs, union
 
 # Colours, the classic brick ones.
 RED = "#c4281c"
@@ -102,7 +102,7 @@ for _a, _b in [(1, 1), (1, 2), (1, 3), (1, 4), (1, 6), (1, 8), (2, 2), (2, 3), (
 for _a, _b in [(1, 1), (1, 2), (1, 4), (1, 6), (2, 2), (2, 4)]:
     part((lambda a, b: lambda: _block("p_brick_%dx%d" % (a, b), "Brick %d×%d" % (a, b), "brick", "bricks", a, b, 3, RED))(_a, _b))
 
-for _a, _b in [(1, 1), (1, 2), (1, 4), (1, 6), (2, 2), (2, 4), (2, 6)]:
+for _a, _b in [(1, 1), (1, 2), (1, 4), (1, 6), (2, 2), (2, 4), (2, 6), (1, 8), (2, 8)]:
     part((lambda a, b: lambda: _block("p_tile_%dx%d" % (a, b), "Tile %d×%d" % (a, b), "plate", "tiles", a, b, 1, BLACK, stud=False, aero={"front": 0.9, "back": 0.9}))(_a, _b))
 
 
@@ -647,6 +647,278 @@ def cowl_2x6():
     side = [(0.0, 0.0), (0.0, h), (l * 0.45, h)] + [(l * 0.45 + l * 0.55 * t, h * (1.0 - 0.75 * t * t)) for t in [k / 12.0 for k in range(1, 13)]] + [(l, 0.0)]
     body = across ^ profile_x(side, 0.0, w)
     return Part("p_cowl_2x6", "Engine cowl 2×6", "body", "curves", (w, h, l), body, sockets(grid_cells(2, 6)), RED, aero={"front": 1.0, "back": 0.4, "side": 0.8})
+
+
+# Car and truck bodywork: a few big smooth pieces, the way small racing sets
+# build a car. Hollow pieces (cabs, the engine cover) have a sill down each
+# side to fix them by, and solid boxes only where they're solid, so a seat,
+# steering or engine fits inside.
+
+def _d_section(hw, h, r, cx, bottom=0.0, n=6):
+    """A cross-section with a flat bottom and its top corners rounded by r,
+    hw either side of cx."""
+    r = max(0.002, min(r, hw - 0.001, h - bottom - 0.001))
+    pts = [(cx - hw, bottom), (cx + hw, bottom)]
+    for k in range(n + 1):
+        a = k / n * math.pi * 0.5
+        pts.append((cx + hw - r + r * math.cos(a), h - r + r * math.sin(a)))
+    for k in range(n + 1):
+        a = math.pi * 0.5 + k / n * math.pi * 0.5
+        pts.append((cx - hw + r + r * math.cos(a), h - r + r * math.sin(a)))
+    return pts
+
+
+def _loft(stations, bottom=0.0):
+    """A smooth body through cross-sections along z. Each station is
+    (z, middle x, half width, height, corner radius); neighbours are joined
+    by their hull, so each step has to be convex."""
+    from manifold3d import Manifold
+    slices = []
+    for k, (z, cx, hw, h, r) in enumerate(stations):
+        sl = front(_d_section(hw, h, r, cx, bottom)).extrude(0.0005)
+        slices.append(sl.translate([0, 0, z - (0.0005 if k == len(stations) - 1 else 0.0)]))
+    return union([Manifold.batch_hull([slices[k], slices[k + 1]]) for k in range(len(slices) - 1)])
+
+
+def _skin(body, boxes):
+    """A thin layer over the top of a body inside the boxes, for stripes."""
+    over = body.translate([0, 0.003, 0]) - body
+    return over ^ union(boxes)
+
+
+def _bonnet(id, name, along, plates, stripes=False):
+    """A bonnet 6 wide, curving up from a thin lip at the front, rounded
+    along both sides, with a row of studs along the flat back edge. With
+    `stripes` it has two racing stripes down the middle."""
+    w = 6 * STUD
+    l = along * STUD
+    h = plates * PLATE
+    lip = 0.05
+    run = l - STUD
+    stations = []
+    for k in range(17):
+        t = k / 16.0
+        y = lip + (h - lip) * math.sin(t * math.pi * 0.5)
+        stations.append((0.002 + (run - 0.002) * t, w * 0.5, w * 0.5 - 0.002, y, min(0.07, y * 0.6)))
+    stations.append((l - 0.002, w * 0.5, w * 0.5 - 0.002, h, 0.07))
+    body = _loft(stations)
+    cells = [(i, along - 1) for i in range(6)]
+    stats = {}
+    if stripes:
+        lanes = [box(x0, 0.0, -0.1, x0 + 0.2, h + 0.1, l + 0.1, edge=0) for x0 in (w * 0.5 - 0.28, w * 0.5 + 0.08)]
+        stats["trim"] = (_skin(body, lanes), WHITE, "plastic")
+    solid = union([body, studs(cells, h)])
+    return Part(id, name, "body", "curves", (w, h, l), solid, sockets(grid_cells(6, along)) + top_studs(cells, h), RED,
+                aero={"front": 0.3, "back": 1.0, "side": 0.8}, **stats)
+
+
+part(lambda: _bonnet("p_bonnet_6x4", "Curved bonnet 6×4", 4, 2))
+part(lambda: _bonnet("p_bonnet_6x6", "Curved bonnet 6×6", 6, 3))
+part(lambda: _bonnet("p_bonnet_6x6_stripes", "Striped bonnet 6×6", 6, 3, stripes=True))
+
+
+def _shell(side_pts, front_pts, w, l, t, r_side, r_front):
+    """A hollow body open underneath: the side view pushed across, cut to the
+    front view pushed back, with walls t thick. Returns the outside, the
+    shell and the middle of its walls (for glass)."""
+    sv = rounded(side(side_pts), r_side)
+    fv = rounded(front(front_pts), r_front)
+    floor = box(-1, -1, -1, 3, 0.0, 3, edge=0)
+
+    def solid(d):
+        return (push_x(sv.offset(-d), -0.5, w + 0.5) ^ push_z(fv.offset(-d), -0.5, l + 0.5)) - floor
+
+    outer = solid(0.0)
+    inner = solid(t)
+    return outer, outer - inner, solid(t * 0.35) - inner
+
+
+def _sills(outer, w, l, across):
+    """A plate high strip down each side to fix a hollow body by."""
+    return outer ^ union([box(0, 0, 0, STUD, PLATE, l, edge=0), box(w - STUD, 0, 0, w, PLATE, l, edge=0)])
+
+
+@part
+def car_cab():
+    """A car's cab 4×6 with a sloping windscreen and back window and two
+    windows down each side. The driver sits inside."""
+    w, l, h = 4 * STUD, 6 * STUD, 0.6
+    sv = [(0.0, -0.3), (0.0, 0.08), (0.55, h), (1.12, h), (l, 0.12), (l, -0.3)]
+    fv = [(0.002, -0.3), (w - 0.002, -0.3), (w - 0.002, 0.12), (w - 0.09, h), (0.09, h), (0.002, 0.12)]
+    outer, shell, glass_layer = _shell(sv, fv, w, l, 0.04, 0.05, 0.08)
+    side_view = (rounded(side(sv), 0.05).offset(-0.08) - side([(-1, -1), (-1, 0.16), (3, 0.16), (3, -1)])) - side([(0.74, -1), (0.74, 2), (0.82, 2), (0.82, -1)])
+    cutters = union([
+        push_x(side_view, -0.1, 0.3), push_x(side_view, w - 0.3, w + 0.1),
+        box(0.13, 0.14, -0.2, w - 0.13, h - 0.07, 0.5, edge=0),
+        box(0.15, 0.18, 1.18, w - 0.15, h - 0.08, l + 0.2, edge=0),
+    ])
+    roof = [(1, 2), (2, 2), (1, 3), (2, 3)]
+    body = union([shell - cutters, _sills(outer, w, l, 4), studs(roof, h)])
+    cells = [(i, k) for i in (0, 3) for k in range(6)]
+    return Part("p_cab_4x6", "Car cab 4×6", "body", "curves", (w, h, l), body, sockets(cells) + top_studs(roof, h), WHITE,
+                trim=(glass_layer ^ cutters, GLASS, "glass"), aero={"front": 0.45, "back": 0.6, "side": 0.8}, mass=4.0, strength=900.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0.55, w, h, 1.12]])
+
+
+@part
+def truck_cab():
+    """A tall boxy truck cab 6×4 with a big windscreen, side windows and a
+    small back window, and studs on the roof for lights."""
+    w, l, h = 6 * STUD, 4 * STUD, 0.8
+    sv = [(0.0, -0.3), (0.0, 0.32), (0.12, h), (l, h), (l, -0.3)]
+    fv = [(0.002, -0.3), (w - 0.002, -0.3), (w - 0.002, 0.3), (w - 0.04, h), (0.04, h), (0.002, 0.3)]
+    outer, shell, glass_layer = _shell(sv, fv, w, l, 0.04, 0.04, 0.06)
+    cutters = union([
+        box(0.13, 0.38, -0.2, w - 0.13, h - 0.08, 0.2, edge=0),
+        box(-0.1, 0.38, 0.26, 0.3, h - 0.08, l - 0.1, edge=0), box(w - 0.3, 0.38, 0.26, w + 0.1, h - 0.08, l - 0.1, edge=0),
+        box(0.42, 0.46, l - 0.2, w - 0.42, h - 0.12, l + 0.2, edge=0),
+    ])
+    roof = [(i, k) for i in range(1, 5) for k in range(1, 4)]
+    body = union([shell - cutters, _sills(outer, w, l, 6), studs(roof, h)])
+    cells = [(i, k) for i in (0, 5) for k in range(4)]
+    return Part("p_truck_cab_6x4", "Truck cab 6×4", "body", "curves", (w, h, l), body, sockets(cells) + top_studs(roof, h), WHITE,
+                trim=(glass_layer ^ cutters, GLASS, "glass"), aero={"front": 0.8, "back": 1.0, "side": 0.9}, mass=6.0, strength=1100.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0.12, w, h, l]])
+
+
+def _big_arch(id, name, across):
+    """A big wheel arch 6 long with flat ends 4 plates high and studs on
+    them, humped over the opening. The opening clears a wheel up to 0.45 m
+    across with its middle a plate or two under the arch's bottom."""
+    w = across * STUD
+    l = 6 * STUD
+    base = 4 * PLATE
+    hump = 0.08
+    a, b = 0.5, 0.36
+    top = []
+    for k in range(33):
+        z = l * k / 32.0
+        u = min(1.0, max(0.0, (z - STUD) / (l - 2 * STUD)))
+        top.append((z, base + hump * math.sin(u * math.pi)))
+    sv = side([(0.0, 0.0)] + top + [(l, 0.0)])
+    hole = side([(l * 0.5 + a * math.cos(k / 24.0 * math.pi), b * math.sin(k / 24.0 * math.pi)) for k in range(25)] + [(l * 0.5 - a, -0.1), (l * 0.5 + a, -0.1)])
+    fv = rounded(front([(0.002, -0.1), (w - 0.002, -0.1), (w - 0.002, base + hump), (0.002, base + hump)]), 0.05)
+    body = push_x(sv - hole, 0.0, w) ^ push_z(fv, 0.002, l - 0.002)
+    ends = [(i, k) for i in range(across) for k in (0, 5)]
+    return Part(id, name, "body", "arches", (w, base + hump, l), union([body, studs(ends, base)]), sockets(ends) + top_studs(ends, base), RED,
+                aero={"front": 0.5, "back": 0.6, "side": 0.9}, mass=round(0.7 * across, 1), strength=500.0 + 100.0 * across,
+                solids=[[0, 0, 0, w, base, STUD], [0, 0, l - STUD, w, base, l], [0, b, STUD, w, base + hump, l - STUD]])
+
+
+part(lambda: _big_arch("p_arch_2x6", "Big wheel arch 2×6", 2))
+part(lambda: _big_arch("p_arch_3x6", "Big wheel arch 3×6", 3))
+
+
+@part
+def nose_cone_2x6():
+    """A long formula nose, 2 wide at the back, tapering and dropping to a
+    low rounded tip."""
+    w, l, h = 2 * STUD, 6 * STUD, 3 * PLATE
+    stations = []
+    for k in range(17):
+        t = k / 16.0
+        z = 0.002 + (l - 0.004) * t
+        u = min(1.0, z / (4.5 * STUD))
+        hw = 0.08 + (w * 0.5 - 0.082) * math.sin(u * math.pi * 0.5)
+        y = 0.09 + (h - 0.09) * math.sin(u * math.pi * 0.5)
+        if k == 0:
+            hw, y = 0.05, 0.06
+        stations.append((z, w * 0.5, hw, y, min(hw, y) * 0.9))
+    return Part("p_nose_cone_2x6", "Formula nose 2×6", "body", "curves", (w, h, l), _loft(stations), sockets(grid_cells(2, 6)), RED,
+                aero={"front": 0.2, "back": 1.0, "side": 0.6})
+
+
+@part
+def front_wing_8x2():
+    """A front wing 8×2 with a flap and an endplate at each end, on a plate
+    2×2 in the middle with studs for a nose."""
+    w, l = 8 * STUD, 2 * STUD
+    main = profile_x([(0.0, 0.01), (0.02, 0.0), (0.32, 0.0), (0.33, 0.04), (0.06, 0.05), (0.0, 0.035)], 0.04, w - 0.04)
+    flap = profile_x([(0.3, 0.045), (0.32, 0.03), (0.49, 0.11), (0.5, 0.14), (0.47, 0.145)], 0.04, w - 0.04)
+    plate = [(0.0, 0.0), (0.0, 0.1), (0.1, 0.2), (l, 0.2), (l, 0.0)]
+    ends = [profile_x(plate, x, x + 0.04) for x in (0.002, w - 0.042)]
+    middle = [(3, 0), (4, 0), (3, 1), (4, 1)]
+    mount = union([box(3 * STUD, 0, 0, 5 * STUD, PLATE, l), studs(middle, PLATE)])
+    return Part("d_front_wing_8x2", "Front wing with endplates 8×2", "wing", "details", (w, 0.2, l), union([main, flap, mount] + ends),
+                sockets(middle) + top_studs(middle, PLATE), RED, lift_area=0.35, aero={"front": 0.8, "back": 0.8}, mass=1.3, strength=300.0,
+                solids=[[3 * STUD, 0, 0, 5 * STUD, PLATE, l], [0, 0, 0, w, 0.05, l], [0, 0, 0, 0.04, 0.2, l], [w - 0.04, 0, 0, w, 0.2, l]])
+
+
+@part
+def rear_wing_8():
+    """A big rear wing 8 wide with a flap and tall endplates, up on two
+    struts from a plate 2×2 in the middle."""
+    w, l = 8 * STUD, 2 * STUD
+    lift = 0.42
+    main = profile_x([(0.0, 0.02), (0.03, 0.0), (0.34, 0.01), (0.35, 0.05), (0.08, 0.07), (0.0, 0.05)], 0.04, w - 0.04).translate([0, lift, 0])
+    flap = profile_x([(0.3, 0.07), (0.33, 0.05), (0.49, 0.15), (0.5, 0.19), (0.47, 0.19)], 0.04, w - 0.04).translate([0, lift, 0])
+    plate = rounded(side([(0.0, 0.3), (0.0, 0.66), (l, 0.7), (l, 0.3)]), 0.03)
+    ends = [push_x(plate, x, x + 0.04) for x in (0.002, w - 0.042)]
+    struts = [push_x(rounded(side([(0.14, PLATE - 0.01), (0.2, lift + 0.03), (0.34, lift + 0.03), (0.34, PLATE - 0.01)]), 0.01), x, x + 0.04) for x in (0.8, 1.16)]
+    middle = [(3, 0), (4, 0), (3, 1), (4, 1)]
+    foot = box(3 * STUD, 0, 0, 5 * STUD, PLATE, l)
+    return Part("d_rear_wing_8", "Big rear wing 8 wide", "wing", "details", (w, 0.7, l), union([main, flap, foot] + ends + struts),
+                sockets(middle), RED, lift_area=0.7, aero={"front": 0.9, "back": 0.9}, mass=2.0, strength=350.0,
+                solids=[[3 * STUD, 0, 0, 5 * STUD, PLATE, l], [0.04, lift, 0, w - 0.04, lift + 0.2, l], [0, 0.3, 0, 0.04, 0.7, l], [w - 0.04, 0.3, 0, w, 0.7, l]])
+
+
+@part
+def bonnet_scoop():
+    """An air scoop 2×3 for a bonnet, tall at the front with a dark intake,
+    sloping down to the back."""
+    w, l, h = 2 * STUD, 3 * STUD, 0.24
+    stations = []
+    for k in range(9):
+        t = k / 8.0
+        stations.append((0.002 + (l - 0.004) * t, w * 0.5, w * 0.5 - 0.02, h - (h - 0.08) * t * t, 0.05))
+    intake = box(0.07, 0.04, -0.1, w - 0.07, h - 0.06, 0.12, edge=0)
+    inside = box(0.075, 0.045, 0.03, w - 0.075, h - 0.065, 0.13, edge=0)
+    return Part("p_scoop_2x3", "Bonnet scoop 2×3", "body", "curves", (w, h, l), _loft(stations) - intake, sockets(grid_cells(2, 3)), RED,
+                trim=(inside, BLACK, "plastic"), aero={"front": 0.9, "back": 0.5, "side": 0.8})
+
+
+@part
+def fin_cover_4x6():
+    """A long engine cover 4×6 with a fin along the top, like an endurance
+    racer's. It's hollow, so an engine 2 wide and 3 plates high fits under
+    its front, between the sills."""
+    w, l, h, low = 4 * STUD, 6 * STUD, 0.4, 0.18
+
+    def height(z):
+        u = min(1.0, max(0.0, (z - 1.0) / (l - 1.0)))
+        return low + (h - low) * (1 + math.cos(u * math.pi)) * 0.5
+
+    def stations(d):
+        out = []
+        for k in range(21):
+            z = d + 0.002 + (l - 2 * d - 0.004) * k / 20.0
+            y = height(z) - d
+            if k == 0:
+                y -= 0.04
+            out.append((z, w * 0.5, w * 0.5 - 0.002 - d, y, 0.12 - d))
+        return out
+
+    outer = _loft(stations(0.0))
+    inner = _loft(stations(0.04), bottom=-0.1)
+    fin = profile_x([(0.35, h - 0.03), (1.0, h - 0.03), (l, low - 0.03), (l, 0.68), (l - 0.12, 0.7)], w * 0.5 - 0.02, w * 0.5 + 0.02)
+    body = union([outer - inner, _sills(outer, w, l, 4), fin])
+    cells = [(i, k) for i in (0, 3) for k in range(6)]
+    return Part("p_fin_cover_4x6", "Engine cover with fin 4×6", "body", "curves", (w, 0.7, l), body, sockets(cells), RED,
+                aero={"front": 1.0, "back": 0.4, "side": 0.8}, mass=4.0, strength=800.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0, w, h, 1.0], [w * 0.5 - 0.02, h, 0.35, w * 0.5 + 0.02, 0.7, l]])
+
+
+def _pinstripe(id, name, along):
+    """A smooth tile 2 wide with two thin white stripes down it."""
+    w, l = 2 * STUD, along * STUD
+    tile = box(0, 0, 0, w, PLATE, l)
+    lines = union([box(x, PLATE - 0.006, 0.01, x + 0.035, PLATE + 0.004, l - 0.01, edge=0) for x in (0.07, w - 0.105)])
+    return Part(id, name, "plate", "tiles", (w, PLATE, l), tile, sockets(grid_cells(2, along)), BLUE, trim=(lines, WHITE, "plastic"),
+                aero={"front": 0.9, "back": 0.9})
+
+
+part(lambda: _pinstripe("p_pinstripe_2x4", "Pinstripe tile 2×4", 4))
+part(lambda: _pinstripe("p_pinstripe_2x6", "Pinstripe tile 2×6", 6))
 
 
 # Motorbikes, the way toy motorbikes come: a frame in one piece with the
