@@ -25979,6 +25979,1731 @@
 			},
 			"mass": 1.5,
 			"strength": 700.0
+		},
+		"b_quad_frame": {
+			"name": "Quad frame",
+			"kind": "seat",
+			"group": "bike",
+			"size": [
+				7,
+				6,
+				10
+			],
+			"fine_size": [
+				140.0,
+				48.0,
+				190.0
+			],
+			"color": "#1b2a34",
+			"mesh": "res://parts/meshes/b_quad_frame.obj",
+			"connectors": [
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						28.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						28.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						28.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						28.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						28.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						28.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						28.0,
+						160.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						28.0,
+						180.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						28.0,
+						160.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						28.0,
+						180.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						28.0,
+						160.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						28.0,
+						180.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						60.0,
+						44.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						80.0,
+						44.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "axle",
+					"at": [
+						0.0,
+						6.4,
+						30.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 140.0
+				},
+				{
+					"type": "axle",
+					"at": [
+						0.0,
+						6.4,
+						160.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 140.0
+				}
+			],
+			"solids": [
+				[
+					44.0,
+					0.0,
+					0.0,
+					96.0,
+					10.0,
+					190.0
+				],
+				[
+					40.0,
+					10.0,
+					0.0,
+					100.0,
+					28.0,
+					40.0
+				],
+				[
+					50.0,
+					10.0,
+					40.0,
+					90.0,
+					44.0,
+					60.0
+				],
+				[
+					40.0,
+					10.0,
+					150.0,
+					100.0,
+					28.0,
+					190.0
+				],
+				[
+					48.0,
+					28.0,
+					58.0,
+					92.0,
+					42.0,
+					100.0
+				],
+				[
+					50.0,
+					28.0,
+					96.0,
+					90.0,
+					48.0,
+					150.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_quad_frame_trim.obj",
+				"color": "#9aa0a6",
+				"finish": "metal"
+			},
+			"about": "A quad's frame with the engine and saddle in it and an axle across each end. Put quad wheels on the ends of the axles, bike bars on the post and fenders over the wheels.",
+			"seat_box": [
+				52.0,
+				40.0,
+				106.0,
+				88.0,
+				48.0,
+				150.0
+			],
+			"aero": {
+				"front": 0.7,
+				"back": 0.8,
+				"side": 0.8
+			},
+			"power": 7000.0,
+			"max_force": 1500.0,
+			"astride": true,
+			"driver_height": 7,
+			"control": 1.05,
+			"recline": 0,
+			"mass": 28.4,
+			"strength": 1600.0,
+			"sound": "engine_twin"
+		},
+		"b_quad_fender_front": {
+			"name": "Quad front fenders",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				7,
+				4,
+				3
+			],
+			"fine_size": [
+				140.0,
+				28.0,
+				60.0
+			],
+			"color": "#0d69ab",
+			"mesh": "res://parts/meshes/b_quad_fender_front.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					18.0,
+					2.0,
+					40.0,
+					24.0,
+					58.0
+				],
+				[
+					100.0,
+					18.0,
+					2.0,
+					140.0,
+					24.0,
+					58.0
+				],
+				[
+					40.0,
+					12.0,
+					0.0,
+					100.0,
+					20.0,
+					40.0
+				]
+			],
+			"lamp": {
+				"mesh": "res://parts/meshes/b_quad_fender_front_lamp.obj",
+				"color": "#e8f4f8"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 1.6,
+			"strength": 700.0,
+			"light": "head"
+		},
+		"b_quad_fender_back": {
+			"name": "Quad back fenders",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				7,
+				4,
+				3
+			],
+			"fine_size": [
+				140.0,
+				28.0,
+				60.0
+			],
+			"color": "#0d69ab",
+			"mesh": "res://parts/meshes/b_quad_fender_back.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						10.0,
+						24.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						10.0,
+						24.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						10.0,
+						24.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						24.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						24.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						24.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						24.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						24.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						24.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						24.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						24.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						24.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					18.0,
+					2.0,
+					40.0,
+					24.0,
+					58.0
+				],
+				[
+					100.0,
+					18.0,
+					2.0,
+					140.0,
+					24.0,
+					58.0
+				],
+				[
+					40.0,
+					12.0,
+					20.0,
+					100.0,
+					20.0,
+					60.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_quad_fender_back_trim.obj",
+				"color": "#c4281c",
+				"finish": "glass"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 1.6,
+			"strength": 700.0,
+			"light": "tail"
+		},
+		"b_quad_fender_rack": {
+			"name": "Quad fenders with rack",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				7,
+				5,
+				3
+			],
+			"fine_size": [
+				140.0,
+				32.6,
+				60.0
+			],
+			"color": "#0d69ab",
+			"mesh": "res://parts/meshes/b_quad_fender_rack.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						90.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					18.0,
+					2.0,
+					40.0,
+					24.0,
+					58.0
+				],
+				[
+					100.0,
+					18.0,
+					2.0,
+					140.0,
+					24.0,
+					58.0
+				],
+				[
+					40.0,
+					12.0,
+					0.0,
+					100.0,
+					20.0,
+					40.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_quad_fender_rack_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 1.6,
+			"strength": 700.0
+		},
+		"b_chopper_fork": {
+			"name": "Chopper fork",
+			"kind": "steering",
+			"group": "bike",
+			"size": [
+				4,
+				12,
+				5
+			],
+			"fine_size": [
+				80.0,
+				96.0,
+				100.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/b_chopper_fork.obj",
+			"connectors": [
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						50.0,
+						52.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						50.0,
+						52.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "axle",
+					"at": [
+						24.0,
+						4.0,
+						10.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 32.0
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					8.0,
+					42.0,
+					38.0,
+					72.0,
+					50.0,
+					62.0
+				],
+				[
+					8.0,
+					70.0,
+					71.0,
+					72.0,
+					76.0,
+					87.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_chopper_fork_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"lamp": {
+				"mesh": "res://parts/meshes/b_chopper_fork_lamp.obj",
+				"color": "#e8f4f8"
+			},
+			"about": "A long raked fork with tall bars, for a cruiser or trike frame. The frame goes on further back than on the motorbike fork.",
+			"style": "bikebars",
+			"control": 1.1,
+			"grip_reach": 0.3,
+			"mass": 3.0,
+			"strength": 900.0,
+			"light": "head"
+		},
+		"b_sissy_bar": {
+			"name": "Sissy bar",
+			"kind": "body",
+			"group": "bike",
+			"size": [
+				2,
+				7,
+				2
+			],
+			"fine_size": [
+				40.0,
+				52.8,
+				31.2
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/b_sissy_bar.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					40.0,
+					8.0,
+					20.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_sissy_bar_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.6,
+				"back": 0.8
+			},
+			"mass": 0.8,
+			"strength": 500.0
+		},
+		"b_cycle_wing_left": {
+			"name": "Cycle wing left",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				3,
+				4,
+				4
+			],
+			"fine_size": [
+				60.0,
+				31.0,
+				80.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/b_cycle_wing_left.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					40.0,
+					0.0,
+					20.0,
+					60.0,
+					8.0,
+					60.0
+				],
+				[
+					4.0,
+					26.0,
+					26.0,
+					44.0,
+					31.0,
+					54.0
+				],
+				[
+					42.0,
+					8.0,
+					34.0,
+					52.0,
+					27.0,
+					46.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 0.6,
+			"strength": 500.0,
+			"steers": true,
+			"mirror": "b_cycle_wing_right"
+		},
+		"b_cycle_wing_right": {
+			"name": "Cycle wing right",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				3,
+				4,
+				4
+			],
+			"fine_size": [
+				60.0,
+				31.0,
+				80.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/b_cycle_wing_right.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					20.0,
+					20.0,
+					8.0,
+					60.0
+				],
+				[
+					16.0,
+					26.0,
+					26.0,
+					56.0,
+					31.0,
+					54.0
+				],
+				[
+					8.0,
+					8.0,
+					34.0,
+					18.0,
+					27.0,
+					46.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 0.6,
+			"strength": 500.0,
+			"steers": true,
+			"mirror": "b_cycle_wing_left"
+		},
+		"b_trike_body": {
+			"name": "Chopper trike body",
+			"kind": "body",
+			"group": "bike",
+			"size": [
+				10,
+				9,
+				4
+			],
+			"fine_size": [
+				200.0,
+				72.0,
+				80.0
+			],
+			"color": "#f2cd37",
+			"mesh": "res://parts/meshes/b_trike_body.obj",
+			"connectors": [
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						70.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						90.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						110.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						130.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						150.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						150.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						150.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						150.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						170.0,
+						68.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						170.0,
+						68.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						170.0,
+						68.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						170.0,
+						68.0,
+						70.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "hole",
+					"at": [
+						46.0,
+						6.0,
+						32.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 10.0
+				},
+				{
+					"type": "hole",
+					"at": [
+						144.0,
+						6.0,
+						32.0
+					],
+					"axis": [
+						1,
+						0,
+						0
+					],
+					"length": 10.0
+				}
+			],
+			"solids": [
+				[
+					16.0,
+					14.0,
+					0.0,
+					84.0,
+					68.0,
+					80.0
+				],
+				[
+					116.0,
+					14.0,
+					0.0,
+					184.0,
+					68.0,
+					80.0
+				],
+				[
+					84.0,
+					60.0,
+					0.0,
+					116.0,
+					68.0,
+					80.0
+				],
+				[
+					0.0,
+					48.0,
+					8.0,
+					18.0,
+					52.0,
+					56.0
+				],
+				[
+					182.0,
+					48.0,
+					8.0,
+					200.0,
+					52.0,
+					56.0
+				],
+				[
+					46.0,
+					0.0,
+					24.0,
+					56.0,
+					14.0,
+					40.0
+				],
+				[
+					144.0,
+					0.0,
+					24.0,
+					154.0,
+					14.0,
+					40.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_trike_body_trim.obj",
+				"color": "#c4281c",
+				"finish": "glass"
+			},
+			"light": "tail",
+			"aero": {
+				"front": 0.7,
+				"back": 0.9,
+				"side": 0.9
+			},
+			"mass": 5.0,
+			"strength": 1400.0,
+			"about": "A wide body for the back of the trike frame, over the frame's tail and between the back wheels, with studs on top. It hangs on the back axle."
 		}
 	}
 }

@@ -2,8 +2,9 @@ extends SceneTree
 
 ## Rides the stock Superbike and Tourer on the test track with no screen. The bike has to stay upright on its own, standing still,
 ## through a slalom and in a hard turn, and lean into the bends the right way.
-## The trike mustn't tip over in a hard turn either. It also checks the
-## building rules for two wheels.
+## The trike mustn't tip over in a hard turn either, and a quad stays flat
+## while only its rider leans a little. It also checks the building rules for
+## two wheels.
 ##
 ## Run it with:
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tests/bike_test.gd
@@ -23,6 +24,7 @@ class Runner:
 	var gentle_bars := 0.0
 	var lean_right := false
 	var on_trike := false
+	var on_quad := false
 
 	## A motorbike built from bits, in the fine unit, with the front wheel in a
 	## fork and the back one in a swingarm, joined by a plate along the top,
@@ -44,6 +46,23 @@ class Runner:
 		]:
 			design.parts.append(KartDesign.placed_entry(p[0], Transform3D(Basis.IDENTITY, p[1])))
 		return design
+
+	## A quad from its frame, four quad wheels, bike bars and fenders, in the
+	## fine unit.
+	static func quad() -> KartDesign:
+		var parts := []
+		for p in [
+			["b_quad_frame", [130, 16, 120], 0],
+			["w_quad", [130, 0, 127.6], 0],
+			["w_quad", [270, 0, 172.4], 2],
+			["w_quad", [130, 0, 257.6], 0],
+			["w_quad", [270, 0, 302.4], 2],
+			["b_bars", [160, 60, 160], 0],
+			["b_quad_fender_front", [130, 32, 120], 0],
+			["b_quad_fender_back", [130, 32, 250], 0],
+		]:
+			parts.append({ "id": p[0], "pos": p[1], "turn": p[2] })
+		return KartDesign.from_dict({ "name": "Test quad", "parts": parts })
 
 
 	func _ready() -> void:
@@ -74,6 +93,9 @@ class Runner:
 		var c := kart.controls
 		if tick > 30:
 			most_roll = maxf(most_roll, roll())
+		if on_quad:
+			_quad_ride(c)
+			return
 		if on_trike:
 			_trike_ride(c)
 			return
@@ -158,6 +180,29 @@ class Runner:
 			510:
 				check(most_roll < 15.0, "doesn't tip over in a hard turn (rolled %.1f degrees at most)" % most_roll)
 				check(absf(kart.lean) < 0.01, "and doesn't lean like a bike")
+				on_quad = true
+				tick = 0
+				_ride(quad())
+
+	func _quad_ride(c: KartControls) -> void:
+		match tick:
+			1:
+				var problems := kart.design.problems()
+				check(problems.is_empty(), "the quad can race %s" % [problems])
+				check(kart.upright == 0.0 and kart.stats.is_quad(), "and it's a quad, held flat like a kart (%.2f)" % kart.upright)
+			90:
+				var grounded := kart.wheels.filter(func(w): return w.grounded).size()
+				check(grounded == 4, "all four wheels on the ground after settling (%d)" % grounded)
+				c.throttle = 1.0
+			330:
+				check(kart.forward_speed > 12.0, "gets up to speed (%.1f m/s)" % kart.forward_speed)
+				c.steer = 1.0
+				most_roll = 0.0
+			450:
+				var leaning := rad_to_deg(kart.rider_lean)
+				check(most_roll < 15.0, "doesn't tip over in a hard turn (rolled %.1f degrees at most)" % most_roll)
+				check(absf(kart.lean) < 0.01, "and the quad itself doesn't lean")
+				check(leaning > 4.0 and leaning < 16.0, "but the rider leans into the bend a little (%.1f degrees)" % leaning)
 				if failures.is_empty():
 					print("All bike checks passed.")
 				else:

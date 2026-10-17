@@ -303,6 +303,12 @@ func _axle_grip() -> float:
 	return minf(mean.call(front), mean.call(back))
 
 
+## Whether it's a quad: four wheels or more and a saddle you sit astride.
+## It drives like a kart, flat, and only the rider leans.
+func is_quad() -> bool:
+	return astride and wheels.size() >= 4
+
+
 ## What most of the drag comes from ("driver", "wheels", "flat" or "smooth").
 func most_drag() -> String:
 	var most := "smooth"

@@ -242,6 +242,9 @@ const LEAN_RATE := 1.4
 const LEAN_FROM := 0.3
 const LEAN_FULL := 1.1
 const LEAN_SMOOTH := 3.0
+## A quad stays flat, but its rider leans into the bend this much of the way
+## a bike would.
+const QUAD_RIDER_LEAN := 0.33
 const KERB_RIDGE := 0.6
 const KERB_KICK := 0.024
 const KERB_WHEEL := 0.3
@@ -317,6 +320,9 @@ var upright := 0.0
 ## body itself stays upright, so this is only in how it looks, and it's
 ## worked out from the steering and speed, so remote bikes lean the same.
 var lean := 0.0
+## How far a quad's rider leans into a bend, in radians, right positive, the
+## same way as `lean`. Only the rider tips; the quad stays flat.
+var rider_lean := 0.0
 ## How the weather changes the grip and drag of the ground, and the puddles
 ## on the road, if any. The race sets them (see Conditions).
 var weather_grip := 1.0
@@ -1999,7 +2005,8 @@ func _lean_looks(delta: float) -> void:
 	if _looks == null:
 		return
 	var want := 0.0
-	if upright >= 1.0:
+	var quad := upright == 0.0 and stats != null and stats.is_quad()
+	if upright >= 1.0 or quad:
 		var bend := tan(steer_angle) / maxf(wheelbase, 0.5)
 		var pull := forward_speed * absf(forward_speed) * bend / KartStats.gravity()
 		_lean_pull = lerpf(_lean_pull, pull, 1.0 - exp(-LEAN_SMOOTH * delta))
@@ -2007,6 +2014,15 @@ func _lean_looks(delta: float) -> void:
 		want = signf(_lean_pull) * MOST_LEAN * t * t * (3.0 - 2.0 * t)
 	else:
 		_lean_pull = 0.0
+	var rider_want := 0.0
+	if quad:
+		rider_want = want * QUAD_RIDER_LEAN
+		want = 0.0
+	rider_lean = move_toward(rider_lean, rider_want, LEAN_RATE * QUAD_RIDER_LEAN * delta)
+	if _rig != null and _rig.astride:
+		# The rider tips about the saddle; the hands still find the bars,
+		# since the grips are worked out in the rig's space.
+		_rig.basis = Basis(Vector3.FORWARD, rider_lean)
 	lean = move_toward(lean, want, LEAN_RATE * delta)
 	var pivot := Vector3(0.0, _ground_y, 0.0)
 	var tip := Basis(Vector3.FORWARD, lean)

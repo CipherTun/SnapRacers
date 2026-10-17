@@ -28,8 +28,9 @@ func _ready() -> void:
 	var keys := Game.stock_keys()
 	var by_wheels := {}
 	for key in keys:
-		var wheels := KartStats.compute(Game.stock_kart(key)).wheels.size()
-		var kind := "bike" if wheels == 2 else "trike" if wheels == 3 else "kart"
+		var stats := KartStats.compute(Game.stock_kart(key))
+		var wheels := stats.wheels.size()
+		var kind := "bike" if wheels == 2 else "trike" if wheels == 3 else "quad" if stats.is_quad() else "kart"
 		by_wheels[kind] = by_wheels.get(kind, 0) + 1
 	check(by_wheels.get("kart", 0) == 15 and by_wheels.get("bike", 0) == 4 and by_wheels.get("trike", 0) == 3, "there are fifteen karts, four bikes and three trikes %s" % by_wheels)
 	var looks := []
