@@ -122,6 +122,28 @@ class Runner:
 					missing.append("%s %s" % [style, region])
 		check(missing.is_empty(), "every neck piece is made and loads %s" % [missing])
 
+		# Every hairdo and its cut version for under hats, and the raised
+		# facial hair, are made in tools/characters and load.
+		missing = []
+		var raised := ["full", "long", "braided", "sideburns"]
+		for slot in ["hair", "facial_hair"]:
+			for style in CharacterDesign.styles(slot):
+				if style == "none" or (slot == "facial_hair" and not style in raised):
+					continue
+				var entry := CharacterMesh.style(slot, style)
+				var shapes := [entry.get("regions", {})]
+				if slot == "hair":
+					shapes.append(entry.get("cut", {}).get("regions", {}))
+				for regions in shapes:
+					if regions.is_empty():
+						missing.append("%s %s" % [slot, style])
+					for region in regions:
+						var mesh := CharacterMesh.mesh(regions[region])
+						if mesh == null or mesh.get_surface_count() == 0:
+							missing.append("%s %s %s" % [slot, style, region])
+		check(missing.is_empty() and CharacterDesign.styles("hair").size() >= 20 and CharacterDesign.styles("facial_hair").size() >= 20,
+				"every hairdo, its cut version and the raised facial hair are made and load %s" % [missing])
+
 		# How far the figure's pieces go into each other in the rig's poses,
 		# measured in tools/characters on the real meshes.
 		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
@@ -143,6 +165,16 @@ class Runner:
 				if not report.get("styles", []).has("neck " + style):
 					unchecked.append(style)
 			check(unchecked.is_empty(), "the clipping report checks every neck piece %s" % [unchecked])
+			unchecked = []
+			for slot in ["hair", "facial_hair"]:
+				for style in CharacterMesh.made().get("styles", {}).get(slot, {}):
+					var names := ["%s %s" % [slot, style]]
+					if slot == "hair":
+						names.append("hair %s cut" % style)
+					for name in names:
+						if not report.get("styles", []).has(name):
+							unchecked.append(name)
+			check(unchecked.is_empty(), "the clipping report checks every hairdo, cut version and raised facial hair %s" % [unchecked])
 
 		# Every style of every piece builds, sitting and standing, baked into
 		# a mesh a bone, with the face on its own.

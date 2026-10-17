@@ -310,7 +310,9 @@ static func _extras(extras: Array, under: bool) -> Array:
 	return out
 
 
-## Facial hair, printed under the face's features in its own colour.
+## Facial hair, printed under the face's features in its own colour. Sideburns
+## and the beard part of full, long and braided beards are raised pieces
+## instead (see HairLooks).
 static func _beard(style: String, c: Color) -> Array:
 	var out := []
 	var moustache := func(width: float, depth: float, y := -0.008) -> Array:
@@ -340,11 +342,9 @@ static func _beard(style: String, c: Color) -> Array:
 		"chinstrap":
 			out.append(_custom(func(p): return absf(_ellipse_d(p, Vector2(0.0, -0.01), Vector2(0.09, 0.085))) - 0.006 if p.y < -0.01 else 1.0, Rect2(-0.1, -0.1, 0.2, 0.09), c))
 		"full", "long", "braided":
-			out.append(_custom(func(p): return maxf(_ellipse_d(p, Vector2(0.0, -0.03), Vector2(0.095, 0.085)), p.y + 0.005), Rect2(-0.095, -0.1, 0.19, 0.095), c))
+			# The beard itself is raised (tools/characters/beards.py), with the
+			# moustache printed over the mouth inside it.
 			out.append_array(moustache.call(0.036, 0.011))
-		"sideburns":
-			for side in [-1.0, 1.0]:
-				out.append(_box(Vector2(0.105 * side, 0.01), Vector2(0.012, 0.04), 0.005, c))
 		"mutton":
 			for side in [-1.0, 1.0]:
 				out.append(_custom(func(p): return minf(_box_d(p, Vector2(0.1 * side, 0.01), Vector2(0.014, 0.04), 0.005), _ellipse_d(p, Vector2(0.075 * side, -0.035), Vector2(0.035, 0.028))), Rect2(-0.12 if side < 0.0 else 0.04, -0.065, 0.08, 0.12), c))

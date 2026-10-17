@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bw4ktjkoh3yy1"
+path="res://.godot/imported/hair_mohawk_main.obj-5a149d262ca2ff2257bcbb6c5319530e.mesh"
+
+[deps]
+
+files=["res://.godot/imported/hair_mohawk_main.obj-5a149d262ca2ff2257bcbb6c5319530e.mesh"]
+
+source_file="res://characters/meshes/hair_mohawk_main.obj"
+dest_files=["res://.godot/imported/hair_mohawk_main.obj-5a149d262ca2ff2257bcbb6c5319530e.mesh", "res://.godot/imported/hair_mohawk_main.obj-5a149d262ca2ff2257bcbb6c5319530e.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

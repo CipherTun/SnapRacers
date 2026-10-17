@@ -66,6 +66,48 @@
 		"cheering"
 	],
 	"styles": [
+		"facial_hair braided",
+		"facial_hair full",
+		"facial_hair long",
+		"facial_hair sideburns",
+		"hair afro",
+		"hair afro cut",
+		"hair bob",
+		"hair bob cut",
+		"hair bowl",
+		"hair bowl cut",
+		"hair braids",
+		"hair braids cut",
+		"hair bun",
+		"hair bun cut",
+		"hair curly",
+		"hair curly cut",
+		"hair flat_top",
+		"hair flat_top cut",
+		"hair fringe",
+		"hair fringe cut",
+		"hair long",
+		"hair long cut",
+		"hair messy",
+		"hair messy cut",
+		"hair mohawk",
+		"hair mohawk cut",
+		"hair pigtails",
+		"hair pigtails cut",
+		"hair ponytail",
+		"hair ponytail cut",
+		"hair princess",
+		"hair princess cut",
+		"hair quiff",
+		"hair quiff cut",
+		"hair short",
+		"hair short cut",
+		"hair side_part",
+		"hair side_part cut",
+		"hair spiky",
+		"hair spiky cut",
+		"hair wavy",
+		"hair wavy cut",
 		"neck beads",
 		"neck bell",
 		"neck big_bow",
@@ -86,7 +128,51 @@
 		"neck tie",
 		"neck whistle"
 	],
-	"worst_cm3": 0.0096,
+	"worst_cm3": 0.046,
+	"most_turn": {
+		"facial_hair braided": 0.5,
+		"facial_hair full": 1.3,
+		"facial_hair long": 0.5,
+		"facial_hair sideburns": 1.3,
+		"hair afro": 0.8,
+		"hair afro cut": 0.8,
+		"hair bob": 1.3,
+		"hair bob cut": 1.3,
+		"hair bowl": 1.3,
+		"hair bowl cut": 1.3,
+		"hair braids": 1.3,
+		"hair braids cut": 1.3,
+		"hair bun": 1.3,
+		"hair bun cut": 1.3,
+		"hair curly": 1.3,
+		"hair curly cut": 1.3,
+		"hair flat_top": 1.3,
+		"hair flat_top cut": 1.3,
+		"hair fringe": 1.3,
+		"hair fringe cut": 1.3,
+		"hair long": 1.3,
+		"hair long cut": 1.3,
+		"hair messy": 1.3,
+		"hair messy cut": 1.3,
+		"hair mohawk": 1.3,
+		"hair mohawk cut": 1.3,
+		"hair pigtails": 0.5,
+		"hair pigtails cut": 0.5,
+		"hair ponytail": 1.3,
+		"hair ponytail cut": 1.3,
+		"hair princess": 1.3,
+		"hair princess cut": 1.3,
+		"hair quiff": 1.3,
+		"hair quiff cut": 1.3,
+		"hair short": 1.3,
+		"hair short cut": 1.3,
+		"hair side_part": 1.3,
+		"hair side_part cut": 1.3,
+		"hair spiky": 1.3,
+		"hair spiky cut": 1.3,
+		"hair wavy": 1.3,
+		"hair wavy cut": 1.3
+	},
 	"overlaps": [
 		{
 			"pose": "seated, hands resting",
@@ -99,6 +185,66 @@
 			"a": "leg_r",
 			"b": "hand_r",
 			"cm3": 0.0096
+		},
+		{
+			"pose": "head turned +0.00",
+			"a": "facial_hair full",
+			"b": "neck ruff",
+			"cm3": 0.0092
+		},
+		{
+			"pose": "head turned +0.00",
+			"a": "facial_hair long",
+			"b": "neck ruff",
+			"cm3": 0.0092
+		},
+		{
+			"pose": "head turned +0.00",
+			"a": "facial_hair braided",
+			"b": "neck ruff",
+			"cm3": 0.0092
+		},
+		{
+			"pose": "head turned +0.30",
+			"a": "facial_hair braided",
+			"b": "neck spiked_collar",
+			"cm3": 0.001
+		},
+		{
+			"pose": "head turned -0.30",
+			"a": "facial_hair braided",
+			"b": "neck spiked_collar",
+			"cm3": 0.0014
+		},
+		{
+			"pose": "head turned +0.35",
+			"a": "facial_hair braided",
+			"b": "neck scarf",
+			"cm3": 0.046
+		},
+		{
+			"pose": "head turned +0.35",
+			"a": "facial_hair braided",
+			"b": "neck spiked_collar",
+			"cm3": 0.0392
+		},
+		{
+			"pose": "head turned -0.35",
+			"a": "facial_hair braided",
+			"b": "neck spiked_collar",
+			"cm3": 0.0439
+		},
+		{
+			"pose": "head turned +0.50",
+			"a": "facial_hair braided",
+			"b": "neck headphones",
+			"cm3": 0.0051
+		},
+		{
+			"pose": "head turned -0.50",
+			"a": "facial_hair braided",
+			"b": "neck headphones",
+			"cm3": 0.0051
 		}
 	]
 }

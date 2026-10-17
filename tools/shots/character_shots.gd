@@ -7,7 +7,8 @@ extends SceneTree
 ## build/shots/characters.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
 ## Add --out=/some/folder to save them there as well, and --only=necks,faces
-## (any of figure, looks, closeup, necks, faces) for just those sheets.
+## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos)
+## for just those sheets.
 
 const OUT := "res://build/shots/characters"
 const TILE := Vector2i(480, 560)
@@ -137,6 +138,12 @@ func _run() -> void:
 		await _necks()
 	if wanted("faces"):
 		await _faces()
+	if wanted("hair"):
+		await _hair()
+	if wanted("facial_hair"):
+		await _facial_hair()
+	if wanted("combos"):
+		await _combos()
 	if wanted("closeup"):
 		await _closeup()
 	quit()
@@ -225,6 +232,76 @@ func _faces() -> void:
 		var middle := Vector3(0.0, 0.88, 0.0)
 		shots.append(await snap(style, middle + Vector3(-0.2, 0.05, -1.0).normalized() * 1.25, middle))
 	save(sheet(shots, 6, TILE), "faces.png")
+
+
+## Every hairstyle from the front three quarters and from behind, and the
+## cut version each has for under a hat.
+func _hair() -> void:
+	var front := []
+	var back := []
+	var cut := []
+	var middle := Vector3(0.0, 0.86, 0.0)
+	for style in CharacterDesign.styles("hair"):
+		var design := bare()
+		design.set_piece("hair", style, Color("#6b4430"))
+		rig(design, false)
+		front.append(await snap(style, middle + Vector3(-0.6, 0.25, -1.0).normalized() * 1.5, middle))
+		back.append(await snap(style + " behind", middle + Vector3(0.7, 0.3, 1.0).normalized() * 1.5, middle))
+		if style == "none":
+			continue
+		# The cut version on its own, as it is under a hat.
+		var r := CharacterRig.new(design, false)
+		r.bake = false
+		r.position = Vector3(0.0, CharacterRig.FEET_BELOW, 0.0)
+		clear()
+		_stand.add_child(r)
+		for node in r.head().get_children():
+			if node is MeshInstance3D and not node.has_meta("unbaked"):
+				node.free()
+		r.add_style("hair", "cut")
+		cut.append(await snap(style + " cut", middle + Vector3(-0.8, 0.45, -1.0).normalized() * 1.5, middle))
+	save(sheet(front, 5, TILE), "hair.png")
+	save(sheet(back, 5, TILE), "hair_back.png")
+	save(sheet(cut, 5, TILE), "hair_cut.png")
+
+
+## Every facial hair close up, and a few in a mood.
+func _facial_hair() -> void:
+	var shots := []
+	var middle := Vector3(0.0, 0.84, 0.0)
+	for style in CharacterDesign.styles("facial_hair"):
+		var design := bare()
+		design.set_piece("facial_hair", style, Color("#8a5a2b"))
+		rig(design, false)
+		shots.append(await snap(style, middle + Vector3(-0.35, 0.08, -1.0).normalized() * 1.15, middle))
+	for look in [["full", "laugh"], ["walrus", "surprised"], ["long", "happy"], ["sideburns", "surprised"], ["braided", "laugh"]]:
+		var design := bare()
+		design.set_piece("facial_hair", look[0], Color("#8a5a2b"))
+		var r := rig(design, false)
+		r._face.material_override = CharacterRig._new_face_material(r._paint(look[1]))
+		shots.append(await snap("%s, %s" % look, middle + Vector3(-0.2, 0.08, -1.0).normalized() * 1.15, middle))
+	save(sheet(shots, 6, TILE), "facial_hair.png")
+
+
+## A few hair and beard pairs on a driver in a kart.
+func _combos() -> void:
+	var shots := []
+	var pairs := [["long", "full"], ["afro", "sideburns"], ["ponytail", "none"], ["pigtails", "none"], ["mohawk", "long"], ["bob", "sideburns"], ["princess", "none"], ["braids", "braided"]]
+	for pair in pairs:
+		var design := bare()
+		design.set_piece("hair", pair[0], Color("#c47a3a"))
+		design.set_piece("facial_hair", pair[1], Color("#6b4430"))
+		design.set_piece("torso", "racing_suit", Color("#c4281c"))
+		clear()
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/classic.json"), design)
+		_stand.add_child(model)
+		await process_frame
+		var seat := Vector3(0.0, 0.6, 0.0)
+		var found := model.find_children("*", "CharacterRig", true, false)
+		if not found.is_empty():
+			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.55, 0.0)
+		shots.append(await snap("%s, %s" % pair, seat + Vector3(-0.8, 0.35, -1.0).normalized() * 2.6, seat))
+	save(sheet(shots, 4, TILE), "combos.png")
 
 
 func _closeup() -> void:

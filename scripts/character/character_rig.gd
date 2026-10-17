@@ -134,6 +134,9 @@ var _rng := RandomNumberGenerator.new()
 ## (standing) at whatever's caught their eye.
 var _steer_look := 0.0
 var _glance := 0.0
+## How far the head can turn, less with long beards or pigtails (see
+## HairLooks.most_turn).
+var _most_turn := INF
 var _glancing := false
 var _idle_look := 0.0
 var _idle_look_in := 0.0
@@ -152,6 +155,7 @@ var _time := 0.0
 func _init(character: CharacterDesign, sitting := true) -> void:
 	design = character
 	seated = sitting
+	_most_turn = HairLooks.most_turn(character)
 
 
 func _ready() -> void:
@@ -223,7 +227,7 @@ func _apply_head_layer() -> void:
 func look(amount: float) -> void:
 	_steer_look = -clampf(amount, -1.0, 1.0) * 0.35
 	if _head != null and not lively:
-		_head.rotation.y = _steer_look
+		_head.rotation.y = clampf(_steer_look, -_most_turn, _most_turn)
 
 
 ## Looks toward something in the rig's own space, like a kart pulling up
@@ -338,6 +342,7 @@ func _process(delta: float) -> void:
 		turn = _glance
 	if _wave_left > 0.0:
 		turn = 0.0
+	turn = clampf(turn, -_most_turn, _most_turn)
 	_head.rotation.y = lerpf(_head.rotation.y, turn, 1.0 - exp(-delta * 8.0))
 
 	# The arms, when nobody else is posing them. Brick figure arms are too short to
@@ -556,17 +561,19 @@ func add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := f
 
 
 ## Adds the style worn in `slot` as made in tools/characters, if it's made
-## there, on the node for its bone. Returns whether it was.
-func add_style(slot: String) -> bool:
+## there, on the node for its bone, or its `variant` (like hair's "cut" for
+## under a hat) when it has one. Returns whether it was.
+func add_style(slot: String, variant := "") -> bool:
 	var entry := CharacterMesh.style(slot, design.style_of(slot))
 	if entry.is_empty():
 		return false
+	var shape: Dictionary = entry.get(variant, entry) if variant != "" else entry
 	var bones := _bones()
 	bones["legs"] = _legs
 	var parent: Node3D = bones.get(entry.get("bone", "upper"), _upper)
-	for region in entry.regions:
+	for region in shape.regions:
 		var look := CharacterMesh.region_colour(entry, region, design.color_of(slot))
-		add(parent, CharacterMesh.mesh(entry.regions[region]), look[0], Vector3.ZERO, Basis.IDENTITY, look[1])
+		add(parent, CharacterMesh.mesh(shape.regions[region]), look[0], Vector3.ZERO, Basis.IDENTITY, look[1])
 	return true
 
 

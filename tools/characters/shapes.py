@@ -206,3 +206,45 @@ def apply(solid, m):
 def _add():
     from manifold3d import OpType
     return OpType.Add
+
+
+def lathe_at(angles, profile):
+    """A ring around the y axis like lathe, with its sections at these angles
+    (in radians, rising, going once round), for more of them where the
+    section changes quickly."""
+    rings = []
+    for a in angles:
+        rings.append([(r * math.sin(a), y, -r * math.cos(a)) for r, y in profile(a)])
+    return from_grid(rings, True)
+
+
+def angles_round(step_degrees=10.0, extra=()):
+    """Angles once round at about this step, with extra ones (in degrees)
+    added, as radians from -180 up."""
+    out = set(round(-180.0 + step_degrees * k, 4) for k in range(int(round(360.0 / step_degrees))))
+    for e in extra:
+        e = (e + 180.0) % 360.0 - 180.0
+        out.add(round(e, 4))
+    out = sorted(out)
+    # Angles too close together make slivers.
+    kept = []
+    for a in out:
+        if not kept or a - kept[-1] > 1.0:
+            kept.append(a)
+    return [math.radians(a) for a in kept]
+
+
+def curve(points, a):
+    """A value that changes smoothly around the head: `points` are (degrees,
+    value) from 0 (the front) to 180 (the back), the same on both sides, or
+    from -180 to 180 for one that differs."""
+    d = math.degrees(a)
+    d = (d + 180.0) % 360.0 - 180.0
+    if points[0][0] >= 0.0:
+        d = abs(d)
+    for (d0, v0), (d1, v1) in zip(points, points[1:]):
+        if d0 <= d <= d1:
+            t = (d - d0) / (d1 - d0) if d1 > d0 else 0.0
+            t = t * t * (3.0 - 2.0 * t)
+            return v0 + (v1 - v0) * t
+    return points[0][1] if d < points[0][0] else points[-1][1]

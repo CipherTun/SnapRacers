@@ -7,8 +7,10 @@ The driver pieces are modelled here in Python, the same way the kart parts are i
 
 - `shapes.py` has the shapes the pieces are made of.
 - `necks.py` makes what's worn around the neck, one function a style. Each comes out cut back from the torso, the neck post and the head, a hairline off them, and in colour regions: main in the piece's colour, dark and light shades of it, and fixed colours like gold and white listed in `COLOURS`.
+- `hair.py` makes the hairdos, mostly a moulded cap with a few broad lobes, and a cut version of each that stops at the hat line (`CUT_Y`) for under hats. `pieces_made.json` gives the cut's top and radius.
+- `beards.py` makes the raised facial hair: the full, long and braided beards and sideburns. The rest of the facial hair is printed in `scripts/character/face_print.gd`.
 
-So far it makes the bare figure (hips, legs standing and seated, torso with its collar, neck, arms, hands and the stud on the head) and the neck pieces. The other pieces are still made in `scripts/character/looks`. The clipping report checks each neck piece against the torso, neck and head and against the arms and hands in every pose.
+So far it makes the bare figure (hips, legs standing and seated, torso with its collar, neck, arms, hands and the stud on the head), the neck pieces, hair and raised facial hair. The other pieces are still made in `scripts/character/looks`. The clipping report checks each neck piece against the torso, neck and head and against the arms and hands in every pose. It checks hair and beards against the head, stud, face and each other, and turns the head to find how far it can go before a piece hits the torso, a neck piece or the arms. Pieces that can't turn all the way get a `most_turn`, and the rig keeps the head within it.
 
 ```
 uv run --with manifold3d --with numpy tools/characters/make_characters.py
@@ -16,4 +18,4 @@ uv run --with manifold3d --with numpy tools/characters/make_characters.py
 
 After making them, run the Godot import (`tools/run-tests.sh` does it first thing). If a mesh came out empty once, Godot keeps it marked as broken even after it's fixed, so delete its `.obj.import` file and import again.
 
-`tools/shots/character_shots.gd` takes pictures of the figure to check them. `--only=necks,faces` makes just the sheets of every neck piece and every face.
+`tools/shots/character_shots.gd` takes pictures of the figure to check them. `--only=necks,faces` makes just the sheets of every neck piece and every face; `hair`, `facial_hair` and `combos` make the hair, cut, beard and seated driver sheets.
