@@ -362,6 +362,17 @@ class Runner:
 		var second := CharacterRig.new(again_who.duplicate_design(), true)
 		add_child(second)
 		check(first.upper().get_node("Baked").mesh == second.upper().get_node("Baked").mesh, "a driver built twice is baked once")
+		# The same driver in an upright seat and lying back wears a different back piece.
+		var caped := again_who.duplicate_design()
+		caped.set_piece("back", "cape")
+		var upright := CharacterRig.new(caped, true)
+		add_child(upright)
+		var lying := CharacterRig.new(caped.duplicate_design(), true)
+		lying.recline = 1.0
+		add_child(lying)
+		check(upright.upper().get_node("Baked").mesh != lying.upper().get_node("Baked").mesh, "lying back is baked with the back piece's own shape")
+		for r in [upright, lying]:
+			r.free()
 		# Astride, the legs are a bone of their own, swung down.
 		var rider := CharacterRig.new(again_who, true)
 		rider.astride = true

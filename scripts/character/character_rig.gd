@@ -500,7 +500,8 @@ func _build() -> void:
 	_build_head()
 	_build_arms()
 	var bones := _bones()
-	var key := "%s %s %s" % [JSON.stringify(design.to_dict()), seated, astride]
+	# The back piece has its own shape lying back, so the recline is in the key too.
+	var key := "%s %s %s %s" % [JSON.stringify(design.to_dict()), seated, astride, back_variant()]
 	var baked := CharacterMesh.kept(key) if bake else {}
 	if baked.is_empty():
 		var pose := "astride" if astride else ("seated" if seated else "standing")
@@ -569,7 +570,9 @@ func add_style(slot: String, variant := "", place := Transform3D.IDENTITY) -> bo
 	var entry := CharacterMesh.style(slot, design.style_of(slot))
 	if entry.is_empty():
 		return false
-	var shape: Dictionary = entry.get(variant, entry) if variant != "" else entry
+	if variant != "" and not entry.has(variant):
+		return false
+	var shape: Dictionary = entry.get(variant) if variant != "" else entry
 	var bones := _bones()
 	bones["legs"] = _legs
 	var parent: Node3D = bones.get(shape.get("bone", entry.get("bone", "upper")), _upper)
