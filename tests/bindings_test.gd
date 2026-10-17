@@ -95,5 +95,14 @@ func _initialize() -> void:
 	check(pads.device_of(0) == 9, "and a new one goes to them")
 	pads.free()
 
+	# The Switch layout swaps A and B, and X and Y, for driving and menus.
+	check(Controllers.sounds_like_switch("Nintendo Switch Pro Controller") and not Controllers.sounds_like_switch("Xbox Wireless Controller"), "a Switch controller is known by its name")
+	Controllers.swapped[PAD] = true
+	button(JOY_BUTTON_B, true)
+	check(is_equal_approx(B.strength(settings, 0, "go", PAD), 1.0) and B.strength(settings, 0, "brake", PAD) == 0.0, "with the Switch layout the button where B is goes")
+	button(JOY_BUTTON_B, false)
+	check(B.pad_name([B.BUTTON, JOY_BUTTON_START, 1], true) == "+" and B.pad_name([B.AXIS, JOY_AXIS_TRIGGER_RIGHT, 1], true) == "ZR", "and the buttons go by Switch names")
+	Controllers.swapped.clear()
+
 	print("All binding checks passed." if failures == 0 else "%d binding checks failed." % failures)
 	quit(1 if failures > 0 else 0)
