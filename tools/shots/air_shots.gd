@@ -2,10 +2,11 @@ extends Node
 
 ## Takes pictures of the garage with the wind shown, for a few stock karts
 ## from the front corner and the side. Like the other shots it needs a screen,
-## and saves in build/shots, or the folder after --.
+## and saves in build/shots, or the folder after --. Name karts after the
+## folder to take only those.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/air_shots.tscn -- /some/folder
 
-const KARTS := ["starter", "streamliner", "superbike", "brick_tank"]
+var KARTS := ["starter", "streamliner", "superbike", "brick_tank"]
 
 var out := "res://build/shots"
 
@@ -14,6 +15,8 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if not args.is_empty():
 		out = args[0]
+	if args.size() > 1:
+		KARTS = args.slice(1)
 	DirAccess.make_dir_recursive_absolute(out)
 	var host := Node.new()
 	add_child(host)

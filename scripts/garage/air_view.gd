@@ -124,21 +124,21 @@ func show_for(stats: KartStats, shapes: Array[Node3D]) -> void:
 # The squares.
 
 ## Every mesh in the models, as [world to mesh, mesh to world, world box,
-## triangles].
+## triangles, whether it's the driver].
 func _targets(shapes: Array[Node3D]) -> Array:
 	var found := []
-	var stack: Array[Node] = []
-	stack.append_array(shapes)
-	while not stack.is_empty():
-		var node: Node = stack.pop_back()
-		if not is_instance_valid(node) or node.is_queued_for_deletion():
-			continue
-		stack.append_array(node.get_children())
-		if node is MeshInstance3D and node.mesh != null and node.is_visible_in_tree():
-			var place: Transform3D = node.global_transform
-			var faces: TriangleMesh = node.mesh.generate_triangle_mesh()
-			if faces != null:
-				found.append([place.affine_inverse(), place, place * node.mesh.get_aabb(), faces])
+	for shape in shapes:
+		var stack: Array[Node] = [shape]
+		while not stack.is_empty():
+			var node: Node = stack.pop_back()
+			if not is_instance_valid(node) or node.is_queued_for_deletion():
+				continue
+			stack.append_array(node.get_children())
+			if node is MeshInstance3D and node.mesh != null and node.is_visible_in_tree():
+				var place: Transform3D = node.global_transform
+				var faces: TriangleMesh = node.mesh.generate_triangle_mesh()
+				if faces != null:
+					found.append([place.affine_inverse(), place, place * node.mesh.get_aabb(), faces, shape is CharacterRig])
 	return found
 
 
@@ -156,10 +156,15 @@ func _square_mesh(stats: KartStats, targets: Array) -> ArrayMesh:
 		# Where the wind meets it, and which way that face leans.
 		# Squares where the wind meets no model, like through the gaps in a
 		# frame or past a rider's elbows, are left out.
+		# The driver's squares go on the driver wherever they are, since a rider
+		# leans out past the seat over the tank.
+		var driver: bool = entry[4] == "driver"
 		var hit_z := INF
 		var normal := Vector3.FORWARD
-		var start := Vector3(middle.x, middle.y, front - 0.5)
+		var start := Vector3(middle.x, middle.y, front - (3.0 if driver else 0.5))
 		for target in targets:
+			if target[4] != driver:
+				continue
 			var box: AABB = target[2]
 			if middle.x < box.position.x or middle.x > box.end.x or middle.y < box.position.y or middle.y > box.end.y:
 				continue
@@ -168,7 +173,7 @@ func _square_mesh(stats: KartStats, targets: Array) -> ArrayMesh:
 			if hit.is_empty():
 				continue
 			var at: Vector3 = (target[1] as Transform3D) * (hit.position as Vector3)
-			if at.z < hit_z and at.z >= front - 0.02 and at.z <= back + 0.02:
+			if at.z < hit_z and (driver or (at.z >= front - 0.02 and at.z <= back + 0.02)):
 				hit_z = at.z
 				normal = ((target[1] as Transform3D).basis * (hit.normal as Vector3)).normalized()
 		if hit_z == INF:
