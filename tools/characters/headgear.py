@@ -490,39 +490,124 @@ def propeller():
 
 
 def beret():
-    """A soft flat beret pulled over to one side, with a little stalk."""
+    """A soft flat beret, one puffed shape over the head, a little higher on
+    one side, with a little stalk."""
     rim = rim_line(0.072, 0.046, 0.044)
-    band = ring(lambda a: rim(a) - 0.001, 0.034, inner_line(), 0.158, 0.008)
-    puff = hat(lambda a: 0.076 + 0.012 * max(0.0, math.cos(a)), radius=0.178, top=0.165, dome=0.014, corner=0.045, lip=0.02, bulge=0.004, step=24.0, extra=(), over_hair=False)
-    stalk = tube((0.0, 0.17, 0.0), (0.003, 0.198, 0.0), 0.007, 0.006, 10)
-    tilt = lambda m: m.rotate([0.0, 0.0, -7.0]).translate([0.01, 0.006, 0.0])
-    return {"main": band + tilt(puff), "dark": tilt(stalk)}
+    puff = hat(rim, radius=lambda a: 0.176 + 0.006 * math.sin(a), top=lambda a: 0.158 + 0.01 * math.sin(a), dome=0.012, corner=0.045, lip=0.014, bulge=0.004, under=0.02, step=15.0)
+    stalk = tube((0.01, 0.164, 0.0), (0.013, 0.196, 0.0), 0.006, 0.005, 10)
+    return {"main": puff, "dark": stalk}
 
 
-# Worn on the hair, made to fit the bare head.
+# Worn on the hair: bands made for each hairdo, snug on it at their height.
 
-def headband():
+SLICE_YS = np.arange(0.056, 0.172, 0.004)
+BIN = 3.0
+BINS = int(360 / BIN)
+
+
+def _window(values, k, pick):
+    """Each value with its k neighbours either side round the ring, picked
+    over by `pick` (np.max or np.min)."""
+    return pick(np.stack([np.roll(values, i) for i in range(-k, k + 1)]), axis=0)
+
+
+class Surface:
+    """How far out a head and its hair reach at each angle round the head
+    (BIN degrees apiece, from the front towards +x) and each height."""
+
+    def __init__(self, solid):
+        turned = solid.rotate([90.0, 0.0, 0.0])
+        rows = []
+        for y in SLICE_YS:
+            reach = np.zeros(BINS)
+            for poly in turned.slice(float(y)).to_polygons():
+                pts = np.asarray(poly, float)
+                nxt = np.roll(pts, -1, axis=0)
+                dense = [pts]
+                for t in np.linspace(0.0, 1.0, 9)[1:-1]:
+                    dense.append(pts + (nxt - pts) * t)
+                pts = np.concatenate(dense)
+                ang = np.degrees(np.arctan2(pts[:, 0], pts[:, 1])) % 360.0
+                idx = (ang / BIN).astype(int) % BINS
+                np.maximum.at(reach, idx, np.hypot(pts[:, 0], pts[:, 1]))
+            # Wide enough that chords between a band's sections stay clear.
+            rows.append(_window(reach, 2, np.max))
+        self.rows = np.array(rows)
+
+    def reach(self, bottom, height):
+        """How far out it reaches at each bin between `bottom` and `bottom`
+        + `height`, each a function of the angle in radians."""
+        out = np.zeros(BINS)
+        for k in range(BINS):
+            a = math.radians(k * BIN)
+            b = bottom(a)
+            use = (SLICE_YS >= b - 0.002) & (SLICE_YS <= b + height(a) + 0.002)
+            out[k] = self.rows[use, k].max()
+        return out
+
+    def most(self, degrees, y0, y1):
+        """The furthest it reaches within `degrees` of the front between two
+        heights."""
+        k = int(degrees / BIN)
+        cols = [i % BINS for i in range(-k, k + 1)]
+        use = (SLICE_YS >= y0) & (SLICE_YS <= y1)
+        return float(self.rows[use][:, cols].max())
+
+
+def _ring_fn(values):
+    """A function of the angle (radians) going smoothly between bins."""
+    def f(a):
+        x = (math.degrees(a) % 360.0) / BIN
+        i = int(x)
+        t = x - i
+        return float(values[i % BINS] * (1.0 - t) + values[(i + 1) % BINS] * t)
+    return f
+
+
+def fit_band(on, front, height):
+    """Where a band `height` tall sits on a hairdo: its bottom `front` high
+    at the front, rising towards the back if that keeps it snugger, and how
+    far out its inside is round the head. Narrow bits standing out (a
+    mohawk's crest, spikes, ties) are left out, so the band goes under
+    them."""
+    tall = _v(height)
+    best = None
+    for tilt in (0.0, 0.01, 0.02, 0.03):
+        bottom = (lambda t: lambda a: front + t * (1.0 - math.cos(a)) * 0.5)(tilt)
+        reach = on.reach(bottom, tall)
+        opened = _window(_window(reach, 4, np.min), 4, np.max)
+        score = opened.mean() + tilt * 0.2
+        if best is None or score < best[0]:
+            best = (score, bottom, opened)
+    return best[1], _ring_fn(best[2] + 0.0015)
+
+
+def headband(on):
     """A sweatband round the brow with goggles on its front."""
-    band = ring(0.07, 0.024, 0.123, 0.134, 0.006)
-    frames, lenses, _ = goggles(0.094, 0.134, 0.35, 0.021)
+    bottom, inside = fit_band(on, 0.07, 0.024)
+    band = ring(bottom, 0.024, inside, lambda a: inside(a) + 0.011, 0.006, 10.0, ())
+    out = max(inside(0.0) + 0.011, on.most(24.0, 0.074, 0.12) + 0.006)
+    frames, lenses, _ = goggles(0.094, out, 0.35, 0.021)
     return {"main": band, "ink": frames, "glass": lenses}
 
 
-def tiara():
+def tiara(on):
     """A slim band over the front of the hair, rising to a point with a gem."""
     def top(a):
-        d = abs(math.degrees(a))
+        d = abs(math.degrees((a + math.pi) % (2.0 * math.pi) - math.pi))
         return 0.016 + 0.03 * max(0.0, 1.0 - d / 22.0) ** 1.5 + 0.012 * max(0.0, 1.0 - abs(d - 38.0) / 10.0)
 
+    bottom, inside = fit_band(on, 0.074, top)
     from shapes import from_grid
     rings = []
     for k in range(21):
         a = math.radians(-70.0 + 140.0 * k / 20)
-        rings.append([(u * math.sin(a), v, -u * math.cos(a)) for u, v in rounded_rect(0.123, 0.131, 0.074, 0.074 + top(a), 0.003, 2)])
+        r, b = inside(a), bottom(a)
+        rings.append([(u * math.sin(a), v, -u * math.cos(a)) for u, v in rounded_rect(r, r + 0.008, b, b + top(a), 0.003, 2)])
     band = from_grid(rings, False)
-    ends = union([ball(around(0.127, 70.0 * s, 0.082), 0.007, 8) for s in (-1.0, 1.0)])
-    gem = band ^ ball((0.0, 0.098, -0.132), 0.012, 14)
-    side_gems = union([band ^ ball(around(0.132, 38.0 * s, 0.092), 0.007, 10) for s in (-1.0, 1.0)])
+    ends = union([ball(around(inside(math.radians(70.0 * s)) + 0.004, 70.0 * s, bottom(math.radians(70.0)) + 0.008), 0.007, 8) for s in (-1.0, 1.0)])
+    gem = band ^ ball((0.0, 0.098, -inside(0.0) - 0.009), 0.012, 14)
+    side_gems = union([band ^ ball(around(inside(math.radians(38.0 * s)) + 0.009, 38.0 * s, bottom(math.radians(38.0)) + 0.018), 0.007, 10) for s in (-1.0, 1.0)])
     return finish({"main": band + ends, "gem": gem, "pink": side_gems}, "gem", "pink")
 
 
@@ -536,11 +621,15 @@ def party():
     return {"main": turn(cone), "white": turn(trim + pom)}
 
 
-def horns():
+def horns(on):
     """Two curved horns on a band round the brow."""
-    band = ring(0.07, 0.022, 0.123, 0.133, 0.006)
-    out = union([horn((0.15 * s, 0.084, 0.01), s, 0.8, 0.02) for s in (-1.0, 1.0)])
-    return {"main": out, "dark": band}
+    bottom, inside = fit_band(on, 0.07, 0.022)
+    band = ring(bottom, 0.022, inside, lambda a: inside(a) + 0.01, 0.006, 10.0, ())
+    out = []
+    for s in (-1.0, 1.0):
+        a = math.radians(90.0 * s)
+        out.append(horn(around(inside(a) + 0.016, 90.0 * s, bottom(a) + 0.012) + np.array([0.0, 0.0, 0.01]), s, 0.8, 0.02))
+    return {"main": union(out), "dark": band}
 
 
 STYLES = {
@@ -574,7 +663,10 @@ HAIR.update({"headband": "full", "tiara": "full", "party": "full", "horns": "ful
 # How a piece worn on the hair is fitted to each hairdo: "around" grows it
 # out round the hair (and may lift it a little and move it back), "over"
 # grows it all over from the middle of the head, "on" lifts it onto the top.
-FIT = {"headband": "around", "tiara": "around", "party": "on", "horns": "around"}
+FIT = {"party": "on"}
+
+# Made for each hairdo, from the Surface of the head and that hair.
+BANDS = ("headband", "tiara", "horns")
 
 
 def placed(solid, fit):

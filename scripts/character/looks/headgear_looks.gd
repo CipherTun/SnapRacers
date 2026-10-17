@@ -4,8 +4,8 @@ extends RefCounted
 ## Hats, helmets and the like, made in tools/characters/headgear.py, in the
 ## headgear's colour on the head. Each says what hair shows under it: hats
 ## have the cut hair under them, helmets and hoods hide it, and what's worn
-## on the hair (a headband, a tiara, a party hat, horns) has the full hair
-## and is placed to fit each hairdo.
+## on the hair has the full hair: bands (a headband, a tiara, horns) are made
+## for each hairdo, and a party hat is placed to fit it.
 
 
 ## What hair shows under this headgear: "cut", "hidden" or "full".
@@ -32,5 +32,8 @@ static func build(rig: CharacterRig) -> void:
 	if style == "none":
 		return
 	var hair := rig.design.style_of("hair")
-	if not rig.add_style("headgear", "", fit(style, hair)):
+	var made_on := "on_" + hair
+	if CharacterMesh.style("headgear", style).has(made_on):
+		rig.add_style("headgear", made_on)
+	elif not rig.add_style("headgear", "", fit(style, hair)):
 		push_warning("No headgear made for %s" % style)

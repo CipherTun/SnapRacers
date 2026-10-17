@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ho1t7gr44i01"
+path="res://.godot/imported/headgear_headband_on_mohawk_glass.obj-7ae2a11a4143b0d7d64f49988b1d3c4c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/headgear_headband_on_mohawk_glass.obj-7ae2a11a4143b0d7d64f49988b1d3c4c.mesh"]
+
+source_file="res://characters/meshes/headgear_headband_on_mohawk_glass.obj"
+dest_files=["res://.godot/imported/headgear_headband_on_mohawk_glass.obj-7ae2a11a4143b0d7d64f49988b1d3c4c.mesh", "res://.godot/imported/headgear_headband_on_mohawk_glass.obj-7ae2a11a4143b0d7d64f49988b1d3c4c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

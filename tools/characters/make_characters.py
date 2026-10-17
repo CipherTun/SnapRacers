@@ -372,11 +372,29 @@ def make():
     for style, make_style in headgear.STYLES.items():
         mode = headgear.HAIR[style]
         keep = hat_keepout if mode == "cut" else head_keepout
-        regions = {k: (v - keep).simplify(0.0016) for k, v in make_style().items()}
-        whole = union(list(regions.values()))
-        entry = {"bone": "head", "hair": mode, "regions": save_regions("headgear_" + style, regions, made), "box": box_of(regions.values())}
         fits = {}
-        if mode == "full":
+        if style in headgear.BANDS:
+            # One for each hairdo, kept off it, saved as variants "on_<hair>"
+            # with the bare head's as the piece itself.
+            made_on = {}
+            for h in ["none"] + list(hair.STYLES):
+                hair_solid = None if h == "none" else style_solids["hair " + h]
+                on = headgear.Surface(bare if hair_solid is None else bare + hair_solid)
+                cut_from = keep if hair_solid is None else keep + hair_solid
+                made_on[h] = {k: v.simplify(0.0016) - cut_from for k, v in make_style(on).items()}
+            regions = made_on["none"]
+            entry = {"bone": "head", "hair": mode, "regions": save_regions("headgear_" + style, regions, made), "box": box_of(regions.values())}
+            for h in hair.STYLES:
+                entry["on_" + h] = {"regions": save_regions("headgear_%s_on_%s" % (style, h), made_on[h], made), "box": box_of(made_on[h].values())}
+            fits = {h: union(list(r.values())) for h, r in made_on.items()}
+            whole = fits["none"]
+            gear_sizes[style] = max(sum(v.num_tri() for v in r.values()) for r in made_on.values())
+        else:
+            regions = {k: (v - keep).simplify(0.0016) for k, v in make_style().items()}
+            whole = union(list(regions.values()))
+            entry = {"bone": "head", "hair": mode, "regions": save_regions("headgear_" + style, regions, made), "box": box_of(regions.values())}
+            gear_sizes[style] = sum(v.num_tri() for v in regions.values())
+        if style in headgear.FIT:
             kind = headgear.FIT[style]
             fits["none"] = headgear.fit_to(whole, bare, kind)
             for h in hair.STYLES:
@@ -387,7 +405,6 @@ def make():
             entry["fit"] = {k: [round(float(x), 4) for x in v] for k, v in fits.items()}
         styles["headgear"][style] = entry
         gear[style] = (whole, fits)
-        gear_sizes[style] = sum(v.num_tri() for v in regions.values())
         print("made headgear", style, mode, gear_sizes[style], "triangles")
     biggest = max(gear_sizes, key=gear_sizes.get)
     print("headgear: %d triangles in all, the biggest %s at %d" % (sum(gear_sizes.values()), biggest, gear_sizes[biggest]))
@@ -395,7 +412,7 @@ def make():
     clipping(solids, style_solids, gear)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'), and for the full hair 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
         "colours": dict(necks.COLOURS, **headgear.COLOURS),
         "figure": pieces,
         "styles": styles,
@@ -534,7 +551,10 @@ def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report):
         name = "headgear " + style
         mode = headgear.HAIR[style]
         if mode == "full":
-            worn = {h: headgear.placed(whole, fits[h]) for h in ["none"] + hairs}
+            if style in headgear.BANDS:
+                worn = {h: fits[h] for h in ["none"] + hairs}
+            else:
+                worn = {h: headgear.placed(whole, fits[h]) for h in ["none"] + hairs}
         else:
             worn = {"": whole}
         for key, solid in worn.items():

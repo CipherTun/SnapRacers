@@ -145,8 +145,8 @@ class Runner:
 				"every hairdo, its cut version and the raised facial hair are made and load %s" % [missing])
 
 		# Every piece of headgear is made in tools/characters and loads, says
-		# what hair shows under it, and what's worn on the hair fits every
-		# hairdo.
+		# what hair shows under it, and what's worn on the hair is made for
+		# or fits every hairdo.
 		missing = []
 		for style in CharacterDesign.styles("headgear"):
 			if style == "none":
@@ -161,7 +161,13 @@ class Runner:
 					missing.append("%s %s" % [style, region])
 			if entry.get("hair", "") == "full":
 				for hair in CharacterDesign.styles("hair"):
-					if not entry.get("fit", {}).has(hair):
+					var made_on: Dictionary = entry.get("on_" + str(hair), {})
+					if not made_on.is_empty():
+						for region in made_on.get("regions", {}):
+							var on_mesh := CharacterMesh.mesh(made_on.regions[region])
+							if on_mesh == null or on_mesh.get_surface_count() == 0:
+								missing.append("%s on %s %s" % [style, hair, region])
+					elif not entry.get("fit", {}).has(hair) and not (hair == "none" and entry.has("on_short")):
 						missing.append("%s on %s" % [style, hair])
 		check(missing.is_empty() and CharacterDesign.styles("headgear").size() >= 20, "every piece of headgear is made and loads %s" % [missing])
 

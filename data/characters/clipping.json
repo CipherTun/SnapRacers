@@ -544,6 +544,24 @@
 			"a": "hair afro",
 			"b": "hand_l",
 			"cm3": 0.0216
+		},
+		{
+			"pose": "any pose",
+			"a": "headgear tiara on side_part",
+			"b": "hair side_part",
+			"cm3": 0.0013
+		},
+		{
+			"pose": "any pose",
+			"a": "headgear tiara on wavy",
+			"b": "hair wavy",
+			"cm3": 0.0052
+		},
+		{
+			"pose": "any pose",
+			"a": "headgear tiara on princess",
+			"b": "hair princess",
+			"cm3": 0.0029
 		}
 	]
 }
