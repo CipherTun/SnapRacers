@@ -47,14 +47,3 @@ static func build(rig: CharacterRig, covered: bool) -> void:
 static func build_beard(rig: CharacterRig) -> void:
 	if not CharacterMesh.style("facial_hair", rig.design.style_of("facial_hair")).is_empty():
 		rig.add_style("facial_hair")
-
-
-## How far the head can turn with this driver's hair and facial hair before
-## they'd go into the shoulders, arms or what's around the neck, in radians.
-static func most_turn(design: CharacterDesign) -> float:
-	var most := INF
-	for slot in ["hair", "facial_hair"]:
-		var entry := CharacterMesh.style(slot, design.style_of(slot))
-		if entry.has("most_turn"):
-			most = minf(most, float(entry.most_turn))
-	return most

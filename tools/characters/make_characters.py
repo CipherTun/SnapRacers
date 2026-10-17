@@ -333,7 +333,7 @@ def make():
     head_keepout = head_local(GAP + 0.001, 24) + stud(GAP + 0.001, 24)
     sizes = {}
     for style, make_style in hair.STYLES.items():
-        regions = {k: (v - head_keepout).simplify(0.0008) for k, v in make_style().items()}
+        regions = {k: (v - head_keepout).simplify(0.0018) for k, v in make_style().items()}
         whole = union(list(regions.values()))
         cut = hair.cut(regions)
         cut_whole = union(list(cut.values()))
@@ -361,16 +361,10 @@ def make():
     biggest = max(sizes, key=lambda k: sizes[k][0])
     print("hair and facial hair: %d triangles in all, the biggest %s at %d" % (total, biggest, sizes[biggest][0]))
 
-    # How far the head can turn with each, from the clipping report.
-    turns = clipping(solids, style_solids)
-    for slot in HEAD_SLOTS:
-        for style, entry in styles[slot].items():
-            most = min(v for k, v in turns.items() if k in ("%s %s" % (slot, style), "%s %s cut" % (slot, style)))
-            if most < HEAD_TURNS[-1]:
-                entry["most_turn"] = most
+    clipping(solids, style_solids)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Hair or facial hair with 'most_turn' keeps the head from turning further than that, in radians.",
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that.",
         "colours": necks.COLOURS,
         "figure": pieces,
         "styles": styles,
@@ -432,7 +426,7 @@ def _boxes_meet(a, b):
     return all(ba[i] <= bb[i + 3] and bb[i] <= ba[i + 3] for i in range(3))
 
 
-def head_clipping(head_styles, solids, neck_styles, poses, report, turns):
+def head_clipping(head_styles, solids, neck_styles, poses, report):
     """Hair and facial hair against the head, the stud, the face and each
     other on the head, and against the neck, the torso, every neck piece and
     the arms and hands as the head turns in every pose."""
@@ -455,8 +449,7 @@ def head_clipping(head_styles, solids, neck_styles, poses, report, turns):
             if _boxes_meet(head_styles[beard], head_styles[h]):
                 note("any pose", beard, h, (head_styles[beard] ^ head_styles[h]).volume() * 1e6)
     # Against what's on the upper body and the arms and hands in every pose,
-    # as the head turns. A piece that clips past a turn keeps the head from
-    # turning that far (its most_turn).
+    # as the head turns all the way either side.
     upper = {"torso": solids["torso"], "neck": solids["neck"]}
     upper.update(neck_styles)
     arms = []
@@ -479,17 +472,9 @@ def head_clipping(head_styles, solids, neck_styles, poses, report, turns):
         return found
 
     for style, solid in head_styles.items():
-        most = 0.0
-        for found in at_turn(solid, 0.0):
-            note(found[0], style, found[1], found[2])
-        for turn in HEAD_TURNS[1:]:
-            found = at_turn(solid, turn) + at_turn(solid, -turn)
-            if any(v > LIMIT_CM3 for _, _, v in found):
-                break
-            most = turn
-            for pose, b, v in found:
+        for turn in HEAD_TURNS:
+            for pose, b, v in at_turn(solid, turn) + (at_turn(solid, -turn) if turn else []):
                 note(pose, style, b, v)
-        turns[style] = most
     return worst
 
 
@@ -537,8 +522,7 @@ def clipping(solids, style_solids):
             worst = max(worst, volume)
             if volume > 0.001:
                 report.append({"pose": name, "a": a, "b": b, "cm3": round(volume, 4)})
-    turns = {}
-    worst = max(worst, head_clipping(head_styles, solids, style_solids, poses, report, turns))
+    worst = max(worst, head_clipping(head_styles, solids, style_solids, poses, report))
     data = {
         "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed.",
         "figure": json.load(open(F.OUT)),
@@ -546,7 +530,6 @@ def clipping(solids, style_solids):
         "poses": [p[0] for p in poses],
         "styles": sorted(list(style_solids) + list(head_styles)),
         "worst_cm3": round(worst, 4),
-        "most_turn": {k: v for k, v in sorted(turns.items())},
         "overlaps": report,
     }
     data["figure"].pop("_comment", None)
@@ -557,10 +540,7 @@ def clipping(solids, style_solids):
     for r in report:
         flag = "CLIPS" if r["cm3"] > LIMIT_CM3 else "touch"
         print("  %s %-34s %s / %s %.4f cm3" % (flag, r["pose"], r["a"], r["b"], r["cm3"]))
-    for k, v in sorted(turns.items()):
-        if v < HEAD_TURNS[-1]:
-            print("  %s turns the head at most %.2f" % (k, v))
-    return turns
+
 
 
 if __name__ == "__main__":

@@ -68,21 +68,21 @@ def full():
 
 
 def long_beard():
-    """The full beard with a long soft point hanging from the chin."""
+    """The full beard with a soft point under the chin, ending above the
+    chest."""
     beard = full()["main"]
-    tip = Manifold.batch_hull([blob((0.0, -0.1, -0.13), (0.055, 0.02, 0.012), 16), ball((0.0, -0.2, -0.14), 0.01, 10)])
+    tip = Manifold.batch_hull([blob((0.0, -0.095, -0.128), (0.05, 0.02, 0.012), 14), ball((0.0, -0.116, -0.136), 0.008, 10)])
     return {"main": beard + tip}
 
 
 def braided():
-    """A shorter beard with a braid hanging from the chin."""
+    """A shorter beard with a short braid at the chin, ending above the
+    chest."""
     top = lambda a: curve([(0.0, -0.072), (18.0, -0.068), (36.0, -0.045), (50.0, -0.02), (62.0, 0.012), (BEARD_ANGLE, 0.022)], a)
     beard = jaw(top, lambda a: 0.012)
-    pts = [(0.0, -0.118, -0.138), (0.0, -0.152, -0.148), (0.0, -0.186, -0.152)]
-    plait = union([ball(p, r, 12) for p, r in zip(pts, (0.024, 0.022, 0.02))])
-    plait = plait + Manifold.batch_hull([ball(pts[0], 0.016, 10), ball(pts[-1], 0.016, 10)])
-    end = ball((0.0, -0.212, -0.152), 0.013, 10)
-    plait, tie = band(plait + end, np.array([0.0, -0.2, -0.152]), (0.0, 1.0, 0.0), 0.006)
+    plait = ball((0.0, -0.1, -0.132), 0.016, 10)
+    end = ball((0.0, -0.114, -0.134), 0.008, 10)
+    plait, tie = band(plait + end, np.array([0.0, -0.11, -0.134]), (0.0, 1.0, 0.0), 0.004)
     return {"main": beard + plait, "dark": tie}
 
 

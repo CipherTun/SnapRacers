@@ -129,50 +129,6 @@
 		"neck whistle"
 	],
 	"worst_cm3": 0.0216,
-	"most_turn": {
-		"facial_hair braided": 0.15,
-		"facial_hair full": 1.3,
-		"facial_hair long": 0.15,
-		"facial_hair sideburns": 1.3,
-		"hair afro": 1.3,
-		"hair afro cut": 1.3,
-		"hair bob": 1.3,
-		"hair bob cut": 1.3,
-		"hair bowl": 1.3,
-		"hair bowl cut": 1.3,
-		"hair braids": 1.3,
-		"hair braids cut": 1.3,
-		"hair bun": 1.3,
-		"hair bun cut": 1.3,
-		"hair curly": 1.3,
-		"hair curly cut": 1.3,
-		"hair flat_top": 1.3,
-		"hair flat_top cut": 1.3,
-		"hair fringe": 1.3,
-		"hair fringe cut": 1.3,
-		"hair long": 1.3,
-		"hair long cut": 1.3,
-		"hair messy": 1.3,
-		"hair messy cut": 1.3,
-		"hair mohawk": 1.3,
-		"hair mohawk cut": 1.3,
-		"hair pigtails": 0.5,
-		"hair pigtails cut": 0.5,
-		"hair ponytail": 1.3,
-		"hair ponytail cut": 1.3,
-		"hair princess": 1.3,
-		"hair princess cut": 1.3,
-		"hair quiff": 1.3,
-		"hair quiff cut": 1.3,
-		"hair short": 1.3,
-		"hair short cut": 1.3,
-		"hair side_part": 1.3,
-		"hair side_part cut": 1.3,
-		"hair spiky": 1.3,
-		"hair spiky cut": 1.3,
-		"hair wavy": 1.3,
-		"hair wavy cut": 1.3
-	},
 	"overlaps": [
 		{
 			"pose": "seated, hands resting",
@@ -190,7 +146,7 @@
 			"pose": "any pose",
 			"a": "hair bowl",
 			"b": "face",
-			"cm3": 0.0166
+			"cm3": 0.013
 		},
 		{
 			"pose": "seated, arms swung 120 degrees, head turned +1.30",
@@ -214,7 +170,7 @@
 			"pose": "seated, arms swung 120 degrees, head turned -1.30",
 			"a": "hair afro cut",
 			"b": "hand_l",
-			"cm3": 0.0216
+			"cm3": 0.0097
 		}
 	]
 }

@@ -140,9 +140,9 @@ def around(r, degrees, y):
     return np.array([r * math.sin(a), y, -r * math.cos(a)])
 
 
-def tuft(base, tip, r0, r1, seg=12):
+def tuft(base, tip, r0, r1, seg=12, tip_seg=None):
     """A chunky rounded cone from base to tip."""
-    return Manifold.batch_hull([ball(base, r0, seg), ball(tip, r1, seg)])
+    return Manifold.batch_hull([ball(base, r0, seg), ball(tip, r1, tip_seg or seg)])
 
 
 def lobe(at, radii, along=None, seg=SEG):
@@ -195,13 +195,13 @@ def short():
 
 
 def spiky():
-    """A few broad spikes with round tips rising from short hair."""
+    """Three broad spikes with round tips rising from short hair."""
     base = cap(face_line(0.08, -0.02, -0.055), top=0.148)
     spikes = []
-    for deg, r, lean, h in ((0.0, 0.05, 0.45, 0.07), (-70.0, 0.075, 0.6, 0.06), (70.0, 0.075, 0.6, 0.06), (180.0, 0.06, 0.6, 0.06)):
+    for deg, r, lean, h in ((0.0, 0.05, 0.45, 0.07), (-110.0, 0.07, 0.6, 0.062), (110.0, 0.07, 0.6, 0.062)):
         root = around(r, deg, 0.14)
         d = np.array([0.0, 1.0, 0.0]) + around(lean, deg, 0.0)
-        spikes.append(tuft(root, root + d / np.linalg.norm(d) * h, 0.05, 0.022, 12))
+        spikes.append(tuft(root, root + d / np.linalg.norm(d) * h, 0.052, 0.024, 12, 8))
     return {"main": base + union(spikes)}
 
 
@@ -250,7 +250,7 @@ def side_part():
     """Parted on the right and swept over to the left in one big wave."""
     line = lambda a: curve([(-180.0, -0.06), (-90.0, -0.03), (-62.0, 0.068), (-30.0, 0.07), (0.0, 0.074), (40.0, 0.088), (62.0, 0.088), (90.0, -0.02), (180.0, -0.06)], a)
     base = cap(line, top=0.148, extra=(-66.0, -62.0, -58.0, 58.0, 62.0, 66.0))
-    sweep = Manifold.batch_hull([blob((0.055, 0.156, -0.05), (0.045, 0.024, 0.05), SEG), blob((-0.07, 0.114, -0.09), (0.06, 0.03, 0.05), SEG)])
+    sweep = Manifold.batch_hull([blob((0.055, 0.156, -0.05), (0.045, 0.024, 0.05), 12), blob((-0.07, 0.114, -0.09), (0.06, 0.03, 0.05), 12)])
     main, part = parting(base + sweep, 0.048, -0.15, -0.032)
     return {"main": main, "dark": part}
 
@@ -288,9 +288,9 @@ def pigtails():
     main, part = parting(base, 0.0, -0.2, 0.15)
     tails, ties = [], []
     for s in (-1.0, 1.0):
-        pts = [(0.128 * s, 0.035, 0.06), (0.155 * s, -0.005, 0.08), (0.165 * s, -0.05, 0.085), (0.16 * s, -0.085, 0.08)]
-        tail = chain(pts, [0.03, 0.032, 0.027, 0.017])
-        tail, tie = band(tail, np.array(pts[0]) + np.array([0.017 * s, -0.01, 0.003]), (s, -0.6, 0.1), 0.008)
+        pts = [around(0.13, 120.0 * s, y) for y in (0.05, 0.015, -0.025, -0.055)]
+        tail = chain(pts, [0.026, 0.026, 0.022, 0.015], 8)
+        tail, tie = band(tail, pts[0] + np.array([0.0, -0.012, 0.0]), (0.0, 1.0, 0.0), 0.007)
         tails.append(tail)
         ties.append(tie)
     return {"main": main + union(tails), "dark": union(ties)}
@@ -312,11 +312,10 @@ def afro():
 
 
 def curly():
-    base = cap(face_line(0.08, -0.02, -0.055), radius=0.138)
+    base = cap(face_line(0.08, -0.02, -0.055), radius=0.138, dome=0.026)
     curls = []
-    for deg, y in ((-35.0, 0.13), (35.0, 0.13), (-110.0, 0.1), (110.0, 0.1), (180.0, 0.1)):
-        curls.append(ball(around(0.115, deg, y), 0.038, 12))
-    curls.append(ball((0.0, 0.15, 0.0), 0.045, 12))
+    for deg, y in ((-40.0, 0.128), (40.0, 0.128), (-130.0, 0.1), (130.0, 0.1)):
+        curls.append(ball(around(0.115, deg, y), 0.04, 10))
     return {"main": base + union(curls)}
 
 
@@ -331,7 +330,7 @@ def messy():
     base = cap(face_line(0.08, -0.02, -0.05))
     tufts = []
     for x, z, lx, lz, h in ((-0.045, -0.05, -0.06, -0.045, 0.03), (0.04, -0.03, 0.055, -0.02, 0.04), (0.0, 0.06, 0.02, 0.06, 0.04)):
-        tufts.append(tuft((x, 0.14, z), (x + lx, 0.14 + h, z + lz), 0.05, 0.024, 12))
+        tufts.append(tuft((x, 0.14, z), (x + lx, 0.14 + h, z + lz), 0.05, 0.024, 10, 8))
     return {"main": base + union(tufts)}
 
 
@@ -341,8 +340,8 @@ def princess():
     base = cap(line, radius=lambda a: curve([(0.0, 0.138), (90.0, 0.146), (180.0, 0.148)], a), bulge=0.006, extra=DROP)
     curls = []
     for deg in (-110.0, 180.0, 110.0):
-        curls.append(ball(around(0.15, deg, -0.07), 0.034, 10))
-    sweep = lobe((0.03, 0.136, -0.06), (0.09, 0.028, 0.06), (-0.4, 0.3, -1.0))
+        curls.append(ball(around(0.15, deg, -0.07), 0.034, 8))
+    sweep = lobe((0.03, 0.136, -0.06), (0.09, 0.028, 0.06), (-0.4, 0.3, -1.0), 8)
     return {"main": base + union(curls) + sweep}
 
 
@@ -352,10 +351,10 @@ def braids():
     plaits, ties = [], []
     for s in (-1.0, 1.0):
         at = [around(0.146, 100.0 * s, y) for y in (0.0, -0.035, -0.07)]
-        plaits += [ball(p, 0.024, 10) for p in at]
-        plaits.append(Manifold.batch_hull([ball(at[0], 0.018, 10), ball(at[-1], 0.018, 10)]))
+        plaits += [ball(p, 0.024, 8) for p in at]
+        plaits.append(Manifold.batch_hull([ball(at[0], 0.018, 8), ball(at[-1], 0.018, 8)]))
         tip = around(0.146, 100.0 * s, -0.094)
-        ties.append(ball(tip, 0.013, 10))
+        ties.append(ball(tip, 0.013, 8))
     return {"main": main + union(plaits), "dark": union(ties)}
 
 
