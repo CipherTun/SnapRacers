@@ -149,7 +149,7 @@ class Runner:
 		check(karts.shielded.lost.is_empty(), "but not off a kart with its shield up")
 		check(karts.hunted.lost.size() >= 1, "a homing brick turns and finds a kart off to one side (%d lost)" % karts.hunted.lost.size())
 		var piles := get_children().filter(func(n): return n is BrickPile).size()
-		check(piles == 3, "a brick dropper leaves three bricks behind (%d)" % piles)
+		check(piles == BrickPile.DROP.size(), "a brick dropper leaves a pile of bricks behind (%d)" % piles)
 		var one: Array[int] = [5, 6]
 		karts.dropper.lose_parts(one)
 		check(karts.dropper.lost.size() >= 2, "the dropper loses a couple of parts")

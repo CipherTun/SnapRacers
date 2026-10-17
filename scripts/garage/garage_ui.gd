@@ -821,7 +821,7 @@ class PartTile:
 	signal chosen
 	signal dragged(finger: int)
 
-	const DRAG_START := 22.0
+	const DRAG_START := 28.0
 
 	var id := ""
 	var _down := Vector2.ZERO
@@ -848,6 +848,11 @@ class PartTile:
 			if not _dragged:
 				chosen.emit())
 
+	## A drag pulls the part out only when it's clearly sideways and the list
+	## hasn't scrolled, so a slanted flick still scrolls.
+	func _pulled_out(moved: Vector2) -> bool:
+		return moved.length() > DRAG_START and absf(moved.x) > absf(moved.y) * 2.0 and not scrolled()
+
 	func _gui_input(event: InputEvent) -> void:
 		super(event)
 		if event is InputEventScreenTouch:
@@ -857,7 +862,7 @@ class PartTile:
 				_dragged = false
 		elif event is InputEventScreenDrag and _pressing and not _dragged:
 			var moved: Vector2 = event.position - _down
-			if moved.length() > DRAG_START and absf(moved.x) > absf(moved.y):
+			if _pulled_out(moved):
 				_dragged = true
 				dragged.emit(event.index)
 		elif event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and not DisplayServer.is_touchscreen_available():
@@ -867,6 +872,6 @@ class PartTile:
 				_dragged = false
 		elif event is InputEventMouseMotion and _pressing and not _dragged and not DisplayServer.is_touchscreen_available():
 			var moved: Vector2 = event.position - _down
-			if moved.length() > DRAG_START and absf(moved.x) > absf(moved.y):
+			if _pulled_out(moved):
 				_dragged = true
 				dragged.emit(-1)

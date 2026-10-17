@@ -170,8 +170,7 @@ func _bank() -> void:
 
 
 ## A part goes anywhere it fits, joined on or not, but the kart can't go out
-## until everything's joined. A new kart starts empty with the base plate in
-## hand.
+## until everything's joined. A new kart starts empty with nothing in hand.
 func _loose_and_new(parts: int) -> void:
 	var away := Vector3i(0, 0, 0)
 	garage.start_placing("brick_2x2", Basis.IDENTITY, null, away)
@@ -189,7 +188,8 @@ func _loose_and_new(parts: int) -> void:
 	garage.ui.new_pressed.emit()
 	await frames(2)
 	check(garage.design.parts.is_empty(), "a new kart starts empty")
-	check(garage._holding == Garage.BASE_PART and garage._ghost_ok, "with the base plate in hand, ready to put down")
+	check(garage._holding == "" and garage._ghost == null, "with nothing in hand")
+	garage.start_placing("p_plate_6x10", Basis.IDENTITY, null, Vector3i.ZERO)
 	garage.place()
 	garage.cancel()
 	check(garage.design.parts.size() == 1, "and it goes down")

@@ -2,7 +2,7 @@ extends Node
 
 ## Takes pictures of the newer power-ups in a race on Peach Pit: a tow rope
 ## onto the kart ahead, a brick wall, marbles and a spike trap behind, and a
-## shockwave. It needs a screen, and saves in build/shots.
+## shockwave, the bricks, the cannon and a ghost. It needs a screen, and saves in build/shots.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/powerup_shots.tscn
 
 const OUT := "res://build/shots"
@@ -28,6 +28,15 @@ func look(from_behind: bool, height := 4.0, back := 9.0) -> void:
 	var along := kart.global_basis.z * (back if from_behind else -back)
 	camera.global_position = kart.global_position + along + Vector3.UP * height
 	camera.look_at(kart.global_position + Vector3.UP * 0.5 - along * 0.4, Vector3.UP)
+	camera.make_current()
+
+
+## Looks at the kart from off to its right, a little ahead.
+func look_side() -> void:
+	var kart := race.player.kart
+	var ahead := -kart.global_basis.z * 8.0
+	camera.global_position = kart.global_position + kart.global_basis.x * 9.0 + ahead * 0.5 + Vector3.UP * 2.0
+	camera.look_at(kart.global_position + ahead + Vector3.UP * 0.8, Vector3.UP)
 	camera.make_current()
 
 
@@ -86,6 +95,37 @@ func _ready() -> void:
 		await frames(2)
 		await shot(trap)
 		await frames(90)
+
+	await frames(60)
+	kart.held = ["dropper", ""]
+	kart.held_uses = [1, 0]
+	kart.use_gadget(0)
+	await frames(40)
+	look(true, 3.0, 9.0)
+	await frames(2)
+	await shot("bricks")
+
+	await frames(90)
+	for wait in [3, 12]:
+		kart.held = ["cannon", ""]
+		kart.held_uses = [1, 0]
+		kart._gadget_wait = [0.0, 0.0]
+		kart.use_gadget(0)
+		await frames(wait)
+		look_side()
+		await frames(1)
+		await shot("cannon_%d" % wait)
+		await frames(90)
+
+	await frames(60)
+	kart.held = ["ghost", ""]
+	kart.held_uses = [1, 0]
+	kart.use_gadget(0)
+	for wait in [6, 60, 105]:
+		await frames(wait)
+		look(true, 2.5, 6.0)
+		await frames(1)
+		await shot("ghost_%d" % wait)
 
 	await frames(60)
 	kart.held = ["shockwave", ""]

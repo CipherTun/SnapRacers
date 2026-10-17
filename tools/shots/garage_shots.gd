@@ -50,6 +50,10 @@ func _ready() -> void:
 	garage._focus = Grid.to_metres(Vector3(12.5, 4.0, 12.0))
 	garage._place_camera()
 	await _save("clip")
+	# A new kart, empty on the baseplate.
+	garage.cancel()
+	garage._new_kart()
+	await _save("new_kart")
 	get_tree().quit()
 
 
