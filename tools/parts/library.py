@@ -870,8 +870,8 @@ def front_wing_8x2():
 
 @part
 def rear_wing_8():
-    """A big rear wing 8 wide with a flap and tall endplates, up on two
-    struts from a plate 2×2 in the middle."""
+    """A big rear wing 8 wide with a flap and tall black endplates, up on
+    two struts from a plate 2×2 in the middle."""
     w, l = 8 * STUD, 2 * STUD
     lift = 0.42
     main = profile_x([(0.0, 0.02), (0.03, 0.0), (0.34, 0.01), (0.35, 0.05), (0.08, 0.07), (0.0, 0.05)], 0.04, w - 0.04).translate([0, lift, 0])
@@ -881,8 +881,8 @@ def rear_wing_8():
     struts = [push_x(rounded(side([(0.14, PLATE - 0.01), (0.2, lift + 0.03), (0.34, lift + 0.03), (0.34, PLATE - 0.01)]), 0.01), x, x + 0.04) for x in (0.8, 1.16)]
     middle = [(3, 0), (4, 0), (3, 1), (4, 1)]
     foot = box(3 * STUD, 0, 0, 5 * STUD, PLATE, l)
-    return Part("d_rear_wing_8", "Big rear wing 8 wide", "wing", "details", (w, 0.7, l), union([main, flap, foot] + ends + struts),
-                sockets(middle), RED, lift_area=0.7, aero={"front": 0.9, "back": 0.9}, mass=2.0, strength=350.0,
+    return Part("d_rear_wing_8", "Big rear wing 8 wide", "wing", "details", (w, 0.7, l), union([main, flap, foot] + struts),
+                sockets(middle), RED, trim=(union(ends), BLACK, "plastic"), lift_area=0.7, aero={"front": 0.9, "back": 0.9}, mass=2.0, strength=350.0,
                 solids=[[3 * STUD, 0, 0, 5 * STUD, PLATE, l], [0.04, lift, 0, w - 0.04, lift + 0.2, l], [0, 0.3, 0, 0.04, 0.7, l], [w - 0.04, 0.3, 0, w, 0.7, l]])
 
 
@@ -1167,6 +1167,18 @@ def kart_axle_plate():
     con = sockets(cells) + top_studs(cells, PLATE) + [c("pin", (x, PLATE * 0.5, STUD), (1, 0, 0), STUD) for x in (0.0, 7 * STUD)]
     return Part("p_kart_axle_plate", "Kart axle plate 6×2", "plate", "technic", (8 * STUD, PLATE, 2 * STUD), union([plate] + pins), con, BLACK,
                 solids=[[STUD, 0, 0, 7 * STUD, PLATE, 2 * STUD]], mass=2.0, strength=2500.0)
+
+
+@part
+def kart_axle_plate_4():
+    """A narrow kart axle plate 4×2, pins out of each side like the 6×2, so
+    the wheels sit in close to a slim formula body."""
+    cells = [(i, k) for i in range(1, 5) for k in range(2)]
+    plate = union([box(STUD, 0, 0, 5 * STUD, PLATE, 2 * STUD), studs(cells, PLATE)])
+    pins = [cylinder(HOLE - 0.006, STUD, "x", (x, PLATE * 0.5, STUD), 14) for x in (0.0, 5 * STUD)]
+    con = sockets(cells) + top_studs(cells, PLATE) + [c("pin", (x, PLATE * 0.5, STUD), (1, 0, 0), STUD) for x in (0.0, 5 * STUD)]
+    return Part("p_kart_axle_plate_4", "Kart axle plate 4×2", "plate", "technic", (6 * STUD, PLATE, 2 * STUD), union([plate] + pins), con, BLACK,
+                solids=[[STUD, 0, 0, 5 * STUD, PLATE, 2 * STUD]], mass=1.4, strength=2500.0)
 
 
 def _seat(id, twin, across, plates, along, recline, back, color, bolsters=True):
