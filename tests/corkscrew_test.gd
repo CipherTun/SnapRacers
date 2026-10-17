@@ -40,7 +40,7 @@ class Runner:
 				roll_end = track.distances[k]
 
 		fast = Kart.new()
-		fast.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+		fast.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 		fast.transform = track.place_at(2.0, 0.05)
 		add_child(fast)
 		ai = AIDriver.new()
@@ -53,7 +53,7 @@ class Runner:
 	## well clear, and creeps in.
 	func add_slow() -> void:
 		slow = Kart.new()
-		slow.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+		slow.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 		slow.transform = track.place_at(roll_start - 6.0, 0.05)
 		add_child(slow)
 		slow.controls.throttle = 0.12

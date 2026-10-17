@@ -32,7 +32,7 @@ class Runner:
 		wall.position = Vector3(60.0, 1.5, 60.0)
 		add_child(wall)
 
-		var design := KartDesign.load_file("res://data/karts/stock/starter.json")
+		var design := KartDesign.load_file("res://tests/data/legacy/starter.json")
 		gentle = Kart.new()
 		gentle.build(design)
 		gentle.transform = Transform3D(Basis.IDENTITY, Vector3(40.0, 0.05, 64.0))
@@ -44,7 +44,7 @@ class Runner:
 		# A kart and a bike hit by power-ups, well off to the side.
 		for which in ["starter", "dirt_bike"]:
 			var hit := Kart.new()
-			hit.build(KartDesign.load_file("res://data/karts/stock/%s.json" % which))
+			hit.build(KartDesign.load_file("res://tests/data/legacy/%s.json" % which))
 			hit.transform = Transform3D(Basis.IDENTITY, Vector3(-60.0 - shot.size() * 10.0, 0.05, 100.0))
 			add_child(hit)
 			shot.append(hit)

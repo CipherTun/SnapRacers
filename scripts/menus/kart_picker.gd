@@ -107,7 +107,7 @@ func _ready() -> void:
 	# Your own kart changes in the garage, so take its picture again each time.
 	KartThumbnails.forget(Game.OWN_KART)
 	var last := Game.player_two_kart() if player == 2 else Game.kart_choice()
-	_choose(last if not (last == Game.OWN_KART and not Game.design.problems().is_empty()) else "starter")
+	_choose(last if not (last == Game.OWN_KART and not Game.design.problems().is_empty()) else Game.DEFAULT_STOCK)
 
 
 func go_back() -> void:

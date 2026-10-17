@@ -49,7 +49,7 @@ class Runner:
 	func _ready() -> void:
 		track = TestTrack.new()
 		add_child(track)
-		_ride(KartDesign.load_file("res://data/karts/stock/superbike.json"))
+		_ride(KartDesign.load_file("res://tests/data/legacy/superbike.json"))
 
 	func _ride(design: KartDesign) -> void:
 		if kart != null:
@@ -139,7 +139,7 @@ class Runner:
 				check(absf(kart.lean) < deg_to_rad(2.0), "with no lean (%.1f degrees)" % rad_to_deg(kart.lean))
 				on_trike = true
 				tick = 0
-				_ride(KartDesign.load_file("res://data/karts/stock/tourer.json"))
+				_ride(KartDesign.load_file("res://tests/data/legacy/tourer.json"))
 
 	func _trike_ride(c: KartControls) -> void:
 		match tick:

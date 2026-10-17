@@ -31,7 +31,7 @@ func frames(n: int) -> void:
 
 func kart_at(where: Transform3D, speed: float) -> Kart:
 	var kart := Kart.new()
-	kart.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+	kart.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 	kart.transform = where
 	world.add_child(kart)
 	kart.linear_velocity = -where.basis.z * speed

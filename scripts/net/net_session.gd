@@ -282,7 +282,7 @@ func _setup() -> Dictionary:
 		var fill := mini(drivers.size(), MOST_KARTS - entries.size())
 		for i in fill:
 			var who := Game.roster_driver(drivers[i])
-			entries.push_front({"owner": 1, "ai": true, "name": who.name, "driver": who.to_dict(), "kart": Game.stock_kart(karts.get(drivers[i], "starter")).to_dict(), "rank": ranks.get(drivers[i], i), "line": (i % 3 - 1) * 1.5})
+			entries.push_front({"owner": 1, "ai": true, "name": who.name, "driver": who.to_dict(), "kart": Game.stock_kart(karts.get(drivers[i], Game.DEFAULT_STOCK)).to_dict(), "rank": ranks.get(drivers[i], i), "line": (i % 3 - 1) * 1.5})
 	# In a cup, after the first race the grid goes by the points so far,
 	# leader at the back.
 	if settings.mode == CUP and cup_round > 0:

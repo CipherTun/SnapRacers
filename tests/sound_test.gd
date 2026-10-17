@@ -68,7 +68,7 @@ class Runner:
 		# A kart keeps its sound when a part comes off.
 		add_child(TestTrack.new())
 		var kart := Kart.new()
-		kart.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+		kart.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 		add_child(kart)
 		kart.global_position = Vector3(0.0, 1.0, 0.0)
 		await get_tree().process_frame

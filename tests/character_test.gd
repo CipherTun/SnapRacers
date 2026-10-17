@@ -155,12 +155,12 @@ class Runner:
 		check(tread.weight_class() == "Heavy" and pip.weight_class() == "Light", "Tread is heavy (%.0f kg) and Pip is light (%.0f kg)" % [tread.mass(), pip.mass()])
 
 		# A kart has to have something to steer with.
-		var no_wheel := KartDesign.load_file("res://data/karts/stock/starter.json")
+		var no_wheel := KartDesign.load_file("res://tests/data/legacy/starter.json")
 		no_wheel.parts = no_wheel.parts.filter(func(p): return PartCatalog.get_part(p.id).kind != "steering")
 		check(no_wheel.problems().has("It needs a steering wheel or handlebars in front of the seat."), "a kart with no steering wheel says so")
 
 		# A heavy driver and a light one make different karts.
-		var design := KartDesign.load_file("res://data/karts/stock/starter.json")
+		var design := KartDesign.load_file("res://tests/data/legacy/starter.json")
 		kart = Kart.new()
 		kart.build(design, tread)
 		kart.transform = Transform3D(Basis.IDENTITY, Vector3(60.0, 0.05, 100.0))

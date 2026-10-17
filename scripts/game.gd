@@ -10,6 +10,11 @@ extends Node
 ## The stock karts, which the AI drives and anyone can pick.
 const STOCK := "res://data/karts/stock"
 const STARTER := STOCK + "/starter.json"
+## The kart you start with, and the one player 2 starts with.
+const DEFAULT_STOCK := "starter"
+const PLAYER_TWO_STOCK := "sparky"
+## Stock kart ids that were renamed, old id to new id.
+const OLD_STOCK := {}
 ## The kart you were last working on, kept between launches.
 const CURRENT_KART := "user://current_kart.json"
 ## The driver you last built, kept between launches too.
@@ -415,10 +420,10 @@ func race_split() -> String:
 ## Which kart player 2 drives: a stock kart by its file name, or the one in
 ## the garage (OWN_KART).
 func player_two_kart() -> String:
-	var key: String = settings.get_value("race", "player_two", "sparky")
+	var key := stock_id(settings.get_value("race", "player_two", PLAYER_TWO_STOCK))
 	if key == OWN_KART and design.problems().is_empty():
 		return key
-	return key if stock_keys().has(key) else "sparky"
+	return key if stock_keys().has(key) else PLAYER_TWO_STOCK
 
 
 func player_two_design() -> KartDesign:
@@ -431,6 +436,11 @@ func player_two_design() -> KartDesign:
 func player_two_name() -> String:
 	var name := str(settings.get_value("player", "name_two", "")).strip_edges()
 	return name if name != "" and name != player_name() else "Player 2"
+
+
+## A stock kart id, with an old one swapped for its new id.
+func stock_id(key: String) -> String:
+	return OLD_STOCK.get(key, key)
 
 
 ## The stock karts' file names, without .json, in order.
@@ -486,7 +496,7 @@ func draw_ranks(drivers: Array) -> Dictionary:
 ## Which kart you race in: OWN_KART for the one from the garage, or a stock
 ## kart's key.
 func kart_choice() -> String:
-	var key: String = settings.get_value("race", "kart", OWN_KART)
+	var key := stock_id(settings.get_value("race", "kart", OWN_KART))
 	return key if key == OWN_KART or stock_keys().has(key) else OWN_KART
 
 
