@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. A 'skin' region is in the driver's skin.",
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
 	"colours": {
 		"white": [
 			"#f2f2f2",
@@ -8173,6 +8173,1187 @@
 						0.1554,
 						0.191,
 						-0.0948
+					]
+				}
+			}
+		},
+		"back": {
+			"spiky_shell": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_spiky_shell_main.obj",
+					"light": "res://characters/meshes/back_spiky_shell_light.obj",
+					"dark": "res://characters/meshes/back_spiky_shell_dark.obj",
+					"white": "res://characters/meshes/back_spiky_shell_white.obj"
+				},
+				"box": [
+					-0.17,
+					0.09,
+					0.102,
+					0.17,
+					0.4261,
+					0.267
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_spiky_shell_seated_main.obj",
+						"light": "res://characters/meshes/back_spiky_shell_seated_light.obj",
+						"dark": "res://characters/meshes/back_spiky_shell_seated_dark.obj",
+						"white": "res://characters/meshes/back_spiky_shell_seated_white.obj"
+					},
+					"box": [
+						-0.17,
+						0.09,
+						0.101,
+						0.17,
+						0.4232,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_spiky_shell_reclined_main.obj",
+						"light": "res://characters/meshes/back_spiky_shell_reclined_light.obj",
+						"dark": "res://characters/meshes/back_spiky_shell_reclined_dark.obj",
+						"white": "res://characters/meshes/back_spiky_shell_reclined_white.obj"
+					},
+					"box": [
+						-0.17,
+						0.2004,
+						0.1009,
+						0.17,
+						0.4236,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_spiky_shell_main.obj",
+						"light": "res://characters/meshes/back_spiky_shell_light.obj",
+						"dark": "res://characters/meshes/back_spiky_shell_dark.obj",
+						"white": "res://characters/meshes/back_spiky_shell_white.obj"
+					},
+					"box": [
+						-0.17,
+						0.09,
+						0.102,
+						0.17,
+						0.4261,
+						0.267
+					]
+				}
+			},
+			"shell": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_shell_main.obj",
+					"light": "res://characters/meshes/back_spiky_shell_light.obj",
+					"dark": "res://characters/meshes/back_shell_dark.obj"
+				},
+				"box": [
+					-0.17,
+					0.09,
+					0.102,
+					0.17,
+					0.4261,
+					0.217
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_shell_seated_main.obj",
+						"light": "res://characters/meshes/back_shell_seated_light.obj",
+						"dark": "res://characters/meshes/back_shell_seated_dark.obj"
+					},
+					"box": [
+						-0.17,
+						0.09,
+						0.1014,
+						0.17,
+						0.4246,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_shell_reclined_main.obj",
+						"light": "res://characters/meshes/back_shell_reclined_light.obj",
+						"dark": "res://characters/meshes/back_shell_reclined_dark.obj"
+					},
+					"box": [
+						-0.17,
+						0.2002,
+						0.1012,
+						0.17,
+						0.4257,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_shell_main.obj",
+						"light": "res://characters/meshes/back_spiky_shell_light.obj",
+						"dark": "res://characters/meshes/back_shell_dark.obj"
+					},
+					"box": [
+						-0.17,
+						0.09,
+						0.102,
+						0.17,
+						0.4261,
+						0.217
+					]
+				}
+			},
+			"cape": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_cape_main.obj",
+					"gold": "res://characters/meshes/back_cape_gold.obj",
+					"dark": "res://characters/meshes/back_cape_dark.obj"
+				},
+				"box": [
+					-0.25,
+					-0.2,
+					-0.06,
+					0.25,
+					0.4268,
+					0.2214
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_cape_seated_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_cape_seated_dark.obj"
+					},
+					"box": [
+						-0.1848,
+						0.104,
+						-0.06,
+						0.1848,
+						0.4268,
+						0.156
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_cape_reclined_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_cape_reclined_dark.obj"
+					},
+					"box": [
+						-0.1799,
+						0.204,
+						-0.06,
+						0.1799,
+						0.4268,
+						0.156
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_cape_seated_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_cape_seated_dark.obj"
+					},
+					"box": [
+						-0.1848,
+						0.104,
+						-0.06,
+						0.1848,
+						0.4268,
+						0.156
+					]
+				}
+			},
+			"short_cape": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_short_cape_main.obj",
+					"gold": "res://characters/meshes/back_cape_gold.obj",
+					"dark": "res://characters/meshes/back_short_cape_dark.obj"
+				},
+				"box": [
+					-0.2,
+					0.18,
+					-0.06,
+					0.2,
+					0.4268,
+					0.144
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_short_cape_seated_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_short_cape_seated_dark.obj"
+					},
+					"box": [
+						-0.2087,
+						0.104,
+						-0.06,
+						0.2087,
+						0.4268,
+						0.156
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_short_cape_reclined_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_short_cape_reclined_dark.obj"
+					},
+					"box": [
+						-0.1941,
+						0.204,
+						-0.06,
+						0.1941,
+						0.4268,
+						0.156
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_short_cape_astride_main.obj",
+						"gold": "res://characters/meshes/back_cape_seated_gold.obj",
+						"dark": "res://characters/meshes/back_short_cape_astride_dark.obj"
+					},
+					"box": [
+						-0.2091,
+						0.104,
+						-0.06,
+						0.2091,
+						0.4268,
+						0.156
+					]
+				}
+			},
+			"backpack": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_backpack_main.obj",
+					"dark": "res://characters/meshes/back_backpack_dark.obj",
+					"light": "res://characters/meshes/back_backpack_light.obj",
+					"gold": "res://characters/meshes/back_backpack_gold.obj"
+				},
+				"box": [
+					-0.155,
+					0.13,
+					-0.107,
+					0.155,
+					0.4268,
+					0.224
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_backpack_seated_main.obj",
+						"dark": "res://characters/meshes/back_backpack_seated_dark.obj",
+						"light": "res://characters/meshes/back_backpack_seated_light.obj",
+						"gold": "res://characters/meshes/back_backpack_seated_gold.obj"
+					},
+					"box": [
+						-0.155,
+						0.13,
+						-0.107,
+						0.155,
+						0.4268,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_backpack_reclined_main.obj",
+						"dark": "res://characters/meshes/back_backpack_reclined_dark.obj",
+						"light": "res://characters/meshes/back_backpack_reclined_light.obj",
+						"gold": "res://characters/meshes/back_backpack_reclined_gold.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.155,
+						0.4268,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_backpack_main.obj",
+						"dark": "res://characters/meshes/back_backpack_dark.obj",
+						"light": "res://characters/meshes/back_backpack_light.obj",
+						"gold": "res://characters/meshes/back_backpack_gold.obj"
+					},
+					"box": [
+						-0.155,
+						0.13,
+						-0.107,
+						0.155,
+						0.4268,
+						0.224
+					]
+				}
+			},
+			"jet_pack": {
+				"bone": "upper",
+				"regions": {
+					"ink": "res://characters/meshes/back_jet_pack_ink.obj",
+					"main": "res://characters/meshes/back_jet_pack_main.obj",
+					"silver": "res://characters/meshes/back_jet_pack_silver.obj",
+					"dark": "res://characters/meshes/back_jet_pack_dark.obj"
+				},
+				"box": [
+					-0.155,
+					0.115,
+					-0.107,
+					0.155,
+					0.4268,
+					0.216
+				],
+				"seated": {
+					"regions": {
+						"ink": "res://characters/meshes/back_jet_pack_seated_ink.obj",
+						"main": "res://characters/meshes/back_jet_pack_seated_main.obj",
+						"silver": "res://characters/meshes/back_jet_pack_seated_silver.obj",
+						"dark": "res://characters/meshes/back_jet_pack_seated_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.115,
+						-0.107,
+						0.155,
+						0.4268,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"ink": "res://characters/meshes/back_jet_pack_reclined_ink.obj",
+						"main": "res://characters/meshes/back_jet_pack_reclined_main.obj",
+						"silver": "res://characters/meshes/back_jet_pack_reclined_silver.obj",
+						"dark": "res://characters/meshes/back_jet_pack_reclined_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.155,
+						0.4268,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"ink": "res://characters/meshes/back_jet_pack_ink.obj",
+						"main": "res://characters/meshes/back_jet_pack_main.obj",
+						"silver": "res://characters/meshes/back_jet_pack_silver.obj",
+						"dark": "res://characters/meshes/back_jet_pack_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.115,
+						-0.107,
+						0.155,
+						0.4268,
+						0.216
+					]
+				}
+			},
+			"angel_wings": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_angel_wings_main.obj",
+					"light": "res://characters/meshes/back_angel_wings_light.obj"
+				},
+				"box": [
+					-0.3119,
+					0.2282,
+					0.102,
+					0.3119,
+					0.4391,
+					0.2481
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_angel_wings_seated_main.obj",
+						"light": "res://characters/meshes/back_angel_wings_seated_light.obj"
+					},
+					"box": [
+						-0.3119,
+						0.2282,
+						0.102,
+						0.3119,
+						0.4391,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_angel_wings_reclined_main.obj",
+						"light": "res://characters/meshes/back_angel_wings_reclined_light.obj"
+					},
+					"box": [
+						-0.3119,
+						0.2282,
+						0.102,
+						0.3119,
+						0.4391,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_angel_wings_main.obj",
+						"light": "res://characters/meshes/back_angel_wings_light.obj"
+					},
+					"box": [
+						-0.3119,
+						0.2282,
+						0.102,
+						0.3119,
+						0.4391,
+						0.2481
+					]
+				}
+			},
+			"bat_wings": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_bat_wings_main.obj",
+					"dark": "res://characters/meshes/back_bat_wings_dark.obj"
+				},
+				"box": [
+					-0.3456,
+					0.1876,
+					0.102,
+					0.3456,
+					0.4735,
+					0.2247
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_bat_wings_seated_main.obj",
+						"dark": "res://characters/meshes/back_bat_wings_seated_dark.obj"
+					},
+					"box": [
+						-0.3456,
+						0.1876,
+						0.102,
+						0.3456,
+						0.4735,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_bat_wings_reclined_main.obj",
+						"dark": "res://characters/meshes/back_bat_wings_reclined_dark.obj"
+					},
+					"box": [
+						-0.3456,
+						0.2,
+						0.102,
+						0.3456,
+						0.4735,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_bat_wings_main.obj",
+						"dark": "res://characters/meshes/back_bat_wings_dark.obj"
+					},
+					"box": [
+						-0.3456,
+						0.1876,
+						0.102,
+						0.3456,
+						0.4735,
+						0.2247
+					]
+				}
+			},
+			"fairy_wings": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_fairy_wings_main.obj",
+					"clear": "res://characters/meshes/back_fairy_wings_clear.obj",
+					"light": "res://characters/meshes/back_fairy_wings_light.obj"
+				},
+				"box": [
+					-0.211,
+					0.1839,
+					0.102,
+					0.211,
+					0.4161,
+					0.1822
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_fairy_wings_main.obj",
+						"clear": "res://characters/meshes/back_fairy_wings_clear.obj",
+						"light": "res://characters/meshes/back_fairy_wings_light.obj"
+					},
+					"box": [
+						-0.211,
+						0.1839,
+						0.102,
+						0.211,
+						0.4161,
+						0.1822
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_fairy_wings_reclined_main.obj",
+						"clear": "res://characters/meshes/back_fairy_wings_reclined_clear.obj",
+						"light": "res://characters/meshes/back_fairy_wings_reclined_light.obj"
+					},
+					"box": [
+						-0.211,
+						0.2,
+						0.102,
+						0.211,
+						0.4161,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_fairy_wings_main.obj",
+						"clear": "res://characters/meshes/back_fairy_wings_clear.obj",
+						"light": "res://characters/meshes/back_fairy_wings_light.obj"
+					},
+					"box": [
+						-0.211,
+						0.1839,
+						0.102,
+						0.211,
+						0.4161,
+						0.1822
+					]
+				}
+			},
+			"dino_tail": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_dino_tail_main.obj",
+					"dark": "res://characters/meshes/back_dino_tail_dark.obj"
+				},
+				"box": [
+					-0.068,
+					0.03,
+					0.102,
+					0.068,
+					0.248,
+					0.536
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_dino_tail_seated_main.obj",
+						"dark": "res://characters/meshes/back_dino_tail_seated_dark.obj"
+					},
+					"box": [
+						-0.055,
+						0.145,
+						0.062,
+						0.438,
+						0.298,
+						0.183
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_dino_tail_reclined_main.obj",
+						"dark": "res://characters/meshes/back_dino_tail_reclined_dark.obj"
+					},
+					"box": [
+						-0.055,
+						0.265,
+						0.062,
+						0.438,
+						0.418,
+						0.183
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_dino_tail_main.obj",
+						"dark": "res://characters/meshes/back_dino_tail_dark.obj"
+					},
+					"box": [
+						-0.068,
+						0.03,
+						0.102,
+						0.068,
+						0.248,
+						0.536
+					]
+				}
+			},
+			"flag": {
+				"bone": "upper",
+				"regions": {
+					"silver": "res://characters/meshes/back_flag_silver.obj",
+					"ink": "res://characters/meshes/back_flag_ink.obj",
+					"main": "res://characters/meshes/back_flag_main.obj",
+					"white": "res://characters/meshes/back_flag_white.obj"
+				},
+				"box": [
+					0.1186,
+					0.1431,
+					0.1049,
+					0.416,
+					0.756,
+					0.3517
+				],
+				"seated": {
+					"regions": {
+						"silver": "res://characters/meshes/back_flag_silver.obj",
+						"ink": "res://characters/meshes/back_flag_ink.obj",
+						"main": "res://characters/meshes/back_flag_main.obj",
+						"white": "res://characters/meshes/back_flag_white.obj"
+					},
+					"box": [
+						0.1186,
+						0.1431,
+						0.1049,
+						0.416,
+						0.756,
+						0.3517
+					]
+				},
+				"reclined": {
+					"regions": {
+						"silver": "res://characters/meshes/back_flag_reclined_silver.obj",
+						"ink": "res://characters/meshes/back_flag_reclined_ink.obj",
+						"main": "res://characters/meshes/back_flag_reclined_main.obj",
+						"white": "res://characters/meshes/back_flag_reclined_white.obj"
+					},
+					"box": [
+						0.1186,
+						0.1431,
+						0.1049,
+						0.6088,
+						0.756,
+						0.148
+					]
+				},
+				"astride": {
+					"regions": {
+						"silver": "res://characters/meshes/back_flag_silver.obj",
+						"ink": "res://characters/meshes/back_flag_ink.obj",
+						"main": "res://characters/meshes/back_flag_main.obj",
+						"white": "res://characters/meshes/back_flag_white.obj"
+					},
+					"box": [
+						0.1186,
+						0.1431,
+						0.1049,
+						0.416,
+						0.756,
+						0.3517
+					]
+				}
+			},
+			"sword": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_sword_main.obj",
+					"gold": "res://characters/meshes/back_sword_gold.obj",
+					"ink": "res://characters/meshes/back_sword_ink.obj"
+				},
+				"box": [
+					-0.155,
+					0.1323,
+					-0.107,
+					0.0781,
+					0.4443,
+					0.134
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_sword_main.obj",
+						"gold": "res://characters/meshes/back_sword_gold.obj",
+						"ink": "res://characters/meshes/back_sword_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.1323,
+						-0.107,
+						0.0781,
+						0.4443,
+						0.134
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_sword_reclined_main.obj",
+						"gold": "res://characters/meshes/back_sword_reclined_gold.obj",
+						"ink": "res://characters/meshes/back_sword_reclined_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.0781,
+						0.4443,
+						0.134
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_sword_main.obj",
+						"gold": "res://characters/meshes/back_sword_gold.obj",
+						"ink": "res://characters/meshes/back_sword_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.1323,
+						-0.107,
+						0.0781,
+						0.4443,
+						0.134
+					]
+				}
+			},
+			"guitar": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_guitar_main.obj",
+					"ink": "res://characters/meshes/back_guitar_ink.obj",
+					"dark": "res://characters/meshes/back_guitar_dark.obj",
+					"brown": "res://characters/meshes/back_guitar_brown.obj"
+				},
+				"box": [
+					-0.1167,
+					0.0081,
+					0.102,
+					0.1719,
+					0.4439,
+					0.154
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_guitar_seated_main.obj",
+						"ink": "res://characters/meshes/back_guitar_seated_ink.obj",
+						"dark": "res://characters/meshes/back_guitar_seated_dark.obj",
+						"brown": "res://characters/meshes/back_guitar_seated_brown.obj"
+					},
+					"box": [
+						-0.1167,
+						0.09,
+						0.102,
+						0.1719,
+						0.4439,
+						0.154
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_guitar_reclined_main.obj",
+						"ink": "res://characters/meshes/back_guitar_reclined_ink.obj",
+						"dark": "res://characters/meshes/back_guitar_reclined_dark.obj",
+						"brown": "res://characters/meshes/back_guitar_reclined_brown.obj"
+					},
+					"box": [
+						-0.1167,
+						0.2,
+						0.102,
+						0.1719,
+						0.4439,
+						0.154
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_guitar_main.obj",
+						"ink": "res://characters/meshes/back_guitar_ink.obj",
+						"dark": "res://characters/meshes/back_guitar_dark.obj",
+						"brown": "res://characters/meshes/back_guitar_brown.obj"
+					},
+					"box": [
+						-0.1167,
+						0.0081,
+						0.102,
+						0.1719,
+						0.4439,
+						0.154
+					]
+				}
+			},
+			"air_tanks": {
+				"bone": "upper",
+				"regions": {
+					"ink": "res://characters/meshes/back_air_tanks_ink.obj",
+					"main": "res://characters/meshes/back_air_tanks_main.obj",
+					"silver": "res://characters/meshes/back_air_tanks_silver.obj"
+				},
+				"box": [
+					-0.155,
+					0.124,
+					-0.107,
+					0.155,
+					0.4268,
+					0.22
+				],
+				"seated": {
+					"regions": {
+						"ink": "res://characters/meshes/back_air_tanks_seated_ink.obj",
+						"main": "res://characters/meshes/back_air_tanks_seated_main.obj",
+						"silver": "res://characters/meshes/back_air_tanks_seated_silver.obj"
+					},
+					"box": [
+						-0.155,
+						0.124,
+						-0.107,
+						0.155,
+						0.4268,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"ink": "res://characters/meshes/back_air_tanks_reclined_ink.obj",
+						"main": "res://characters/meshes/back_air_tanks_reclined_main.obj",
+						"silver": "res://characters/meshes/back_air_tanks_reclined_silver.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.155,
+						0.4268,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"ink": "res://characters/meshes/back_air_tanks_ink.obj",
+						"main": "res://characters/meshes/back_air_tanks_main.obj",
+						"silver": "res://characters/meshes/back_air_tanks_silver.obj"
+					},
+					"box": [
+						-0.155,
+						0.124,
+						-0.107,
+						0.155,
+						0.4268,
+						0.22
+					]
+				}
+			},
+			"parachute": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_parachute_main.obj",
+					"dark": "res://characters/meshes/back_parachute_dark.obj",
+					"silver": "res://characters/meshes/back_parachute_silver.obj",
+					"ink": "res://characters/meshes/back_parachute_ink.obj"
+				},
+				"box": [
+					-0.155,
+					0.12,
+					-0.107,
+					0.155,
+					0.4268,
+					0.177
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_parachute_main.obj",
+						"dark": "res://characters/meshes/back_parachute_dark.obj",
+						"silver": "res://characters/meshes/back_parachute_silver.obj",
+						"ink": "res://characters/meshes/back_parachute_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.12,
+						-0.107,
+						0.155,
+						0.4268,
+						0.177
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_parachute_reclined_main.obj",
+						"dark": "res://characters/meshes/back_parachute_reclined_dark.obj",
+						"silver": "res://characters/meshes/back_parachute_reclined_silver.obj",
+						"ink": "res://characters/meshes/back_parachute_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.155,
+						0.4268,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_parachute_main.obj",
+						"dark": "res://characters/meshes/back_parachute_dark.obj",
+						"silver": "res://characters/meshes/back_parachute_silver.obj",
+						"ink": "res://characters/meshes/back_parachute_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.12,
+						-0.107,
+						0.155,
+						0.4268,
+						0.177
+					]
+				}
+			},
+			"quiver": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_quiver_main.obj",
+					"dark": "res://characters/meshes/back_quiver_dark.obj",
+					"brown": "res://characters/meshes/back_quiver_brown.obj",
+					"white": "res://characters/meshes/back_quiver_white.obj",
+					"ink": "res://characters/meshes/back_quiver_ink.obj"
+				},
+				"box": [
+					-0.155,
+					0.065,
+					-0.107,
+					0.0655,
+					0.4264,
+					0.19
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_quiver_seated_main.obj",
+						"dark": "res://characters/meshes/back_quiver_seated_dark.obj",
+						"brown": "res://characters/meshes/back_quiver_seated_brown.obj",
+						"white": "res://characters/meshes/back_quiver_seated_white.obj",
+						"ink": "res://characters/meshes/back_quiver_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.09,
+						-0.107,
+						0.0655,
+						0.4264,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_quiver_reclined_main.obj",
+						"dark": "res://characters/meshes/back_quiver_reclined_dark.obj",
+						"brown": "res://characters/meshes/back_quiver_reclined_brown.obj",
+						"white": "res://characters/meshes/back_quiver_reclined_white.obj",
+						"ink": "res://characters/meshes/back_quiver_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.0655,
+						0.4264,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_quiver_main.obj",
+						"dark": "res://characters/meshes/back_quiver_dark.obj",
+						"brown": "res://characters/meshes/back_quiver_brown.obj",
+						"white": "res://characters/meshes/back_quiver_white.obj",
+						"ink": "res://characters/meshes/back_quiver_ink.obj"
+					},
+					"box": [
+						-0.155,
+						0.065,
+						-0.107,
+						0.0655,
+						0.4264,
+						0.19
+					]
+				}
+			},
+			"radio": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_radio_main.obj",
+					"ink": "res://characters/meshes/back_radio_ink.obj",
+					"silver": "res://characters/meshes/back_radio_silver.obj",
+					"dark": "res://characters/meshes/back_radio_dark.obj"
+				},
+				"box": [
+					-0.155,
+					0.13,
+					-0.107,
+					0.155,
+					0.441,
+					0.193
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_radio_seated_main.obj",
+						"ink": "res://characters/meshes/back_radio_seated_ink.obj",
+						"silver": "res://characters/meshes/back_radio_seated_silver.obj",
+						"dark": "res://characters/meshes/back_radio_seated_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.13,
+						-0.107,
+						0.155,
+						0.441,
+						0.184
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_radio_reclined_main.obj",
+						"ink": "res://characters/meshes/back_radio_reclined_ink.obj",
+						"silver": "res://characters/meshes/back_radio_reclined_silver.obj",
+						"dark": "res://characters/meshes/back_radio_reclined_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.2,
+						-0.107,
+						0.155,
+						0.441,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_radio_main.obj",
+						"ink": "res://characters/meshes/back_radio_ink.obj",
+						"silver": "res://characters/meshes/back_radio_silver.obj",
+						"dark": "res://characters/meshes/back_radio_dark.obj"
+					},
+					"box": [
+						-0.155,
+						0.13,
+						-0.107,
+						0.155,
+						0.441,
+						0.193
+					]
+				}
+			},
+			"fox_tail": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_fox_tail_main.obj",
+					"white": "res://characters/meshes/back_fox_tail_white.obj"
+				},
+				"box": [
+					-0.04,
+					0.058,
+					0.102,
+					0.16,
+					0.35,
+					0.48
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_fox_tail_seated_main.obj",
+						"white": "res://characters/meshes/back_fox_tail_seated_white.obj"
+					},
+					"box": [
+						-0.04,
+						0.16,
+						0.062,
+						0.42,
+						0.41,
+						0.182
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_fox_tail_reclined_main.obj",
+						"white": "res://characters/meshes/back_fox_tail_reclined_white.obj"
+					},
+					"box": [
+						-0.04,
+						0.28,
+						0.062,
+						0.42,
+						0.53,
+						0.182
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_fox_tail_main.obj",
+						"white": "res://characters/meshes/back_fox_tail_white.obj"
+					},
+					"box": [
+						-0.04,
+						0.058,
+						0.102,
+						0.16,
+						0.35,
+						0.48
+					]
+				}
+			},
+			"shield": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/back_shield_main.obj",
+					"silver": "res://characters/meshes/back_shield_silver.obj",
+					"light": "res://characters/meshes/back_shield_light.obj"
+				},
+				"box": [
+					-0.154,
+					0.106,
+					0.102,
+					0.154,
+					0.414,
+					0.172
+				],
+				"seated": {
+					"regions": {
+						"main": "res://characters/meshes/back_shield_main.obj",
+						"silver": "res://characters/meshes/back_shield_silver.obj",
+						"light": "res://characters/meshes/back_shield_light.obj"
+					},
+					"box": [
+						-0.154,
+						0.106,
+						0.102,
+						0.154,
+						0.414,
+						0.172
+					]
+				},
+				"reclined": {
+					"regions": {
+						"main": "res://characters/meshes/back_shield_reclined_main.obj",
+						"silver": "res://characters/meshes/back_shield_reclined_silver.obj",
+						"light": "res://characters/meshes/back_shield_reclined_light.obj"
+					},
+					"box": [
+						-0.154,
+						0.2,
+						0.102,
+						0.154,
+						0.414,
+						0.172
+					]
+				},
+				"astride": {
+					"regions": {
+						"main": "res://characters/meshes/back_shield_main.obj",
+						"silver": "res://characters/meshes/back_shield_silver.obj",
+						"light": "res://characters/meshes/back_shield_light.obj"
+					},
+					"box": [
+						-0.154,
+						0.106,
+						0.102,
+						0.154,
+						0.414,
+						0.172
 					]
 				}
 			}

@@ -55,8 +55,8 @@ static func style(slot: String, name: String) -> Dictionary:
 
 
 ## The colour and shine of a style's region, for a piece in `colour`. Main is
-## the piece's own colour, dark and light are shades of it and the rest are
-## fixed, from pieces_made.json.
+## the piece's own colour, dark and light are shades of it, clear is it see
+## through and the rest are fixed, from pieces_made.json.
 static func region_colour(entry: Dictionary, region: String, colour: Color) -> Array:
 	match region:
 		"main":
@@ -65,6 +65,8 @@ static func region_colour(entry: Dictionary, region: String, colour: Color) -> A
 			return [colour.darkened(0.3), 0.0]
 		"light":
 			return [colour.lightened(0.4), 0.0]
+		"clear":
+			return [Color(colour, 0.55), 0.0]
 	var fixed: Array = made().get("colours", {}).get(region, ["#ff00ff", 0.0])
 	return [Color(fixed[0]), float(fixed[1])]
 

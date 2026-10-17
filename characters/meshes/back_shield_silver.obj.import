@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cb1esiccmokoe"
+path="res://.godot/imported/back_shield_silver.obj-b6b6440b6444624fb71d31bce33f4f9c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_shield_silver.obj-b6b6440b6444624fb71d31bce33f4f9c.mesh"]
+
+source_file="res://characters/meshes/back_shield_silver.obj"
+dest_files=["res://.godot/imported/back_shield_silver.obj-b6b6440b6444624fb71d31bce33f4f9c.mesh", "res://.godot/imported/back_shield_silver.obj-b6b6440b6444624fb71d31bce33f4f9c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

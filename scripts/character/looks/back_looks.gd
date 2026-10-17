@@ -2,8 +2,12 @@ class_name BackLooks
 extends RefCounted
 
 ## What's worn on the back, like shells, capes, packs, wings, tails and gear,
-## in the back piece's colour. Everything comes out from the flat back of the
-## torso, and some pieces have straps over the shoulders.
+## in the back piece's colour. Every style is made in tools/characters/backs.py,
+## standing, seated, reclined in a lay-down seat and astride. Styles not made
+## there are built here.
+
+## Leaning back further than this (in radians) uses the reclined shape.
+const RECLINED := 0.7
 
 const WHITE := Color("#f2f2f2")
 const DARK := Color("#3c3f44")
@@ -12,6 +16,11 @@ const GOLD := Color("#c9a227")
 
 
 static func build(rig: CharacterRig) -> void:
+	if rig.design.style_of("back") == "none":
+		return
+	if rig.add_style("back", variant(rig)):
+		return
+	push_warning("No back piece made for %s" % rig.design.style_of("back"))
 	var d := rig.design
 	var c := d.color_of("back")
 	var up := rig.upper()
@@ -135,3 +144,13 @@ static func _two_sided(node: MeshInstance3D) -> void:
 	var material := node.material_override.duplicate() as StandardMaterial3D
 	material.cull_mode = BaseMaterial3D.CULL_DISABLED
 	node.material_override = material
+
+
+## Which shape of the back piece a rig wears: its own standing, or the one
+## made for sitting, lying back or riding astride.
+static func variant(rig: CharacterRig) -> String:
+	if rig.astride:
+		return "astride"
+	if not rig.seated:
+		return ""
+	return "reclined" if rig.recline > RECLINED else "seated"

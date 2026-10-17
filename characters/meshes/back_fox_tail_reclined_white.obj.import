@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://clapqr7obgiko"
+path="res://.godot/imported/back_fox_tail_reclined_white.obj-d0a5fed339f417252d18c8935d42fce1.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_fox_tail_reclined_white.obj-d0a5fed339f417252d18c8935d42fce1.mesh"]
+
+source_file="res://characters/meshes/back_fox_tail_reclined_white.obj"
+dest_files=["res://.godot/imported/back_fox_tail_reclined_white.obj-d0a5fed339f417252d18c8935d42fce1.mesh", "res://.godot/imported/back_fox_tail_reclined_white.obj-d0a5fed339f417252d18c8935d42fce1.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

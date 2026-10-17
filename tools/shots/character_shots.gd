@@ -8,7 +8,8 @@ extends SceneTree
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
 ## Add --out=/some/folder to save them there as well, and --only=necks,faces
 ## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos,
-## headgear, headgear_hair, headgear_karts, torsos, arms, outfits, legs)
+## headgear, headgear_hair, headgear_karts, torsos, arms, outfits, legs,
+## backs)
 ## for just those sheets.
 
 const OUT := "res://build/shots/characters"
@@ -159,6 +160,8 @@ func _run() -> void:
 		await _outfits()
 	if wanted("legs"):
 		await _legs()
+	if wanted("backs"):
+		await _backs()
 	if wanted("closeup"):
 		await _closeup()
 	quit()
@@ -517,3 +520,48 @@ func _legs() -> void:
 		var view := Vector3(-0.9, 0.35, -1.0) if not astride else Vector3(-1.0, 0.2, -0.7)
 		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if not astride else 3.4), seat))
 	save(sheet(shots, 4, TILE), "legs_outfits.png")
+
+
+const BACK_COLOURS := {"angel_wings": "#f2f2f2", "fairy_wings": "#d86cb0", "bat_wings": "#5a2d82", "dino_tail": "#4b9f4a", "shell": "#4b9f4a", "fox_tail": "#e8782b", "backpack": "#e8782b", "air_tanks": "#f2cd37", "guitar": "#a0703c", "parachute": "#4b9f4a", "radio": "#4b9f4a"}
+
+
+## Every back piece standing, from behind and from the side, then each one
+## seated in a kart (upright seats in turn), lying back in a lay-down seat and
+## astride a bike.
+func _backs() -> void:
+	var styles := CharacterDesign.styles("back").filter(func(s): return s != "none")
+	for view in [["behind", Vector3(-0.75, 0.3, 1.0)], ["side", Vector3(-1.0, 0.2, 0.15)]]:
+		var shots := []
+		for style in styles:
+			var design := bare()
+			design.set_piece("back", style, Color(BACK_COLOURS.get(style, "#c4281c")))
+			design.set_piece("hair", "ponytail", Color("#6b4430"))
+			rig(design, false)
+			var middle := Vector3(0.0, 0.5, 0.0)
+			shots.append(await snap(style, middle + view[1].normalized() * 2.3, middle))
+		save(sheet(shots, 5, TILE), "backs_standing_%s.png" % view[0])
+	var rides := [
+		["seated", ["starter", "classic", "downforce"], Vector3(-0.9, 0.5, 0.9)],
+		["reclined", ["soapbox"], Vector3(-1.0, 0.45, 0.6)],
+		["astride", ["superbike", "chopper", "dirt_bike", "scooter", "trikester"], Vector3(-1.0, 0.35, 0.7)],
+	]
+	for ride in rides:
+		var shots := []
+		var karts: Array = ride[1]
+		for k in styles.size():
+			var style: String = styles[k]
+			var kart: String = karts[k % karts.size()]
+			var design := bare()
+			design.set_piece("back", style, Color(BACK_COLOURS.get(style, "#c4281c")))
+			clear()
+			var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/%s.json" % kart), design)
+			_stand.add_child(model)
+			await process_frame
+			var seat := Vector3(0.0, 0.6, 0.0)
+			var found := model.find_children("*", "CharacterRig", true, false)
+			if not found.is_empty():
+				seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.25, 0.0)
+			for frame in 10:
+				await process_frame
+			shots.append(await snap("%s in the %s" % [style, kart], seat + (ride[2] as Vector3).normalized() * 3.0, seat))
+		save(sheet(shots, 5, TILE), "backs_%s.png" % ride[0])

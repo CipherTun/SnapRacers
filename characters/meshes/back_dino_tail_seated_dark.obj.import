@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bcj0vjfimtga8"
+path="res://.godot/imported/back_dino_tail_seated_dark.obj-d49e745da8e71a31ad5dd8850bf6e688.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_dino_tail_seated_dark.obj-d49e745da8e71a31ad5dd8850bf6e688.mesh"]
+
+source_file="res://characters/meshes/back_dino_tail_seated_dark.obj"
+dest_files=["res://.godot/imported/back_dino_tail_seated_dark.obj-d49e745da8e71a31ad5dd8850bf6e688.mesh", "res://.godot/imported/back_dino_tail_seated_dark.obj-d49e745da8e71a31ad5dd8850bf6e688.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://medtal22fuqv"
+path="res://.godot/imported/back_spiky_shell_reclined_main.obj-96849ffca74d4f13fd9fddfcd92e1b51.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_spiky_shell_reclined_main.obj-96849ffca74d4f13fd9fddfcd92e1b51.mesh"]
+
+source_file="res://characters/meshes/back_spiky_shell_reclined_main.obj"
+dest_files=["res://.godot/imported/back_spiky_shell_reclined_main.obj-96849ffca74d4f13fd9fddfcd92e1b51.mesh", "res://.godot/imported/back_spiky_shell_reclined_main.obj-96849ffca74d4f13fd9fddfcd92e1b51.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

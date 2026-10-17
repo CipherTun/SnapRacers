@@ -24,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "parts"))
 
 import arms  # noqa: E402
+import backs  # noqa: E402
 import beards  # noqa: E402
 import figure as F  # noqa: E402
 import hair  # noqa: E402
@@ -526,7 +527,46 @@ def make():
         styles["legs"][style] = entry
         leg_solids[style] = parts
         print("made legs", style, max(v for k, v in tri_sizes.items() if k.startswith("leg %s " % style)), "triangles a leg,", tri_sizes["hips " + style], "the hips")
-    for kind in ("torso", "arm", "hand", "hips", "leg"):
+    # Back pieces, on the upper body, in each pose: cut back from the torso,
+    # the neck, the head and every neck piece, and seated, reclined and
+    # astride from the seats and saddle they lean against. Old files are
+    # cleared first, as with the arms.
+    for old in os.listdir(os.path.join(GAME, MESHES)):
+        if old.startswith("back_") and old.endswith(".obj"):
+            os.remove(os.path.join(GAME, MESHES, old))
+    styles["back"] = {}
+    back_solids = {}
+    neck_worn = [torsos.keep(v) for k, v in style_solids.items() if k.startswith("neck ")]
+    back_keepout = torso(GAP) + neck(GAP) + head(GAP)
+    seat_keepouts = {pose: torsos.keep(seats_in_upper(pose, GAP)) for pose in ("seated", "reclined", "astride")}
+    for style in backs.STYLES:
+        made_style = backs.make(style)
+        entry = {"bone": "upper"}
+        parts = {}
+        for pose in backs.POSES:
+            whole = union(list(made_style[pose].values()))
+            # Only what it meets, so the cuts stay light.
+            hits = [n for n in neck_worn if _boxes_meet(whole, n) and (whole ^ n).volume() > 1e-10]
+            if pose in seat_keepouts and (whole ^ seat_keepouts[pose]).volume() > 1e-10:
+                hits.append(seat_keepouts[pose])
+            cut = back_keepout + union(hits) if hits else back_keepout
+            regions = {k: v.simplify(0.0004) - cut for k, v in made_style[pose].items()}
+            regions = {k: v for k, v in regions.items() if not v.is_empty() and v.volume() > 1e-9}
+            counts = [0]
+            name = "back_%s" % style if pose == "standing" else "back_%s_%s" % (style, pose)
+            shape = {"regions": save_regions(name, regions, made, True, counts), "box": box_of(regions.values())}
+            if pose == "standing":
+                entry.update(shape)
+            else:
+                entry[pose] = shape
+            tri_sizes["back %s %s" % (style, pose)] = counts[0]
+            parts[pose] = union(list(regions.values()))
+        if style in backs.METAL:
+            entry["metallic"] = backs.METAL[style]
+        styles["back"][style] = entry
+        back_solids[style] = parts
+        print("made back", style, ", ".join("%s %d" % (p, tri_sizes["back %s %s" % (style, p)]) for p in backs.POSES), "triangles")
+    for kind in ("torso", "arm", "hand", "hips", "leg", "back"):
         mine = {k: v for k, v in tri_sizes.items() if k.split(" ")[0] == kind}
         biggest = max(mine, key=mine.get)
         print("%s: %d triangles in all, the biggest %s at %d" % (kind, sum(mine.values()), biggest, mine[biggest]))
@@ -534,11 +574,11 @@ def make():
     if over:
         raise SystemExit("over 1,500 triangles: %s" % over)
 
-    clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids)
+    clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids, back_solids)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. A 'skin' region is in the driver's skin.",
-        "colours": dict(necks.COLOURS, **headgear.COLOURS, **torsos.COLOURS, **legs.COLOURS),
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
+        "colours": {**necks.COLOURS, **headgear.COLOURS, **torsos.COLOURS, **legs.COLOURS, **backs.COLOURS},
         "figure": pieces,
         "styles": styles,
     }
@@ -778,8 +818,125 @@ def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report, rai
 # The seat under a seated driver, hips and legs, for the leg styles.
 SEAT = Manifold.cube([0.7, 0.1, 0.6]).translate([-0.35, -0.1, -0.45])
 
+# The kart seats as tools/parts/library.py makes them (_seat), with how far
+# each leans the driver back: name, plates high, studs long, how far its
+# back leans in degrees, how tall its back is, whether it has bolsters and
+# the driver's recline in degrees (from data/parts.json).
+SEATS = [
+    ("driver's seat", 3, 2, 8.0, 0.3, False, 0.0),
+    ("bucket seat", 2, 2, 25.0, 0.3, True, 25.0),
+    ("racing seat", 2, 2, 15.0, 0.34, True, 15.0),
+    ("lay-down seat", 1, 4, 62.0, 0.3, True, 55.0),
+]
 
-def clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids):
+
+def seat_solid(seat, grow=0.0):
+    """A seat in the rig's space, whose origin is the middle of the top of
+    its cushion, grown by `grow`."""
+    _, plates, along, rest_deg, back, bolsters, _ = seat
+    g = grow
+    w, h, l = 0.5, plates * 0.1, along * 0.25
+    parts = [rbox(0.01 - g, -g, 0.01 - g, w - 0.01 + g, h + g, l - 0.01 + g, 0.025)]
+    parts.append(rbox(0.02 - g, -g, -0.06 - g, w - 0.02 + g, back + g, g, 0.025).rotate([rest_deg, 0.0, 0.0]).translate([0.0, h - 0.02, l - 0.01]))
+    if bolsters:
+        for x in (0.0, w - 0.06):
+            parts.append(rbox(x - g, h - 0.02 - g, 0.06 - g, x + 0.06 + g, h + 0.07 + g, l - 0.02 + g, 0.02))
+    return union(parts).translate([-w * 0.5, -h, -l * 0.5])
+
+
+def saddle_solid(grow=0.0):
+    """A motorbike's seat and the tail rising behind it, in the rig's space,
+    like the sports bike frame's."""
+    g = grow
+    seat = rbox(-0.2 - g, -0.1 - g, -0.29 - g, 0.2 + g, g, 0.29 + g, 0.03)
+    tail = Manifold.hull_points([(x, y, z) for x in (-0.15 - g, 0.15 + g) for y, z in ((-0.1, 0.29), (g, 0.29), (0.025 - g, 0.76 + g), (0.1 + g, 0.76 + g))])
+    return seat + tail
+
+
+def seat_lean(seat):
+    return F.upper_lean(math.radians(seat[6]))
+
+
+def seats_in_upper(pose, grow=0.0):
+    """Where the seats are in the upper body's space for a pose: every
+    upright seat seated, the lay-down seat reclined and the saddle astride."""
+    if pose == "astride":
+        return apply(saddle_solid(grow), inverse(F.upper_lean(-math.radians(F.ASTRIDE_LEAN))))
+    chosen = [s for s in SEATS if (s[6] > 40.0) == (pose == "reclined")]
+    return union([apply(seat_solid(s, grow), inverse(seat_lean(s))) for s in chosen])
+
+
+def back_clipping(back_solids, solids, neck_styles, raised_torsos, raised_arms, leg_solids, poses, report):
+    """Back pieces, in the variant made for each pose, against the torso,
+    the neck, the head, every neck piece and raised torso, and in every pose
+    the hips, every leg style, the arms and hands and the raised arms, and
+    the seats: every upright seat seated, the lay-down seat lying back in it
+    and the saddle astride."""
+    worst = 0.0
+
+    def note(pose, a, b, one, other):
+        nonlocal worst
+        if not _boxes_meet(one, other):
+            return
+        volume = (one ^ other).volume() * 1e6
+        worst = max(worst, volume)
+        if volume > 0.001:
+            report.append({"pose": pose, "a": a, "b": b, "cm3": round(volume, 4)})
+
+    still = {"torso": solids["torso"], "neck": solids["neck"], "head": head()}
+    still.update(neck_styles)
+    still.update(raised_torsos)
+    for style, parts in back_solids.items():
+        for pose in backs.POSES:
+            name = "back %s" % style if pose == "standing" else "back %s %s" % (style, pose)
+            for b, other in still.items():
+                note("any pose", name, b, parts[pose], other)
+    lay = [s for s in SEATS if s[6] > 40.0][0]
+    reclined = []
+    for degrees in (45, 75, 100):
+        a = math.radians(degrees)
+        reclined.append(("reclined in the %s, arms swung %d degrees" % (lay[0], degrees), True, False, [(a, 0.0), (a, 0.0)], (0.0, 0.0, 1.0)))
+    for name, seated, astride, swings, along in list(poses) + reclined:
+        lying = name.startswith("reclined")
+        kind = "astride" if astride else ("seated" if seated else "standing")
+        variant = "reclined" if lying else kind
+        lean = seat_lean(lay) if lying else F.upper_lean(-math.radians(F.ASTRIDE_LEAN) if astride else 0.0)
+        legs_m = F.legs_astride() if astride else np.hstack([np.eye(3), np.zeros((3, 1))])
+        others = {"hips": solids["hips"]}
+        for leg in ("leg_l", "leg_r"):
+            others[leg] = apply(solids[leg + ("_seated" if seated else "")], legs_m)
+        for side, suffix in ((0, "l"), (1, "r")):
+            angle, spread = swings[side]
+            arm_m, hand_m = F.arm_pose(side, angle, spread, along)
+            others["arm_" + suffix] = apply(solids["arm_" + suffix], F.compose(lean, arm_m))
+            others["hand_" + suffix] = apply(solids["hand_" + suffix], F.compose(lean, hand_m))
+        for style, parts in raised_arms.items():
+            for suffix in ("l", "r"):
+                side = 0 if suffix == "l" else 1
+                angle, spread = swings[side]
+                arm_m = F.arm_pose(side, angle, spread, along)[0]
+                others["arms %s arm_%s" % (style, suffix)] = apply(parts["arm_" + suffix], F.compose(lean, arm_m))
+        for style, parts in leg_solids.items():
+            others["legs %s hips" % style] = parts["hips"]
+            others["legs %s leg_l" % style] = apply(parts[(kind, 0)], legs_m)
+            others["legs %s leg_r" % style] = apply(parts[(kind, 1)], legs_m)
+        if lying:
+            others[lay[0]] = seat_solid(lay)
+        elif kind == "astride":
+            others["saddle"] = saddle_solid()
+        for style, parts in back_solids.items():
+            label = "back %s" % style if variant == "standing" else "back %s %s" % (style, variant)
+            placed = apply(parts[variant], lean)
+            for b, other in others.items():
+                note(name, label, b, placed, other)
+            if name == "seated, hands resting":
+                for seat in SEATS:
+                    if seat[6] <= 40.0:
+                        note("%s, in the %s" % (name, seat[0]), label, seat[0], apply(parts[variant], seat_lean(seat)), seat_solid(seat))
+    return worst
+
+
+def clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids, back_solids):
     """Everything against everything it can meet, in every pose. Torso and
     arm styles that are only printed have the figure's own shape, so only
     those with raised bits are checked apart. Every leg style is checked:
@@ -866,16 +1023,24 @@ def clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids):
             worst = max(worst, volume)
             if volume > 0.001:
                 report.append({"pose": name, "a": a, "b": b, "cm3": round(volume, 4)})
+    worst = max(worst, back_clipping(back_solids, solids, style_solids, raised_torsos, raised_arms, leg_solids, poses, report))
     upper_styles = dict(style_solids, **raised_torsos)
+    # Back pieces against the hair and headgear as the head turns, in every
+    # pose they're made for.
+    for style, parts in back_solids.items():
+        upper_styles["back " + style] = parts["standing"]
+        upper_styles["back %s seated" % style] = parts["seated"]
+        upper_styles["back %s reclined" % style] = parts["reclined"]
     worst = max(worst, head_clipping(head_styles, solids, upper_styles, poses, report, raised_arms=raised_arms))
     gear_worst, checked, bare_spots = headgear_clipping(gear, head_styles, solids, upper_styles, poses, report, raised_arms)
     worst = max(worst, gear_worst)
     data = {
-        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head. Torso and arm styles that are only printed have the figure's own shape; those in 'raised' have raised bits and are checked on their own.",
+        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head. Torso and arm styles that are only printed have the figure's own shape; those in 'raised' have raised bits and are checked on their own. Back pieces are checked in each pose in the variant made for it, and against every kart seat (seated, and reclined in the lay-down seat) and a motorbike's saddle and tail astride; 'seats' lists them.",
+        "seats": [s[0] for s in SEATS] + ["saddle"],
         "figure": json.load(open(F.OUT)),
         "limit_cm3": LIMIT_CM3,
         "poses": [p[0] for p in poses],
-        "styles": sorted(list(style_solids) + list(head_styles) + ["headgear " + k for k in gear] + ["torso " + k for k in torso_solids] + ["arms " + k for k in arm_solids] + ["legs " + k for k in leg_solids]),
+        "styles": sorted(list(style_solids) + list(head_styles) + ["headgear " + k for k in gear] + ["torso " + k for k in torso_solids] + ["arms " + k for k in arm_solids] + ["legs " + k for k in leg_solids] + ["back " + k for k in back_solids]),
         "raised": sorted(list(raised_torsos) + ["arms " + k for k in raised_arms]),
         "headgear_hair": checked,
         "uncovered": bare_spots,

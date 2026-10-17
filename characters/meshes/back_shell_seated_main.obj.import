@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://qogf7p3rgwnh"
+path="res://.godot/imported/back_shell_seated_main.obj-3def6c5e52a8ba7c73650541d4941218.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_shell_seated_main.obj-3def6c5e52a8ba7c73650541d4941218.mesh"]
+
+source_file="res://characters/meshes/back_shell_seated_main.obj"
+dest_files=["res://.godot/imported/back_shell_seated_main.obj-3def6c5e52a8ba7c73650541d4941218.mesh", "res://.godot/imported/back_shell_seated_main.obj-3def6c5e52a8ba7c73650541d4941218.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
