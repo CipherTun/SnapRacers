@@ -119,6 +119,7 @@ func _ready() -> void:
 	await _bank()
 	await _placing(parts)
 	await _mirror_and_paint(parts)
+	await _air(parts)
 	await _moving(parts)
 	await _snapping(parts)
 	await _controller(parts)
@@ -273,6 +274,27 @@ func _mirror_and_paint(parts: int) -> void:
 	garage.ui.delete_pressed.emit()
 	check(count("brick_2x2", SPOT) == 0 and count("brick_2x2", TWIN) == 0 and garage.design.parts.size() == parts, "deleting one deletes its twin")
 	garage.ui.mirror_toggled.emit(false)
+
+
+func _air(parts: int) -> void:
+	garage.ui.air_toggled.emit(true)
+	check(garage.air and garage._air.visible, "the wind button shows the wind")
+	var faces := func() -> int:
+		var mesh: Mesh = garage._air._squares.mesh
+		return 0 if mesh == null else mesh.surface_get_array_len(0) / 6
+	var before: int = faces.call()
+	check(before > 0 and garage._air._lines.mesh != null, "with squares on the kart and lines of wind (%d squares)" % before)
+	var old_mesh: Mesh = garage._air._squares.mesh
+	garage.start_placing("brick_2x2", Basis.IDENTITY, null, SPOT)
+	garage.place()
+	garage.cancel()
+	check(count("brick_2x2", SPOT) == 1, "parts still go down with it on")
+	check(garage._air._squares.mesh != old_mesh and faces.call() > 0, "and the squares are made again for the new kart (%d)" % faces.call())
+	garage.undo()
+	check(garage.design.parts.size() == parts, "undo takes it off again")
+	garage.ui.air_toggled.emit(false)
+	check(not garage.air and garage._air._squares.mesh == null, "pressing it again hides the wind")
+	await frames(1)
 
 
 func _moving(parts: int) -> void:

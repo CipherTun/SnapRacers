@@ -60,6 +60,14 @@ func _draw() -> void:
 		"paint":
 			draw_line(c + Vector2(7, -10), c + Vector2(-3, 2), ink, 4.0, true)
 			draw_circle(c + Vector2(-6, 7), 5.0, ink)
+		"air":
+			# Three gusts of wind, the middle one longer.
+			for line in [[-8.0, -10.0, 6.0], [0.0, -13.0, 11.0], [8.0, -10.0, 4.0]]:
+				var wave := PackedVector2Array()
+				for i in 9:
+					var x: float = lerpf(line[1], line[2], i / 8.0)
+					wave.append(c + Vector2(x, line[0] + sin(i / 8.0 * TAU) * 2.0))
+				draw_polyline(wave, ink, w, true)
 		"camera":
 			draw_rect(Rect2(c + Vector2(-12, -7), Vector2(24, 15)), ink, false, w)
 			draw_circle(c + Vector2(0, 0.5), 4.0, ink)
