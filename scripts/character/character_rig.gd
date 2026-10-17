@@ -557,8 +557,9 @@ func add_figure(piece: String, parent: Node3D, colours: Dictionary, sitting := f
 
 ## Adds the style worn in `slot` as made in tools/characters, if it's made
 ## there, on the node for its bone, or its `variant` (like hair's "cut" for
-## under a hat) when it has one, placed by `place` in the bone's space.
-## Returns whether it was.
+## under a hat, or an arm style's "arm_r" and hands) when it has one, on the
+## variant's own bone if it has one, placed by `place` in the bone's space.
+## The skin region is in the driver's skin. Returns whether it was.
 func add_style(slot: String, variant := "", place := Transform3D.IDENTITY) -> bool:
 	var entry := CharacterMesh.style(slot, design.style_of(slot))
 	if entry.is_empty():
@@ -566,9 +567,9 @@ func add_style(slot: String, variant := "", place := Transform3D.IDENTITY) -> bo
 	var shape: Dictionary = entry.get(variant, entry) if variant != "" else entry
 	var bones := _bones()
 	bones["legs"] = _legs
-	var parent: Node3D = bones.get(entry.get("bone", "upper"), _upper)
+	var parent: Node3D = bones.get(shape.get("bone", entry.get("bone", "upper")), _upper)
 	for region in shape.regions:
-		var look := CharacterMesh.region_colour(entry, region, design.color_of(slot))
+		var look := [design.skin(), 0.0] if region == "skin" else CharacterMesh.region_colour(entry, region, design.color_of(slot))
 		var node := add(parent, CharacterMesh.mesh(shape.regions[region]), look[0], place.origin, place.basis, look[1])
 		if slot in ["hair", "facial_hair"] and look[1] == 0.0:
 			node.material_override = hair_mat(look[0])

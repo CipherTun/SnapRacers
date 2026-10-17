@@ -23,14 +23,16 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "parts"))
 
+import arms  # noqa: E402
 import beards  # noqa: E402
 import figure as F  # noqa: E402
 import hair  # noqa: E402
 import headgear  # noqa: E402
 import necks  # noqa: E402
+import torsos  # noqa: E402
 from kit import save_obj, union  # noqa: E402
 from manifold3d import CrossSection, JoinType, Manifold  # noqa: E402
-from shapes import GAP, SEGMENTS, apply, ball, rbox, soft_slab, tube  # noqa: E402
+from shapes import GAP, SEGMENTS, apply, ball, rbox, tube  # noqa: E402
 
 GAME = F.GAME
 MESHES = "characters/meshes"
@@ -48,39 +50,10 @@ def hips():
     return block - groove - under
 
 
-def torso_section():
-    """The torso from the front: wider at the bottom, the sides bowing out a
-    little, rounded shoulders."""
-    bottom, top = F.HIPS_TOP, F.HIPS_TOP + F.TORSO_HEIGHT
-    right = []
-    steps = 12
-    for k in range(steps + 1):
-        t = k / steps
-        y = bottom + F.TORSO_HEIGHT * t
-        right.append((F.half_width(y) + 0.007 * math.sin(math.pi * t), y))
-    points = right + [(-x, y) for x, y in reversed(right)]
-    section = CrossSection([points])
-    # Rounded shoulders, and softer bottom corners.
-    shoulders = section.offset(-0.04, JoinType.Round, 2.0, 64).offset(0.04, JoinType.Round, 2.0, 64)
-    lower = section.offset(-0.012, JoinType.Round, 2.0, 32).offset(0.012, JoinType.Round, 2.0, 32)
-    cut = CrossSection.square([1.0, 1.0]).translate([-0.5, bottom + F.TORSO_HEIGHT * 0.5])
-    return (shoulders ^ cut) + (lower - cut)
-
-
 def torso(grow=0.0):
-    """The torso, or with `grow` the space around it pieces are kept out of."""
-    section = torso_section()
-    if grow > 0.0:
-        section = section.offset(grow, JoinType.Round, 2.0, 32)
-    body = soft_slab(section, F.TORSO_DEPTH + grow * 2.0, 0.03 + grow)
-    top = F.HIPS_TOP + F.TORSO_HEIGHT
-    # The round collar the neck sits in, moulded into the top.
-    collar = CrossSection([[(0.046, -0.004), (0.068, -0.004), (0.068, 0.006), (0.046, 0.006)]])
-    collar = collar.offset(-0.003, JoinType.Round, 2.0, 24).offset(0.003, JoinType.Round, 2.0, 24)
-    if grow > 0.0:
-        collar = collar.offset(grow, JoinType.Round, 2.0, 24)
-    ring = collar.revolve(SEGMENTS * 2).rotate([-90.0, 0.0, 0.0]).translate([0.0, top, 0.0])
-    return body + ring
+    """The torso, or with `grow` the space around it pieces are kept out of
+    (see torsos.base)."""
+    return torsos.base(grow)
 
 
 def neck(grow=0.0):
@@ -218,16 +191,16 @@ def arm(side):
     elbow = F.elbow(side)
     d = F.forearm_dir(side)
     end = F.wrist(side) - d * 0.013
-    shoulder = ball((0.017 * s, -0.004, 0.0), 0.047)
-    knee = ball(elbow, 0.042)
+    shoulder = ball((0.017 * s, -0.004, 0.0), 0.047, 20)
+    knee = ball(elbow, 0.042, 20)
     # The forearm goes forward from the elbow before it turns in to the
     # wrist, so it clears the front corner of the torso.
     mid = elbow + (F.wrist(side) - elbow) * 0.6
     mid[0] = elbow[0]
-    bend = ball(mid, 0.039)
-    cuff = tube(end - d * 0.012, end, 0.037, 0.035)
+    bend = ball(mid, 0.039, 20)
+    cuff = tube(end - d * 0.012, end, 0.037, 0.035, 20)
     solid = Manifold.batch_hull([shoulder, knee]) + Manifold.batch_hull([knee, bend]) + Manifold.batch_hull([bend, cuff])
-    socket = tube(end - d * 0.026, end + d * 0.01, 0.0215, 0.0215)
+    socket = tube(end - d * 0.026, end + d * 0.01, 0.0215, 0.0215, 16)
     return solid - socket
 
 
@@ -250,9 +223,9 @@ def hand(side):
     from the wrist (+y), with the wrist that plugs into the arm."""
     outer, inner, half = 0.042, 0.02, 0.0215
     section = CrossSection([[(inner, -half), (outer, -half), (outer, half), (inner, half)]])
-    section = section.offset(-0.007, JoinType.Round, 2.0, 32).offset(0.007, JoinType.Round, 2.0, 32)
-    ring = section.revolve(SEGMENTS * 2, 280.0).rotate([0.0, 0.0, -50.0])
-    stub = tube((0.0, 0.034, 0.0), (0.0, F.HAND_SIZE + 0.03, 0.0), 0.019, 0.019)
+    section = section.offset(-0.007, JoinType.Round, 2.0, 12).offset(0.007, JoinType.Round, 2.0, 12)
+    ring = section.revolve(32, 280.0).rotate([0.0, 0.0, -50.0])
+    stub = tube((0.0, 0.034, 0.0), (0.0, F.HAND_SIZE + 0.03, 0.0), 0.019, 0.019, 20)
     return ring + stub
 
 
@@ -262,14 +235,73 @@ def rel(path):
     return "res://%s/%s" % (MESHES, path)
 
 
-def save_regions(name, regions, made):
-    """Saves each region of a piece and returns their paths by region."""
+def save_shown(solid, path, sharp=35.0):
+    """Writes a region as an OBJ file like kit.save_obj, but only the faces
+    that show (see torsos.keep), leaving out the cuts between regions.
+    Returns how many triangles it has."""
+    solid = solid.calculate_normals(0, sharp)
+    mesh = solid.to_mesh()
+    props = np.asarray(mesh.vert_properties)
+    tris = np.asarray(mesh.tri_verts)
+    runs = np.asarray(mesh.run_index) // 3
+    ids = np.asarray(mesh.run_original_id)
+    shown = np.zeros(len(tris), bool)
+    for k in range(len(ids)):
+        if int(ids[k]) in torsos.SURFACE:
+            shown[runs[k]:runs[k + 1]] = True
+    tris = tris[shown]
+    used = np.unique(tris)
+    index = np.full(len(props), -1, np.int64)
+    index[used] = np.arange(len(used))
+    lines = []
+    for p in props[used]:
+        lines.append("v %.5f %.5f %.5f" % (p[0], p[1], p[2]))
+    for p in props[used]:
+        n = p[3:6]
+        length = math.sqrt(float(np.dot(n, n))) or 1.0
+        lines.append("vn %.4f %.4f %.4f" % (n[0] / length, n[1] / length, n[2] / length))
+    for t in index[tris]:
+        a, b, c = int(t[0]) + 1, int(t[1]) + 1, int(t[2]) + 1
+        lines.append("f %d//%d %d//%d %d//%d" % (a, a, b, b, c, c))
+    text = "\n".join(lines) + "\n"
+    if text in _written:
+        return _written[text], 0
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        f.write(text)
+    _written[text] = path
+    return path, len(tris)
+
+
+def solid_shown_tris(path):
+    with open(path) as f:
+        return [line for line in f if line.startswith("f ")]
+
+
+# Meshes saved so far by their text, so a region the same as one saved
+# already, like a bare hand, uses that file.
+_written = {}
+
+
+def save_regions(name, regions, made, shown=False, counts=None):
+    """Saves each region of a piece and returns their paths by region. With
+    `shown`, only the faces that show are saved, and `counts` gets how many
+    triangles."""
     out = {}
     for region, solid in regions.items():
         if solid.is_empty() or solid.volume() < 1e-9:
             continue
         file = "%s_%s.obj" % (name, region)
-        made[0] += save_obj(solid, (0.0, 0.0, 0.0), os.path.join(GAME, MESHES, file), 35.0)
+        if shown:
+            path, n = save_shown(solid, os.path.join(GAME, MESHES, file))
+            if counts is not None:
+                counts[0] += len(solid_shown_tris(path))
+            file = os.path.relpath(path, os.path.join(GAME, MESHES))
+        else:
+            n = save_obj(solid, (0.0, 0.0, 0.0), os.path.join(GAME, MESHES, file), 35.0)
+            if counts is not None:
+                counts[0] += n
+        made[0] += n
         out[region] = rel(file)
     return out
 
@@ -409,11 +441,76 @@ def make():
     biggest = max(gear_sizes, key=gear_sizes.get)
     print("headgear: %d triangles in all, the biggest %s at %d" % (sum(gear_sizes.values()), biggest, gear_sizes[biggest]))
 
-    clipping(solids, style_solids, gear)
+    # Torsos, on the upper body, printed in colour regions on the torso.
+    styles["torso"] = {}
+    torso_solids = {}
+    tri_sizes = {}
+    plain = torso().volume()
+    for style, make_style in torsos.STYLES.items():
+        regions = make_style()
+        counts = [0]
+        entry = {"bone": "upper", "regions": save_regions("torso_" + style, regions, made, True, counts), "box": box_of(regions.values())}
+        if style in torsos.METAL:
+            entry["metallic"] = torsos.METAL[style]
+        styles["torso"][style] = entry
+        whole = union(list(regions.values()))
+        torso_solids[style] = (whole, abs(whole.volume() - plain) > 1e-8)
+        tri_sizes["torso " + style] = counts[0]
+        print("made torso", style, counts[0], "triangles")
+
+    # Arms, a piece for each side and its hand. Regions the same as one made
+    # already share its file, so old files are cleared first.
+    for old in os.listdir(os.path.join(GAME, MESHES)):
+        if old.startswith("arms_") and old.endswith(".obj"):
+            os.remove(os.path.join(GAME, MESHES, old))
+    styles["arms"] = {}
+    arm_solids = {}
+    flags_by_style = arms.settings()
+    keepouts = [arm_keepout(side) for side in (0, 1)]
+    bare_hands = [torsos.keep(hand(side)) for side in (0, 1)]
+    for style, flags in flags_by_style.items():
+        entry = {}
+        parts = {}
+        raised_any = False
+        for side, suffix in ((0, "l"), (1, "r")):
+            bare_arm = torsos.keep(arm(side))
+            regions, raised, hand_regions = arms.make(side, bare_arm, bare_hands[side], flags)
+            for region, solid in raised.items():
+                solid = torsos.keep(solid - keepouts[side])
+                if solid.is_empty():
+                    continue
+                raised_any = True
+                regions[region] = regions[region] + solid if region in regions else solid
+            counts, hand_counts = [0], [0]
+            arm_entry = {"bone": "arm_" + suffix, "regions": save_regions("arms_%s_%s" % (style, suffix), regions, made, True, counts), "box": box_of(regions.values())}
+            hand_entry = {"bone": "hand_" + suffix, "regions": save_regions("arms_%s_hand_%s" % (style, suffix), hand_regions, made, True, hand_counts), "box": box_of(hand_regions.values())}
+            if side == 0:
+                entry.update(arm_entry)
+            else:
+                entry["arm_r"] = arm_entry
+            entry["hand_" + suffix] = hand_entry
+            parts["arm_" + suffix] = union(list(regions.values()))
+            parts["hand_" + suffix] = union(list(hand_regions.values()))
+            tri_sizes["arm %s %s" % (style, suffix)] = counts[0]
+            tri_sizes["hand %s %s" % (style, suffix)] = hand_counts[0]
+        if flags.get("metal"):
+            entry["metallic"] = 0.5
+        styles["arms"][style] = entry
+        arm_solids[style] = (parts, raised_any)
+        print("made arms", style, tri_sizes["arm %s l" % style], "triangles an arm,", tri_sizes["hand %s l" % style], "a hand")
+    for kind in ("torso", "arm", "hand"):
+        mine = {k: v for k, v in tri_sizes.items() if k.split(" ")[0] == kind}
+        biggest = max(mine, key=mine.get)
+        print("%s: %d triangles in all, the biggest %s at %d" % (kind, sum(mine.values()), biggest, mine[biggest]))
+    over = [k for k, v in tri_sizes.items() if v > 1500]
+    if over:
+        raise SystemExit("over 1,500 triangles: %s" % over)
+
+    clipping(solids, style_solids, gear, torso_solids, arm_solids)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
-        "colours": dict(necks.COLOURS, **headgear.COLOURS),
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. A 'skin' region is in the driver's skin.",
+        "colours": dict(necks.COLOURS, **headgear.COLOURS, **torsos.COLOURS),
         "figure": pieces,
         "styles": styles,
     }
@@ -448,6 +545,47 @@ def posed(solids, seated, astride=False, swings=None, along=(0.0, 0.0, -1.0)):
     return out
 
 
+def inverse(m):
+    r = m[:, :3].T
+    return np.hstack([r, (-r @ m[:, 3]).reshape(3, 1)])
+
+
+_lower = []
+
+
+def lower_body():
+    """The hips and the legs standing, seated and seated astride, in the
+    rig's space."""
+    if not _lower:
+        keepout = leg_keepout()
+        seat = seated_from_standing()
+        standing = union([union(list(leg_regions(leg_standing(side)).values())) for side in (0, 1)])
+        seated = union([union([apply(v, seat) - keepout for v in leg_regions(leg_standing(side)).values()]) for side in (0, 1)])
+        _lower.extend([hips(), standing, seated, apply(seated, F.legs_astride())])
+    return _lower
+
+
+def arm_keepout(side):
+    """In the arm's own space, where the torso, hips and legs are as the arm
+    swings through every pose, for cutting raised bits on the arms back
+    from."""
+    hip, standing, seated, astride_legs = lower_body()
+    body = torso(GAP)
+    rest_standing = F.swing_to(side, STANDING_REST[side])[0]
+    rest_seated = F.swing_to(side, SEATED_REST[side])[0]
+    angles = [rest_standing - 0.08 + 0.04 * k for k in range(5)] + [rest_seated] + [math.radians(d) for d in range(39, 127, 3)] + [math.pi * 0.6]
+    placed = []
+    for a in angles:
+        inv = inverse(F.arm_pose(side, a, 0.0)[0])
+        placed += [apply(body, inv), apply(hip + standing + seated, inv)]
+    lean = F.upper_lean(-math.radians(F.ASTRIDE_LEAN))
+    for d in range(48, 108, 3):
+        arm_m = F.arm_pose(side, math.radians(d), 0.3)[0]
+        placed.append(apply(body, inverse(arm_m)))
+        placed.append(apply(hip + astride_legs, inverse(F.compose(lean, arm_m))))
+    return union(placed)
+
+
 PAIRS = [
     ("hips", "leg_l"), ("hips", "leg_r"), ("leg_l", "leg_r"), ("torso", "leg_l"), ("torso", "leg_r"),
     ("torso", "arm_l"), ("torso", "arm_r"), ("hips", "arm_l"), ("hips", "arm_r"),
@@ -474,7 +612,19 @@ def _boxes_meet(a, b):
     return all(ba[i] <= bb[i + 3] and bb[i] <= ba[i + 3] for i in range(3))
 
 
-def head_clipping(head_styles, solids, neck_styles, poses, report, still_checks=True):
+def place_arms(parts, astride, swings, along):
+    """An arm style's arms and hands placed for a pose, in the rig's space."""
+    lean = F.upper_lean(-math.radians(F.ASTRIDE_LEAN) if astride else 0.0)
+    out = {}
+    for side, suffix in ((0, "l"), (1, "r")):
+        angle, spread = swings[side]
+        arm_m, hand_m = F.arm_pose(side, angle, spread, along)
+        out["arm_" + suffix] = apply(parts["arm_" + suffix], F.compose(lean, arm_m))
+        out["hand_" + suffix] = apply(parts["hand_" + suffix], F.compose(lean, hand_m))
+    return out
+
+
+def head_clipping(head_styles, solids, neck_styles, poses, report, still_checks=True, raised_arms=None):
     """Hair and facial hair against the head, the stud, the face and each
     other on the head, and against the neck, the torso, every neck piece and
     the arms and hands as the head turns in every pose."""
@@ -504,7 +654,14 @@ def head_clipping(head_styles, solids, neck_styles, poses, report, still_checks=
     for name, seated, astride, swings, along in poses:
         lean = F.upper_lean(-math.radians(F.ASTRIDE_LEAN) if astride else 0.0)
         placed = posed(solids, seated, astride, swings, along)
-        arms.append((name, lean, {b: placed[b] for b in ("arm_l", "arm_r", "hand_l", "hand_r")}))
+        swung = {b: placed[b] for b in ("arm_l", "arm_r", "hand_l", "hand_r")}
+        # Arm styles with raised bits, their arms only, as their hands are the
+        # figure's.
+        for style, parts in (raised_arms or {}).items():
+            on = place_arms(parts, astride, swings, along)
+            swung["arms %s arm_l" % style] = on["arm_l"]
+            swung["arms %s arm_r" % style] = on["arm_r"]
+        arms.append((name, lean, swung))
 
     def at_turn(solid, turn):
         found = []
@@ -526,7 +683,7 @@ def head_clipping(head_styles, solids, neck_styles, poses, report, still_checks=
     return worst
 
 
-def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report):
+def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report, raised_arms=None):
     """Headgear against the head, the stud and the face, the hair shown under
     it (each hairdo's cut version under a hat, each full hairdo under what's
     fitted to it), the raised facial hair, and as the head turns, against
@@ -586,11 +743,14 @@ def headgear_clipping(gear, head_styles, solids, neck_styles, poses, report):
             checked[style] = []
         moving[name] = union(list(worn.values()))
     # As the head turns, every way it's worn at once.
-    worst = max(worst, head_clipping(moving, solids, neck_styles, poses, report, still_checks=False))
+    worst = max(worst, head_clipping(moving, solids, neck_styles, poses, report, still_checks=False, raised_arms=raised_arms))
     return worst, checked, bare_spots
 
 
-def clipping(solids, style_solids, gear):
+def clipping(solids, style_solids, gear, torso_solids, arm_solids):
+    """Everything against everything it can meet, in every pose. Torso and
+    arm styles that are only printed have the figure's own shape, so only
+    those with raised bits are checked apart."""
     poses = []
 
     def rest(targets, astride=False):
@@ -622,6 +782,17 @@ def clipping(solids, style_solids, gear):
             worst = max(worst, volume)
             if volume > 0.001:
                 report.append({"pose": "any pose", "a": style, "b": b, "cm3": round(volume, 4)})
+    raised_torsos = {"torso " + k: whole for k, (whole, raised) in torso_solids.items() if raised}
+    raised_arms = {k: parts for k, (parts, raised) in arm_solids.items() if raised}
+    neck_names = list(style_solids)
+    for style, solid in raised_torsos.items():
+        for b in ["neck", "head"] + neck_names:
+            other = still[b] if b in still else style_solids[b]
+            if _boxes_meet(solid, other):
+                volume = (solid ^ other).volume() * 1e6
+                worst = max(worst, volume)
+                if volume > 0.001:
+                    report.append({"pose": "any pose", "a": style, "b": b, "cm3": round(volume, 4)})
     for name, seated, astride, swings, along in poses:
         placed = posed(solids, seated, astride, swings, along)
         pairs = list(PAIRS)
@@ -629,20 +800,33 @@ def clipping(solids, style_solids, gear):
         for style, solid in style_solids.items():
             placed[style] = apply(solid, lean)
             pairs += [(style, b) for b in STYLE_MOVING[style.split(" ")[0]]]
+        for style, solid in raised_torsos.items():
+            placed[style] = apply(solid, lean)
+            pairs += [(style, b) for b in ("arm_l", "arm_r", "hand_l", "hand_r", "leg_l", "leg_r")]
+        for style, parts in raised_arms.items():
+            on = place_arms(parts, astride, swings, along)
+            for suffix in ("l", "r"):
+                a = "arms %s arm_%s" % (style, suffix)
+                placed[a] = on["arm_" + suffix]
+                pairs += [(a, b) for b in ["torso", "hips", "leg_l", "leg_r", "hand_" + suffix] + neck_names + list(raised_torsos)]
         for a, b in pairs:
+            if not _boxes_meet(placed[a], placed[b]):
+                continue
             volume = (placed[a] ^ placed[b]).volume() * 1e6
             worst = max(worst, volume)
             if volume > 0.001:
                 report.append({"pose": name, "a": a, "b": b, "cm3": round(volume, 4)})
-    worst = max(worst, head_clipping(head_styles, solids, style_solids, poses, report))
-    gear_worst, checked, bare_spots = headgear_clipping(gear, head_styles, solids, style_solids, poses, report)
+    upper_styles = dict(style_solids, **raised_torsos)
+    worst = max(worst, head_clipping(head_styles, solids, upper_styles, poses, report, raised_arms=raised_arms))
+    gear_worst, checked, bare_spots = headgear_clipping(gear, head_styles, solids, upper_styles, poses, report, raised_arms)
     worst = max(worst, gear_worst)
     data = {
-        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head.",
+        "_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head. Torso and arm styles that are only printed have the figure's own shape; those in 'raised' have raised bits and are checked on their own.",
         "figure": json.load(open(F.OUT)),
         "limit_cm3": LIMIT_CM3,
         "poses": [p[0] for p in poses],
-        "styles": sorted(list(style_solids) + list(head_styles) + ["headgear " + k for k in gear]),
+        "styles": sorted(list(style_solids) + list(head_styles) + ["headgear " + k for k in gear] + ["torso " + k for k in torso_solids] + ["arms " + k for k in arm_solids]),
+        "raised": sorted(list(raised_torsos) + ["arms " + k for k in raised_arms]),
         "headgear_hair": checked,
         "uncovered": bare_spots,
         "worst_cm3": round(worst, 4),

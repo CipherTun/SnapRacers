@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head.",
+	"_comment": "Made by tools/characters/make_characters.py: how far the figure's pieces and the styles made there go into each other, in cubic centimetres, in the rig's poses. Only overlaps over 0.001 are listed. 'headgear_hair' lists the hair each headgear was checked against, and 'uncovered' where a hat leaves the top edge of the cut hair under it showing, in degrees round the head. Torso and arm styles that are only printed have the figure's own shape; those in 'raised' have raised bits and are checked on their own.",
 	"figure": {
 		"HIPS_TOP": 0.08,
 		"TORSO_HEIGHT": 0.34,
@@ -66,6 +66,26 @@
 		"cheering"
 	],
 	"styles": [
+		"arms armoured",
+		"arms bandaged",
+		"arms bare",
+		"arms furry",
+		"arms gloves",
+		"arms long_gloves",
+		"arms long_sleeves",
+		"arms mechanical",
+		"arms puffed",
+		"arms racing_gloves",
+		"arms rolled",
+		"arms scaly",
+		"arms short_sleeves",
+		"arms spiked_bracers",
+		"arms striped",
+		"arms tattoo",
+		"arms two_tone",
+		"arms watch",
+		"arms white_gloves",
+		"arms wristbands",
 		"facial_hair braided",
 		"facial_hair full",
 		"facial_hair long",
@@ -147,7 +167,41 @@
 		"neck scarf",
 		"neck spiked_collar",
 		"neck tie",
-		"neck whistle"
+		"neck whistle",
+		"torso armour",
+		"torso dino_belly",
+		"torso flowery",
+		"torso gi",
+		"torso gown",
+		"torso hoodie",
+		"torso jacket",
+		"torso jersey",
+		"torso lab_coat",
+		"torso leather",
+		"torso overalls",
+		"torso pirate_coat",
+		"torso plaid",
+		"torso racing_suit",
+		"torso robot",
+		"torso space_suit",
+		"torso stripes",
+		"torso tank_top",
+		"torso tee",
+		"torso tunic",
+		"torso tuxedo",
+		"torso vest"
+	],
+	"raised": [
+		"arms armoured",
+		"arms furry",
+		"arms long_gloves",
+		"arms puffed",
+		"arms rolled",
+		"arms spiked_bracers",
+		"arms watch",
+		"arms wristbands",
+		"torso pirate_coat",
+		"torso tunic"
 	],
 	"headgear_hair": {
 		"racing_helmet": [],
@@ -513,19 +567,19 @@
 		]
 	},
 	"uncovered": [],
-	"worst_cm3": 0.0216,
+	"worst_cm3": 0.016,
 	"overlaps": [
 		{
 			"pose": "seated, hands resting",
 			"a": "leg_l",
 			"b": "hand_l",
-			"cm3": 0.0096
+			"cm3": 0.0084
 		},
 		{
 			"pose": "seated, hands resting",
 			"a": "leg_r",
 			"b": "hand_r",
-			"cm3": 0.0096
+			"cm3": 0.0084
 		},
 		{
 			"pose": "any pose",
@@ -537,13 +591,13 @@
 			"pose": "seated, arms swung 120 degrees, head turned +1.30",
 			"a": "hair afro",
 			"b": "hand_r",
-			"cm3": 0.0216
+			"cm3": 0.016
 		},
 		{
 			"pose": "seated, arms swung 120 degrees, head turned -1.30",
 			"a": "hair afro",
 			"b": "hand_l",
-			"cm3": 0.0216
+			"cm3": 0.016
 		},
 		{
 			"pose": "any pose",

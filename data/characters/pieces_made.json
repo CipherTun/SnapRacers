@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head.",
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. A 'skin' region is in the driver's skin.",
 	"colours": {
 		"white": [
 			"#f2f2f2",
@@ -59,6 +59,18 @@
 		],
 		"blue": [
 			"#0d69ab",
+			0.0
+		],
+		"denim": [
+			"#1f4e8c",
+			0.0
+		],
+		"denim_dark": [
+			"#173c6c",
+			0.0
+		],
+		"brown": [
+			"#6b4430",
 			0.0
 		]
 	},
@@ -173,10 +185,10 @@
 				"main": "res://characters/meshes/torso_main.obj"
 			},
 			"box": [
-				-0.1992,
+				-0.1991,
 				0.08,
 				-0.1,
-				0.1992,
+				0.1991,
 				0.426,
 				0.1
 			]
@@ -234,8 +246,8 @@
 			"box": [
 				-0.072,
 				-0.2498,
-				-0.0902,
-				0.0543,
+				-0.0901,
+				0.0544,
 				0.043,
 				0.047
 			]
@@ -272,9 +284,9 @@
 				"fore": "res://characters/meshes/arm_r_fore.obj"
 			},
 			"box": [
-				-0.0543,
+				-0.0544,
 				-0.2498,
-				-0.0902,
+				-0.0901,
 				0.072,
 				0.043,
 				0.047
@@ -4442,6 +4454,1538 @@
 						0.2417,
 						0.159,
 						0.1507
+					]
+				}
+			}
+		},
+		"torso": {
+			"racing_suit": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_racing_suit_main.obj",
+					"white": "res://characters/meshes/torso_racing_suit_white.obj",
+					"dark": "res://characters/meshes/torso_racing_suit_dark.obj",
+					"silver": "res://characters/meshes/torso_racing_suit_silver.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"jacket": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_jacket_main.obj",
+					"white": "res://characters/meshes/torso_jacket_white.obj",
+					"dark": "res://characters/meshes/torso_jacket_dark.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"overalls": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_overalls_main.obj",
+					"denim": "res://characters/meshes/torso_overalls_denim.obj",
+					"gold": "res://characters/meshes/torso_overalls_gold.obj",
+					"denim_dark": "res://characters/meshes/torso_overalls_denim_dark.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"hoodie": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_hoodie_main.obj",
+					"dark": "res://characters/meshes/torso_hoodie_dark.obj",
+					"white": "res://characters/meshes/torso_hoodie_white.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"armour": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_armour_main.obj",
+					"dark": "res://characters/meshes/torso_armour_dark.obj",
+					"silver": "res://characters/meshes/torso_armour_silver.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				],
+				"metallic": 0.45
+			},
+			"tee": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_tee_main.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"tuxedo": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_tuxedo_main.obj",
+					"white": "res://characters/meshes/torso_tuxedo_white.obj",
+					"dark": "res://characters/meshes/torso_tuxedo_dark.obj",
+					"ink": "res://characters/meshes/torso_tuxedo_ink.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"gown": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_gown_main.obj",
+					"light": "res://characters/meshes/torso_gown_light.obj",
+					"gold": "res://characters/meshes/torso_gown_gold.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"vest": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_vest_main.obj",
+					"white": "res://characters/meshes/torso_vest_white.obj",
+					"dark": "res://characters/meshes/torso_vest_dark.obj",
+					"gold": "res://characters/meshes/torso_vest_gold.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"tank_top": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_tank_top_main.obj",
+					"skin": "res://characters/meshes/torso_tank_top_skin.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"flowery": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_flowery_main.obj",
+					"white": "res://characters/meshes/torso_flowery_white.obj",
+					"orange": "res://characters/meshes/torso_flowery_orange.obj",
+					"yellow": "res://characters/meshes/torso_flowery_yellow.obj",
+					"pink": "res://characters/meshes/torso_flowery_pink.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"stripes": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_stripes_main.obj",
+					"white": "res://characters/meshes/torso_stripes_white.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"plaid": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_plaid_main.obj",
+					"dark": "res://characters/meshes/torso_plaid_dark.obj",
+					"light": "res://characters/meshes/torso_plaid_light.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"lab_coat": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_lab_coat_main.obj",
+					"dark": "res://characters/meshes/torso_lab_coat_dark.obj",
+					"ink": "res://characters/meshes/torso_lab_coat_ink.obj",
+					"blue": "res://characters/meshes/torso_lab_coat_blue.obj",
+					"red": "res://characters/meshes/torso_lab_coat_red.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"tunic": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_tunic_main.obj",
+					"white": "res://characters/meshes/torso_tunic_white.obj",
+					"brown": "res://characters/meshes/torso_tunic_brown.obj",
+					"gold": "res://characters/meshes/torso_tunic_gold.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.106,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"pirate_coat": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_pirate_coat_main.obj",
+					"white": "res://characters/meshes/torso_pirate_coat_white.obj",
+					"dark": "res://characters/meshes/torso_pirate_coat_dark.obj",
+					"gold": "res://characters/meshes/torso_pirate_coat_gold.obj",
+					"brown": "res://characters/meshes/torso_pirate_coat_brown.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.106,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"leather": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_leather_main.obj",
+					"silver": "res://characters/meshes/torso_leather_silver.obj",
+					"dark": "res://characters/meshes/torso_leather_dark.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"space_suit": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_space_suit_main.obj",
+					"grey": "res://characters/meshes/torso_space_suit_grey.obj",
+					"red": "res://characters/meshes/torso_space_suit_red.obj",
+					"green": "res://characters/meshes/torso_space_suit_green.obj",
+					"yellow": "res://characters/meshes/torso_space_suit_yellow.obj",
+					"blue": "res://characters/meshes/torso_space_suit_blue.obj",
+					"ink": "res://characters/meshes/torso_space_suit_ink.obj",
+					"white": "res://characters/meshes/torso_space_suit_white.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"gi": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_gi_main.obj",
+					"dark": "res://characters/meshes/torso_gi_dark.obj",
+					"ink": "res://characters/meshes/torso_gi_ink.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"robot": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_robot_main.obj",
+					"dark": "res://characters/meshes/torso_robot_dark.obj",
+					"red": "res://characters/meshes/torso_robot_red.obj",
+					"green": "res://characters/meshes/torso_robot_green.obj",
+					"blue": "res://characters/meshes/torso_robot_blue.obj",
+					"ink": "res://characters/meshes/torso_robot_ink.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				],
+				"metallic": 0.35
+			},
+			"jersey": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_jersey_main.obj",
+					"white": "res://characters/meshes/torso_jersey_white.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			},
+			"dino_belly": {
+				"bone": "upper",
+				"regions": {
+					"main": "res://characters/meshes/torso_dino_belly_main.obj",
+					"light": "res://characters/meshes/torso_dino_belly_light.obj",
+					"dark": "res://characters/meshes/torso_dino_belly_dark.obj"
+				},
+				"box": [
+					-0.1991,
+					0.08,
+					-0.1,
+					0.1991,
+					0.426,
+					0.1
+				]
+			}
+		},
+		"arms": {
+			"long_sleeves": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_long_sleeves_l_main.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_r_main.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"short_sleeves": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_short_sleeves_l_main.obj",
+					"skin": "res://characters/meshes/arms_short_sleeves_l_skin.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_short_sleeves_r_main.obj",
+						"skin": "res://characters/meshes/arms_short_sleeves_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"gloves": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_long_sleeves_l_main.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"ink": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_r_main.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"ink": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"mechanical": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_mechanical_l_main.obj",
+					"dark": "res://characters/meshes/arms_mechanical_l_dark.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_mechanical_r_main.obj",
+						"dark": "res://characters/meshes/arms_mechanical_r_dark.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"metallic": 0.5
+			},
+			"bare": {
+				"bone": "arm_l",
+				"regions": {
+					"skin": "res://characters/meshes/arms_bare_l_skin.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_bare_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"rolled": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_rolled_l_main.obj",
+					"skin": "res://characters/meshes/arms_rolled_l_skin.obj"
+				},
+				"box": [
+					-0.077,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_rolled_r_main.obj",
+						"skin": "res://characters/meshes/arms_rolled_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.077,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"white_gloves": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_long_sleeves_l_main.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"white": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_r_main.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"white": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"long_gloves": {
+				"bone": "arm_l",
+				"regions": {
+					"skin": "res://characters/meshes/arms_long_gloves_l_skin.obj",
+					"white": "res://characters/meshes/arms_long_gloves_l_white.obj"
+				},
+				"box": [
+					-0.075,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"white": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_gloves_r_skin.obj",
+						"white": "res://characters/meshes/arms_long_gloves_r_white.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.075,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"white": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"wristbands": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_wristbands_l_main.obj",
+					"skin": "res://characters/meshes/arms_wristbands_l_skin.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2554,
+					-0.0919,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_wristbands_r_main.obj",
+						"skin": "res://characters/meshes/arms_wristbands_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2554,
+						-0.0919,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"spiked_bracers": {
+				"bone": "arm_l",
+				"regions": {
+					"skin": "res://characters/meshes/arms_spiked_bracers_l_skin.obj",
+					"ink": "res://characters/meshes/arms_spiked_bracers_l_ink.obj",
+					"silver": "res://characters/meshes/arms_spiked_bracers_l_silver.obj"
+				},
+				"box": [
+					-0.088,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_spiked_bracers_r_skin.obj",
+						"ink": "res://characters/meshes/arms_spiked_bracers_r_ink.obj",
+						"silver": "res://characters/meshes/arms_spiked_bracers_r_silver.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.088,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"armoured": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_armoured_l_main.obj",
+					"dark": "res://characters/meshes/arms_armoured_l_dark.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.05,
+					0.054
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_armoured_r_main.obj",
+						"dark": "res://characters/meshes/arms_armoured_r_dark.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.05,
+						0.054
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"metallic": 0.5
+			},
+			"striped": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_striped_l_main.obj",
+					"white": "res://characters/meshes/arms_striped_l_white.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_striped_r_main.obj",
+						"white": "res://characters/meshes/arms_striped_r_white.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"puffed": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_puffed_l_main.obj",
+					"skin": "res://characters/meshes/arms_short_sleeves_l_skin.obj"
+				},
+				"box": [
+					-0.073,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.053
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_puffed_r_main.obj",
+						"skin": "res://characters/meshes/arms_short_sleeves_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.073,
+						0.043,
+						0.053
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"furry": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_furry_l_main.obj",
+					"light": "res://characters/meshes/arms_furry_l_light.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2565,
+					-0.0929,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_furry_r_main.obj",
+						"light": "res://characters/meshes/arms_furry_r_light.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2565,
+						-0.0929,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"scaly": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_scaly_l_main.obj",
+					"light": "res://characters/meshes/arms_scaly_l_light.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_scaly_r_main.obj",
+						"light": "res://characters/meshes/arms_scaly_r_light.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"bandaged": {
+				"bone": "arm_l",
+				"regions": {
+					"skin": "res://characters/meshes/arms_bandaged_l_skin.obj",
+					"white": "res://characters/meshes/arms_bandaged_l_white.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_bandaged_r_skin.obj",
+						"white": "res://characters/meshes/arms_bandaged_r_white.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"watch": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_watch_l_main.obj",
+					"ink": "res://characters/meshes/arms_watch_l_ink.obj",
+					"silver": "res://characters/meshes/arms_watch_l_silver.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2556,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_watch_r_main.obj",
+						"ink": "res://characters/meshes/arms_watch_r_ink.obj",
+						"silver": "res://characters/meshes/arms_watch_r_silver.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2556,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"racing_gloves": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_racing_gloves_l_main.obj",
+					"ink": "res://characters/meshes/arms_racing_gloves_l_ink.obj",
+					"light": "res://characters/meshes/arms_racing_gloves_l_light.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"ink": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_racing_gloves_r_main.obj",
+						"ink": "res://characters/meshes/arms_racing_gloves_r_ink.obj",
+						"light": "res://characters/meshes/arms_racing_gloves_r_light.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"ink": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"tattoo": {
+				"bone": "arm_l",
+				"regions": {
+					"skin": "res://characters/meshes/arms_tattoo_l_skin.obj",
+					"blue": "res://characters/meshes/arms_tattoo_l_blue.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_tattoo_r_skin.obj",
+						"blue": "res://characters/meshes/arms_tattoo_r_blue.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				}
+			},
+			"two_tone": {
+				"bone": "arm_l",
+				"regions": {
+					"main": "res://characters/meshes/arms_two_tone_l_main.obj",
+					"dark": "res://characters/meshes/arms_rolled_l_skin.obj"
+				},
+				"box": [
+					-0.072,
+					-0.2498,
+					-0.0901,
+					0.0544,
+					0.043,
+					0.047
+				],
+				"hand_l": {
+					"bone": "hand_l",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
+					]
+				},
+				"arm_r": {
+					"bone": "arm_r",
+					"regions": {
+						"main": "res://characters/meshes/arms_two_tone_r_main.obj",
+						"dark": "res://characters/meshes/arms_rolled_r_skin.obj"
+					},
+					"box": [
+						-0.0544,
+						-0.2498,
+						-0.0901,
+						0.072,
+						0.043,
+						0.047
+					]
+				},
+				"hand_r": {
+					"bone": "hand_r",
+					"regions": {
+						"skin": "res://characters/meshes/arms_long_sleeves_hand_l_skin.obj"
+					},
+					"box": [
+						-0.042,
+						-0.0322,
+						-0.0215,
+						0.042,
+						0.075,
+						0.0215
 					]
 				}
 			}

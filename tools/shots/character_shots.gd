@@ -8,7 +8,7 @@ extends SceneTree
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
 ## Add --out=/some/folder to save them there as well, and --only=necks,faces
 ## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos,
-## headgear, headgear_hair, headgear_karts)
+## headgear, headgear_hair, headgear_karts, torsos, arms, outfits)
 ## for just those sheets.
 
 const OUT := "res://build/shots/characters"
@@ -151,6 +151,12 @@ func _run() -> void:
 		await _headgear_hair()
 	if wanted("headgear_karts"):
 		await _headgear_karts()
+	if wanted("torsos"):
+		await _torsos()
+	if wanted("arms"):
+		await _arms()
+	if wanted("outfits"):
+		await _outfits()
 	if wanted("closeup"):
 		await _closeup()
 	quit()
@@ -393,3 +399,68 @@ func _closeup() -> void:
 	r.rotation.y = PI
 	shots.append(await snap("", Vector3(0.0, 0.62, 1.6), Vector3(0.0, 0.42, 0.0)))
 	save(sheet(shots, 2, _view.size), "closeup.png")
+
+
+## Every torso from the front three quarters and from behind.
+func _torsos() -> void:
+	var front := []
+	var back := []
+	var middle := Vector3(0.0, 0.62, 0.0)
+	for style in CharacterDesign.styles("torso"):
+		var design := bare()
+		design.set_piece("torso", style, Color("#c4281c"))
+		design.set_piece("arms", "long_sleeves", Color("#c4281c"))
+		rig(design, false)
+		front.append(await snap(style, middle + Vector3(-0.45, 0.15, -1.0).normalized() * 2.3, middle))
+		back.append(await snap(style + " behind", middle + Vector3(0.45, 0.2, 1.0).normalized() * 2.3, middle))
+	save(sheet(front, 6, TILE), "torsos.png")
+	save(sheet(back, 6, TILE), "torsos_back.png")
+
+
+## Every arm style, on a plain torso, from the front three quarters.
+func _arms() -> void:
+	var shots := []
+	var middle := Vector3(0.0, 0.62, 0.0)
+	for style in CharacterDesign.styles("arms"):
+		var design := bare()
+		design.set_piece("torso", "tee", Color("#0d69ab"))
+		design.set_piece("arms", style, Color("#c4281c") if style != "mechanical" and style != "armoured" else Color("#9aa0a6"))
+		rig(design, false)
+		shots.append(await snap(style, middle + Vector3(-0.7, 0.15, -1.0).normalized() * 2.3, middle))
+	save(sheet(shots, 5, TILE), "arms.png")
+
+
+## A few whole outfits on drivers in karts and astride a bike.
+func _outfits() -> void:
+	var shots := []
+	var outfits := [
+		["racing", "classic", {"torso": ["racing_suit", "#c4281c"], "arms": ["racing_gloves", "#c4281c"], "hair": "short", "headgear": "racing_helmet", "neck": "none"}],
+		["knight", "classic", {"torso": ["tunic", "#0d69ab"], "arms": ["armoured", "#9aa0a6"], "hair": "long", "headgear": "none", "neck": "none"}],
+		["pirate", "classic", {"torso": ["pirate_coat", "#7a2a2a"], "arms": ["puffed", "#f2f2f2"], "hair": "ponytail", "headgear": "pirate", "neck": "neckerchief"}],
+		["lab", "classic", {"torso": ["lab_coat", "#f2f2f2"], "arms": ["watch", "#f2f2f2"], "hair": "afro", "headgear": "none", "neck": "tie"}],
+		["biker", "superbike", {"torso": ["leather", "#2b2b2b"], "arms": ["spiked_bracers", "#2b2b2b"], "hair": "mohawk", "headgear": "none", "neck": "spiked_collar"}],
+		["overalls", "dirt_bike", {"torso": ["overalls", "#f2cd37"], "arms": ["rolled", "#f2cd37"], "hair": "bun", "headgear": "cap", "neck": "none"}],
+		["gown", "chopper", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "hair": "princess", "headgear": "tiara", "neck": "pearls"}],
+		["space", "scooter", {"torso": ["space_suit", "#f2f2f2"], "arms": ["mechanical", "#9aa0a6"], "hair": "bob", "headgear": "none", "neck": "none"}],
+	]
+	for look in outfits:
+		var design := bare()
+		var parts: Dictionary = look[2]
+		for slot in ["torso", "arms"]:
+			design.set_piece(slot, parts[slot][0], Color(parts[slot][1]))
+		design.set_piece("hair", parts.hair, Color("#6b4430"))
+		_gear(design, parts.headgear)
+		design.set_piece("neck", parts.neck, Color("#c4281c"))
+		clear()
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/%s.json" % look[1]), design)
+		_stand.add_child(model)
+		await process_frame
+		var seat := Vector3(0.0, 0.6, 0.0)
+		var found := model.find_children("*", "CharacterRig", true, false)
+		if not found.is_empty():
+			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.45 if look[1] == "classic" else 0.5, 0.0)
+		for frame in 20:
+			await process_frame
+		var view := Vector3(-0.8, 0.3, -1.0) if look[1] == "classic" else Vector3(-0.75, 0.2, -1.0)
+		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if look[1] == "classic" else 3.8), seat))
+	save(sheet(shots, 4, TILE), "outfits.png")

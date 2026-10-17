@@ -171,6 +171,29 @@ class Runner:
 						missing.append("%s on %s" % [style, hair])
 		check(missing.is_empty() and CharacterDesign.styles("headgear").size() >= 20, "every piece of headgear is made and loads %s" % [missing])
 
+		# Every torso and arm style is made in tools/characters and loads,
+		# each arm and hand on its own bone.
+		missing = []
+		for slot in ["torso", "arms"]:
+			for style in CharacterDesign.styles(slot):
+				var entry := CharacterMesh.style(slot, style)
+				var shapes := {"": entry}
+				if slot == "arms":
+					for part in ["arm_r", "hand_l", "hand_r"]:
+						shapes[part] = entry.get(part, {})
+				for part in shapes:
+					var regions: Dictionary = shapes[part].get("regions", {})
+					if regions.is_empty():
+						missing.append("%s %s %s" % [slot, style, part])
+					for region in regions:
+						var mesh := CharacterMesh.mesh(regions[region])
+						if mesh == null or mesh.get_surface_count() == 0:
+							missing.append("%s %s %s %s" % [slot, style, part, region])
+				if slot == "arms" and (entry.get("bone", "") != "arm_l" or entry.get("arm_r", {}).get("bone", "") != "arm_r" or entry.get("hand_r", {}).get("bone", "") != "hand_r"):
+					missing.append("%s on the wrong bones" % style)
+		check(missing.is_empty() and CharacterDesign.styles("torso").size() >= 20 and CharacterDesign.styles("arms").size() >= 20,
+				"every torso and arm style is made and loads %s" % [missing])
+
 		# How far the figure's pieces go into each other in the rig's poses,
 		# measured in tools/characters on the real meshes.
 		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
@@ -202,6 +225,12 @@ class Runner:
 						if not report.get("styles", []).has(name):
 							unchecked.append(name)
 			check(unchecked.is_empty(), "the clipping report checks every hairdo, cut version and raised facial hair %s" % [unchecked])
+			unchecked = []
+			for slot in ["torso", "arms"]:
+				for style in CharacterMesh.made().get("styles", {}).get(slot, {}):
+					if not report.get("styles", []).has("%s %s" % [slot, style]):
+						unchecked.append("%s %s" % [slot, style])
+			check(unchecked.is_empty() and report.has("raised"), "the clipping report checks every torso and arm style %s" % [unchecked])
 			# Every piece of headgear against every hairdo it shows: the cut
 			# version under a hat, the full one under what's worn on the hair.
 			unchecked = []
