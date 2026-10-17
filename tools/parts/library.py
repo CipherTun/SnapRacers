@@ -710,11 +710,12 @@ def _skin(body, boxes):
     return over ^ union(boxes)
 
 
-def _bonnet(id, name, along, plates, stripes=False):
-    """A bonnet 6 wide, curving up from a thin lip at the front, rounded
-    along both sides, with a row of studs along the flat back edge. With
-    `stripes` it has two racing stripes down the middle."""
-    w = 6 * STUD
+def _bonnet(id, name, along, plates, stripes=False, stripe_colour=WHITE, lanes=None, across=6):
+    """A bonnet `across` studs wide, curving up from a thin lip at the
+    front, rounded along both sides, with a row of studs along the flat back
+    edge. With `stripes` it has two racing stripes down the middle, or a
+    stud wide in the columns `lanes`, to line up with tiles behind it."""
+    w = across * STUD
     l = along * STUD
     h = plates * PLATE
     lip = 0.05
@@ -726,19 +727,23 @@ def _bonnet(id, name, along, plates, stripes=False):
         stations.append((0.002 + (run - 0.002) * t, w * 0.5, w * 0.5 - 0.002, y, min(0.07, y * 0.6)))
     stations.append((l - 0.002, w * 0.5, w * 0.5 - 0.002, h, 0.07))
     body = _loft(stations)
-    cells = [(i, along - 1) for i in range(6)]
+    cells = [(i, along - 1) for i in range(across)]
     stats = {}
     if stripes:
-        lanes = [box(x0, 0.0, -0.1, x0 + 0.2, h + 0.1, l + 0.1, edge=0) for x0 in (w * 0.5 - 0.28, w * 0.5 + 0.08)]
-        stats["trim"] = (_skin(body, lanes), WHITE, "plastic")
+        if lanes:
+            cuts = [box(x0 * STUD, 0.0, -0.1, (x0 + 1) * STUD, h + 0.1, l + 0.1, edge=0) for x0 in lanes]
+        else:
+            cuts = [box(x0, 0.0, -0.1, x0 + 0.2, h + 0.1, l + 0.1, edge=0) for x0 in (w * 0.5 - 0.28, w * 0.5 + 0.08)]
+        stats["trim"] = (_skin(body, cuts), stripe_colour, "plastic")
     solid = union([body, studs(cells, h)])
-    return Part(id, name, "body", "curves", (w, h, l), solid, sockets(grid_cells(6, along)) + top_studs(cells, h), RED,
+    return Part(id, name, "body", "curves", (w, h, l), solid, sockets(grid_cells(across, along)) + top_studs(cells, h), RED,
                 aero={"front": 0.3, "back": 1.0, "side": 0.8}, **stats)
 
 
 part(lambda: _bonnet("p_bonnet_6x4", "Curved bonnet 6×4", 4, 2))
 part(lambda: _bonnet("p_bonnet_6x6", "Curved bonnet 6×6", 6, 3))
 part(lambda: _bonnet("p_bonnet_6x6_stripes", "Striped bonnet 6×6", 6, 3, stripes=True))
+part(lambda: _bonnet("p_bonnet_4x6_black_stripes", "Bonnet 4×6 with black stripes", 6, 3, stripes=True, stripe_colour=BLACK, lanes=(0, 3), across=4))
 
 
 def _shell(side_pts, front_pts, w, l, t, r_side, r_front):
