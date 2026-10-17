@@ -3,17 +3,21 @@ extends RefCounted
 
 ## The hips and legs. Sitting, the legs stick straight out in front with the
 ## feet up, like a brick figure sitting down. Standing, they go straight down with
-## the feet forward.
-##
-## Each leg is made of lengths in different colours from the hip down, so
-## shorts, boots and socks show where they should. Skirts and gowns go over the
-## legs, and prints like pockets and stripes go on the front.
+## the feet forward. Every style is made in tools/characters/legs.py: the hips
+## on the rig, and each leg standing, seated or astride on the legs bone.
+## Styles not made there are built here.
 
 const BOOT := Color("#2a2a2a")
 const WHITE := Color("#f2f2f2")
 
 
 static func build(rig: CharacterRig) -> void:
+	if rig.add_style("legs"):
+		var pose := "astride" if rig.astride else ("seated" if rig.seated else "standing")
+		rig.add_style("legs", pose + "_l")
+		rig.add_style("legs", pose + "_r")
+		return
+	push_warning("No legs made for %s" % rig.design.style_of("legs"))
 	var d := rig.design
 	var c := d.color_of("legs")
 	var skin := d.skin()

@@ -86,6 +86,86 @@ class Runner:
 					todo.append(j)
 		return boxes.size() - joined.size()
 
+	## The triangles of a leg style's legs in a pose, in the rig's space, as
+	## made in tools/characters, and its hips with `hips`.
+	func leg_faces(style: String, pose: String, hips := false) -> PackedVector3Array:
+		var entry := CharacterMesh.style("legs", style)
+		var legs_at := Transform3D.IDENTITY
+		if pose == "astride":
+			var hip := Vector3(0.0, CharacterRig.HIPS_TOP * 0.5, 0.0)
+			var down := Basis(Vector3.RIGHT, -CharacterRig.ASTRIDE_LEGS)
+			legs_at = Transform3D(down, hip - down * hip)
+		var out := PackedVector3Array()
+		var parts := [[pose + "_l", legs_at], [pose + "_r", legs_at]]
+		if hips:
+			parts.append(["", Transform3D.IDENTITY])
+		for part in parts:
+			var shape: Dictionary = entry if part[0] == "" else entry.get(part[0], {})
+			for region in shape.get("regions", {}):
+				for v in CharacterMesh.mesh(shape.regions[region]).get_faces():
+					out.append(part[1] * v)
+		return out
+
+	## Whether a point is inside the closed surface made of these triangles,
+	## by how many of them a ray from it crosses.
+	func inside(point: Vector3, faces: PackedVector3Array) -> bool:
+		var ray := Vector3(0.31, 0.93, 0.17).normalized()
+		var crossings := 0
+		for i in range(0, faces.size(), 3):
+			if Geometry3D.ray_intersects_triangle(point, ray, faces[i], faces[i + 1], faces[i + 2]) != null:
+				crossings += 1
+		return crossings % 2 == 1
+
+	## The points of each back piece's meshes that are inside a leg style's
+	## legs, in each pose, as "back / legs pose (count)". The hips are the
+	## same for every style and are left to the back pieces' own check.
+	func back_into_legs() -> Array:
+		var found := []
+		for pose in ["standing", "seated", "astride"]:
+			var legs := {}
+			var boxes := {}
+			for style in CharacterDesign.styles("legs"):
+				legs[style] = leg_faces(style, pose)
+				var box := AABB(legs[style][0], Vector3.ZERO)
+				for v in legs[style]:
+					box = box.expand(v)
+				boxes[style] = box
+			var plain := CharacterDesign.load_file("res://data/characters/roster/racer.json")
+			plain.set_piece("neck", "none")
+			plain.set_piece("back", "none")
+			var bare := CharacterRig.new(plain, pose != "standing")
+			bare.astride = pose == "astride"
+			bare.bake = false
+			add_child(bare)
+			var before := bare.upper().get_child_count()
+			bare.queue_free()
+			for back in CharacterDesign.styles("back"):
+				if back == "none":
+					continue
+				var who := plain.duplicate_design()
+				who.set_piece("back", back)
+				var rig := CharacterRig.new(who, pose != "standing")
+				rig.astride = pose == "astride"
+				rig.bake = false
+				add_child(rig)
+				var points := PackedVector3Array()
+				var to_rig := rig.global_transform.affine_inverse()
+				for k in range(before, rig.upper().get_child_count()):
+					var node = rig.upper().get_child(k)
+					if node is MeshInstance3D:
+						var where: Transform3D = to_rig * node.global_transform
+						for v in node.mesh.get_faces():
+							points.append(where * v)
+				rig.queue_free()
+				for style in legs:
+					var count := 0
+					for v in points:
+						if boxes[style].has_point(v) and inside(v, legs[style]):
+							count += 1
+					if count > 0:
+						found.append("%s / %s %s (%d)" % [back, style, pose, count])
+		return found
+
 	func hand_at(rig: CharacterRig, side: int) -> Vector3:
 		return rig._hand[side].global_position
 
@@ -194,6 +274,34 @@ class Runner:
 		check(missing.is_empty() and CharacterDesign.styles("torso").size() >= 20 and CharacterDesign.styles("arms").size() >= 20,
 				"every torso and arm style is made and loads %s" % [missing])
 
+		# Every leg style is made in tools/characters and loads: the hips on
+		# the rig and each leg standing, seated and astride on the legs bone.
+		missing = []
+		for style in CharacterDesign.styles("legs"):
+			var entry := CharacterMesh.style("legs", style)
+			var shapes := {"": entry}
+			for pose in ["standing", "seated", "astride"]:
+				for side in ["l", "r"]:
+					shapes["%s_%s" % [pose, side]] = entry.get("%s_%s" % [pose, side], {})
+			for part in shapes:
+				var regions: Dictionary = shapes[part].get("regions", {})
+				if regions.is_empty():
+					missing.append("%s %s" % [style, part])
+				for region in regions:
+					var mesh := CharacterMesh.mesh(regions[region])
+					if mesh == null or mesh.get_surface_count() == 0:
+						missing.append("%s %s %s" % [style, part, region])
+				if part != "" and shapes[part].get("bone", "") != "legs":
+					missing.append("%s %s on the wrong bone" % [style, part])
+			if entry.get("bone", "") != "hips":
+				missing.append("%s hips on the wrong bone" % style)
+		check(missing.is_empty() and CharacterDesign.styles("legs").size() >= 20, "every leg style is made and loads %s" % [missing])
+
+		# The back pieces, still built in looks, don't reach into any leg
+		# style's legs or skirt, standing, seated or astride.
+		var into := back_into_legs()
+		check(into.is_empty(), "no back piece reaches into the legs %s" % [into])
+
 		# How far the figure's pieces go into each other in the rig's poses,
 		# measured in tools/characters on the real meshes.
 		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
@@ -231,6 +339,11 @@ class Runner:
 					if not report.get("styles", []).has("%s %s" % [slot, style]):
 						unchecked.append("%s %s" % [slot, style])
 			check(unchecked.is_empty() and report.has("raised"), "the clipping report checks every torso and arm style %s" % [unchecked])
+			unchecked = []
+			for style in CharacterMesh.made().get("styles", {}).get("legs", {}):
+				if not report.get("styles", []).has("legs " + style):
+					unchecked.append(style)
+			check(unchecked.is_empty(), "the clipping report checks every leg style %s" % [unchecked])
 			# Every piece of headgear against every hairdo it shows: the cut
 			# version under a hat, the full one under what's worn on the hair.
 			unchecked = []

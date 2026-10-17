@@ -149,6 +149,26 @@
 		"headgear top_hat",
 		"headgear viking",
 		"headgear wizard",
+		"legs armoured",
+		"legs barefoot",
+		"legs boots",
+		"legs cowboy",
+		"legs dino_feet",
+		"legs flares",
+		"legs gown",
+		"legs jeans",
+		"legs kilt",
+		"legs leggings",
+		"legs overalls",
+		"legs racing_boots",
+		"legs robot_legs",
+		"legs shorts",
+		"legs skinny",
+		"legs skirt",
+		"legs sneakers",
+		"legs socks",
+		"legs stripy",
+		"legs trousers",
 		"neck beads",
 		"neck bell",
 		"neck big_bow",
@@ -578,6 +598,222 @@
 		{
 			"pose": "seated, hands resting",
 			"a": "leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs trousers leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs trousers leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs shorts leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs shorts leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs boots leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs boots leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs jeans leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs jeans leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs gown leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs gown leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs skirt leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs skirt leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs kilt leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs kilt leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs dino_feet leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs dino_feet leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs robot_legs leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs robot_legs leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs armoured leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs armoured leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs stripy leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs stripy leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs flares leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs flares leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs cowboy leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs cowboy leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs sneakers leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs sneakers leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs barefoot leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs barefoot leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs racing_boots leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs racing_boots leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs socks leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs socks leg_r",
+			"b": "hand_r",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs overalls leg_l",
+			"b": "hand_l",
+			"cm3": 0.0084
+		},
+		{
+			"pose": "seated, hands resting",
+			"a": "legs overalls leg_r",
 			"b": "hand_r",
 			"cm3": 0.0084
 		},

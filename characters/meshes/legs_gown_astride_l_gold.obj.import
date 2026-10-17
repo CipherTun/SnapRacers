@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b02bu6apgt4vw"
+path="res://.godot/imported/legs_gown_astride_l_gold.obj-18b8a91fd90fcc51708bd36b3f572f6b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_gown_astride_l_gold.obj-18b8a91fd90fcc51708bd36b3f572f6b.mesh"]
+
+source_file="res://characters/meshes/legs_gown_astride_l_gold.obj"
+dest_files=["res://.godot/imported/legs_gown_astride_l_gold.obj-18b8a91fd90fcc51708bd36b3f572f6b.mesh", "res://.godot/imported/legs_gown_astride_l_gold.obj-18b8a91fd90fcc51708bd36b3f572f6b.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

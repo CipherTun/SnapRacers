@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://xqadjnbf5mro"
+path="res://.godot/imported/legs_armoured_standing_r_boot.obj-4ac821940c6899df008c9d733a78bc9b.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_armoured_standing_r_boot.obj-4ac821940c6899df008c9d733a78bc9b.mesh"]
+
+source_file="res://characters/meshes/legs_armoured_standing_r_boot.obj"
+dest_files=["res://.godot/imported/legs_armoured_standing_r_boot.obj-4ac821940c6899df008c9d733a78bc9b.mesh", "res://.godot/imported/legs_armoured_standing_r_boot.obj-4ac821940c6899df008c9d733a78bc9b.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

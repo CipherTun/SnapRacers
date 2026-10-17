@@ -8,7 +8,7 @@ extends SceneTree
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/character_shots.gd
 ## Add --out=/some/folder to save them there as well, and --only=necks,faces
 ## (any of figure, looks, closeup, necks, faces, hair, facial_hair, combos,
-## headgear, headgear_hair, headgear_karts, torsos, arms, outfits)
+## headgear, headgear_hair, headgear_karts, torsos, arms, outfits, legs)
 ## for just those sheets.
 
 const OUT := "res://build/shots/characters"
@@ -157,6 +157,8 @@ func _run() -> void:
 		await _arms()
 	if wanted("outfits"):
 		await _outfits()
+	if wanted("legs"):
+		await _legs()
 	if wanted("closeup"):
 		await _closeup()
 	quit()
@@ -464,3 +466,54 @@ func _outfits() -> void:
 		var view := Vector3(-0.8, 0.3, -1.0) if look[1] == "classic" else Vector3(-0.75, 0.2, -1.0)
 		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if look[1] == "classic" else 3.8), seat))
 	save(sheet(shots, 4, TILE), "outfits.png")
+
+
+## Every leg style standing, seated and astride, a sheet each, and a few
+## whole outfits with skirts and boots in karts and on bikes.
+func _legs() -> void:
+	for pose in ["standing", "seated", "astride"]:
+		var shots := []
+		for style in CharacterDesign.styles("legs"):
+			var design := bare()
+			design.set_piece("legs", style, Color("#9aa0a6") if style in ["robot_legs", "armoured"] else Color("#c4281c"))
+			rig(design, pose != "standing", pose == "astride")
+			if pose == "standing":
+				var middle := Vector3(0.0, 0.42, 0.0)
+				shots.append(await snap(style, middle + Vector3(-0.6, 0.2, -1.0).normalized() * 2.2, middle))
+			else:
+				var middle := Vector3(0.0, 0.25, -0.12)
+				shots.append(await snap("%s %s" % [style, pose], middle + Vector3(-0.9, 0.55, -1.0).normalized() * 2.0, middle))
+		save(sheet(shots, 5, TILE), "legs_%s.png" % pose)
+	var shots := []
+	var outfits := [
+		["gown", "classic", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
+		["kilt", "classic", {"torso": ["tunic", "#0d69ab"], "arms": ["rolled", "#f2f2f2"], "legs": ["kilt", "#4b9f4a"], "hair": "short", "headgear": "none"}],
+		["skirt", "soapbox", {"torso": ["stripes", "#0d69ab"], "arms": ["short_sleeves", "#0d69ab"], "legs": ["skirt", "#7a3fb8"], "hair": "bob", "headgear": "none"}],
+		["cowboy", "hot_rod", {"torso": ["plaid", "#c4281c"], "arms": ["long_sleeves", "#c4281c"], "legs": ["cowboy", "#1f4e8c"], "hair": "short", "headgear": "cowboy"}],
+		["gown", "chopper", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
+		["skirt", "scooter", {"torso": ["flowery", "#f2cd37"], "arms": ["short_sleeves", "#f2cd37"], "legs": ["skirt", "#7a3fb8"], "hair": "ponytail", "headgear": "none"}],
+		["kilt", "dirt_bike", {"torso": ["jersey", "#4b9f4a"], "arms": ["racing_gloves", "#4b9f4a"], "legs": ["kilt", "#4b9f4a"], "hair": "spiky", "headgear": "none"}],
+		["dino", "trike", {"torso": ["dino_belly", "#4b9f4a"], "arms": ["scaly", "#4b9f4a"], "legs": ["dino_feet", "#4b9f4a"], "hair": "none", "headgear": "none"}],
+	]
+	for look in outfits:
+		var design := bare()
+		var parts: Dictionary = look[2]
+		for slot in ["torso", "arms", "legs"]:
+			design.set_piece(slot, parts[slot][0], Color(parts[slot][1]))
+		design.set_piece("hair", parts.hair, Color("#6b4430"))
+		_gear(design, parts.headgear)
+		clear()
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/%s.json" % look[1]), design)
+		_stand.add_child(model)
+		await process_frame
+		var seat := Vector3(0.0, 0.6, 0.0)
+		var found := model.find_children("*", "CharacterRig", true, false)
+		var astride := false
+		if not found.is_empty():
+			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.3, 0.0)
+			astride = (found[0] as CharacterRig).astride
+		for frame in 20:
+			await process_frame
+		var view := Vector3(-0.9, 0.35, -1.0) if not astride else Vector3(-1.0, 0.2, -0.7)
+		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if not astride else 3.4), seat))
+	save(sheet(shots, 4, TILE), "legs_outfits.png")

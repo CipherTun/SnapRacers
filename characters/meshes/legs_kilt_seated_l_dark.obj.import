@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cxxc4tx4g0hap"
+path="res://.godot/imported/legs_kilt_seated_l_dark.obj-2b9882601d062b4408b20d4fc9f1d3b2.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_kilt_seated_l_dark.obj-2b9882601d062b4408b20d4fc9f1d3b2.mesh"]
+
+source_file="res://characters/meshes/legs_kilt_seated_l_dark.obj"
+dest_files=["res://.godot/imported/legs_kilt_seated_l_dark.obj-2b9882601d062b4408b20d4fc9f1d3b2.mesh", "res://.godot/imported/legs_kilt_seated_l_dark.obj-2b9882601d062b4408b20d4fc9f1d3b2.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false
