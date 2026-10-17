@@ -289,12 +289,12 @@
 					"dark": "res://characters/meshes/neck_scarf_dark.obj"
 				},
 				"box": [
-					-0.121,
-					0.27,
-					-0.134,
-					0.121,
-					0.448,
-					0.121
+					-0.124,
+					0.335,
+					-0.14,
+					0.124,
+					0.4454,
+					0.124
 				]
 			},
 			"long_scarf": {
@@ -304,12 +304,12 @@
 					"dark": "res://characters/meshes/neck_long_scarf_dark.obj"
 				},
 				"box": [
-					-0.121,
-					0.18,
-					-0.134,
-					0.121,
-					0.448,
-					0.121
+					-0.122,
+					0.15,
+					-0.122,
+					0.122,
+					0.4415,
+					0.122
 				]
 			},
 			"tie": {
@@ -349,27 +349,28 @@
 					"white": "res://characters/meshes/neck_neckerchief_white.obj"
 				},
 				"box": [
-					-0.07,
+					-0.0854,
 					0.305,
 					-0.127,
-					0.07,
-					0.444,
-					0.064
+					0.0857,
+					0.4297,
+					0.0856
 				]
 			},
 			"medal": {
 				"bone": "upper",
 				"regions": {
 					"main": "res://characters/meshes/neck_medal_main.obj",
-					"gold": "res://characters/meshes/neck_medal_gold.obj"
+					"gold": "res://characters/meshes/neck_medal_gold.obj",
+					"dark": "res://characters/meshes/neck_medal_dark.obj"
 				},
 				"box": [
-					-0.0853,
-					0.255,
-					-0.115,
-					0.0853,
-					0.426,
-					0.087
+					-0.0908,
+					0.258,
+					-0.114,
+					0.0907,
+					0.4265,
+					0.0906
 				]
 			},
 			"beads": {
@@ -379,12 +380,12 @@
 					"light": "res://characters/meshes/neck_beads_light.obj"
 				},
 				"box": [
-					-0.0942,
-					0.3285,
-					-0.125,
-					0.0939,
-					0.445,
-					0.0948
+					-0.0909,
+					0.326,
+					-0.128,
+					0.0908,
+					0.4365,
+					0.0907
 				]
 			},
 			"pearls": {
@@ -393,12 +394,12 @@
 					"white": "res://characters/meshes/neck_pearls_white.obj"
 				},
 				"box": [
-					-0.0909,
-					0.3115,
-					-0.119,
-					0.091,
-					0.439,
-					0.0923
+					-0.0844,
+					0.2973,
+					-0.12,
+					0.0842,
+					0.4315,
+					0.0845
 				]
 			},
 			"spiked_collar": {
@@ -408,12 +409,12 @@
 					"silver": "res://characters/meshes/neck_spiked_collar_silver.obj"
 				},
 				"box": [
-					-0.1434,
+					-0.1358,
 					0.422,
-					-0.1434,
-					0.1434,
+					-0.1358,
+					0.1358,
 					0.439,
-					0.1434
+					0.1358
 				]
 			},
 			"ruff": {
@@ -422,27 +423,28 @@
 					"white": "res://characters/meshes/neck_ruff_white.obj"
 				},
 				"box": [
-					-0.126,
-					0.4225,
-					-0.1251,
-					0.126,
-					0.4455,
-					0.1251
+					-0.117,
+					0.422,
+					-0.123,
+					0.117,
+					0.444,
+					0.123
 				]
 			},
 			"whistle": {
 				"bone": "upper",
 				"regions": {
 					"main": "res://characters/meshes/neck_whistle_main.obj",
-					"silver": "res://characters/meshes/neck_whistle_silver.obj"
+					"silver": "res://characters/meshes/neck_whistle_silver.obj",
+					"ink": "res://characters/meshes/neck_whistle_ink.obj"
 				},
 				"box": [
-					-0.0803,
-					0.308,
+					-0.0814,
+					0.3092,
 					-0.126,
-					0.0803,
-					0.43,
-					0.082
+					0.0812,
+					0.429,
+					0.0814
 				]
 			},
 			"pass": {
@@ -455,12 +457,12 @@
 					"ink": "res://characters/meshes/neck_pass_ink.obj"
 				},
 				"box": [
-					-0.0803,
-					0.25,
+					-0.0813,
+					0.2465,
 					-0.11,
-					0.0803,
-					0.43,
-					0.082
+					0.0813,
+					0.429,
+					0.0811
 				]
 			},
 			"gold_chain": {
@@ -469,12 +471,12 @@
 					"main": "res://characters/meshes/neck_gold_chain_main.obj"
 				},
 				"box": [
-					-0.0826,
-					0.296,
-					-0.1117,
-					0.0827,
-					0.4317,
-					0.0828
+					-0.0839,
+					0.2922,
+					-0.1105,
+					0.0839,
+					0.4305,
+					0.0837
 				],
 				"metallic": 0.6
 			},
@@ -485,11 +487,11 @@
 					"main": "res://characters/meshes/neck_brooch_main.obj"
 				},
 				"box": [
-					-0.0285,
-					0.3565,
-					-0.117,
-					0.0285,
-					0.4135,
+					-0.023,
+					0.362,
+					-0.116,
+					0.023,
+					0.408,
 					-0.102
 				]
 			},
@@ -497,19 +499,17 @@
 				"bone": "upper",
 				"regions": {
 					"main": "res://characters/meshes/neck_lei_main.obj",
-					"yellow": "res://characters/meshes/neck_lei_yellow.obj",
 					"white": "res://characters/meshes/neck_lei_white.obj",
-					"pink": "res://characters/meshes/neck_lei_pink.obj",
-					"orange": "res://characters/meshes/neck_lei_orange.obj",
-					"green": "res://characters/meshes/neck_lei_green.obj"
+					"yellow": "res://characters/meshes/neck_lei_yellow.obj",
+					"pink": "res://characters/meshes/neck_lei_pink.obj"
 				},
 				"box": [
-					-0.1074,
-					0.3444,
-					-0.115,
-					0.1079,
-					0.435,
-					0.1075
+					-0.1028,
+					0.3321,
+					-0.121,
+					0.1027,
+					0.4357,
+					0.1027
 				]
 			},
 			"headphones": {
@@ -523,8 +523,8 @@
 					0.368,
 					-0.124,
 					0.1,
-					0.434,
-					0.094
+					0.4323,
+					0.0925
 				]
 			},
 			"choker": {
