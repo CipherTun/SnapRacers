@@ -165,7 +165,7 @@ def chassis(k, front, back, z0, length, colour, extra_front=()):
     return (level + 2 * PLATE) / PLATE
 
 
-def racer(k, front, back, z0, length, colour=DARK, arches=2, width=6):
+def racer(k, front, back, z0, length, colour=DARK, arches=2, width=6, rims=None):
     """The new racers' black chassis: an axle plate at the front and back
     with the wheels on their pins out at the corners, and plates `width`
     wide (6, or 4 for a slim formula car) along the top, levelled like
@@ -176,7 +176,7 @@ def racer(k, front, back, z0, length, colour=DARK, arches=2, width=6):
     When two plates along the top meet between two arches, the arch plates
     behind the front wheels reach a row further, under the seam (and do for
     the back arch too when the arches touch). Returns the top of the
-    chassis, in plates."""
+    chassis, in plates. `rims` paints the wheels' rims."""
     assert width in (4, 6) and arches in (0, 2, 3)
     assert not arches or length >= 8, "arches need a chassis 8 or more long"
     assert arches + width <= 8, "arches 3 wide only fit the wide chassis"
@@ -187,7 +187,7 @@ def racer(k, front, back, z0, length, colour=DARK, arches=2, width=6):
         base = radius(wheel) - 4
         assert (level - base) % PLATE == 0, "%s and %s aren't whole plates apart" % (front, back)
         k.fine(axle, (edge - 1) * STUD, base, z * STUD, colour=colour)
-        k.pair_fine(wheel, edge * STUD - turned_size(wheel, 0)[0], 0, z * STUD + STUD - fine_size(wheel)[2] / 2)
+        k.pair_fine(wheel, edge * STUD - turned_size(wheel, 0)[0], 0, z * STUD + STUD - fine_size(wheel)[2] / 2, colour=rims)
         y = base + PLATE
         while y < level + PLATE - 0.01:
             k.fine("p_plate_2x%d" % width, edge * STUD, y, z * STUD, rot=1, colour=colour)
@@ -665,6 +665,118 @@ arches(k, T, (4, 12), WHITE, sides=WHITE, part="p_arch_2x6_teal_stripe")
     .pair("p_tile_1x2", 8, T, 14, colour=WHITE)
     .add("d_rear_wing_8", 6, T + 2, 14, colour=BLUE))
 
+
+# Trucks.
+
+def fenders(k, wheel_z, top):
+    """A truck mudguard over each wheel of a pair whose middle is at
+    `wheel_z`, on a chassis 4 wide, their plates on studs `top` plates up."""
+    y = top * PLATE - 12
+    k.fine("d_truck_fender", 6 * STUD, y, (wheel_z - 2) * STUD)
+    k.fine("d_truck_fender", 11 * STUD, y, (wheel_z - 2) * STUD, rot=2)
+
+
+# 27. A monster truck: a green body with a purple stripe up over huge wheels
+# and a pickup cab with lamps on the roof.
+k = kart("crusher", "Crusher", "A monster truck on huge wheels. It rolls over anything and doesn't mind the grass, but it's tall, so take the corners steady.")
+T = racer(k, "w_monster", "w_monster", 2, 10, arches=0, width=4, rims=PURPLE)
+(k.add("p_brick_2x4", 8, T, 2, colour=DARK).add("p_brick_2x4", 10, T, 2, colour=DARK)
+    .pair("p_brick_1x4", 8, T, 6, colour=DARK)
+    .add("engine_v8", 9, T, 6, colour=SILVER)
+    .add("p_brick_2x2", 8, T, 10, colour=DARK).add("p_brick_2x2", 10, T, 10, colour=DARK)
+    .add("p_plate_4x6", 8, T + 3, 0, colour=DARK)
+    .add("p_plate_4x8", 8, T + 3, 6, colour=DARK))
+B = T + 4
+(k.add("p_plate_4x4", 8, B, 0, colour=LIME)
+    .add("p_bonnet_4x4", 8, B + 1, 0, colour=LIME)
+    .pair("p_brick_1x6", 8, B, 4, colour=LIME)
+    .pair("p_plate_1x6", 8, B + 3, 4, colour=PURPLE)
+    .add("steering_wheel", 9, B, 5)
+    .add("s_racing_seat", 9, B, 6)
+    .add("p_cab_4x6", 8, B + 4, 4, colour=LIME)
+    .add("d_light_1x1", 9, B + 10, 6, colour=YELLOW).add("d_light_1x1", 10, B + 10, 6, colour=YELLOW)
+    .add("p_plate_4x4", 8, B, 10, colour=PURPLE)
+    .add("p_brick_2x4", 8, B + 1, 10, colour=LIME).add("p_brick_2x4", 10, B + 1, 10, colour=LIME))
+
+# 28. A big rig cab racer: a tall cab behind a bonnet and grille, stacks
+# behind the cab and a fifth wheel at the back. It's built by hand, so the
+# back wheels sit far enough back for the stacks.
+k = kart("long_haul", "Long Haul", "A big rig with the trailer left behind. Heavy and slow to get going, then hard to stop, and it shoves everyone out of the way.")
+base = radius("w_slick") - 4
+for z in (1, 10):
+    k.fine("p_kart_axle_plate_4", 7 * STUD, base, z * STUD, colour=DARK)
+    k.pair_fine("w_slick", 8 * STUD - fine_size("w_slick")[0], 0, (z + 1) * STUD - fine_size("w_slick")[2] / 2)
+(k.fine("p_plate_4x6", 8 * STUD, base + PLATE, STUD, colour=DARK)
+    .fine("p_plate_4x6", 8 * STUD, base + PLATE, 7 * STUD, colour=DARK)
+    .fine("p_plate_2x2", 9 * STUD, base, 6 * STUD, colour=DARK))
+T = (base + 2 * PLATE) / PLATE
+(k.pair("p_brick_1x4", 8, T, 0, colour=BLUE)
+    .add("d_hot_rod_grille", 9, T - 1, 0)
+    .add("p_brick_2x2", 9, T, 2, colour=DARK)
+    .add("p_plate_2x3", 9, T + 3, 1, colour=BLUE))
+fenders(k, 2, T + 3)
+(k.add("p_bonnet_4x4", 8, T + 4, 0, colour=BLUE)
+    .pair("p_plate_2x4", 7, T, 4, colour=WHITE)
+    .pair("p_plate_1x4", 7, T + 1, 4, colour=BLUE)
+    .add("steering_wheel", 9, T, 4)
+    .add("s_racing_seat", 9, T, 5)
+    .add("p_truck_cab_6x4", 7, T + 2, 4, colour=BLUE)
+    .add("p_curve_4x4", 8, T + 10, 4, colour=WHITE)
+    .pair("d_exhaust_stack", 8, T, 8)
+    .add("engine_hybrid", 9, T, 8, colour=SILVER)
+    .add("p_round_tile_2x2", 9, T + 3, 9, colour=SILVER)
+    .pair("p_brick_1x2", 8, T, 10, colour=DARK))
+fenders(k, 11, T + 3)
+
+# 29. A trophy truck: white with a red stripe, big knobbly tires under black
+# mudguards, lamps on the roof and a spare wheel in the back.
+k = kart("desert_pro", "Desert Pro", "A desert racer on big knobbly tires. Fast over the rough stuff and happy on the road too.")
+T = racer(k, "w_truck", "w_truck", 1, 10, arches=0, width=4)
+(k.pair("p_brick_1x4", 8, T, 0, colour=WHITE)
+    .add("p_brick_2x4", 9, T, 0, colour=WHITE)
+    .pair("p_plate_1x1", 8, T + 3, 0, colour=WHITE).pair("p_plate_1x1", 8, T + 3, 3, colour=WHITE)
+    .add("p_plate_2x4", 9, T + 3, 0, colour=WHITE)
+    .add("p_bonnet_4x4_red_stripe", 8, T + 4, 0, colour=WHITE)
+    .pair("p_brick_1x6", 8, T, 4, colour=WHITE)
+    .pair("p_plate_1x4", 8, T + 3, 4, colour=RED).pair("p_plate_1x1", 8, T + 3, 8, colour=RED)
+    .add("steering_wheel", 9, T, 5)
+    .add("s_racing_seat", 9, T, 6)
+    .add("p_cab_4x6", 8, T + 4, 4, colour=WHITE)
+    .add("d_light_1x1", 9, T + 10, 6, colour=YELLOW).add("d_light_1x1", 10, T + 10, 6, colour=YELLOW)
+    .pair("p_brick_1x2", 8, T, 10, colour=WHITE)
+    .add("engine_v8", 9, T, 8, colour=SILVER)
+    .add("p_round_brick_2x2", 9, T + 3, 10, colour=DARK)
+    .add("p_round_tile_2x2", 9, T + 6, 10, colour=SILVER)
+    .pair("p_plate_1x1", 8, T + 3, 11, colour=WHITE)
+    .pair("p_tile_1x2", 8, T + 4, 10, colour=WHITE))
+fenders(k, 2, T + 3)
+fenders(k, 10, T + 3)
+
+# 30. A six wheeler: an orange cab over the front wheels and a grey bed over
+# two axles at the back with a load on it. It's built by hand for the third
+# axle.
+k = kart("six_pack", "Six Pack", "A truck with two axles at the back. Steady and strong, and it grips like nothing else, but it's slow to turn.")
+base = radius("w_truck") - 4
+for z in (1, 6, 10):
+    k.fine("p_kart_axle_plate_4", 7 * STUD, base, z * STUD, colour=DARK)
+    k.pair_fine("w_truck", 8 * STUD - fine_size("w_truck")[0], 0, (z + 1) * STUD - fine_size("w_truck")[2] / 2, colour=ORANGE)
+(k.fine("p_plate_4x6", 8 * STUD, base + PLATE, STUD, colour=DARK)
+    .fine("p_plate_4x6", 8 * STUD, base + PLATE, 7 * STUD, colour=DARK))
+T = (base + 2 * PLATE) / PLATE
+(k.pair("p_brick_1x6", 8, T, 1, colour=ORANGE)
+    .add("d_spotlights", 9, T, 1, colour=DARK)
+    .add("steering_wheel", 9, T, 2)
+    .add("s_racing_seat", 9, T, 3)
+    .pair("p_brick_1x6", 8, T, 7, colour=GREY)
+    .add("p_brick_1x2", 9, T, 12, rot=1, colour=GREY)
+    .add("engine_big", 9, T, 5, colour=GREY)
+    .add("p_brick_2x4", 9, T, 8, colour=GREY)
+    .add("p_brick_2x4", 9, T + 3, 8, colour=ORANGE))
+fenders(k, 2, T + 3)
+fenders(k, 7, T + 3)
+fenders(k, 11, T + 3)
+(k.pair("p_plate_1x3", 8, T + 3, 3, colour=DARK)
+    .add("p_cab_4x6", 8, T + 4, 1, colour=ORANGE))
 
 # Bikes and trikes, built the way toy motorbikes are: a frame in one piece
 # with the engine, tank, seat and swingarm in it, a fork with the bars on
