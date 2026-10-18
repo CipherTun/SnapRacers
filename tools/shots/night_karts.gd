@@ -4,7 +4,7 @@ extends SceneTree
 ## from the front.
 
 const OUT := "res://build/shots"
-const KARTS := ["starter", "sparky", "trike", "chopper", "superbike", "scooter", "dirt_bike", "tourer"]
+const KARTS := ["kart_kid", "volt", "tiddler", "long_fork", "streak", "zippy", "scrambler", "sunday_trike"]
 
 var _view: SubViewport
 

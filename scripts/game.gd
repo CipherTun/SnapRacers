@@ -9,12 +9,21 @@ extends Node
 
 ## The stock karts, which the AI drives and anyone can pick.
 const STOCK := "res://data/karts/stock"
-const STARTER := STOCK + "/starter.json"
 ## The kart you start with, and the one player 2 starts with.
-const DEFAULT_STOCK := "starter"
-const PLAYER_TWO_STOCK := "sparky"
-## Stock kart ids that were renamed, old id to new id.
-const OLD_STOCK := {}
+const DEFAULT_STOCK := "kart_kid"
+const PLAYER_TWO_STOCK := "volt"
+const STARTER := STOCK + "/" + DEFAULT_STOCK + ".json"
+## The old stock karts, by id, and the new one each became, for settings
+## saved before they went.
+const OLD_STOCK := {
+	"starter": "kart_kid", "classic": "kart_kid", "sparky": "volt", "featherlight": "volt",
+	"downforce": "redline", "soapbox": "redline", "streamliner": "night_shift",
+	"rocket": "quarter_mile", "slingshot": "quarter_mile", "hot_rod": "flathead",
+	"brick_tank": "big_block", "bruiser": "long_haul", "monster": "crusher",
+	"six_wheeler": "six_pack", "mudlark": "mudlark_quad", "trike": "tiddler",
+	"tourer": "sunday_trike", "trikester": "twin_nose", "superbike": "streak",
+	"dirt_bike": "scrambler", "chopper": "long_fork", "scooter": "zippy",
+}
 ## The kart you were last working on, kept between launches.
 const CURRENT_KART := "user://current_kart.json"
 ## The driver you last built, kept between launches too.
@@ -81,6 +90,7 @@ func _ready() -> void:
 	# Esc and Back still work while a race is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	settings.load(SETTINGS)
+	_move_old_stock()
 	if FileAccess.file_exists(CURRENT_KART):
 		design = KartDesign.load_file(CURRENT_KART)
 	if design == null or design.parts.is_empty():
@@ -454,7 +464,19 @@ func stock_keys() -> Array[String]:
 
 
 func stock_kart(key: String) -> KartDesign:
-	return KartDesign.load_file("%s/%s.json" % [STOCK, key])
+	return KartDesign.load_file("%s/%s.json" % [STOCK, stock_id(key)])
+
+
+## Swaps old stock kart ids in the settings for the new ones and saves, once.
+func _move_old_stock() -> void:
+	var moved := false
+	for key in ["kart", "player_two"]:
+		var old: String = str(settings.get_value("race", key, ""))
+		if OLD_STOCK.has(old):
+			settings.set_value("race", key, OLD_STOCK[old])
+			moved = true
+	if moved:
+		save_settings()
 
 
 ## The AI drivers, by their file names in the roster. The Racer is yours.

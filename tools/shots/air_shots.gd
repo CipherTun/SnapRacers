@@ -6,7 +6,7 @@ extends Node
 ## folder to take only those.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/air_shots.tscn -- /some/folder
 
-var KARTS := ["starter", "streamliner", "superbike", "brick_tank"]
+var KARTS := ["kart_kid", "night_shift", "streak", "big_block"]
 
 var out := "res://build/shots"
 

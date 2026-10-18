@@ -28,7 +28,7 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
-	Game.settings.set_value("race", "kart", "starter")
+	Game.settings.set_value("race", "kart", "kart_kid")
 	var was_view := Game.camera_view(0)
 	Game.settings.set_value("camera", "player_1", "chase")
 	Game.start_practice(Tracks.path_of("peach_pit"))

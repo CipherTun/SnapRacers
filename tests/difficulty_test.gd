@@ -27,7 +27,10 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
-	Game.settings.set_value("race", "kart", "starter")
+	# The gaps were tuned with the old starter kart, raced as your own.
+	var was_design := Game.design
+	Game.design = KartDesign.load_file("res://tests/data/legacy/starter.json")
+	Game.settings.set_value("race", "kart", Game.OWN_KART)
 	var last: Race = null
 	for course in COURSES:
 		var times := {}
@@ -58,5 +61,6 @@ func _ready() -> void:
 			var gap: float = (times[level] / times.expert - 1.0) * 100.0
 			var want: Array = GAPS[level]
 			check(absf(gap - want[0]) <= want[1], "and %s is %.1f%% behind Expert (it should be about %.1f%%)" % [Difficulty.name_of(level), gap, want[0]])
+	Game.design = was_design
 	print("All difficulty checks passed." if failures == 0 else "%d difficulty checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)

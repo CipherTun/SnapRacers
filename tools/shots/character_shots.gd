@@ -182,7 +182,7 @@ func _figure() -> void:
 	astride.grip(Vector3(-0.3, 0.42, -0.35), Vector3(0.3, 0.42, -0.35), Vector3.LEFT, Vector3.RIGHT)
 	shots.append(await snap("astride side", middle + views["side"].normalized() * 2.6, middle))
 	# In a kart and on a bike, holding on.
-	for kart in ["classic", "superbike"]:
+	for kart in ["kart_kid", "streak"]:
 		clear()
 		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/%s.json" % kart), bare())
 		_stand.add_child(model)
@@ -311,7 +311,7 @@ func _combos() -> void:
 		design.set_piece("facial_hair", pair[1], Color("#6b4430"))
 		design.set_piece("torso", "racing_suit", Color("#c4281c"))
 		clear()
-		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/classic.json"), design)
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/kart_kid.json"), design)
 		_stand.add_child(model)
 		await process_frame
 		var seat := Vector3(0.0, 0.6, 0.0)
@@ -377,7 +377,7 @@ func _headgear_karts() -> void:
 		_gear(design, look[0])
 		design.set_piece("torso", "racing_suit", Color("#c4281c"))
 		clear()
-		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/classic.json"), design)
+		var model := KartModel.make(KartDesign.load_file("res://data/karts/stock/kart_kid.json"), design)
 		_stand.add_child(model)
 		await process_frame
 		var seat := Vector3(0.0, 0.6, 0.0)
@@ -439,14 +439,14 @@ func _arms() -> void:
 func _outfits() -> void:
 	var shots := []
 	var outfits := [
-		["racing", "classic", {"torso": ["racing_suit", "#c4281c"], "arms": ["racing_gloves", "#c4281c"], "hair": "short", "headgear": "racing_helmet", "neck": "none"}],
-		["knight", "classic", {"torso": ["tunic", "#0d69ab"], "arms": ["armoured", "#9aa0a6"], "hair": "long", "headgear": "none", "neck": "none"}],
-		["pirate", "classic", {"torso": ["pirate_coat", "#7a2a2a"], "arms": ["puffed", "#f2f2f2"], "hair": "ponytail", "headgear": "pirate", "neck": "neckerchief"}],
-		["lab", "classic", {"torso": ["lab_coat", "#f2f2f2"], "arms": ["watch", "#f2f2f2"], "hair": "afro", "headgear": "none", "neck": "tie"}],
-		["biker", "superbike", {"torso": ["leather", "#2b2b2b"], "arms": ["spiked_bracers", "#2b2b2b"], "hair": "mohawk", "headgear": "none", "neck": "spiked_collar"}],
-		["overalls", "dirt_bike", {"torso": ["overalls", "#f2cd37"], "arms": ["rolled", "#f2cd37"], "hair": "bun", "headgear": "cap", "neck": "none"}],
-		["gown", "chopper", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "hair": "princess", "headgear": "tiara", "neck": "pearls"}],
-		["space", "scooter", {"torso": ["space_suit", "#f2f2f2"], "arms": ["mechanical", "#9aa0a6"], "hair": "bob", "headgear": "none", "neck": "none"}],
+		["racing", "kart_kid", {"torso": ["racing_suit", "#c4281c"], "arms": ["racing_gloves", "#c4281c"], "hair": "short", "headgear": "racing_helmet", "neck": "none"}],
+		["knight", "kart_kid", {"torso": ["tunic", "#0d69ab"], "arms": ["armoured", "#9aa0a6"], "hair": "long", "headgear": "none", "neck": "none"}],
+		["pirate", "kart_kid", {"torso": ["pirate_coat", "#7a2a2a"], "arms": ["puffed", "#f2f2f2"], "hair": "ponytail", "headgear": "pirate", "neck": "neckerchief"}],
+		["lab", "kart_kid", {"torso": ["lab_coat", "#f2f2f2"], "arms": ["watch", "#f2f2f2"], "hair": "afro", "headgear": "none", "neck": "tie"}],
+		["biker", "streak", {"torso": ["leather", "#2b2b2b"], "arms": ["spiked_bracers", "#2b2b2b"], "hair": "mohawk", "headgear": "none", "neck": "spiked_collar"}],
+		["overalls", "scrambler", {"torso": ["overalls", "#f2cd37"], "arms": ["rolled", "#f2cd37"], "hair": "bun", "headgear": "cap", "neck": "none"}],
+		["gown", "long_fork", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "hair": "princess", "headgear": "tiara", "neck": "pearls"}],
+		["space", "zippy", {"torso": ["space_suit", "#f2f2f2"], "arms": ["mechanical", "#9aa0a6"], "hair": "bob", "headgear": "none", "neck": "none"}],
 	]
 	for look in outfits:
 		var design := bare()
@@ -463,11 +463,11 @@ func _outfits() -> void:
 		var seat := Vector3(0.0, 0.6, 0.0)
 		var found := model.find_children("*", "CharacterRig", true, false)
 		if not found.is_empty():
-			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.45 if look[1] == "classic" else 0.5, 0.0)
+			seat = (found[0] as Node3D).global_position + Vector3(0.0, 0.45 if look[1] == "kart_kid" else 0.5, 0.0)
 		for frame in 20:
 			await process_frame
-		var view := Vector3(-0.8, 0.3, -1.0) if look[1] == "classic" else Vector3(-0.75, 0.2, -1.0)
-		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if look[1] == "classic" else 3.8), seat))
+		var view := Vector3(-0.8, 0.3, -1.0) if look[1] == "kart_kid" else Vector3(-0.75, 0.2, -1.0)
+		shots.append(await snap("%s on the %s" % [look[0], look[1]], seat + view.normalized() * (3.0 if look[1] == "kart_kid" else 3.8), seat))
 	save(sheet(shots, 4, TILE), "outfits.png")
 
 
@@ -489,14 +489,14 @@ func _legs() -> void:
 		save(sheet(shots, 5, TILE), "legs_%s.png" % pose)
 	var shots := []
 	var outfits := [
-		["gown", "classic", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
-		["kilt", "classic", {"torso": ["tunic", "#0d69ab"], "arms": ["rolled", "#f2f2f2"], "legs": ["kilt", "#4b9f4a"], "hair": "short", "headgear": "none"}],
-		["skirt", "soapbox", {"torso": ["stripes", "#0d69ab"], "arms": ["short_sleeves", "#0d69ab"], "legs": ["skirt", "#7a3fb8"], "hair": "bob", "headgear": "none"}],
-		["cowboy", "hot_rod", {"torso": ["plaid", "#c4281c"], "arms": ["long_sleeves", "#c4281c"], "legs": ["cowboy", "#1f4e8c"], "hair": "short", "headgear": "cowboy"}],
-		["gown", "chopper", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
-		["skirt", "scooter", {"torso": ["flowery", "#f2cd37"], "arms": ["short_sleeves", "#f2cd37"], "legs": ["skirt", "#7a3fb8"], "hair": "ponytail", "headgear": "none"}],
-		["kilt", "dirt_bike", {"torso": ["jersey", "#4b9f4a"], "arms": ["racing_gloves", "#4b9f4a"], "legs": ["kilt", "#4b9f4a"], "hair": "spiky", "headgear": "none"}],
-		["dino", "trike", {"torso": ["dino_belly", "#4b9f4a"], "arms": ["scaly", "#4b9f4a"], "legs": ["dino_feet", "#4b9f4a"], "hair": "none", "headgear": "none"}],
+		["gown", "kart_kid", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
+		["kilt", "kart_kid", {"torso": ["tunic", "#0d69ab"], "arms": ["rolled", "#f2f2f2"], "legs": ["kilt", "#4b9f4a"], "hair": "short", "headgear": "none"}],
+		["skirt", "night_shift", {"torso": ["stripes", "#0d69ab"], "arms": ["short_sleeves", "#0d69ab"], "legs": ["skirt", "#7a3fb8"], "hair": "bob", "headgear": "none"}],
+		["cowboy", "flathead", {"torso": ["plaid", "#c4281c"], "arms": ["long_sleeves", "#c4281c"], "legs": ["cowboy", "#1f4e8c"], "hair": "short", "headgear": "cowboy"}],
+		["gown", "long_fork", {"torso": ["gown", "#d86cb0"], "arms": ["long_gloves", "#d86cb0"], "legs": ["gown", "#d86cb0"], "hair": "princess", "headgear": "tiara"}],
+		["skirt", "zippy", {"torso": ["flowery", "#f2cd37"], "arms": ["short_sleeves", "#f2cd37"], "legs": ["skirt", "#7a3fb8"], "hair": "ponytail", "headgear": "none"}],
+		["kilt", "scrambler", {"torso": ["jersey", "#4b9f4a"], "arms": ["racing_gloves", "#4b9f4a"], "legs": ["kilt", "#4b9f4a"], "hair": "spiky", "headgear": "none"}],
+		["dino", "tiddler", {"torso": ["dino_belly", "#4b9f4a"], "arms": ["scaly", "#4b9f4a"], "legs": ["dino_feet", "#4b9f4a"], "hair": "none", "headgear": "none"}],
 	]
 	for look in outfits:
 		var design := bare()
@@ -541,9 +541,9 @@ func _backs() -> void:
 			shots.append(await snap(style, middle + view[1].normalized() * 2.3, middle))
 		save(sheet(shots, 5, TILE), "backs_standing_%s.png" % view[0])
 	var rides := [
-		["seated", ["starter", "classic", "downforce"], Vector3(-0.9, 0.5, 0.9)],
-		["reclined", ["soapbox"], Vector3(-1.0, 0.45, 0.6)],
-		["astride", ["superbike", "chopper", "dirt_bike", "scooter", "trikester"], Vector3(-1.0, 0.35, 0.7)],
+		["seated", ["kart_kid", "oval_ace", "redline"], Vector3(-0.9, 0.5, 0.9)],
+		["reclined", ["night_shift"], Vector3(-1.0, 0.45, 0.6)],
+		["astride", ["streak", "long_fork", "scrambler", "zippy", "twin_nose"], Vector3(-1.0, 0.35, 0.7)],
 	]
 	for ride in rides:
 		var shots := []
