@@ -25,6 +25,8 @@ const OTHERS := Color(1.0, 1.0, 1.0, 0.85)
 const CPU := Color(1.0, 1.0, 1.0, 0.6)
 ## The dark square behind the map, so the course stands out over the race.
 const BACKING := Color(0.0, 0.0, 0.0, 0.2)
+## Fainter on the shared map in split screen, where it sits over both views.
+const SHARED_BACKING := Color(0.0, 0.0, 0.0, 0.05)
 
 signal changed(mode: String)
 
@@ -95,7 +97,7 @@ func _draw() -> void:
 		return
 	if track == null or _line.size() < 2:
 		return
-	draw_rect(Rect2(Vector2.ZERO, size), BACKING)
+	draw_rect(Rect2(Vector2.ZERO, size), SHARED_BACKING if shared() else BACKING)
 	var to_map := _whole() if mode != "close" else _close_up()
 	var shown := to_map * _line
 	# A bigger map has thicker lines and dots to go with it.
