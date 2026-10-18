@@ -676,8 +676,8 @@ def fenders(k, wheel_z, top):
     k.fine("d_truck_fender", 11 * STUD, y, (wheel_z - 2) * STUD, rot=2)
 
 
-# 27. A monster truck: a green body with a purple stripe up over huge wheels
-# and a pickup cab with lamps on the roof.
+# 27. A monster truck: a green body with a purple stripe up over huge wheels,
+# a short pickup cab with lamps on the roof and a smooth bed behind.
 k = kart("crusher", "Crusher", "A monster truck on huge wheels. It rolls over anything and doesn't mind the grass, but it's tall, so take the corners steady.")
 T = racer(k, "w_monster", "w_monster", 2, 10, arches=0, width=4, rims=PURPLE)
 (k.add("p_brick_2x4", 8, T, 2, colour=DARK).add("p_brick_2x4", 10, T, 2, colour=DARK)
@@ -689,14 +689,16 @@ T = racer(k, "w_monster", "w_monster", 2, 10, arches=0, width=4, rims=PURPLE)
 B = T + 4
 (k.add("p_plate_4x4", 8, B, 0, colour=LIME)
     .add("p_bonnet_4x4", 8, B + 1, 0, colour=LIME)
-    .pair("p_brick_1x6", 8, B, 4, colour=LIME)
-    .pair("p_plate_1x6", 8, B + 3, 4, colour=PURPLE)
-    .add("steering_wheel", 9, B, 5)
-    .add("s_racing_seat", 9, B, 6)
-    .add("p_cab_4x6", 8, B + 4, 4, colour=LIME)
+    .pair("p_brick_1x4", 8, B, 4, colour=LIME)
+    .pair("p_plate_1x4", 8, B + 3, 4, colour=PURPLE)
+    .add("steering_wheel", 9, B, 4)
+    .add("s_racing_seat", 9, B, 5)
+    .add("p_cab_4x4", 8, B + 4, 4, colour=LIME)
     .add("d_light_1x1", 9, B + 10, 6, colour=YELLOW).add("d_light_1x1", 10, B + 10, 6, colour=YELLOW)
-    .add("p_plate_4x4", 8, B, 10, colour=PURPLE)
-    .add("p_brick_2x4", 8, B + 1, 10, colour=LIME).add("p_brick_2x4", 10, B + 1, 10, colour=LIME))
+    .pair("p_brick_1x6", 8, B, 8, colour=LIME)
+    .add("p_brick_2x4", 9, B, 8, colour=LIME).add("p_brick_2x2", 9, B, 12, colour=LIME)
+    .add("p_plate_4x6", 8, B + 3, 8, colour=PURPLE)
+    .add("p_tile_2x6", 8, B + 4, 8, colour=LIME).add("p_tile_2x6", 10, B + 4, 8, colour=LIME))
 
 # 28. A big rig cab racer: a tall cab behind a bonnet and grille, stacks
 # behind the cab and a fifth wheel at the back. It's built by hand, so the
@@ -722,14 +724,16 @@ fenders(k, 2, T + 3)
     .add("s_racing_seat", 9, T, 5)
     .add("p_truck_cab_6x4", 7, T + 2, 4, colour=BLUE)
     .add("p_curve_4x4", 8, T + 10, 4, colour=WHITE)
+    .add("p_tile_1x4", 8, T + 13, 7, rot=1, colour=WHITE)
     .pair("d_exhaust_stack", 8, T, 8)
     .add("engine_hybrid", 9, T, 8, colour=SILVER)
     .add("p_round_tile_2x2", 9, T + 3, 9, colour=SILVER)
     .pair("p_brick_1x2", 8, T, 10, colour=DARK))
 fenders(k, 11, T + 3)
 
-# 29. A trophy truck: white with a red stripe, big knobbly tires under black
-# mudguards, lamps on the roof and a spare wheel in the back.
+# 29. A trophy truck: white with a red stripe and a number on the doors, big
+# knobbly tires under black mudguards, lamps on the roof, a roll bar behind the
+# cab and a spare wheel in the back.
 k = kart("desert_pro", "Desert Pro", "A desert racer on big knobbly tires. Fast over the rough stuff and happy on the road too.")
 T = racer(k, "w_truck", "w_truck", 1, 10, arches=0, width=4)
 (k.pair("p_brick_1x4", 8, T, 0, colour=WHITE)
@@ -737,12 +741,15 @@ T = racer(k, "w_truck", "w_truck", 1, 10, arches=0, width=4)
     .pair("p_plate_1x1", 8, T + 3, 0, colour=WHITE).pair("p_plate_1x1", 8, T + 3, 3, colour=WHITE)
     .add("p_plate_2x4", 9, T + 3, 0, colour=WHITE)
     .add("p_bonnet_4x4_red_stripe", 8, T + 4, 0, colour=WHITE)
-    .pair("p_brick_1x6", 8, T, 4, colour=WHITE)
-    .pair("p_plate_1x4", 8, T + 3, 4, colour=RED).pair("p_plate_1x1", 8, T + 3, 8, colour=RED)
-    .add("steering_wheel", 9, T, 5)
-    .add("s_racing_seat", 9, T, 6)
-    .add("p_cab_4x6", 8, T + 4, 4, colour=WHITE)
+    .pair("p_brick_1x2", 8, T, 4, colour=WHITE)
+    .add("d_number_brick", 8, T, 6).add("d_number_brick", 11, T, 6, rot=2)
+    .pair("p_brick_1x2", 8, T, 7, colour=WHITE)
+    .pair("p_plate_1x4", 8, T + 3, 4, colour=RED)
+    .add("steering_wheel", 9, T, 4)
+    .add("s_racing_seat", 9, T, 5)
+    .add("p_cab_4x4", 8, T + 4, 4, colour=WHITE)
     .add("d_light_1x1", 9, T + 10, 6, colour=YELLOW).add("d_light_1x1", 10, T + 10, 6, colour=YELLOW)
+    .add("d_roll_bar", 8, T + 3, 8)
     .pair("p_brick_1x2", 8, T, 10, colour=WHITE)
     .add("engine_v8", 9, T, 8, colour=SILVER)
     .add("p_round_brick_2x2", 9, T + 3, 10, colour=DARK)
@@ -752,9 +759,9 @@ T = racer(k, "w_truck", "w_truck", 1, 10, arches=0, width=4)
 fenders(k, 2, T + 3)
 fenders(k, 10, T + 3)
 
-# 30. A six wheeler: an orange cab over the front wheels and a grey bed over
-# two axles at the back with a load on it. It's built by hand for the third
-# axle.
+# 30. A six wheeler: a tall orange truck cab over the front wheels and a grey
+# bed over two axles at the back with a load on it. It's built by hand for the
+# third axle.
 k = kart("six_pack", "Six Pack", "A truck with two axles at the back. Steady and strong, and it grips like nothing else, but it's slow to turn.")
 base = radius("w_truck") - 4
 for z in (1, 6, 10):
@@ -765,18 +772,21 @@ for z in (1, 6, 10):
 T = (base + 2 * PLATE) / PLATE
 (k.pair("p_brick_1x6", 8, T, 1, colour=ORANGE)
     .add("d_spotlights", 9, T, 1, colour=DARK)
+    .add("p_plate_1x2", 9, T + 3, 1, rot=1, colour=ORANGE)
     .add("steering_wheel", 9, T, 2)
     .add("s_racing_seat", 9, T, 3)
-    .pair("p_brick_1x6", 8, T, 7, colour=GREY)
-    .add("p_brick_1x2", 9, T, 12, rot=1, colour=GREY)
     .add("engine_big", 9, T, 5, colour=GREY)
+    .pair("p_brick_1x6", 8, T, 7, colour=GREY)
     .add("p_brick_2x4", 9, T, 8, colour=GREY)
-    .add("p_brick_2x4", 9, T + 3, 8, colour=ORANGE))
+    .add("p_brick_1x2", 9, T, 12, rot=1, colour=GREY)
+    .add("p_brick_2x4", 9, T + 3, 8, colour=ORANGE)
+    .add("p_tile_2x4", 9, T + 6, 8, colour=ORANGE))
 fenders(k, 2, T + 3)
 fenders(k, 7, T + 3)
 fenders(k, 11, T + 3)
-(k.pair("p_plate_1x3", 8, T + 3, 3, colour=DARK)
-    .add("p_cab_4x6", 8, T + 4, 1, colour=ORANGE))
+(k.pair("p_plate_1x3", 8, T + 3, 3, colour=ORANGE)
+    .add("p_tile_1x4", 8, T + 4, 1, rot=1, colour=ORANGE)
+    .add("p_truck_cab_4x4", 8, T + 4, 2, colour=ORANGE))
 
 # Bikes and trikes, built the way toy motorbikes are: a frame in one piece
 # with the engine, tank, seat and swingarm in it, a fork with the bars on
