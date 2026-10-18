@@ -190,13 +190,26 @@ func _grand_prix_for_two() -> void:
 		if round == 0:
 			# Player 1 home first can't move on while player 2's still racing.
 			race.humans[0].progress.finished = true
+			race.humans[0].progress.finish_time = race.time
 			race._player_finished(race.humans[0])
 			await frames(2)
 			var hud: RaceHud = race.humans[0].hud
-			check(hud._next.disabled and hud._waiting.visible and hud._waiting.text.begins_with(two), "Standings waits for player 2 (%s)" % hud._waiting.text)
+			check(hud._next.disabled and hud._waiting.visible and hud._waiting.text == "%s is still racing" % two, "Standings waits for player 2 (%s)" % hud._waiting.text)
 			hud.next_pressed.emit()
 			await frames(2)
 			check(screen() == race, "and the race doesn't end before player 2 is home")
+			# Everyone but player 2 home lets it move on.
+			var cpus: Array = race.racers.filter(func(r): return not r.player)
+			for r in cpus:
+				r.progress.finished = true
+			await frames(2)
+			check(not hud._next.disabled and not hud._waiting.visible, "once all but one are home, Standings can be pressed without player 2")
+			for i in cpus.size():
+				cpus[i].progress.finished = i < cpus.size() - 1
+			await frames(2)
+			check(hud._next.disabled, "and not with two still racing")
+			for r in cpus:
+				r.progress.finished = false
 			race.humans[1].progress.finished = true
 			race._player_finished(race.humans[1])
 			await frames(2)

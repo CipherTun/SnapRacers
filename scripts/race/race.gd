@@ -336,6 +336,8 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 		for other in humans.size():
 			if other != index:
 				view.set_cull_mask_value(PowerupField.layer_of(other), false)
+	# In split screen it's in a half that keeps running while paused.
+	view.process_mode = Node.PROCESS_MODE_PAUSABLE
 	world_parent.add_child(view)
 	view.make_current()
 	view.snap()
@@ -360,8 +362,8 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 	racer_hud.garage_pressed.connect(Game.show_garage)
 	racer_hud.menu_pressed.connect(leave)
 	racer_hud.next_pressed.connect(func() -> void:
-		# Someone still racing would be scored where they are now.
-		if all_humans_home():
+		# Someone still racing is scored where they are now.
+		if can_move_on():
 			Game.finish_grand_prix_race(standings().map(func(r): return r.name)))
 	racer_hud.courses_pressed.connect(func() -> void: Game.show_tracks(mode, Game.racing_alone, true))
 	racer_hud.camera_pressed.connect(input.press_view)
@@ -767,6 +769,13 @@ func go_back() -> void:
 ## Whether every person on this device has finished.
 func all_humans_home() -> bool:
 	return humans.all(func(r: Racer) -> bool: return r.progress.finished)
+
+
+## Whether the race can move on to the standings: once everyone here is
+## home, or everyone in the race but one is, so a player a lap behind
+## doesn't hold it up for long.
+func can_move_on() -> bool:
+	return all_humans_home() or racers.filter(func(r: Racer) -> bool: return r.progress.finished).size() >= racers.size() - 1
 
 
 ## Opens this player's menu over their view. Off the network that pauses

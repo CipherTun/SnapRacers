@@ -160,6 +160,7 @@ func _ready() -> void:
 		check(not first.input.can_process() and not second.input.can_process(), "and neither player's controls drive")
 		var ai: Array = race.racers.filter(func(r): return r.ai != null)
 		check(not ai.is_empty() and ai.all(func(r): return not r.ai.can_process()) and not first.kart.sound.can_process(), "nor the AI, and kart sounds pause")
+		check(not second.camera.can_process() and not first.camera.can_process(), "the cameras pause too")
 		# Tapping Resume in player 2's half, turned round or not.
 		await tap(own._resume)
 		check(not race.menu_open(first) and not race.menu_open(second) and not get_tree().paused and race._shared_map.visible, "tapping Resume in player 2's half carries on for both")

@@ -514,16 +514,17 @@ func _build_results() -> void:
 		box.add_child(_waiting)
 
 
-## The other player's still racing, so Standings waits for them.
+## The other player's still racing, so Standings waits for them, or until
+## all but one of the racers are home.
 func _show_waiting() -> void:
 	if _next == null:
 		return
-	var home := race.all_humans_home()
-	_next.disabled = not home
+	var ready := race.can_move_on()
+	_next.disabled = not ready
 	if _waiting != null:
-		var out := race.humans.filter(func(r: Race.Racer) -> bool: return not r.progress.finished)
-		_waiting.visible = not home
-		if not home:
+		_waiting.visible = not ready
+		if not ready:
+			var out := race.humans.filter(func(r: Race.Racer) -> bool: return not r.progress.finished)
 			_waiting.text = "%s is still racing" % out[0].name
 
 
