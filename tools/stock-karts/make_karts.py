@@ -607,24 +607,29 @@ k = kart("quarter_mile", "Quarter Mile", "A dragster with a blower V8, huge slic
     .pair("p_tile_1x2", 8, 9.5, 17, colour=DARK)
     .add("d_rear_wing_8", 6, 9.5, 17, colour=PURPLE))
 
-# 24. A hot rod: a blower V8 out front over little wheels, a tub for the
-# driver and big slicks at the back, with open pipes down both sides.
+# 24. A hot rod: a blower V8 out front over little wheels, a flamed tub for
+# the driver and big slicks at the back, with open pipes down both sides.
+# It's built by hand so the engine and driver sit low: a plate 4×8 hangs
+# off the back axle plate and reaches forward to the front one, with tiles
+# either side of the engine joining the two.
 k = kart("flathead", "Flathead", "A hot rod with a blower V8 out in the open and fat tires at the back. Loads of pull, and a bit of a handful.")
-T = racer(k, "w_kart", "w_slick", 1, 10, arches=0, width=4)
-(k.add("p_brick_1x2", 9, T, 1, rot=1, colour=SILVER)
-    .add("p_grille_1x2", 9, T + 3, 1, rot=1, colour=SILVER)
-    .add("p_jumper_1x2", 9, T, 3, colour=DARK).add("p_jumper_1x2", 9, T, 4, colour=DARK)
-    .add("e_blower_v8", 8.5, T + 1, 2, colour=RED)
-    .pair("p_tile_1x4", 8, T, 2, colour=DARK)
-    .add("p_plate_2x6", 7, T - 2, 6, rot=1, colour=DARK)
-    .pair("d_open_exhausts", 7, T - 1, 4)
-    .add("windscreen_4", 8, T, 6)
-    .add("steering_wheel", 9, T, 7)
-    .add("s_racing_seat", 9, T, 8)
-    .pair("p_brick_1x4", 8, T, 7, colour=TEAL)
-    .pair("p_tile_1x4", 8, T + 3, 7, colour=TEAL)
-    .add("p_brick_1x2", 9, T, 10, rot=1, colour=TEAL)
-    .add("p_tile_1x2", 9, T + 3, 10, rot=1, colour=TEAL))
+(k.add("p_kart_axle_plate_4", 7, 2.5, 1, colour=DARK)
+    .pair_fine("w_kart", 8 * STUD - fine_size("w_kart")[0], 0, 2 * STUD - fine_size("w_kart")[2] / 2)
+    .add("p_plate_4x8", 8, 2.5, 3, colour=DARK)
+    .add("p_kart_axle_plate_4", 7, 3.5, 9, colour=DARK)
+    .pair_fine("w_slick", 8 * STUD - fine_size("w_slick")[0], 0, 10 * STUD - fine_size("w_slick")[2] / 2)
+    .add("d_hot_rod_grille", 9, 2.5, 0)
+    .pair("p_tile_1x4", 8, 3.5, 1, colour=DARK)
+    .add("p_jumper_1x2", 9, 3.5, 2, colour=DARK).add("p_jumper_1x2", 9, 3.5, 3, colour=DARK)
+    .add("e_blower_v8", 8.5, 4.5, 1, colour=RED)
+    .pair("p_plate_2x3", 7, 3.5, 5, colour=DARK)
+    .pair("d_open_exhausts", 7, 4.5, 4)
+    .pair("p_tub_side_1x6_flames", 8, 4.5, 5, colour=TEAL)
+    .add("windscreen_tall", 9, 3.5, 5)
+    .add("steering_wheel", 9, 3.5, 6)
+    .add("s_racing_seat", 9, 3.5, 7)
+    .add("p_plate_2x2", 9, 4.5, 9, colour=TEAL)
+    .add("p_curve_2x2", 9, 5.5, 9, rot=2, colour=TEAL))
 
 # 25. A dune buggy: knobbly tires, a short yellow nose, a roll cage with
 # lamps on top and the engine out the back.
@@ -633,11 +638,12 @@ T = racer(k, "w_offroad", "w_offroad", 1, 8, arches=0, width=4)
 (k.add("p_bonnet_4x4", 8, T, 0, colour=YELLOW)
     .pair("p_tile_1x2", 8, T, 5, colour=YELLOW)
     .add("d_roll_cage_4x4", 8, T, 4, colour=DARK)
-    .add("d_light_1x1", 9, T + 11.8, 6, colour=YELLOW).add("d_light_1x1", 10, T + 11.8, 6, colour=YELLOW)
+    .add("d_light_1x1", 8.5, T + 11.8, 6, colour=YELLOW).add("d_light_1x1", 9.5, T + 11.8, 6, colour=YELLOW).add("d_light_1x1", 10.5, T + 11.8, 6, colour=YELLOW)
     .add("steering_wheel", 9, T, 4)
     .add("s_racing_seat", 9, T, 5)
     .add("engine_small", 9, T, 8, colour=SILVER)
-    .add("p_tile_2x2", 9, T + 3, 8, colour=SILVER))
+    .add("p_tile_2x2", 9, T + 3, 8, colour=SILVER)
+    .pair("d_exhaust", 8, T, 8))
 
 # 26. An electric racer in white with teal stripes, smooth over the wheels,
 # with an open cockpit and a wing at each end.
