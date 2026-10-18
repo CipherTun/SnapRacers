@@ -1826,3 +1826,77 @@ def chopper_trike_body():
     return Part("b_trike_body", "Chopper trike body", "body", "bike", (w * FINE, (top + STUD_HEIGHT / FINE - ylow) * FINE, (z1 - z0) * FINE), body.translate(shift), con, YELLOW,
                 trim=(union(lights).translate(shift), TRANS_RED, "glass"), light="tail", aero={"front": 0.7, "back": 0.9, "side": 0.9}, mass=5.0, strength=1400.0, solids=solids,
                 about="A wide body for the back of the trike frame, over the frame's tail and between the back wheels, with studs on top. It hangs on the back axle.")
+
+
+# Racer bodies and fittings for the dragster, hot rod, buggy and electric racer.
+
+@part
+def jumper_1x2():
+    """A plate 2×1 with one stud in the middle, so a part an odd number of
+    studs wide can sit centred on a body an even number wide."""
+    w, l = 2 * STUD, STUD
+    solid = union([box(0, 0, 0, w, PLATE, l), cylinder(STUD_RADIUS, STUD_HEIGHT, "y", (STUD, PLATE - 0.001, STUD * 0.5), 12)])
+    con = sockets(grid_cells(2, 1)) + [c("stud", (STUD, PLATE, STUD * 0.5), (0, 1, 0))]
+    return Part("p_jumper_1x2", "Jumper plate 1×2", "plate", "plates", (w, PLATE, l), solid, con, LIGHT_GREY)
+
+
+@part
+def drag_body_2x10_flames():
+    """A dragster's long body 2×10, narrowing and dropping to a thin nose at
+    the front, with orange flames licking forward along its top."""
+    w, l, h = 2 * STUD, 10 * STUD, 3 * PLATE
+    stations = []
+    for k in range(21):
+        t = k / 20.0
+        z = 0.002 + (l - STUD - 0.002) * t
+        hw = 0.07 + (w * 0.5 - 0.072) * t ** 0.8
+        y = 0.07 + (h - 0.07) * t ** 1.2
+        stations.append((z, w * 0.5, hw, y, min(hw, y) * 0.8))
+    stations.append((l - 0.002, w * 0.5, w * 0.5 - 0.002, h, (w * 0.5 - 0.002) * 0.8))
+    body = _loft(stations)
+    # A thin base the full width, so the studs it sits on don't show beside
+    # the narrow nose.
+    base = plan_y([(0.002, 0.1), (0.1, 0.002), (w - 0.1, 0.002), (w - 0.002, 0.1), (w - 0.002, l - 0.002), (0.002, l - 0.002)], 0.0, STUD_HEIGHT + 0.012)
+    body = union([body, base])
+
+    def flame(side):
+        # A tongue from the back reaching forward, with a notch, on one side
+        # of the middle.
+        x = lambda u: w * 0.5 + side * u
+        pts = [(x(0.025), l - 1.6 * STUD), (x(0.2), l - 1.6 * STUD), (x(0.05), 3.2 * STUD), (x(0.1), 4.4 * STUD), (x(0.03), 1.6 * STUD)]
+        return plan_y(pts if side > 0 else pts[::-1], -0.1, 1.0)
+
+    return Part("p_drag_body_2x10_flames", "Dragster body 2×10 with flames", "body", "curves", (w, h, l), body,
+                sockets(grid_cells(2, 10)), RED, trim=(_skin(body, [flame(1), flame(-1)]), ORANGE, "plastic"),
+                aero={"front": 0.2, "back": 1.0, "side": 0.6})
+
+
+@part
+def roll_cage_4x4():
+    """A dune buggy's roll cage 4×4, over the seat of a small buggy, with a
+    plate 2×1 across the roof for lights. The front pillars lean back to the
+    roof and the back ones drop nearly straight, with one bar across the back
+    up high, so an engine fits under it behind the seat."""
+    roof = 1.08
+    w, l, h = 4 * STUD, 4 * STUD, roof + PLATE
+    zf, za, zb, zr = STUD * 0.5, 0.36, 0.78, l - STUD * 0.5
+    sides = []
+    for x in (STUD * 0.5, w - STUD * 0.5):
+        sides.append(_rods([(x, PLATE, zf), (x, roof - 0.06, za - 0.04), (x, roof, za + 0.06), (x, roof, zb - 0.06), (x, roof - 0.06, zb + 0.02), (x, PLATE, zr)], TUBE))
+    x0, x1 = STUD * 0.5, w - STUD * 0.5
+    bars = [_capsule((x0, roof, za + 0.06), (x1, roof, za + 0.06), TUBE), _capsule((x0, roof, zb - 0.06), (x1, roof, zb - 0.06), TUBE),
+            _capsule((x0, 0.62, zb + 0.06), (x1, 0.62, zb + 0.06), TUBE)]
+    feet = [box(x, 0, z, x + STUD, PLATE, z + STUD) for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
+    lights = [(1, 2), (2, 2)]
+    plate = union([box(STUD, roof, 2 * STUD, 3 * STUD, roof + PLATE, 3 * STUD), studs(lights, roof + PLATE)])
+    cells = [(i, k) for i in (0, 3) for k in (0, 3)]
+    tube = [[0, PLATE, 0, STUD, roof + TUBE, l], [w - STUD, PLATE, 0, w, roof + TUBE, l]]
+    return Part("d_roll_cage_4x4", "Small roll cage 4×4", "body", "details", (w, h, l), union(sides + bars + feet + [plate]), sockets(cells) + top_studs(lights, roof + PLATE), BLACK,
+                aero={"front": 0.5, "back": 0.8}, mass=3.0, strength=1500.0,
+                solids=[[x, 0, z, x + STUD, PLATE, z + STUD] for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
+                + tube + [[STUD, roof - TUBE, za, w - STUD, h, zb]])
+
+
+TEAL = "#36aebf"
+part(lambda: _bonnet("p_bonnet_4x4", "Smooth bonnet 4×4", 4, 3, across=4, top=False))
+part(lambda: _big_arch("p_arch_2x6_teal_stripe", "Smooth wheel arch 2×6 with a teal stripe", 2, smooth=True, stripe=TEAL))
