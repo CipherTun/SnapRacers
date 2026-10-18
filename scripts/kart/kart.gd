@@ -522,9 +522,10 @@ func build(new_design: KartDesign, who: CharacterDesign = null) -> void:
 		var info: KartStats.PartInfo = _full.wheels[n]
 		var share: float = shares[n] * _full.mass
 		var spring := share * KartStats.gravity() / SUSPENSION_TRAVEL
-		# A kart with only one axle steers and drives with it.
+		# A kart with only one axle steers and drives with it. A quad drives
+		# all four wheels, since its light back end can't grip enough alone.
 		var steers := steered.is_empty() or steered.has(info.index)
-		var drives := driven.is_empty() or driven.has(info.index)
+		var drives := driven.is_empty() or driven.has(info.index) or _full.is_quad()
 		_wheel_setup[info.index] = [steers, drives, spring, 2.0 * SUSPENSION_DAMPING * sqrt(spring * share)]
 	upright = 0.0
 	var in_line := _full.wheels.filter(func(info: KartStats.PartInfo) -> bool: return absf(info.centre.x - com.x) < IN_LINE).size()
