@@ -1935,3 +1935,35 @@ def tub_side_flames():
     trim = union([push_x(flame, -0.004, 0.003), push_x(flame, w - 0.003, w + 0.004)])
     return Part("p_tub_side_1x6_flames", "Tub side 1×6 with flames", "body", "curves", (w, h, l), body, sockets(grid_cells(1, 6)), RED,
                 trim=(trim, ORANGE, "plastic"), aero={"front": 0.8, "back": 0.9, "side": 0.9})
+
+
+# Truck fittings.
+
+@part
+def truck_fender():
+    """A truck's mudguard curved over the top of a tire 2 wide, on a plate
+    1×2 along its inside that sits on a brick beside the tire and has studs
+    on top. With the plate level with the top of a tire 0.45 m round (or a
+    brick and a plate above a big slick's axle), the inside clears the tire
+    by 5 cm (10 cm for the slick)."""
+    w, l = 3 * STUD, 4 * STUD
+    ri, ro, low = 0.5, 0.55, 0.3
+    tab = 0.45 - low
+    h = ro - low
+    zc = l * 0.5
+
+    def arc(r, a0, a1, n=24):
+        return [(zc + r * math.sin(a0 + (a1 - a0) * k / n), r * math.cos(a0 + (a1 - a0) * k / n) - low) for k in range(n + 1)]
+
+    o = math.acos(low / ro)
+    i = math.acos(low / ri)
+    sheet = push_x(side(arc(ro, -o, o) + arc(ri, i, -i)), 0.002, 2 * STUD)
+    plate = box(2 * STUD, tab, STUD, w, tab + PLATE, 3 * STUD)
+    web = box(2 * STUD - 0.01, tab, STUD, 2 * STUD + 0.02, h, 3 * STUD, edge=0.004)
+    cells = [(2, 1), (2, 2)]
+    return Part("d_truck_fender", "Truck mudguard", "body", "arches", (w, h, l), union([sheet, plate, web, studs(cells, tab + PLATE)]),
+                sockets(cells, tab) + top_studs(cells, tab + PLATE), BLACK, aero={"front": 0.5, "back": 0.6, "side": 0.9}, mass=0.8, strength=600.0,
+                solids=[[2 * STUD, tab, STUD, w, tab + PLATE, 3 * STUD], [0, 0.45 - low, zc - 0.25, 2 * STUD, h, zc + 0.25]])
+
+
+part(lambda: _bonnet("p_bonnet_4x4_red_stripe", "Low bonnet 4×4 with a red stripe", 4, 2, stripes=True, stripe_colour=RED, lanes=((1.5, 1),), across=4, top=False))

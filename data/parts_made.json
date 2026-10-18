@@ -30132,6 +30132,341 @@
 			},
 			"mass": 1.35,
 			"strength": 625.0
+		},
+		"d_truck_fender": {
+			"name": "Truck mudguard",
+			"kind": "body",
+			"group": "arches",
+			"size": [
+				3,
+				3,
+				4
+			],
+			"fine_size": [
+				60.0,
+				20.0,
+				80.0
+			],
+			"color": "#1b2a34",
+			"mesh": "res://parts/meshes/d_truck_fender.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						12.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						20.0,
+						30.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						20.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					40.0,
+					12.0,
+					20.0,
+					60.0,
+					20.0,
+					60.0
+				],
+				[
+					0.0,
+					12.0,
+					20.0,
+					40.0,
+					20.0,
+					60.0
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.6,
+				"side": 0.9
+			},
+			"mass": 0.8,
+			"strength": 600.0
+		},
+		"p_bonnet_4x4_red_stripe": {
+			"name": "Low bonnet 4\u00d74 with a red stripe",
+			"kind": "body",
+			"group": "curves",
+			"size": [
+				4,
+				2,
+				4
+			],
+			"fine_size": [
+				80.0,
+				16.0,
+				80.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/p_bonnet_4x4_red_stripe.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						50.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_bonnet_4x4_red_stripe_trim.obj",
+				"color": "#c4281c",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.3,
+				"back": 1.0,
+				"side": 0.8
+			},
+			"mass": 2.4,
+			"strength": 800.0
 		}
 	}
 }
