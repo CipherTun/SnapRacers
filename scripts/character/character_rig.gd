@@ -157,9 +157,7 @@ func _ready() -> void:
 	# The upper body pivots at the top of the hips. Its children are placed in
 	# the rig's own space, as if it weren't leaning.
 	_upper = Node3D.new()
-	var pivot := Vector3(0.0, HIPS_TOP, 0.0)
-	var lean := Basis(Vector3.RIGHT, recline - (ASTRIDE_LEAN if astride else 0.0))
-	_upper.transform = Transform3D(lean, pivot - lean * pivot)
+	_upper.transform = _upper_at(recline, astride)
 	add_child(_upper)
 	_build()
 	_apply_head_layer()
@@ -209,6 +207,19 @@ func eye_point() -> Vector3:
 	if _head == null:
 		return global_position + global_basis.y * HEAD_Y
 	return _head.global_position + _head.global_basis.y * 0.02 - _head.global_basis.z * 0.06
+
+
+## Where the eyes are in the rig's own space with the head straight, worked
+## out without building the rig, for a kart deciding what's in the driver's way.
+static func rest_eye(lean_back: float, on_bike: bool) -> Vector3:
+	return _upper_at(lean_back, on_bike) * (Vector3(0.0, HEAD_Y, 0.0) + Vector3(0.0, 0.02, -0.06) * HEAD_SCALE)
+
+
+## The upper body's place, pivoting at the top of the hips.
+static func _upper_at(lean_back: float, on_bike: bool) -> Transform3D:
+	var pivot := Vector3(0.0, HIPS_TOP, 0.0)
+	var lean := Basis(Vector3.RIGHT, lean_back - (ASTRIDE_LEAN if on_bike else 0.0))
+	return Transform3D(lean, pivot - lean * pivot)
 
 
 func _apply_head_layer() -> void:
