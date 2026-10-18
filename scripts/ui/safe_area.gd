@@ -118,10 +118,16 @@ static func holes_in(viewport: Viewport) -> Array[Rect2]:
 	var holder := viewport.get_parent() as SubViewportContainer
 	if holder != null:
 		var into := holder.get_global_transform_with_canvas().affine_inverse()
+		# A half drawn bigger (see Race._fit_hud()) has fewer UI units than
+		# pixels.
+		var sub := viewport as SubViewport
+		var shrink := Vector2.ONE
+		if sub != null and sub.size_2d_override_stretch and sub.size_2d_override != Vector2i.ZERO and holder.size.x > 0.0 and holder.size.y > 0.0:
+			shrink = Vector2(sub.size_2d_override) / holder.size
 		for hole in holes_in(holder.get_viewport()):
 			var inside := into * hole
 			if inside.intersects(Rect2(Vector2.ZERO, holder.size)):
-				out.append(inside)
+				out.append(Rect2(inside.position * shrink, inside.size * shrink))
 		return out
 	var shown := viewport.get_visible_rect()
 	var window := screen_size(viewport)

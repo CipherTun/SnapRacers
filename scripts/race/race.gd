@@ -396,7 +396,9 @@ func _add_split_views() -> void:
 			# It's turned all the way around its middle (not flipped, which would
 			# mirror it). The middle moves as the screen settles into portrait.
 			holder.rotation = PI
-			holder.resized.connect(func() -> void: holder.pivot_offset = holder.size * 0.5)
+			var turn := func() -> void: holder.pivot_offset = holder.size * 0.5
+			holder.resized.connect(turn)
+			turn.call()
 		var viewport := SubViewport.new()
 		Graphics.apply_to(viewport)
 		holder.add_child(viewport)
@@ -404,6 +406,8 @@ func _add_split_views() -> void:
 		var hud_layer := CanvasLayer.new()
 		viewport.add_child(hud_layer)
 		_add_view(humans[i], viewport, hud_layer)
+		# The screen may already be its final size, so resized won't come.
+		_fit_hud.call_deferred(viewport, humans[i])
 	_add_shared_map(root)
 
 
