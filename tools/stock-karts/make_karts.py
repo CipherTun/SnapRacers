@@ -570,11 +570,14 @@ T = racer(k, "w_racing", "w_racing", 3, 10, width=4)
 arches(k, T, (3, 11), BLUE)
 (k.add("p_plate_4x4", 8, T, 1, colour=BLUE)
     .add("p_bonnet_4x4_lime_stripe", 8, T + 1, 1, colour=BLUE)
-    .add("p_brick_1x1", 8, T, 5, colour=BLUE).add("p_brick_1x1", 11, T, 5, colour=BLUE)
-    .add("p_brick_1x1", 8, T, 10, colour=BLUE).add("p_brick_1x1", 11, T, 10, colour=BLUE)
-    .add("d_canopy", 8, T + 3, 5)
-    .add("racing_wheel", 9, T, 6)
-    .add("s_lay_down_seat", 9, T, 7)
+    .add("d_canopy_high_back", 8, T + 4, 5))
+# The bubble stands on posts a brick and a plate high, clear of the wheel.
+for x in (8, 11):
+    for z in (5, 10):
+        k.add("p_brick_1x1", x, T, z, colour=BLUE).add("p_plate_1x1", x, T + 3, z, colour=BLUE)
+(k
+    .add("racing_wheel", 9, T, 5)
+    .add("s_lay_down_seat", 9, T, 6)
     .add("p_plate_4x4", 8, T, 11, colour=BLUE)
     .add("p_bonnet_4x4_lime_stripe", 8, T + 1, 11, rot=2, colour=BLUE)
     .add("p_plate_2x3", 9, T - 3, 14, colour=DARK)

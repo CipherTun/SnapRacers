@@ -28967,6 +28967,119 @@
 			},
 			"mass": 0.2,
 			"strength": 300.0
+		},
+		"d_canopy_high_back": {
+			"name": "Canopy high at the back",
+			"kind": "screen",
+			"group": "details",
+			"size": [
+				4,
+				6,
+				6
+			],
+			"fine_size": [
+				80.0,
+				48.0,
+				120.0
+			],
+			"color": "#8fd3f4",
+			"mesh": "res://parts/meshes/d_canopy_high_back.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "glass",
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					80.0,
+					4.0,
+					4.8
+				],
+				[
+					0.0,
+					0.0,
+					115.2,
+					80.0,
+					4.0,
+					120.0
+				],
+				[
+					0.0,
+					0.0,
+					0.0,
+					4.8,
+					4.0,
+					120.0
+				],
+				[
+					75.2,
+					0.0,
+					0.0,
+					80.0,
+					4.0,
+					120.0
+				]
+			],
+			"aero": {
+				"front": 0.35,
+				"back": 0.6,
+				"side": 0.6
+			},
+			"mass": 10.8,
+			"strength": 2200.0
 		}
 	}
 }

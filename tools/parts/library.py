@@ -1342,6 +1342,30 @@ def canopy():
                 solids=[[0, 0, 0, w, PLATE * 0.5, 0.06], [0, 0, l - 0.06, w, PLATE * 0.5, l], [0, 0, 0, 0.06, PLATE * 0.5, l], [w - 0.06, 0, 0, w, PLATE * 0.5, l]])
 
 
+
+@part
+def canopy_high_back():
+    """A bubble canopy 4×6 that's highest three quarters of the way back, over a
+    lay-down driver's helmet, and drops steeply behind it."""
+    l = 6 * STUD
+    w = 4 * STUD
+    h = 0.6
+    peak = 4.5 * STUD
+    from manifold3d import Manifold
+
+    def bubble(inset, top):
+        # Two half egg shapes meeting at the peak: long in front, short behind.
+        front = Manifold.sphere(1.0, 36).scale([w * 0.5 - inset, top, peak - inset]).translate([w * 0.5, 0.0, peak])
+        back = Manifold.sphere(1.0, 36).scale([w * 0.5 - inset, top, l - peak - inset]).translate([w * 0.5, 0.0, peak])
+        return union([front - box(-1, -2, peak, 2, 2, 3, edge=0), back - box(-1, -2, -2, 2, 2, peak, edge=0)])
+
+    shell = (bubble(0.01, h) - bubble(0.04, h - 0.03)) - box(-1, -2, -1, 2, 0.0, 2, edge=0)
+    rim = cut(box(0, 0, 0, w, PLATE * 0.5, l, edge=0.01), box(0.06, -0.1, 0.06, w - 0.06, 0.2, l - 0.06, edge=0))
+    cells = [(0, 0), (3, 0), (0, 5), (3, 5)]
+    return Part("d_canopy_high_back", "Canopy high at the back", "screen", "details", (w, h, l), union([shell.translate([0, PLATE * 0.5, 0]), rim]), sockets(cells), GLASS, finish="glass",
+                aero={"front": 0.35, "back": 0.6, "side": 0.6},
+                solids=[[0, 0, 0, w, PLATE * 0.5, 0.06], [0, 0, l - 0.06, w, PLATE * 0.5, l], [0, 0, 0, 0.06, PLATE * 0.5, l], [w - 0.06, 0, 0, w, PLATE * 0.5, l]])
+
 # Engines and mechanical parts for the bigger stock vehicles.
 
 def _rods(points, r):
