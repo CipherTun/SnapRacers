@@ -178,6 +178,8 @@ func _time_trial() -> void:
 	var race: Race = await wait_for(Race)
 	check(race.mode == Game.MODE_TIME_TRIAL and race.racers.size() == 1, "a time trial is just you (%d karts)" % race.racers.size())
 	check(race.boxes == null, "with no power-ups to pick up")
+	await frames(2)
+	check(not race.player.hud._slots.visible, "and no power-up boxes on the screen")
 	# Pretend you've done three laps.
 	var p := race.player.progress
 	p.lap_times.assign([41.5, 39.25, 40.0])
@@ -219,6 +221,7 @@ func _practice() -> void:
 	check(race.boxes != null, "with power-ups, so you can try them out")
 	await frames(20)
 	check(race.player.hud._place.text == "Practice", "the HUD says it's practice")
+	check(race.player.hud._slots.visible, "with the power-up boxes at the bottom")
 	race.leave()
 	await frames(2)
 	var picker := screen()
