@@ -401,6 +401,10 @@ func _add_split_views() -> void:
 			turn.call()
 		var viewport := SubViewport.new()
 		Graphics.apply_to(viewport)
+		# A SubViewport doesn't listen for 3D sound unless told to, and with
+		# the cameras in here none of the karts would be heard. Both halves
+		# listen, so each player hears what's around their own kart.
+		viewport.audio_listener_enable_3d = true
 		holder.add_child(viewport)
 		holder.resized.connect(_fit_hud.bind(viewport, humans[i]), CONNECT_DEFERRED)
 		var hud_layer := CanvasLayer.new()
