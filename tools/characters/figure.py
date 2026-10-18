@@ -167,7 +167,7 @@ def legs_astride():
 # "forward" the feet out in front on a chopper's pegs. Degrees.
 RIDES = {
     "astride": {"down": 10.0, "splay": 40.0, "bend": 85.0},
-    "forward": {"down": -5.0, "splay": 12.0, "bend": 15.0},
+    "forward": {"down": 23.0, "splay": 12.0, "bend": -16.0},
 }
 # Where the knee is along a seated leg, from the hip.
 KNEE_Z = -0.17
