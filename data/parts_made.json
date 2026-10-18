@@ -29504,7 +29504,7 @@
 				{
 					"type": "stud",
 					"at": [
-						30.0,
+						20.0,
 						94.4,
 						50.0
 					],
@@ -29517,7 +29517,20 @@
 				{
 					"type": "stud",
 					"at": [
-						50.0,
+						40.0,
+						94.4,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						60.0,
 						94.4,
 						50.0
 					],
@@ -29935,6 +29948,190 @@
 			},
 			"mass": 1.4,
 			"strength": 700.0
+		},
+		"d_hot_rod_grille": {
+			"name": "Hot rod grille",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				2,
+				6,
+				2
+			],
+			"fine_size": [
+				40.0,
+				43.2,
+				40.0
+			],
+			"color": "#9aa0a6",
+			"mesh": "res://parts/meshes/d_hot_rod_grille.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						8.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						8.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"finish": "metal",
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					40.0,
+					40.0,
+					13.6
+				],
+				[
+					0.0,
+					8.0,
+					13.6,
+					40.0,
+					16.0,
+					40.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/d_hot_rod_grille_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.9,
+				"back": 0.8
+			},
+			"mass": 1.0,
+			"strength": 600.0
+		},
+		"p_tub_side_1x6_flames": {
+			"name": "Tub side 1\u00d76 with flames",
+			"kind": "body",
+			"group": "curves",
+			"size": [
+				1,
+				3,
+				6
+			],
+			"fine_size": [
+				20.0,
+				24.0,
+				120.0
+			],
+			"color": "#c4281c",
+			"mesh": "res://parts/meshes/p_tub_side_1x6_flames.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						90.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						110.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_tub_side_1x6_flames_trim.obj",
+				"color": "#da8540",
+				"finish": "plastic"
+			},
+			"aero": {
+				"front": 0.8,
+				"back": 0.9,
+				"side": 0.9
+			},
+			"mass": 1.35,
+			"strength": 625.0
 		}
 	}
 }

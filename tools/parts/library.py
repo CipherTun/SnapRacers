@@ -1874,9 +1874,10 @@ def drag_body_2x10_flames():
 @part
 def roll_cage_4x4():
     """A dune buggy's roll cage 4×4, over the seat of a small buggy, with a
-    plate 2×1 across the roof for lights. The front pillars lean back to the
+    plate across the roof for lights. The front pillars lean back to the
     roof and the back ones drop nearly straight, with one bar across the back
-    up high, so an engine fits under it behind the seat."""
+    up high, so an engine fits under it behind the seat. Three studs across
+    the roof take lamps."""
     roof = 1.08
     w, l, h = 4 * STUD, 4 * STUD, roof + PLATE
     zf, za, zb, zr = STUD * 0.5, 0.36, 0.78, l - STUD * 0.5
@@ -1887,11 +1888,14 @@ def roll_cage_4x4():
     bars = [_capsule((x0, roof, za + 0.06), (x1, roof, za + 0.06), TUBE), _capsule((x0, roof, zb - 0.06), (x1, roof, zb - 0.06), TUBE),
             _capsule((x0, 0.62, zb + 0.06), (x1, 0.62, zb + 0.06), TUBE)]
     feet = [box(x, 0, z, x + STUD, PLATE, z + STUD) for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
-    lights = [(1, 2), (2, 2)]
-    plate = union([box(STUD, roof, 2 * STUD, 3 * STUD, roof + PLATE, 3 * STUD), studs(lights, roof + PLATE)])
+    # Three studs for lamps, half a stud off the grid so they sit centred.
+    lights = [((i + 0.5) * STUD, roof + PLATE, 2.5 * STUD) for i in (0.5, 1.5, 2.5)]
+    plate = union([box(0.5 * STUD, roof, 2 * STUD, 3.5 * STUD, roof + PLATE, 3 * STUD)]
+                  + [cylinder(STUD_RADIUS, STUD_HEIGHT, "y", (x, y - 0.001, z), 12) for x, y, z in lights])
     cells = [(i, k) for i in (0, 3) for k in (0, 3)]
     tube = [[0, PLATE, 0, STUD, roof + TUBE, l], [w - STUD, PLATE, 0, w, roof + TUBE, l]]
-    return Part("d_roll_cage_4x4", "Small roll cage 4×4", "body", "details", (w, h, l), union(sides + bars + feet + [plate]), sockets(cells) + top_studs(lights, roof + PLATE), BLACK,
+    return Part("d_roll_cage_4x4", "Small roll cage 4×4", "body", "details", (w, h, l), union(sides + bars + feet + [plate]),
+                sockets(cells) + [c("stud", at, (0, 1, 0)) for at in lights], BLACK,
                 aero={"front": 0.5, "back": 0.8}, mass=3.0, strength=1500.0,
                 solids=[[x, 0, z, x + STUD, PLATE, z + STUD] for x in (0.0, w - STUD) for z in (0.0, l - STUD)]
                 + tube + [[STUD, roof - TUBE, za, w - STUD, h, zb]])
@@ -1900,3 +1904,34 @@ def roll_cage_4x4():
 TEAL = "#36aebf"
 part(lambda: _bonnet("p_bonnet_4x4", "Smooth bonnet 4×4", 4, 3, across=4, top=False))
 part(lambda: _big_arch("p_arch_2x6_teal_stripe", "Smooth wheel arch 2×6 with a teal stripe", 2, smooth=True, stripe=TEAL))
+
+
+@part
+def hot_rod_grille():
+    """A hot rod's radiator grille 2 wide standing up at the front, a chrome
+    surround round dark bars, on a foot that reaches back a stud and clips
+    onto the studs behind it a plate up."""
+    w, l, h = 2 * STUD, 2 * STUD, 0.5
+    shell = push_z(rounded(front([(0.02, 0.0), (w - 0.02, 0.0), (w - 0.02, h), (0.02, h)]), 0.06), 0.02, 0.17)
+    opening = box(0.08, 0.06, -0.1, w - 0.08, h - 0.06, 0.09, edge=0)
+    cap = cylinder(0.035, 0.05, "y", (w * 0.5, h - 0.01, 0.1), 16)
+    foot = box(0, PLATE, STUD, w, 2 * PLATE, l)
+    brace = box(0.12, PLATE, 0.15, w - 0.12, 2 * PLATE, STUD + 0.01, edge=0.005)
+    bars = union([box(0.08, 0.06, 0.07, w - 0.08, h - 0.06, 0.1, edge=0)]
+                  + [box(x - 0.012, 0.06, 0.04, x + 0.012, h - 0.06, 0.08, edge=0.004) for x in [0.11 + k * 0.035 for k in range(9)]])
+    cells = [(0, 1), (1, 1)]
+    return Part("d_hot_rod_grille", "Hot rod grille", "body", "details", (w, h + 0.04, l), union([shell - opening, cap, foot, brace]),
+                sockets(cells, PLATE), METAL, finish="metal", trim=(bars, BLACK, "plastic"), aero={"front": 0.9, "back": 0.8}, mass=1.0, strength=600.0,
+                solids=[[0, 0, 0, w, h, 0.17], [0, PLATE, 0.17, w, 2 * PLATE, l]])
+
+
+@part
+def tub_side_flames():
+    """A smooth side for a hot rod's tub, 1×6 and a brick high, rounded along
+    the top, with orange flames licking forward down both faces."""
+    w, l, h = STUD, 6 * STUD, 3 * PLATE
+    body = push_x(rounded(side([(0.0, 0.0), (0.0, h), (l, h), (l, 0.0)]), 0.02), 0.0, w) ^ push_z(rounded(front([(0.0, -0.1), (w, -0.1), (w, h), (0.0, h)]), 0.04), 0.0, l)
+    flame = side([(l - 0.03, 0.07), (0.2, 0.12), (0.7, 0.15), (0.45, 0.2), (1.0, 0.22), (l - 0.03, 0.24)])
+    trim = union([push_x(flame, -0.004, 0.003), push_x(flame, w - 0.003, w + 0.004)])
+    return Part("p_tub_side_1x6_flames", "Tub side 1×6 with flames", "body", "curves", (w, h, l), body, sockets(grid_cells(1, 6)), RED,
+                trim=(trim, ORANGE, "plastic"), aero={"front": 0.8, "back": 0.9, "side": 0.9})
