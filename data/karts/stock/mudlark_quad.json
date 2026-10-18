@@ -1,5 +1,5 @@
 {
-	"name": "Mudlark Quad",
+	"name": "Mudlark",
 	"about": "A mud quad up on big knobbly wheels, with racks front and back. Slow on tarmac but happy anywhere off it.",
 	"parts": [
 		{"id": "b_frame_quad_mudlark", "pos": [126.0, 27.6, 26], "turn": 0, "color": "#1b1b1b"},
