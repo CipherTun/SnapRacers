@@ -1627,7 +1627,9 @@ static func default_driver() -> CharacterDesign:
 func _pose_driver() -> void:
 	if _rig == null:
 		return
-	var amount := clampf(steer_angle / full_lock, -1.0, 1.0)
+	# With every wheel knocked off there's no lock at all, and 0/0 would send
+	# the driver's arms, head and wheel off to nowhere.
+	var amount := clampf(steer_angle / maxf(full_lock, 0.001), -1.0, 1.0)
 	_rig.look(amount)
 	# A motorbike's bars turn as far as the front wheel looks turned, along
 	# with the fork.
