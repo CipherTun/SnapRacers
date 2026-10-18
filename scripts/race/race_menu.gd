@@ -3,8 +3,9 @@ extends Control
 
 ## The menu you open in a race, from the button at the top, Start on a
 ## controller, Esc or Back. It covers that player's view, so in split screen
-## each player has their own. In a single player race it pauses everything
-## until you go back to it. In split screen and online the race carries on.
+## each player has their own. Off the network it pauses everything until
+## you go back to it, and in split screen both players get one. Online the
+## race carries on. Start and B close it (see Race._menu_keys).
 ##
 ## It has the settings that make sense halfway round: the sound, your
 ## touch steering, your camera and map, and the frame rate.
@@ -19,6 +20,8 @@ var racer: Race.Racer
 var person := 0
 ## Whether the race is paused while this is open.
 var pauses := true
+## Whether this player opened it, and so has the controller's pick.
+var focus_on_open := true
 ## Whether there's a Restart, which there isn't in a Grand Prix or online.
 var can_restart := true
 
@@ -109,7 +112,7 @@ func _ready() -> void:
 	scroll.custom_minimum_size = Vector2(440.0, minf(column.get_combined_minimum_size().y, room))
 	panel.reset_size()
 	panel.position = (get_viewport_rect().size - panel.size) * 0.5
-	if PadFocus.using_pad:
+	if PadFocus.using_pad and focus_on_open:
 		_resume.grab_focus.call_deferred()
 
 
@@ -135,12 +138,3 @@ func _next_map() -> void:
 	# The map two players share is kept as player 1's.
 	Game.set_map_view(0 if map.shared() else person, mode)
 	_map_button.text = CourseMap.NAMES[mode]
-
-
-## Start or B on the controller closes it again, and so does Esc (through
-## Race.go_back).
-func _input(event: InputEvent) -> void:
-	if event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_START, JOY_BUTTON_B]:
-		if racer.input == null or racer.input.owns_joypad(event.device):
-			get_viewport().set_input_as_handled()
-			resume_pressed.emit()

@@ -6,7 +6,7 @@ extends RefCounted
 ## Time trials keep the best race time and the best single lap on each course,
 ## in clear daytime outdoors or any conditions indoors. Existing records stay.
 ## Grand Prix cups keep the best place you've finished them in, at each
-## difficulty.
+## difficulty, with cups for two kept apart.
 
 const FILE := "user://records.cfg"
 
@@ -50,18 +50,23 @@ static func add_time(track_id: String, time: float, lap: float, conditions: Cond
 
 
 ## The best place you've finished this cup in (1 is a win) at this
-## difficulty, or 0 if you haven't finished it yet.
-static func best_cup_place(cup_id: String, level := Difficulty.DEFAULT) -> int:
-	return _load().get_value("cup", _cup_key(cup_id, level), 0)
+## difficulty, or 0 if you haven't finished it yet. Cups for two on one phone
+## keep their own places, the better of the two players.
+static func best_cup_place(cup_id: String, level := Difficulty.DEFAULT, two := false) -> int:
+	return _load().get_value(_cup_section(two), _cup_key(cup_id, level), 0)
 
 
-static func add_cup_place(cup_id: String, place: int, level := Difficulty.DEFAULT) -> bool:
-	var best := best_cup_place(cup_id, level)
+static func add_cup_place(cup_id: String, place: int, level := Difficulty.DEFAULT, two := false) -> bool:
+	var best := best_cup_place(cup_id, level, two)
 	if best == 0 or place < best:
-		_load().set_value("cup", _cup_key(cup_id, level), place)
+		_load().set_value(_cup_section(two), _cup_key(cup_id, level), place)
 		_save()
 		return true
 	return false
+
+
+static func _cup_section(two: bool) -> String:
+	return "cup_two" if two else "cup"
 
 
 ## Normal keeps using the plain cup id, which is where cups finished before

@@ -159,6 +159,17 @@ func _grand_prix_for_two() -> void:
 	await frames(2)
 	check(screen() is CupGrid and Game.cups_for_two, "back from the picker goes to the cups for two")
 
+	# The two people never share a name, or their points would be kept as one.
+	var names_were := [Game.settings.get_value("player", "name", ""), Game.settings.get_value("player", "name_two", "")]
+	for pair in [["", ""], ["", "Player 1"], ["Player 2", ""], ["Sam", "Sam"], ["Player 2", "Player 2"], ["Sam", "Gina"]]:
+		Game.settings.set_value("player", "name", pair[0])
+		Game.settings.set_value("player", "name_two", pair[1])
+		check(Game.player_one_name() != Game.player_two_name(), "names %s give %s and %s" % [pair, Game.player_one_name(), Game.player_two_name()])
+	check(Game.player_two_name() == "Gina", "and player 2's own name is kept when it's different")
+	Game.settings.set_value("player", "name", names_were[0])
+	Game.settings.set_value("player", "name_two", names_were[1])
+
+	var single_gearbox := Records.best_cup_place("gearbox")
 	Game.start_grand_prix("gearbox", true)
 	var one := Game.player_one_name()
 	var two := Game.player_two_name()
@@ -176,6 +187,20 @@ func _grand_prix_for_two() -> void:
 			# Player 2 won the first race, so starts last; player 1 came third.
 			check(race.racers.find(race.humans[1]) == Race.KARTS - 1, "the grid goes by points for player 2")
 			check(race.racers.find(race.humans[0]) == Race.KARTS - 3, "and for player 1")
+		if round == 0:
+			# Player 1 home first can't move on while player 2's still racing.
+			race.humans[0].progress.finished = true
+			race._player_finished(race.humans[0])
+			await frames(2)
+			var hud: RaceHud = race.humans[0].hud
+			check(hud._next.disabled and hud._waiting.visible and hud._waiting.text.begins_with(two), "Standings waits for player 2 (%s)" % hud._waiting.text)
+			hud.next_pressed.emit()
+			await frames(2)
+			check(screen() == race, "and the race doesn't end before player 2 is home")
+			race.humans[1].progress.finished = true
+			race._player_finished(race.humans[1])
+			await frames(2)
+			check(not hud._next.disabled and not hud._waiting.visible, "once they are, Standings can be pressed")
 		# Player 2 wins every race and player 1 comes third.
 		var others: Array = race.racers.map(func(r): return r.name).filter(func(n): return n != one and n != two)
 		var order: Array = [two, others[0], one] + others.slice(1)
@@ -189,7 +214,9 @@ func _grand_prix_for_two() -> void:
 			standings.find_children("*", "Button", true, false).filter(func(b): return b.text.begins_with("Next race"))[0].pressed.emit()
 	check(Game.grand_prix.finished(), "the cup's over")
 	check(Game.grand_prix.points[two] == 15 * rounds and Game.grand_prix.points[one] == 10 * rounds, "both people scored (%s)" % [Game.grand_prix.points])
-	check(Records.best_cup_place("gearbox") == 1, "the trophy goes by the better place (%d)" % Records.best_cup_place("gearbox"))
+	check(Records.best_cup_place("gearbox", Difficulty.DEFAULT, true) == 1, "the trophy for two goes by the better place (%d)" % Records.best_cup_place("gearbox", Difficulty.DEFAULT, true))
+	check(Records.best_cup_place("gearbox") == single_gearbox, "and single player's trophy isn't touched")
+	check(CupGrid.best_place("gearbox", true) == 1 and CupGrid.best_place("gearbox") == single_gearbox, "the cups for two show their own trophy")
 	Game._go_back()
 	await frames(2)
 	check(screen() is CupGrid and Game.cups_for_two, "leaving goes back to the cups for two")

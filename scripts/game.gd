@@ -461,10 +461,16 @@ func player_two_design() -> KartDesign:
 
 
 ## Player 2's name, for two on one phone. It's "Player 2" until they give
-## one, or if it's the same as player 1's.
+## one, or if it's the same as player 1's, and never the same as player 1's,
+## since a Grand Prix keeps the points by name.
 func player_two_name() -> String:
+	var one := player_one_name()
 	var name := str(settings.get_value("player", "name_two", "")).strip_edges()
-	return name if name != "" and name != player_name() else "Player 2"
+	if name == "" or name == one:
+		name = "Player 2"
+	if name == one:
+		name = "Player Two"
+	return name
 
 
 ## A stock kart id, with an old one swapped for its new id.

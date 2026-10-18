@@ -40,7 +40,7 @@ func _ready() -> void:
 		banner.add_theme_color_override("font_color", MenuStyle.ACCENT)
 		column.add_child(banner)
 		if not Game.net.is_online():
-			Records.add_cup_place(grand_prix.cup.id, place, grand_prix.difficulty)
+			Records.add_cup_place(grand_prix.cup.id, place, grand_prix.difficulty, grand_prix.two)
 	var table := GridContainer.new()
 	table.columns = 3
 	table.add_theme_constant_override("h_separation", 40)

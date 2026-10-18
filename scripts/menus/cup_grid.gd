@@ -98,14 +98,20 @@ func _fit() -> void:
 		card.custom_minimum_size.x = width
 
 
-## Your best place in a cup at any level, for its trophy, or 0.
-static func best_place(id: String) -> int:
+## Your best place in a cup at any level, for its trophy, or 0. With `two`
+## it's the cup for two on one phone.
+static func best_place(id: String, two := false) -> int:
 	var best := 0
 	for level in Difficulty.LEVELS:
-		var place := Records.best_cup_place(id, level)
+		var place := Records.best_cup_place(id, level, two)
 		if place > 0 and (best == 0 or place < best):
 			best = place
 	return best
+
+
+## Whether these are the Grand Prix cups for two, with their own trophies.
+func _for_two() -> bool:
+	return mode == Game.MODE_GRAND_PRIX and Game.cups_for_two
 
 
 func _pick(id: String) -> void:
@@ -122,10 +128,10 @@ func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, pa
 	card.set_meta("cup", id)
 	var won := []
 	for level in Difficulty.LEVELS:
-		var place := Records.best_cup_place(id, level)
+		var place := Records.best_cup_place(id, level, _for_two())
 		if place > 0 and place <= 3:
 			won.append([level, place])
-	var finish := TrophyModel.finish_for(best_place(id))
+	var finish := TrophyModel.finish_for(best_place(id, _for_two()))
 	var key := TrophyThumbnails.key_of(spec, colour, finish)
 	var trophy := card.picture(TrophyThumbnails.picture(key), 106.0)
 	_trophies[key] = _trophies.get(key, []) + [trophy]
