@@ -2379,22 +2379,23 @@ def body_scrambler():
 
 def _scooter_frame(id, name, trike, about):
     R, back = 20, 104
-    black = [_vbox(-8, 56, 12, 8, 62, 24, edge=0.015), _tube((0, 58, 22), (0, 22, 36), 3.5), _vbox(-10, 16, 30, 10, 18.5, 70, edge=0.006)]
+    # The floor is thick so the rider's feet rest on the bodywork's floor on top.
+    black = [_vbox(-8, 56, 12, 8, 62, 24, edge=0.015), _tube((0, 58, 22), (0, 26, 36), 3.5), _vbox(-10, 16, 30, 10, 26.5, 66, edge=0.012)]
     metal = []
     con = [("socket", (x, 56, 18), (0, -1, 0)) for x in (-10, 10)]
-    con += [("stud", (x, 18.5, z), (0, 1, 0)) for x in (-6, 6) for z in (40, 60)]
-    solids = [[-8, 56, 12, 8, 62, 24], [-10, 16, 30, 10, 18.5, 70]]
+    con += [("stud", (x, 26.5, z), (0, 1, 0)) for x in (-6, 6) for z in (40, 60)]
+    solids = [[-8, 56, 12, 8, 62, 24], [-10, 16, 30, 10, 26.5, 66]]
     if trike:
         # An axle across the back for a little wheel each end, a deck over
         # it for a box, and the saddle up on a post.
-        black += [_vbox(-6, 18, 66, 6, 24, 96, edge=0.01), _tube((0, 22, 70), (0, 44, 74), 3.5)]
-        black.append(_lofted([(60, 11, 44, 50, 4, 2), (66, 13, 44, 54, 5, 2), (88, 13, 44, 54, 5, 2), (94, 11, 46, 54, 4, 2)]))
+        black += [_vbox(-6, 18, 66, 6, 24, 96, edge=0.01), _tube((0, 22, 70), (0, 38, 74), 3.5)]
+        black.append(_lofted([(67, 11, 36, 45, 4, 2), (72, 13, 37, 48, 5, 2), (78, 13, 38, 48, 5, 2), (88, 13, 38, 48, 5, 2), (94, 11, 40, 48, 4, 2)]))
         black.append(_vbox(-22, 38, 96, 22, 42, 132, edge=0.01))
         black += [_tube((s * 14, 22, 104), (s * 14, 39, 112), 2.6) for s in (-1, 1)]
         metal += [cylinder(4.0 * FINE, 88 * FINE, "x", tuple(_f(-44, R, back)), 14), _vbox(-12, 16.5, 92, 12, 28, 114, edge=0.02)]
         con.append(("axle", (-44, R, back), (1, 0, 0), 88))
         con += [("stud", (x, 42, z), (0, 1, 0)) for x in (-10, 10) for z in (104, 124)]
-        solids += [[-13, 44, 60, 13, 54, 94], [-22, 38, 96, 22, 42, 132], [-12, 16.5, 92, 12, 28, 114]]
+        solids += [[-13, 38, 67, 13, 48, 94], [-22, 38, 96, 22, 42, 132], [-12, 16.5, 92, 12, 28, 114]]
         stats = dict(engine_twin="electric_motor", power=3600.0, max_force=1600.0)
         at = (-45, 16, 11)
     else:
@@ -2405,7 +2406,7 @@ def _scooter_frame(id, name, trike, about):
         solids.append([-14, 18, 82, -6.5, 30, 112])
         stats = dict(engine_twin="electric_motor", power=4500.0, max_force=1600.0)
         at = (-17, 16, 11)
-    return _vpart(id, name, "seat", at, union(black), BLACK, con=con, solids=solids, seat_box=[-12, 46, 52, 12, 54, 96],
+    return _vpart(id, name, "seat", at, union(black), BLACK, con=con, solids=solids, seat_box=[-12, 40, 52, 12, 48, 96],
                   trim=(union(metal), METAL, "metal") if metal else None, about=about, aero={"front": 0.7, "back": 0.7, "side": 0.8},
                   astride=True, feet_forward=True, driver_height=7, control=1.05, recline=0, **stats)
 
@@ -2419,22 +2420,24 @@ part(lambda: _scooter_frame("b_frame_delta_trike", "Little trike frame", True,
 def _apron(hw0, hw1):
     """A scooter's apron, from the floor up to just under the headset, in
     front of the rider's feet, leaning forward at the top."""
-    return _lofted([(23, hw1, 40, 62, 6, 3), (28, hw0 * 0.5 + hw1 * 0.5, 22, 62, 8, 3), (34, hw0, 18.5, 60, 8, 3), (42, hw0, 18.5, 30, 6, 3)])
+    return _lofted([(23, hw1, 40, 62, 6, 3), (28, hw0 * 0.5 + hw1 * 0.5, 22, 62, 8, 3), (34, hw0, 18.5, 60, 8, 3), (42, hw0, 18.5, 38, 6, 3)])
 
 
 @part
 def body_scooter():
     apron = _apron(17, 13)
-    floor = _vbox(-15, 18.5, 30, 15, 23, 66, edge=0.012)
-    cowl = _lofted([(58, 13, 23, 40, 8, 4), (66, 18, 23, 46, 10, 5), (100, 20, 23, 47, 12, 6), (120, 18, 25, 45, 10, 6), (132, 11, 31, 41, 6, 4)])
+    floor = _vbox(-15, 18.5, 30, 15, 31, 66, edge=0.012)
+    cowl = _lofted([(58, 13, 23, 31, 6, 4), (66, 18, 23, 34, 8, 5), (76, 19, 23, 39, 10, 6), (84, 19, 23, 42, 11, 6), (100, 20, 23, 47, 12, 6), (120, 18, 25, 45, 10, 6),
+                    (132, 11, 31, 41, 6, 4)])
     well = cylinder(26 * FINE, 20 * FINE, "x", tuple(_f(-10, 20, 104)), 32)
     cowl = cowl - union([well, _vbox(-10, 0, 104, 10, 40, 140, edge=0)])
-    seat = _lofted([(56, 12, 46, 52, 4, 2), (62, 14, 46, 54, 5, 2), (96, 14, 46, 54, 5, 2), (104, 12, 46, 52, 4, 2)])
+    # Low where the rider sits, stepping up over the back wheel.
+    seat = _lofted([(67, 12, 36, 45, 4, 2), (72, 14, 37, 48, 5, 2), (78, 14, 38, 48, 5, 2), (86, 14, 39, 48, 5, 2), (96, 14, 44, 54, 5, 2), (104, 12, 46, 52, 4, 2)])
     rack = _vbox(-9, 44, 108, 9, 46.5, 128, edge=0.006)
-    mat = _vbox(-12, 22.5, 34, 12, 23.6, 62, edge=0.004)
+    mat = _vbox(-12, 30.5, 34, 12, 31.6, 62, edge=0.004)
     body = union([apron, floor, cowl])
-    con = [("socket", (x, 18.5, z), (0, -1, 0)) for x in (-6, 6) for z in (40, 60)]
-    solids = [[-15, 18.5, 30, 15, 23, 66], [-16, 23, 27.5, 16, 47.5, 40], [-20, 23.5, 66, 20, 46, 82], [-20, 31, 82, -10.5, 46, 128], [10.5, 31, 82, 20, 46, 128]]
+    con = [("socket", (x, 26.5, z), (0, -1, 0)) for x in (-6, 6) for z in (40, 60)]
+    solids = [[-15, 26.5, 30, 15, 31, 66], [-16, 31, 27.5, 16, 47.5, 40], [-20, 23.5, 66, 20, 41, 82], [-20, 31, 82, -10.5, 46, 128], [10.5, 31, 82, 20, 46, 128]]
     return _vpart("b_body_scooter", "Scooter bodywork", "body", (-21, 18, 23), body, BLUE, con=con, solids=solids,
                   trim=(union([seat, rack, mat]), CREAM, "plastic"), about="A scooter's apron, floor and rounded back with the seat on top, for the little scooter frame.",
                   aero={"front": 0.5, "back": 0.6, "side": 0.8}, mass=2.4, strength=800.0)
@@ -2443,14 +2446,14 @@ def body_scooter():
 @part
 def body_delta_trike():
     apron = _apron(15, 12)
-    floor = _vbox(-14, 18.5, 30, 14, 23, 62, edge=0.012)
-    stand = _lofted([(58, 10, 22, 44, 5, 3), (66, 12, 22, 44, 6, 3), (90, 12, 24, 44, 6, 3), (96, 10, 24, 42, 5, 3)])
+    floor = _vbox(-14, 18.5, 30, 14, 31, 62, edge=0.012)
+    stand = _lofted([(58, 10, 22, 31, 5, 3), (66, 12, 22, 34, 6, 3), (76, 12, 23, 38, 6, 3), (90, 12, 24, 38, 6, 3), (96, 10, 24, 36, 5, 3)])
     guards = [_arc(23, 27, (104, 20), x0, x1, -75, 80) for x0, x1 in ((-46, -30), (30, 46))]
     stays = [_vbox(x0, 36, 100, x1, 39, 110, edge=0.004) for x0, x1 in ((-31, -21), (21, 31))]
-    mat = _vbox(-11, 22.5, 34, 11, 23.6, 58, edge=0.004)
+    mat = _vbox(-11, 30.5, 34, 11, 31.6, 58, edge=0.004)
     body = union([apron, floor, stand] + guards + stays)
-    con = [("socket", (x, 18.5, z), (0, -1, 0)) for x in (-6, 6) for z in (40, 60)]
-    solids = [[-14, 18.5, 30, 14, 23, 62], [-15, 23, 27.5, 15, 47.5, 40], [-12, 24, 66, 12, 43.5, 92], [-46, 40, 94, -30, 47, 120], [30, 40, 94, 46, 47, 120]]
+    con = [("socket", (x, 26.5, z), (0, -1, 0)) for x in (-6, 6) for z in (40, 60)]
+    solids = [[-14, 26.5, 30, 14, 31, 62], [-15, 31, 27.5, 15, 47.5, 40], [-12, 26.5, 66, 12, 37.5, 92], [-46, 40, 94, -30, 47, 120], [30, 40, 94, 46, 47, 120]]
     return _vpart("b_body_delta_trike", "Little trike bodywork", "body", (-47, 18, 23), body, "#e86a9a", con=con, solids=solids,
                   trim=(mat, BLACK, "plastic"), about="A little trike's apron, floor, a stand for its saddle and mudguards over the back wheels.",
                   aero={"front": 0.5, "back": 0.6, "side": 0.8}, mass=2.0, strength=800.0)
