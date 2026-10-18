@@ -584,6 +584,81 @@ for x in (8, 11):
     .add("engine_small", 9, T - 2, 15, colour=DARK)
     .add("d_rear_wing_8", 6, T + 1, 15, colour=DARK))
 
+# 23. A dragster: a long thin flamed body, slicks at the back with a blower
+# V8 in front of them, a wing up high and a wheelie bar. It's built by hand,
+# low at the nose and a step up at the back for the big wheels.
+k = kart("quarter_mile", "Quarter Mile", "A dragster with a blower V8, huge slicks and a wheelie bar. Unbeatable in a straight line, and it hates corners.")
+(k.add("p_kart_axle_plate_4", 7, 2.5, 0, colour=DARK)
+    .pair_fine("w_drag_front", 8 * STUD - fine_size("w_drag_front")[0], 24 - radius("w_drag_front"), STUD - fine_size("w_drag_front")[2] / 2)
+    .add("p_plate_2x10", 9, 2.5, 2, colour=DARK)
+    .add("p_plate_2x6", 9, 2.5, 12, colour=DARK)
+    .pair("p_tile_1x2", 8, 3.5, 0, colour=DARK)
+    .add("p_drag_body_2x10_flames", 9, 3.5, 0, colour=PURPLE)
+    .add("racing_wheel", 9, 3.5, 10)
+    .add("s_racing_seat", 9, 3.5, 11)
+    .add("p_plate_2x4", 9, 3.5, 14, colour=DARK)
+    .add("p_kart_axle_plate_4", 7, 4.5, 16, colour=DARK)
+    .pair_fine("w_drag_slick", 8 * STUD - fine_size("w_drag_slick")[0], 0, 16 * STUD + STUD - fine_size("w_drag_slick")[2] / 2)
+    .add("p_jumper_1x2", 9, 5.5, 16, colour=DARK)
+    .add("e_blower_v8", 8.5, 6.5, 13, colour=RED)
+    .add("d_wheelie_bar", 9, 3.5, 17)
+    .pair("p_brick_1x1", 8, 5.5, 17, colour=DARK)
+    .add("p_plate_2x4", 8, 8.5, 17, rot=1, colour=DARK)
+    .pair("p_tile_1x2", 8, 9.5, 17, colour=DARK)
+    .add("d_rear_wing_8", 6, 9.5, 17, colour=PURPLE))
+
+# 24. A hot rod: a blower V8 out front over little wheels, a tub for the
+# driver and big slicks at the back, with open pipes down both sides.
+k = kart("flathead", "Flathead", "A hot rod with a blower V8 out in the open and fat tires at the back. Loads of pull, and a bit of a handful.")
+T = racer(k, "w_kart", "w_slick", 1, 10, arches=0, width=4)
+(k.add("p_brick_1x2", 9, T, 1, rot=1, colour=SILVER)
+    .add("p_grille_1x2", 9, T + 3, 1, rot=1, colour=SILVER)
+    .add("p_jumper_1x2", 9, T, 3, colour=DARK).add("p_jumper_1x2", 9, T, 4, colour=DARK)
+    .add("e_blower_v8", 8.5, T + 1, 2, colour=RED)
+    .pair("p_tile_1x4", 8, T, 2, colour=DARK)
+    .add("p_plate_2x6", 7, T - 2, 6, rot=1, colour=DARK)
+    .pair("d_open_exhausts", 7, T - 1, 4)
+    .add("windscreen_4", 8, T, 6)
+    .add("steering_wheel", 9, T, 7)
+    .add("s_racing_seat", 9, T, 8)
+    .pair("p_brick_1x4", 8, T, 7, colour=TEAL)
+    .pair("p_tile_1x4", 8, T + 3, 7, colour=TEAL)
+    .add("p_brick_1x2", 9, T, 10, rot=1, colour=TEAL)
+    .add("p_tile_1x2", 9, T + 3, 10, rot=1, colour=TEAL))
+
+# 25. A dune buggy: knobbly tires, a short yellow nose, a roll cage with
+# lamps on top and the engine out the back.
+k = kart("sandhopper", "Sandhopper", "A dune buggy on big knobbly tires with a roll cage and lamps on top. Happiest off the road, in sand and on grass.")
+T = racer(k, "w_offroad", "w_offroad", 1, 8, arches=0, width=4)
+(k.add("p_bonnet_4x4", 8, T, 0, colour=YELLOW)
+    .pair("p_tile_1x2", 8, T, 5, colour=YELLOW)
+    .add("d_roll_cage_4x4", 8, T, 4, colour=DARK)
+    .add("d_light_1x1", 9, T + 11.8, 6, colour=YELLOW).add("d_light_1x1", 10, T + 11.8, 6, colour=YELLOW)
+    .add("steering_wheel", 9, T, 4)
+    .add("s_racing_seat", 9, T, 5)
+    .add("engine_small", 9, T, 8, colour=SILVER)
+    .add("p_tile_2x2", 9, T + 3, 8, colour=SILVER))
+
+# 26. An electric racer in white with teal stripes, smooth over the wheels,
+# with an open cockpit and a wing at each end.
+k = kart("volt", "Volt", "An electric racer, smooth and light, with wings at both ends. Quick away and easy to drive.")
+T = racer(k, "w_racing", "w_racing", 4, 10, width=4)
+arches(k, T, (4, 12), WHITE, sides=WHITE, part="p_arch_2x6_teal_stripe")
+(k.add("d_front_wing_8x2", 6, T - 1, 0, colour=BLUE)
+    .add("p_plate_4x4", 8, T, 0, colour=WHITE)
+    .add("p_bonnet_4x4", 8, T + 1, 0, colour=WHITE)
+    .add("windscreen_2", 9, T, 4)
+    .add("racing_wheel", 9, T, 5)
+    .add("s_lay_down_seat", 9, T, 6)
+    .pair("p_brick_1x6", 8, T, 4, colour=WHITE)
+    .pair("p_tile_1x2", 8, T + 3, 4, colour=WHITE)
+    .pair("p_tile_1x4", 8, T + 3, 6, colour=BLUE)
+    .add("p_plate_4x4", 8, T, 10, colour=WHITE)
+    .add("p_bonnet_4x4", 8, T + 1, 10, rot=2, colour=WHITE)
+    .add("electric_motor", 9, T, 14, colour=DARK)
+    .pair("p_tile_1x2", 8, T, 14, colour=WHITE)
+    .add("d_rear_wing_8", 6, T + 2, 14, colour=BLUE))
+
 
 # Bikes and trikes, built the way toy motorbikes are: a frame in one piece
 # with the engine, tank, seat and swingarm in it, a fork with the bars on

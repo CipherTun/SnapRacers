@@ -1,6 +1,6 @@
 extends Node
 
-## Checks the stock karts, bikes and trikes. There are twenty-one karts, four
+## Checks the stock karts, bikes and trikes. There are twenty-five karts, four
 ## bikes and three trikes, every one can be driven and says what it's like, no
 ## two drive the same, and each one gets around a lap of Peach Pit with the AI
 ## driving it. tools/stock-karts/balance.tscn goes
@@ -32,7 +32,7 @@ func _ready() -> void:
 		var wheels := stats.wheels.size()
 		var kind := "bike" if wheels == 2 else "trike" if wheels == 3 else "quad" if stats.is_quad() else "kart"
 		by_wheels[kind] = by_wheels.get(kind, 0) + 1
-	check(by_wheels.get("kart", 0) == 21 and by_wheels.get("bike", 0) == 4 and by_wheels.get("trike", 0) == 3, "there are twenty-one karts, four bikes and three trikes %s" % by_wheels)
+	check(by_wheels.get("kart", 0) == 25 and by_wheels.get("bike", 0) == 4 and by_wheels.get("trike", 0) == 3, "there are twenty-five karts, four bikes and three trikes %s" % by_wheels)
 	var looks := []
 	var names := {}
 	for key in keys:
