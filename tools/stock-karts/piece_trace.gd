@@ -23,7 +23,7 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	var course: String = args[0] if args.size() > 0 else "windmill_ridge"
 	var piece := int(args[1]) if args.size() > 1 else 0
-	Game.settings.set_value("race", "kart", args[2] if args.size() > 2 else "starter")
+	Game.settings.set_value("race", "kart", args[2] if args.size() > 2 else "kart_kid")
 	Game.mode = Game.MODE_TIME_TRIAL
 	Game.show_race(Game.TRACKS + "/" + course + ".json")
 	var race: Race = null

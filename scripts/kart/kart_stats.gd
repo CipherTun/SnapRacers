@@ -83,9 +83,15 @@ var seat_top := Vector3.ZERO
 var recline := 0.0
 ## Whether the driver sits astride a saddle, like on a motorbike.
 var astride := false
+## Whether the rider's feet go forward on pegs, like on a chopper.
+var feet_forward := false
 ## What the drag comes from, in m² of drag area: "driver", "wheels", "flat"
 ## (flat fronts and backs) and "smooth" (everything else).
 var drag_parts := {}
+## Each square's share of the drag, for the garage's air view: [square (x, y)
+## on the grid, front z, back z, m² of drag, what's at the front]. A wheel's
+## squares carry their share of its churn too.
+var drag_squares: Array = []
 ## What the driver steers with, if it's still on.
 var steering: PartInfo
 ## Where the kart's origin sits on the design grid. It's under the middle of
@@ -178,6 +184,7 @@ static func compute(design: KartDesign, skip := {}, fixed_origin: Variant = null
 					stats.seat_cells = design.seat_box_of(info.index)
 					stats.recline = deg_to_rad(info.def.get("recline", 0.0))
 					stats.astride = info.def.get("astride", false)
+					stats.feet_forward = info.def.get("feet_forward", false)
 					seat_control = info.def.get("control", 1.0)
 					# The driver sits in the middle of the seat with their legs
 					# out in front. Any further back on a long seat and their
@@ -268,6 +275,7 @@ func _work_out_drag() -> void:
 		var square: Array = squares[key]
 		var what: String = square[2]
 		var amount: float = cell * BODY_DRAG * (FRONT_SHARE * square[1] + (1.0 - FRONT_SHARE) * square[4])
+		drag_squares.append([key, square[0], square[3], amount, what])
 		if what.begins_with("wheel"):
 			open_squares[what] = open_squares.get(what, 0) + 1
 			what = "wheels"
@@ -279,6 +287,11 @@ func _work_out_drag() -> void:
 		var width: float = info.def.get("width", 0.25)
 		var open := float(open_squares.get("wheel %d" % info.index, 0)) / maxf(info.size.x * info.size.y, 1.0)
 		drag_parts["wheels"] += width * radius * 2.0 * TIRE_DRAG * open
+		var churn := width * radius * 2.0 * TIRE_DRAG / maxf(info.size.x * info.size.y, 1.0)
+		var wheel_name := "wheel %d" % info.index
+		for entry in drag_squares:
+			if entry[4] == wheel_name:
+				entry[3] += churn
 	drag_area = 0.0
 	for what in drag_parts:
 		drag_area += drag_parts[what]
@@ -301,6 +314,12 @@ func _axle_grip() -> float:
 	if front.is_empty() or back.is_empty():
 		return mean.call(front + back)
 	return minf(mean.call(front), mean.call(back))
+
+
+## Whether it's a quad: four wheels or more and a saddle you sit astride.
+## It drives like a kart, flat, and only the rider leans.
+func is_quad() -> bool:
+	return astride and wheels.size() >= 4
 
 
 ## What most of the drag comes from ("driver", "wheels", "flat" or "smooth").

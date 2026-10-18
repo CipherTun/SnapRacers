@@ -36,7 +36,7 @@ func _ready() -> void:
 		Kart.slide_boost_most = float(OS.get_environment("SLIDE_BOOST_MOST"))
 	if OS.has_environment("SLIDE_PLAN"):
 		AIDriver.slide_plan = float(OS.get_environment("SLIDE_PLAN"))
-	var kart: String = args[2] if args.size() > 2 else "starter"
+	var kart: String = args[2] if args.size() > 2 else "kart_kid"
 	var courses: Array = args.slice(3) if args.size() > 3 else COURSES
 	AIDriver.slide_bend = bend if bend > 0.0 else 99.0
 	AIDriver.slide_time = time

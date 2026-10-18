@@ -53,6 +53,9 @@ const ORBIT_RADIUS := 6.0
 ## so their own first person camera can leave it out (see Kart.head_layer).
 ## The next person's is the one after.
 const FIRST_HEAD_LAYER := 13
+## Layers 15 and 16 have see-through copies of the parts in each person's
+## first person view, and 17 and 18 the solid ones (see ViewBlockers).
+const PEOPLE := 2
 
 var target: Kart
 ## The track, for the TV cameras. A test drive has none, so no TV cameras.
@@ -80,10 +83,13 @@ static func head_layer_of(person: int) -> int:
 	return FIRST_HEAD_LAYER + person
 
 
+
 func _ready() -> void:
 	top_level = true
 	fov = 70.0
 	near = 0.05
+	for person in PEOPLE:
+		set_cull_mask_value(ViewBlockers.see_through_layer(head_layer_of(person)), false)
 	if track != null:
 		_place_tv_cameras()
 	_show_view()
@@ -109,6 +115,7 @@ func finish() -> void:
 	_orbit_left = ORBIT_TIME
 	_orbit_angle = 0.0
 	_after_orbit = "tv" if track != null else view
+	_show_view()
 
 
 func _views() -> Array:
@@ -116,9 +123,13 @@ func _views() -> Array:
 
 
 func _show_view() -> void:
-	# Leave out your own head in first person, and nowhere else.
+	# Leave out your own head in first person, and nowhere else, and draw the
+	# parts in your way see-through there.
 	if head_layer > 0:
-		set_cull_mask_value(head_layer, view != "driver" or _orbit_left > 0.0)
+		var inside := view == "driver" and _orbit_left <= 0.0
+		set_cull_mask_value(head_layer, not inside)
+		set_cull_mask_value(ViewBlockers.see_through_layer(head_layer), inside)
+		set_cull_mask_value(ViewBlockers.blocking_layer(head_layer), not inside)
 	fov = 75.0 if view in ["driver", "bumper"] else 70.0
 
 

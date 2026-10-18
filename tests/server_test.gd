@@ -62,7 +62,7 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("player", "name", "Phone" if how == "enet" else "Browser")
-	Game.settings.set_value("race", "kart", "starter")
+	Game.settings.set_value("race", "kart", "kart_kid")
 	var net := Game.net
 
 	if how == "enet":

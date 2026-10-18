@@ -51,7 +51,7 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("player", "name", "Host" if role == "host" else "Joiner")
-	Game.settings.set_value("race", "kart", "starter")
+	Game.settings.set_value("race", "kart", "kart_kid")
 	var net := Game.net
 	net.race_begun.connect(func() -> void: order.clear())
 

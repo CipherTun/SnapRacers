@@ -165,7 +165,8 @@ func _physics_process(delta: float) -> void:
 	if track.piece_type_at(offset) == "corkscrew":
 		var off_line := (kart.global_position - track.point_at(offset)).dot(track.right_at(offset)) - line
 		angle = atan(off_line / 20.0)
-	controls.steer = clampf(-angle / kart.full_lock * 1.2, -1.0, 1.0)
+	# A kart with no wheels left has no lock (see Kart._pose_driver()).
+	controls.steer = clampf(-angle / maxf(kart.full_lock, 0.001) * 1.2, -1.0, 1.0)
 
 	# For speed, find the slowest it needs to be for anything coming up, with
 	# room to brake. A driver who can't steer quickly (see KartStats.control)

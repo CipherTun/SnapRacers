@@ -1,0 +1,29 @@
+{
+	"name": "Quarter Mile",
+	"about": "A dragster with a blower V8, huge slicks and a wheelie bar. Unbeatable in a straight line, and it hates corners.",
+	"parts": [
+		{"id": "p_kart_axle_plate_4", "pos": [140, 20.0, 0], "turn": 0, "color": "#1b1b1b"},
+		{"id": "w_drag_front", "pos": [150.4, 3.2, -0.8], "turn": 0},
+		{"id": "w_drag_front", "pos": [249.6, 3.2, 40.8], "turn": 2},
+		{"id": "p_plate_2x10", "pos": [180, 20.0, 40], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_plate_2x6", "pos": [180, 20.0, 240], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_tile_1x2", "pos": [160, 28.0, 0], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_tile_1x2", "pos": [220.0, 28.0, 0], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_drag_body_2x10_flames", "pos": [180, 28.0, 0], "turn": 0, "color": "#6b3fa0"},
+		{"id": "racing_wheel", "pos": [180, 28.0, 200], "turn": 0},
+		{"id": "s_racing_seat", "pos": [180, 28.0, 220], "turn": 0},
+		{"id": "p_plate_2x4", "pos": [180, 28.0, 280], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_kart_axle_plate_4", "pos": [140, 36.0, 320], "turn": 0, "color": "#1b1b1b"},
+		{"id": "w_drag_slick", "pos": [112.0, 0, 300.0], "turn": 0},
+		{"id": "w_drag_slick", "pos": [288.0, 0, 380.0], "turn": 2},
+		{"id": "p_jumper_1x2", "pos": [180, 44.0, 320], "turn": 0, "color": "#1b1b1b"},
+		{"id": "e_blower_v8", "pos": [170.0, 52.0, 260], "turn": 0, "color": "#c4281c"},
+		{"id": "d_wheelie_bar", "pos": [180, 28.0, 340], "turn": 0},
+		{"id": "p_brick_1x1", "pos": [160, 44.0, 340], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_brick_1x1", "pos": [220.0, 44.0, 340], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_plate_2x4", "pos": [240.0, 68.0, 340], "turn": 1, "color": "#1b1b1b"},
+		{"id": "p_tile_1x2", "pos": [160, 76.0, 340], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_tile_1x2", "pos": [220.0, 76.0, 340], "turn": 0, "color": "#1b1b1b"},
+		{"id": "d_rear_wing_8", "pos": [120, 76.0, 340], "turn": 0, "color": "#6b3fa0"}
+	]
+}

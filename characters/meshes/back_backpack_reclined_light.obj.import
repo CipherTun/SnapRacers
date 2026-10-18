@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dnyptv1t8qimf"
+path="res://.godot/imported/back_backpack_reclined_light.obj-549ea5b1058d620ddcd8a376f6f5a85e.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_backpack_reclined_light.obj-549ea5b1058d620ddcd8a376f6f5a85e.mesh"]
+
+source_file="res://characters/meshes/back_backpack_reclined_light.obj"
+dest_files=["res://.godot/imported/back_backpack_reclined_light.obj-549ea5b1058d620ddcd8a376f6f5a85e.mesh", "res://.godot/imported/back_backpack_reclined_light.obj-549ea5b1058d620ddcd8a376f6f5a85e.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

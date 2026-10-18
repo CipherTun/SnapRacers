@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://chydweofq8qid"
+path="res://.godot/imported/b_nose_superbike.obj-b9ef6aa9c4b969a4391e186d97f3c2ce.mesh"
+
+[deps]
+
+files=["res://.godot/imported/b_nose_superbike.obj-b9ef6aa9c4b969a4391e186d97f3c2ce.mesh"]
+
+source_file="res://parts/meshes/b_nose_superbike.obj"
+dest_files=["res://.godot/imported/b_nose_superbike.obj-b9ef6aa9c4b969a4391e186d97f3c2ce.mesh", "res://.godot/imported/b_nose_superbike.obj-b9ef6aa9c4b969a4391e186d97f3c2ce.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

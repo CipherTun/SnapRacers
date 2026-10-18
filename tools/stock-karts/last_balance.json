@@ -1,394 +1,156 @@
 {
-	"brick_tank": {
+	"big_block": {
 		"dune_drift": {
 			"laps": [
-				83.4,
-				83.3
+				80.0,
+				79.9
 			],
 			"resets": 0,
-			"time": 166.73333333336
+			"time": 159.866666666687
 		},
 		"foundry_flats": {
+			"laps": [
+				78.9,
+				78.4
+			],
+			"resets": 0,
+			"time": 157.266666666685
+		},
+		"launchpad_loop": {
 			"laps": [
 				81.0,
-				80.3
+				80.7
 			],
 			"resets": 0,
-			"time": 161.316666666688
-		},
-		"launchpad_loop": {
-			"laps": [
-				85.1,
-				85.6
-			],
-			"resets": 0,
-			"time": 170.716666666696
+			"time": 161.700000000022
 		},
 		"peach_pit": {
 			"laps": [
-				79.4,
-				78.6
+				79.9,
+				79.2
 			],
 			"resets": 0,
-			"time": 158.050000000019
+			"time": 159.033333333353
 		}
 	},
-	"bruiser": {
+	"crusher": {
 		"dune_drift": {
-			"laps": [
-				83.7,
-				83.5
-			],
-			"resets": 0,
-			"time": 167.23333333336
-		},
-		"foundry_flats": {
-			"laps": [
-				82.6,
-				81.9
-			],
-			"resets": 0,
-			"time": 164.450000000024
-		},
-		"launchpad_loop": {
-			"laps": [
-				86.1,
-				85.7
-			],
-			"resets": 0,
-			"time": 171.783333333364
-		},
-		"peach_pit": {
-			"laps": [
-				83.3,
-				82.6
-			],
-			"resets": 0,
-			"time": 165.916666666692
-		}
-	},
-	"chopper": {
-		"dune_drift": {
-			"laps": [
-				91.4,
-				91.2
-			],
-			"resets": 0,
-			"time": 182.550000000039
-		},
-		"foundry_flats": {
-			"laps": [
-				89.3,
-				88.1
-			],
-			"resets": 0,
-			"time": 177.416666666702
-		},
-		"launchpad_loop": {
-			"laps": [
-				90.4,
-				89.5
-			],
-			"resets": 0,
-			"time": 179.93333333337
-		},
-		"peach_pit": {
-			"laps": [
-				83.9,
-				82.0
-			],
-			"resets": 0,
-			"time": 165.916666666692
-		}
-	},
-	"classic": {
-		"dune_drift": {
-			"laps": [
-				90.0,
-				89.9
-			],
-			"resets": 0,
-			"time": 179.916666666704
-		},
-		"foundry_flats": {
-			"laps": [
-				86.0,
-				85.0
-			],
-			"resets": 0,
-			"time": 171.066666666696
-		},
-		"launchpad_loop": {
-			"laps": [
-				92.0,
-				91.2
-			],
-			"resets": 0,
-			"time": 183.116666666706
-		},
-		"peach_pit": {
-			"laps": [
-				84.8,
-				83.5
-			],
-			"resets": 0,
-			"time": 168.300000000027
-		}
-	},
-	"dirt_bike": {
-		"dune_drift": {
-			"laps": [
-				95.1,
-				95.0
-			],
-			"resets": 0,
-			"time": 190.066666666712
-		},
-		"foundry_flats": {
-			"laps": [
-				93.8,
-				92.6
-			],
-			"resets": 0,
-			"time": 186.416666666709
-		},
-		"launchpad_loop": {
-			"laps": [
-				94.7,
-				93.9
-			],
-			"resets": 0,
-			"time": 188.633333333377
-		},
-		"peach_pit": {
-			"laps": [
-				89.6,
-				87.8
-			],
-			"resets": 0,
-			"time": 177.433333333368
-		}
-	},
-	"downforce": {
-		"dune_drift": {
-			"laps": [
-				84.5,
-				84.5
-			],
-			"resets": 0,
-			"time": 169.050000000028
-		},
-		"foundry_flats": {
-			"laps": [
-				80.7,
-				80.2
-			],
-			"resets": 0,
-			"time": 160.900000000021
-		},
-		"launchpad_loop": {
-			"laps": [
-				85.9,
-				84.9
-			],
-			"resets": 0,
-			"time": 170.783333333363
-		},
-		"peach_pit": {
-			"laps": [
-				81.5,
-				80.9
-			],
-			"resets": 0,
-			"time": 162.316666666689
-		}
-	},
-	"featherlight": {
-		"dune_drift": {
-			"laps": [
-				93.7,
-				93.6
-			],
-			"resets": 0,
-			"time": 187.300000000043
-		},
-		"foundry_flats": {
-			"laps": [
-				90.9,
-				89.6
-			],
-			"resets": 0,
-			"time": 180.450000000037
-		},
-		"launchpad_loop": {
 			"laps": [
 				94.5,
 				94.3
 			],
 			"resets": 0,
-			"time": 188.783333333377
-		},
-		"peach_pit": {
-			"laps": [
-				86.5,
-				84.7
-			],
-			"resets": 0,
-			"time": 171.216666666697
-		}
-	},
-	"hot_rod": {
-		"dune_drift": {
-			"laps": [
-				90.0,
-				90.0
-			],
-			"resets": 0,
-			"time": 180.000000000037
+			"time": 188.750000000044
 		},
 		"foundry_flats": {
 			"laps": [
-				87.0,
-				85.9
+				92.9,
+				92.0
 			],
 			"resets": 0,
-			"time": 172.850000000031
+			"time": 184.866666666707
 		},
 		"launchpad_loop": {
 			"laps": [
-				90.7,
-				89.8
+				95.4,
+				94.7
 			],
 			"resets": 0,
-			"time": 180.416666666704
+			"time": 190.116666666712
 		},
 		"peach_pit": {
-			"laps": [
-				85.6,
-				84.2
-			],
-			"resets": 0,
-			"time": 169.833333333362
-		}
-	},
-	"monster": {
-		"dune_drift": {
-			"laps": [
-				89.6,
-				89.5
-			],
-			"resets": 0,
-			"time": 179.050000000036
-		},
-		"foundry_flats": {
-			"laps": [
-				88.1,
-				87.2
-			],
-			"resets": 0,
-			"time": 175.2166666667
-		},
-		"launchpad_loop": {
 			"laps": [
 				92.5,
-				91.5
-			],
-			"resets": 0,
-			"time": 183.933333333373
-		},
-		"peach_pit": {
-			"laps": [
-				88.2,
-				87.1
-			],
-			"resets": 0,
-			"time": 175.233333333366
-		}
-	},
-	"mudlark": {
-		"dune_drift": {
-			"laps": [
-				89.1,
-				89.0
-			],
-			"resets": 0,
-			"time": 178.116666666702
-		},
-		"foundry_flats": {
-			"laps": [
-				87.6,
-				86.7
-			],
-			"resets": 0,
-			"time": 174.366666666699
-		},
-		"launchpad_loop": {
-			"laps": [
-				92.0,
 				91.3
 			],
 			"resets": 0,
-			"time": 183.316666666706
-		},
-		"peach_pit": {
-			"laps": [
-				84.2,
-				82.9
-			],
-			"resets": 0,
-			"time": 167.066666666693
+			"time": 183.80000000004
 		}
 	},
-	"rocket": {
+	"desert_pro": {
 		"dune_drift": {
 			"laps": [
-				79.4,
-				79.1
+				88.2,
+				88.2
 			],
 			"resets": 0,
-			"time": 158.50000000002
+			"time": 176.383333333367
 		},
 		"foundry_flats": {
 			"laps": [
-				81.8,
-				80.6
+				85.9,
+				84.9
 			],
 			"resets": 0,
-			"time": 162.41666666669
+			"time": 170.833333333363
 		},
 		"launchpad_loop": {
 			"laps": [
-				82.1,
-				81.2
+				89.0,
+				88.5
 			],
 			"resets": 0,
-			"time": 163.250000000024
+			"time": 177.533333333368
 		},
 		"peach_pit": {
 			"laps": [
-				84.3,
-				83.0
+				81.9,
+				80.5
 			],
 			"resets": 0,
-			"time": 167.33333333336
+			"time": 162.400000000023
 		}
 	},
-	"scooter": {
+	"flat_track": {
 		"dune_drift": {
 			"laps": [
-				89.4,
-				89.3
+				83.9,
+				83.9
 			],
 			"resets": 0,
-			"time": 178.650000000036
+			"time": 167.750000000027
 		},
 		"foundry_flats": {
 			"laps": [
-				85.8,
-				84.8
+				82.1,
+				81.6
 			],
 			"resets": 0,
-			"time": 170.550000000029
+			"time": 163.650000000023
+		},
+		"launchpad_loop": {
+			"laps": [
+				85.6,
+				85.3
+			],
+			"resets": 0,
+			"time": 170.933333333363
+		},
+		"peach_pit": {
+			"laps": [
+				81.0,
+				80.5
+			],
+			"resets": 0,
+			"time": 161.500000000022
+		}
+	},
+	"flathead": {
+		"dune_drift": {
+			"laps": [
+				90.4,
+				90.3
+			],
+			"resets": 0,
+			"time": 180.733333333371
+		},
+		"foundry_flats": {
+			"laps": [
+				87.2,
+				86.0
+			],
+			"resets": 0,
+			"time": 173.216666666698
 		},
 		"launchpad_loop": {
 			"laps": [
@@ -396,355 +158,661 @@
 				88.5
 			],
 			"resets": 0,
-			"time": 177.666666666702
+			"time": 177.683333333368
 		},
 		"peach_pit": {
 			"laps": [
-				82.2,
-				80.8
+				85.2,
+				83.6
 			],
 			"resets": 0,
-			"time": 163.033333333357
+			"time": 168.800000000028
 		}
 	},
-	"six_wheeler": {
+	"gravel_rat": {
 		"dune_drift": {
 			"laps": [
-				86.2,
-				86.1
-			],
-			"resets": 0,
-			"time": 172.283333333364
-		},
-		"foundry_flats": {
-			"laps": [
-				82.3,
-				81.2
-			],
-			"resets": 0,
-			"time": 163.483333333357
-		},
-		"launchpad_loop": {
-			"laps": [
-				87.3,
-				86.3
-			],
-			"resets": 0,
-			"time": 173.600000000032
-		},
-		"peach_pit": {
-			"laps": [
-				78.8,
-				77.5
-			],
-			"resets": 0,
-			"time": 156.216666666685
-		}
-	},
-	"slingshot": {
-		"dune_drift": {
-			"laps": [
-				85.4,
-				85.5
-			],
-			"resets": 0,
-			"time": 170.816666666696
-		},
-		"foundry_flats": {
-			"laps": [
-				80.6,
-				80.0
-			],
-			"resets": 0,
-			"time": 160.633333333354
-		},
-		"launchpad_loop": {
-			"laps": [
-				86.3,
-				85.8
-			],
-			"resets": 0,
-			"time": 172.133333333364
-		},
-		"peach_pit": {
-			"laps": [
-				77.0,
-				76.5
-			],
-			"resets": 0,
-			"time": 153.466666666682
-		}
-	},
-	"soapbox": {
-		"dune_drift": {
-			"laps": [
-				91.3,
-				91.2
-			],
-			"resets": 0,
-			"time": 182.516666666706
-		},
-		"foundry_flats": {
-			"laps": [
-				87.7,
-				86.5
-			],
-			"resets": 0,
-			"time": 174.216666666699
-		},
-		"launchpad_loop": {
-			"laps": [
-				91.4,
-				91.1
+				91.2,
+				91.3
 			],
 			"resets": 0,
 			"time": 182.500000000039
 		},
+		"foundry_flats": {
+			"laps": [
+				89.2,
+				88.4
+			],
+			"resets": 0,
+			"time": 177.533333333368
+		},
+		"launchpad_loop": {
+			"laps": [
+				91.8,
+				91.4
+			],
+			"resets": 0,
+			"time": 183.216666666706
+		},
 		"peach_pit": {
 			"laps": [
-				83.6,
-				82.1
+				84.9,
+				83.9
 			],
 			"resets": 0,
-			"time": 165.700000000025
+			"time": 168.750000000028
 		}
 	},
-	"sparky": {
+	"kart_kid": {
 		"dune_drift": {
 			"laps": [
-				90.4,
-				90.2
+				89.8,
+				89.8
 			],
 			"resets": 0,
-			"time": 180.583333333371
+			"time": 179.53333333337
 		},
 		"foundry_flats": {
 			"laps": [
-				87.3,
+				87.5,
+				86.6
+			],
+			"resets": 0,
+			"time": 174.083333333365
+		},
+		"launchpad_loop": {
+			"laps": [
+				88.6,
+				88.1
+			],
+			"resets": 0,
+			"time": 176.633333333367
+		},
+		"peach_pit": {
+			"laps": [
+				83.8,
+				82.8
+			],
+			"resets": 0,
+			"time": 166.583333333359
+		}
+	},
+	"long_fork": {
+		"dune_drift": {
+			"laps": [
+				86.3,
 				86.3
 			],
 			"resets": 0,
-			"time": 173.550000000032
-		},
-		"launchpad_loop": {
-			"laps": [
-				91.9,
-				91.5
-			],
-			"resets": 0,
-			"time": 183.416666666706
-		},
-		"peach_pit": {
-			"laps": [
-				85.6,
-				84.4
-			],
-			"resets": 0,
-			"time": 170.050000000029
-		}
-	},
-	"starter": {
-		"dune_drift": {
-			"laps": [
-				88.7,
-				88.6
-			],
-			"resets": 0,
-			"time": 177.300000000035
+			"time": 172.600000000031
 		},
 		"foundry_flats": {
 			"laps": [
-				85.4,
-				84.5
+				82.9,
+				82.2
 			],
 			"resets": 0,
-			"time": 169.916666666695
+			"time": 165.166666666691
 		},
 		"launchpad_loop": {
 			"laps": [
-				90.8,
-				89.9
+				86.4,
+				86.0
 			],
 			"resets": 0,
-			"time": 180.700000000037
+			"time": 172.350000000031
 		},
 		"peach_pit": {
 			"laps": [
-				83.6,
-				82.6
+				80.6,
+				79.9
 			],
 			"resets": 0,
-			"time": 166.233333333359
+			"time": 160.466666666688
 		}
 	},
-	"streamliner": {
+	"long_haul": {
 		"dune_drift": {
 			"laps": [
-				87.1,
-				87.0
+				85.8,
+				85.7
 			],
 			"resets": 0,
-			"time": 174.066666666699
+			"time": 171.45000000003
 		},
 		"foundry_flats": {
 			"laps": [
-				83.2,
-				82.3
+				83.0,
+				82.0
 			],
 			"resets": 0,
-			"time": 165.516666666692
+			"time": 165.066666666692
 		},
 		"launchpad_loop": {
 			"laps": [
-				88.5,
-				87.7
+				85.5,
+				84.9
 			],
 			"resets": 0,
-			"time": 176.1166666667
+			"time": 170.433333333362
 		},
 		"peach_pit": {
 			"laps": [
-				80.1,
-				78.9
+				81.5,
+				80.3
 			],
 			"resets": 0,
-			"time": 158.966666666687
+			"time": 161.783333333356
 		}
 	},
-	"superbike": {
+	"mudlark_quad": {
 		"dune_drift": {
 			"laps": [
-				91.0,
-				90.8
+				90.2,
+				90.2
 			],
 			"resets": 0,
-			"time": 181.816666666705
+			"time": 180.400000000037
 		},
 		"foundry_flats": {
 			"laps": [
 				88.8,
-				87.2
+				88.3
 			],
 			"resets": 0,
-			"time": 176.0666666667
+			"time": 177.083333333368
 		},
 		"launchpad_loop": {
 			"laps": [
-				89.8,
-				89.2
+				92.5,
+				92.2
 			],
 			"resets": 0,
-			"time": 178.966666666703
+			"time": 184.666666666707
 		},
 		"peach_pit": {
 			"laps": [
-				83.1,
-				81.3
+				88.3,
+				87.9
 			],
 			"resets": 0,
-			"time": 164.466666666691
+			"time": 176.200000000033
 		}
 	},
-	"tourer": {
+	"night_shift": {
 		"dune_drift": {
 			"laps": [
-				93.7,
-				93.6
+				83.3,
+				83.3
 			],
 			"resets": 0,
-			"time": 187.366666666709
+			"time": 166.650000000026
+		},
+		"foundry_flats": {
+			"laps": [
+				80.6,
+				79.9
+			],
+			"resets": 0,
+			"time": 160.550000000021
+		},
+		"launchpad_loop": {
+			"laps": [
+				83.9,
+				83.6
+			],
+			"resets": 0,
+			"time": 167.466666666693
+		},
+		"peach_pit": {
+			"laps": [
+				78.1,
+				77.2
+			],
+			"resets": 0,
+			"time": 155.350000000017
+		}
+	},
+	"oval_ace": {
+		"dune_drift": {
+			"laps": [
+				85.5,
+				85.4
+			],
+			"resets": 0,
+			"time": 170.833333333363
+		},
+		"foundry_flats": {
+			"laps": [
+				82.7,
+				82.0
+			],
+			"resets": 0,
+			"time": 164.733333333358
+		},
+		"launchpad_loop": {
+			"laps": [
+				84.5,
+				84.1
+			],
+			"resets": 0,
+			"time": 168.566666666694
+		},
+		"peach_pit": {
+			"laps": [
+				77.7,
+				76.8
+			],
+			"resets": 0,
+			"time": 154.48333333335
+		}
+	},
+	"quarter_mile": {
+		"dune_drift": {
+			"laps": [
+				86.1,
+				86.2
+			],
+			"resets": 0,
+			"time": 172.366666666697
+		},
+		"foundry_flats": {
+			"laps": [
+				80.3,
+				79.9
+			],
+			"resets": 0,
+			"time": 160.216666666687
+		},
+		"launchpad_loop": {
+			"laps": [
+				85.8,
+				85.8
+			],
+			"resets": 0,
+			"time": 171.55000000003
+		},
+		"peach_pit": {
+			"laps": [
+				78.1,
+				77.6
+			],
+			"resets": 0,
+			"time": 155.700000000017
+		}
+	},
+	"redline": {
+		"dune_drift": {
+			"laps": [
+				81.8,
+				81.7
+			],
+			"resets": 0,
+			"time": 163.550000000024
+		},
+		"foundry_flats": {
+			"laps": [
+				79.6,
+				78.9
+			],
+			"resets": 0,
+			"time": 158.516666666686
+		},
+		"launchpad_loop": {
+			"laps": [
+				82.3,
+				81.8
+			],
+			"resets": 0,
+			"time": 164.166666666691
+		},
+		"peach_pit": {
+			"laps": [
+				81.1,
+				80.4
+			],
+			"resets": 0,
+			"time": 161.483333333355
+		}
+	},
+	"sandhopper": {
+		"dune_drift": {
+			"laps": [
+				93.1,
+				93.2
+			],
+			"resets": 0,
+			"time": 186.316666666709
 		},
 		"foundry_flats": {
 			"laps": [
 				90.7,
-				89.4
+				89.9
 			],
 			"resets": 0,
-			"time": 180.050000000037
+			"time": 180.666666666704
 		},
 		"launchpad_loop": {
 			"laps": [
-				93.3,
-				92.4
+				94.0,
+				93.5
 			],
 			"resets": 0,
-			"time": 185.716666666708
+			"time": 187.500000000043
 		},
 		"peach_pit": {
 			"laps": [
-				87.9,
+				87.4,
+				86.4
+			],
+			"resets": 0,
+			"time": 173.716666666698
+		}
+	},
+	"scrambler": {
+		"dune_drift": {
+			"laps": [
+				94.1,
+				93.9
+			],
+			"resets": 0,
+			"time": 187.933333333377
+		},
+		"foundry_flats": {
+			"laps": [
+				93.0,
+				91.5
+			],
+			"resets": 0,
+			"time": 184.500000000041
+		},
+		"launchpad_loop": {
+			"laps": [
+				93.1,
+				92.3
+			],
+			"resets": 0,
+			"time": 185.416666666708
+		},
+		"peach_pit": {
+			"laps": [
+				89.2,
+				87.4
+			],
+			"resets": 0,
+			"time": 176.633333333368
+		}
+	},
+	"six_pack": {
+		"dune_drift": {
+			"laps": [
+				95.5,
+				95.4
+			],
+			"resets": 0,
+			"time": 190.916666666713
+		},
+		"foundry_flats": {
+			"laps": [
+				92.9,
+				91.8
+			],
+			"resets": 0,
+			"time": 184.650000000041
+		},
+		"launchpad_loop": {
+			"laps": [
+				95.7,
+				95.1
+			],
+			"resets": 0,
+			"time": 190.733333333379
+		},
+		"peach_pit": {
+			"laps": [
+				88.2,
+				86.7
+			],
+			"resets": 0,
+			"time": 174.8666666667
+		}
+	},
+	"streak": {
+		"dune_drift": {
+			"laps": [
+				89.8,
+				89.7
+			],
+			"resets": 0,
+			"time": 179.466666666703
+		},
+		"foundry_flats": {
+			"laps": [
+				86.6,
+				85.3
+			],
+			"resets": 0,
+			"time": 171.90000000003
+		},
+		"launchpad_loop": {
+			"laps": [
+				88.0,
+				87.3
+			],
+			"resets": 0,
+			"time": 175.250000000033
+		},
+		"peach_pit": {
+			"laps": [
+				82.0,
+				80.3
+			],
+			"resets": 0,
+			"time": 162.283333333356
+		}
+	},
+	"sunday_trike": {
+		"dune_drift": {
+			"laps": [
+				86.6,
 				86.5
 			],
 			"resets": 0,
-			"time": 174.400000000032
-		}
-	},
-	"trike": {
-		"dune_drift": {
+			"time": 173.116666666698
+		},
+		"foundry_flats": {
 			"laps": [
-				84.5,
-				84.4
+				82.7,
+				82.0
 			],
 			"resets": 0,
-			"time": 168.900000000028
+			"time": 164.633333333358
+		},
+		"launchpad_loop": {
+			"laps": [
+				85.7,
+				85.3
+			],
+			"resets": 0,
+			"time": 171.016666666696
+		},
+		"peach_pit": {
+			"laps": [
+				80.5,
+				79.8
+			],
+			"resets": 0,
+			"time": 160.300000000021
+		}
+	},
+	"tiddler": {
+		"dune_drift": {
+			"laps": [
+				90.1,
+				90.0
+			],
+			"resets": 0,
+			"time": 180.116666666704
+		},
+		"foundry_flats": {
+			"laps": [
+				87.0,
+				86.2
+			],
+			"resets": 0,
+			"time": 173.250000000031
+		},
+		"launchpad_loop": {
+			"laps": [
+				89.8,
+				89.3
+			],
+			"resets": 0,
+			"time": 179.083333333369
+		},
+		"peach_pit": {
+			"laps": [
+				85.3,
+				84.3
+			],
+			"resets": 0,
+			"time": 169.650000000029
+		}
+	},
+	"twin_nose": {
+		"dune_drift": {
+			"laps": [
+				91.8,
+				91.7
+			],
+			"resets": 0,
+			"time": 183.45000000004
+		},
+		"foundry_flats": {
+			"laps": [
+				89.9,
+				88.8
+			],
+			"resets": 0,
+			"time": 178.666666666702
+		},
+		"launchpad_loop": {
+			"laps": [
+				90.4,
+				89.7
+			],
+			"resets": 0,
+			"time": 180.13333333337
+		},
+		"peach_pit": {
+			"laps": [
+				87.7,
+				86.4
+			],
+			"resets": 0,
+			"time": 174.133333333365
+		}
+	},
+	"volt": {
+		"dune_drift": {
+			"laps": [
+				84.0,
+				83.8
+			],
+			"resets": 0,
+			"time": 167.800000000027
 		},
 		"foundry_flats": {
 			"laps": [
 				81.4,
-				80.6
+				80.4
 			],
 			"resets": 0,
-			"time": 162.016666666689
+			"time": 161.816666666689
 		},
 		"launchpad_loop": {
 			"laps": [
-				84.5,
-				83.9
+				83.8,
+				83.1
 			],
 			"resets": 0,
-			"time": 168.433333333361
+			"time": 166.98333333336
 		},
 		"peach_pit": {
 			"laps": [
-				80.3,
-				79.1
+				79.7,
+				78.5
 			],
 			"resets": 0,
-			"time": 159.366666666687
+			"time": 158.183333333353
 		}
 	},
-	"trikester": {
+	"zipper": {
 		"dune_drift": {
 			"laps": [
-				95.4,
-				95.3
+				85.3,
+				85.4
 			],
 			"resets": 0,
-			"time": 190.650000000045
+			"time": 170.683333333363
 		},
 		"foundry_flats": {
 			"laps": [
-				92.1,
-				91.1
+				83.6,
+				83.1
 			],
 			"resets": 0,
-			"time": 183.233333333373
+			"time": 166.683333333359
 		},
 		"launchpad_loop": {
 			"laps": [
-				94.6,
-				94.1
+				87.3,
+				87.0
 			],
 			"resets": 0,
-			"time": 188.616666666711
+			"time": 174.333333333365
 		},
 		"peach_pit": {
 			"laps": [
-				88.9,
-				87.5
+				81.2,
+				80.7
 			],
 			"resets": 0,
-			"time": 176.383333333367
+			"time": 161.850000000022
+		}
+	},
+	"zippy": {
+		"dune_drift": {
+			"laps": [
+				88.9,
+				88.8
+			],
+			"resets": 0,
+			"time": 177.716666666702
+		},
+		"foundry_flats": {
+			"laps": [
+				85.0,
+				83.9
+			],
+			"resets": 0,
+			"time": 168.883333333361
+		},
+		"launchpad_loop": {
+			"laps": [
+				87.7,
+				87.1
+			],
+			"resets": 0,
+			"time": 174.800000000033
+		},
+		"peach_pit": {
+			"laps": [
+				81.7,
+				80.6
+			],
+			"resets": 0,
+			"time": 162.300000000023
 		}
 	}
 }

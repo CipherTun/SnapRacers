@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://cdm2xn83nxn5v"
+path="res://.godot/imported/legs_jeans_forward_r_main.obj-8cba0ad1af72ced95b8778e18592121d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_jeans_forward_r_main.obj-8cba0ad1af72ced95b8778e18592121d.mesh"]
+
+source_file="res://characters/meshes/legs_jeans_forward_r_main.obj"
+dest_files=["res://.godot/imported/legs_jeans_forward_r_main.obj-8cba0ad1af72ced95b8778e18592121d.mesh", "res://.godot/imported/legs_jeans_forward_r_main.obj-8cba0ad1af72ced95b8778e18592121d.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

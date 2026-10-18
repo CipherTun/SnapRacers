@@ -1,0 +1,31 @@
+{
+	"name": "Redline",
+	"about": "A formula racer with open wheels, wings at both ends and a little engine behind the driver. Light and quick through the fast corners.",
+	"parts": [
+		{"id": "p_kart_axle_plate_4", "pos": [140, 20.0, 60], "turn": 0, "color": "#1b1b1b"},
+		{"id": "w_kart_wide", "pos": [124.0, 0, 56.0], "turn": 0},
+		{"id": "w_kart_wide", "pos": [276.0, 0, 104.0], "turn": 2},
+		{"id": "p_plate_2x4", "pos": [240.0, 28.0, 60], "turn": 1, "color": "#1b1b1b"},
+		{"id": "p_kart_axle_plate_4", "pos": [140, 28.0, 260], "turn": 0, "color": "#1b1b1b"},
+		{"id": "w_slick", "pos": [120.0, 0, 248.0], "turn": 0},
+		{"id": "w_slick", "pos": [280.0, 0, 312.0], "turn": 2},
+		{"id": "p_plate_4x4", "pos": [160, 36.0, 60], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_plate_4x8", "pos": [160, 36.0, 140], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_plate_2x2", "pos": [180, 28.0, 120], "turn": 0, "color": "#1b1b1b"},
+		{"id": "d_front_wing_8x2", "pos": [120, 36.0, 0], "turn": 0, "color": "#f2f3f2"},
+		{"id": "p_nose_cone_2x6", "pos": [180, 44.0, 0], "turn": 0, "color": "#c4281c"},
+		{"id": "p_curve_1x4", "pos": [160, 44.0, 60], "turn": 0, "color": "#c4281c"},
+		{"id": "p_curve_1x4", "pos": [220.0, 44.0, 60], "turn": 0, "color": "#c4281c"},
+		{"id": "racing_wheel", "pos": [180, 44.0, 120], "turn": 0},
+		{"id": "s_lay_down_seat", "pos": [180, 44.0, 140], "turn": 0},
+		{"id": "p_curve_2x4", "pos": [180.0, 44.0, 220.0], "turn": 2, "color": "#c4281c"},
+		{"id": "p_curve_2x4", "pos": [260.0, 44.0, 220.0], "turn": 2, "color": "#c4281c"},
+		{"id": "engine_small", "pos": [180, 44.0, 220], "turn": 0, "color": "#1b1b1b"},
+		{"id": "p_curve_2x2", "pos": [220.0, 68.0, 260.0], "turn": 2, "color": "#c4281c"},
+		{"id": "d_roll_hoop", "pos": [160, 44.0, 220], "turn": 0, "color": "#a3a2a4"},
+		{"id": "d_open_exhausts", "pos": [160, 44.0, 260], "turn": 0},
+		{"id": "d_open_exhausts", "pos": [220.0, 44.0, 260], "turn": 0},
+		{"id": "p_brick_2x2", "pos": [180, 44.0, 260], "turn": 0, "color": "#1b1b1b"},
+		{"id": "d_rear_wing_8", "pos": [120, 68.0, 260], "turn": 0, "color": "#c4281c"}
+	]
+}

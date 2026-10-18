@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://ehxynsj6vysq"
+path="res://.godot/imported/legs_socks_seated_l_boot.obj-9b51a6051ae9b0936f5f330a95bb1043.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_socks_seated_l_boot.obj-9b51a6051ae9b0936f5f330a95bb1043.mesh"]
+
+source_file="res://characters/meshes/legs_socks_seated_l_boot.obj"
+dest_files=["res://.godot/imported/legs_socks_seated_l_boot.obj-9b51a6051ae9b0936f5f330a95bb1043.mesh", "res://.godot/imported/legs_socks_seated_l_boot.obj-9b51a6051ae9b0936f5f330a95bb1043.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

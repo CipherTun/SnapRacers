@@ -1,7 +1,7 @@
 extends Node
 
-## Checks the stock karts, bikes and trikes. There are fifteen karts, four
-## bikes and three trikes, every one can be driven and says what it's like, no
+## Checks the stock karts, bikes, trikes and quads. There are twenty-nine
+## karts, eight bikes, six trikes and three quads, every one can be driven and says what it's like, no
 ## two drive the same, and each one gets around a lap of Peach Pit with the AI
 ## driving it. tools/stock-karts/balance.tscn goes
 ## further and times them all on four courses.
@@ -28,10 +28,24 @@ func _ready() -> void:
 	var keys := Game.stock_keys()
 	var by_wheels := {}
 	for key in keys:
-		var wheels := KartStats.compute(Game.stock_kart(key)).wheels.size()
-		var kind := "bike" if wheels == 2 else "trike" if wheels == 3 else "kart"
+		var stats := KartStats.compute(Game.stock_kart(key))
+		var wheels := stats.wheels.size()
+		var kind := "bike" if wheels == 2 else "trike" if wheels == 3 else "quad" if stats.is_quad() else "kart"
 		by_wheels[kind] = by_wheels.get(kind, 0) + 1
-	check(by_wheels.get("kart", 0) == 15 and by_wheels.get("bike", 0) == 4 and by_wheels.get("trike", 0) == 3, "there are fifteen karts, four bikes and three trikes %s" % by_wheels)
+	check(by_wheels.get("kart", 0) == 14 and by_wheels.get("bike", 0) == 4 and by_wheels.get("trike", 0) == 3 and by_wheels.get("quad", 0) == 3, "there are fourteen karts and trucks, four bikes, three trikes and three quads %s" % by_wheels)
+	# Every old stock id leads to one that's still there, and a saved old
+	# pick is swapped for its new id.
+	var lost := Game.OLD_STOCK.keys().filter(func(k): return not keys.has(Game.OLD_STOCK[k]))
+	check(lost.is_empty() and Game.OLD_STOCK.keys().all(func(k): return not keys.has(k)), "every old stock id leads to a new one %s" % [lost])
+	var was_kart = Game.settings.get_value("race", "kart", Game.OWN_KART)
+	var was_two = Game.settings.get_value("race", "player_two", Game.PLAYER_TWO_STOCK)
+	Game.settings.set_value("race", "kart", "starter")
+	Game.settings.set_value("race", "player_two", "superbike")
+	Game._move_old_stock()
+	check(Game.settings.get_value("race", "kart") == "kart_kid" and Game.settings.get_value("race", "player_two") == "streak", "old picks in the settings move to the new ids")
+	Game.settings.set_value("race", "kart", was_kart)
+	Game.settings.set_value("race", "player_two", was_two)
+	Game.save_settings()
 	var looks := []
 	var names := {}
 	for key in keys:

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dtcx4n5asgpp"
+path="res://.godot/imported/d_canopy_high_back.obj-c3e7b573913e79675a8775c72b539281.mesh"
+
+[deps]
+
+files=["res://.godot/imported/d_canopy_high_back.obj-c3e7b573913e79675a8775c72b539281.mesh"]
+
+source_file="res://parts/meshes/d_canopy_high_back.obj"
+dest_files=["res://.godot/imported/d_canopy_high_back.obj-c3e7b573913e79675a8775c72b539281.mesh", "res://.godot/imported/d_canopy_high_back.obj-c3e7b573913e79675a8775c72b539281.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

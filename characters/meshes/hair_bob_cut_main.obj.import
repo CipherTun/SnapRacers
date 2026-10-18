@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dyxxxe05dpkr"
+path="res://.godot/imported/hair_bob_cut_main.obj-fb1b4d91554567fc9702d1cf121e2edc.mesh"
+
+[deps]
+
+files=["res://.godot/imported/hair_bob_cut_main.obj-fb1b4d91554567fc9702d1cf121e2edc.mesh"]
+
+source_file="res://characters/meshes/hair_bob_cut_main.obj"
+dest_files=["res://.godot/imported/hair_bob_cut_main.obj-fb1b4d91554567fc9702d1cf121e2edc.mesh", "res://.godot/imported/hair_bob_cut_main.obj-fb1b4d91554567fc9702d1cf121e2edc.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

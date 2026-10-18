@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dvj2fyc08d8f3"
+path="res://.godot/imported/back_fairy_wings_reclined_main.obj-a82d848384e9e729fa434f225e74df1f.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_fairy_wings_reclined_main.obj-a82d848384e9e729fa434f225e74df1f.mesh"]
+
+source_file="res://characters/meshes/back_fairy_wings_reclined_main.obj"
+dest_files=["res://.godot/imported/back_fairy_wings_reclined_main.obj-a82d848384e9e729fa434f225e74df1f.mesh", "res://.godot/imported/back_fairy_wings_reclined_main.obj-a82d848384e9e729fa434f225e74df1f.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -18,7 +18,7 @@ func _initialize() -> void:
 	# The stock starter checks out, and the rest of the rules are checked on
 	# the starter as it was built before parts had their own connectors, on
 	# the stud grid, which also checks a kart saved back then still works.
-	var stock := KartDesign.load_file("res://data/karts/stock/starter.json")
+	var stock := KartDesign.load_file("res://tests/data/legacy/starter.json")
 	check(stock.problems().is_empty() and stock.groups().size() == 1, "the stock starter kart has no problems and is all one piece %s" % [stock.problems()])
 	var starter := KartDesign.load_file("res://tests/data/old_starter.json")
 
@@ -104,7 +104,7 @@ func _initialize() -> void:
 			check(kart.problems().is_empty(), "%s is driveable %s (%d kg, %d km/h)" % [kart.name, kart.problems(), stats_here.mass, stats_here.top_speed() * 3.6])
 
 	# A painted part keeps its paint through saving and loading.
-	var painted := KartDesign.load_file("res://data/karts/stock/featherlight.json")
+	var painted := KartDesign.load_file("res://tests/data/legacy/featherlight.json")
 	var again := KartDesign.from_dict(painted.to_dict())
 	var kept := true
 	for i in painted.parts.size():

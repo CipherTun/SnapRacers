@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://b0qvp7v4ahq6f"
+path="res://.godot/imported/neck_bow_tie_dark.obj-2d076878870aa53fd46dd78d0e01f0e6.mesh"
+
+[deps]
+
+files=["res://.godot/imported/neck_bow_tie_dark.obj-2d076878870aa53fd46dd78d0e01f0e6.mesh"]
+
+source_file="res://characters/meshes/neck_bow_tie_dark.obj"
+dest_files=["res://.godot/imported/neck_bow_tie_dark.obj-2d076878870aa53fd46dd78d0e01f0e6.mesh", "res://.godot/imported/neck_bow_tie_dark.obj-2d076878870aa53fd46dd78d0e01f0e6.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

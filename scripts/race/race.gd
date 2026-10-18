@@ -155,7 +155,7 @@ func _ready() -> void:
 		drivers.resize(mini(drivers.size(), KARTS - people))
 		for i in drivers.size():
 			var who := Game.roster_driver(drivers[i])
-			var design := Game.stock_kart(karts.get(drivers[i], "starter"))
+			var design := Game.stock_kart(karts.get(drivers[i], Game.DEFAULT_STOCK))
 			entries.append({ "name": who.name, "design": design, "who": who, "rank": ranks.get(drivers[i], i), "line": (i % 3 - 1) * 1.5 })
 		if people > 1:
 			entries.append({ "name": Game.player_two_name(), "design": Game.player_two_design(), "who": Game.roster_driver(two_driver), "human": 1 })
@@ -396,14 +396,22 @@ func _add_split_views() -> void:
 			# It's turned all the way around its middle (not flipped, which would
 			# mirror it). The middle moves as the screen settles into portrait.
 			holder.rotation = PI
-			holder.resized.connect(func() -> void: holder.pivot_offset = holder.size * 0.5)
+			var turn := func() -> void: holder.pivot_offset = holder.size * 0.5
+			holder.resized.connect(turn)
+			turn.call()
 		var viewport := SubViewport.new()
 		Graphics.apply_to(viewport)
+		# A SubViewport doesn't listen for 3D sound unless told to, and with
+		# the cameras in here none of the karts would be heard. Both halves
+		# listen, so each player hears what's around their own kart.
+		viewport.audio_listener_enable_3d = true
 		holder.add_child(viewport)
 		holder.resized.connect(_fit_hud.bind(viewport, humans[i]), CONNECT_DEFERRED)
 		var hud_layer := CanvasLayer.new()
 		viewport.add_child(hud_layer)
 		_add_view(humans[i], viewport, hud_layer)
+		# The screen may already be its final size, so resized won't come.
+		_fit_hud.call_deferred(viewport, humans[i])
 	_add_shared_map(root)
 
 

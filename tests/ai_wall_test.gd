@@ -35,7 +35,7 @@ class Runner:
 			add_child(wall)
 			walls.append(wall)
 		kart = Kart.new()
-		kart.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+		kart.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 		kart.transform = track.place_at(2.0, 0.05)
 		add_child(kart)
 		kart.was_reset.connect(func() -> void: reset_at = tick)

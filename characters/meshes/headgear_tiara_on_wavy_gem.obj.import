@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://d0vmjlf3sobhq"
+path="res://.godot/imported/headgear_tiara_on_wavy_gem.obj-8b2969972676b02bedcc2b714b96b5ca.mesh"
+
+[deps]
+
+files=["res://.godot/imported/headgear_tiara_on_wavy_gem.obj-8b2969972676b02bedcc2b714b96b5ca.mesh"]
+
+source_file="res://characters/meshes/headgear_tiara_on_wavy_gem.obj"
+dest_files=["res://.godot/imported/headgear_tiara_on_wavy_gem.obj-8b2969972676b02bedcc2b714b96b5ca.mesh", "res://.godot/imported/headgear_tiara_on_wavy_gem.obj-8b2969972676b02bedcc2b714b96b5ca.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

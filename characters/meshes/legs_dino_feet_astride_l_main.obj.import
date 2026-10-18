@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dgw5yhs0lbh1o"
+path="res://.godot/imported/legs_dino_feet_astride_l_main.obj-254286cc11beb2fd1d6a87d95f7f851d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_dino_feet_astride_l_main.obj-254286cc11beb2fd1d6a87d95f7f851d.mesh"]
+
+source_file="res://characters/meshes/legs_dino_feet_astride_l_main.obj"
+dest_files=["res://.godot/imported/legs_dino_feet_astride_l_main.obj-254286cc11beb2fd1d6a87d95f7f851d.mesh", "res://.godot/imported/legs_dino_feet_astride_l_main.obj-254286cc11beb2fd1d6a87d95f7f851d.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

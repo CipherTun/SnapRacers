@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://36w1m6km8823"
+path="res://.godot/imported/neck_brooch_gold.obj-9e1186ed96fe0b77f05c389ab8418470.mesh"
+
+[deps]
+
+files=["res://.godot/imported/neck_brooch_gold.obj-9e1186ed96fe0b77f05c389ab8418470.mesh"]
+
+source_file="res://characters/meshes/neck_brooch_gold.obj"
+dest_files=["res://.godot/imported/neck_brooch_gold.obj-9e1186ed96fe0b77f05c389ab8418470.mesh", "res://.godot/imported/neck_brooch_gold.obj-9e1186ed96fe0b77f05c389ab8418470.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

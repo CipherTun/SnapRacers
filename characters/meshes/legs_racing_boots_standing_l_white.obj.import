@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bsg0633ssf3oh"
+path="res://.godot/imported/legs_racing_boots_standing_l_white.obj-e6d7f1fea230f43808d270d11291d43c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_racing_boots_standing_l_white.obj-e6d7f1fea230f43808d270d11291d43c.mesh"]
+
+source_file="res://characters/meshes/legs_racing_boots_standing_l_white.obj"
+dest_files=["res://.godot/imported/legs_racing_boots_standing_l_white.obj-e6d7f1fea230f43808d270d11291d43c.mesh", "res://.godot/imported/legs_racing_boots_standing_l_white.obj-e6d7f1fea230f43808d270d11291d43c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

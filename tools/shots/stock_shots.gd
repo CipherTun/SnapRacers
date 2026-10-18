@@ -4,9 +4,10 @@ extends SceneTree
 ## little to one side, and puts them all on one sheet with their names. Like
 ## the other shots it needs a screen, and saves in build/shots.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/stock_shots.gd
+## Add --folder=res://build/preview/ to take the vehicles from another folder.
 
 const OUT := "res://build/shots"
-const DIR := "res://data/karts/stock"
+var dir := "res://data/karts/stock"
 const TILE := Vector2i(480, 340)
 ## Only these, bigger, when named after --.
 var only: Array = []
@@ -20,7 +21,11 @@ var _label: Label
 
 
 func _initialize() -> void:
-	only = OS.get_cmdline_user_args()
+	for arg in OS.get_cmdline_user_args():
+		if arg.begins_with("--folder="):
+			dir = arg.substr(9).trim_suffix("/")
+		else:
+			only.append(arg)
 	DisplayServer.window_set_size(TILE)
 	_view = SubViewport.new()
 	_view.size = TILE
@@ -53,12 +58,12 @@ func _initialize() -> void:
 
 func _run() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
-	var files := Array(DirAccess.get_files_at(DIR)).filter(func(f): return f.ends_with(".json") and (only.is_empty() or only.has(f.get_basename())))
+	var files := Array(DirAccess.get_files_at(dir)).filter(func(f): return f.ends_with(".json") and (only.is_empty() or only.has(f.get_basename())))
 	var rows := ceili(files.size() / float(COLUMNS))
 	_sheet = Image.create(TILE.x * COLUMNS, TILE.y * rows, false, Image.FORMAT_RGBA8)
 	_sheet.fill(Color("#2b3440"))
 	for i in files.size():
-		var design := KartDesign.load_file(DIR + "/" + files[i])
+		var design := KartDesign.load_file(dir + "/" + files[i])
 		for child in _stand.get_children():
 			child.free()
 		var model := KartModel.make(design)

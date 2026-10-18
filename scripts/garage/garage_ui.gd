@@ -36,6 +36,7 @@ signal undo_pressed
 signal redo_pressed
 signal mirror_toggled(on: bool)
 signal paint_toggled(on: bool)
+signal air_toggled(on: bool)
 signal colour_chosen(colour: Color)
 signal view_pressed(view: String)
 signal new_pressed
@@ -84,6 +85,7 @@ var _undo: IconButton
 var _redo: IconButton
 var _mirror: IconButton
 var _paint: IconButton
+var _air: IconButton
 var _views_menu: PopupMenu
 var _file_menu: PopupMenu
 
@@ -239,6 +241,10 @@ func set_mirror(on: bool) -> void:
 	_mirror.on = on
 
 
+func set_air(on: bool) -> void:
+	_air.on = on
+
+
 func paint_colour() -> Color:
 	return _paint_colour
 
@@ -328,9 +334,11 @@ func _build_toolbar() -> void:
 	_mirror.pressed.connect(func() -> void: mirror_toggled.emit(not _mirror_on))
 	_paint = IconButton.new("paint", "Paint")
 	_paint.pressed.connect(func() -> void: paint_toggled.emit(_mode != Mode.PAINTING))
+	_air = IconButton.new("air", "Show the wind")
+	_air.pressed.connect(func() -> void: air_toggled.emit(not _air.on))
 	var camera := IconButton.new("camera", "Camera views")
 	var more := IconButton.new("more", "Save, load or start again")
-	for button in [close, _undo, _redo, _mirror, _paint, camera, more]:
+	for button in [close, _undo, _redo, _mirror, _paint, _air, camera, more]:
 		_toolbar.add_child(button)
 
 	_views_menu = _menu(["Front", "Side", "Top", "Angle", "Fit the kart"])

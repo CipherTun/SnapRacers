@@ -242,6 +242,9 @@ const LEAN_RATE := 1.4
 const LEAN_FROM := 0.3
 const LEAN_FULL := 1.1
 const LEAN_SMOOTH := 3.0
+## A quad stays flat, but its rider leans into the bend this much of the way
+## a bike would.
+const QUAD_RIDER_LEAN := 0.33
 const KERB_RIDGE := 0.6
 const KERB_KICK := 0.024
 const KERB_WHEEL := 0.3
@@ -317,6 +320,9 @@ var upright := 0.0
 ## body itself stays upright, so this is only in how it looks, and it's
 ## worked out from the steering and speed, so remote bikes lean the same.
 var lean := 0.0
+## How far a quad's rider leans into a bend, in radians, right positive, the
+## same way as `lean`. Only the rider tips; the quad stays flat.
+var rider_lean := 0.0
 ## How the weather changes the grip and drag of the ground, and the puddles
 ## on the road, if any. The race sets them (see Conditions).
 var weather_grip := 1.0
@@ -413,6 +419,8 @@ var _gadget_wait: Array[float] = [0.0, 0.0]
 var _bubble: MeshInstance3D
 var _steering: SteeringVisual
 var _rig: CharacterRig
+## The baked meshes of the kart's body (see _bake_body()).
+var _body: Array[MeshInstance3D] = []
 ## A kart driven on another device, or the host's AI seen on a player's device.
 ## It isn't simulated here. It's moved to where its updates say (see NetRace),
 ## and only its looks, sound and wreckage happen here.
@@ -435,11 +443,16 @@ var slowdown_left := 0.0
 ## Whether it's said a force or speed came out as nonsense (see _ok()).
 var _said_bad := false
 ## The render layer the driver's head is drawn on (see RaceCamera), or 0.
+## With one, the parts in the driver's way in first person are drawn twice:
+## solid for everyone else and a little see-through for them.
 var head_layer := 0:
 	set(value):
+		var changed := value != head_layer
 		head_layer = value
 		if _rig != null:
 			_rig.head_layer = value
+		if changed and _looks != null:
+			_rebake_body()
 ## How hard the engine pushes compared with usual. The AI's difficulty uses it
 ## to catch up or ease off (see Difficulty).
 var push := 1.0
@@ -509,9 +522,10 @@ func build(new_design: KartDesign, who: CharacterDesign = null) -> void:
 		var info: KartStats.PartInfo = _full.wheels[n]
 		var share: float = shares[n] * _full.mass
 		var spring := share * KartStats.gravity() / SUSPENSION_TRAVEL
-		# A kart with only one axle steers and drives with it.
+		# A kart with only one axle steers and drives with it. A quad drives
+		# all four wheels, since its light back end can't grip enough alone.
 		var steers := steered.is_empty() or steered.has(info.index)
-		var drives := driven.is_empty() or driven.has(info.index)
+		var drives := driven.is_empty() or driven.has(info.index) or _full.is_quad()
 		_wheel_setup[info.index] = [steers, drives, spring, 2.0 * SUSPENSION_DAMPING * sqrt(spring * share)]
 	upright = 0.0
 	var in_line := _full.wheels.filter(func(info: KartStats.PartInfo) -> bool: return absf(info.centre.x - com.x) < IN_LINE).size()
@@ -626,6 +640,7 @@ func _assemble() -> void:
 
 	# Everything but the wheels and steering is drawn as one mesh.
 	var looks: Array[Node3D] = []
+	var boxes: Array[AABB] = []
 	for info in stats.parts:
 		if info.def.kind == "wheel":
 			var w := Wheel.new()
@@ -665,17 +680,10 @@ func _assemble() -> void:
 				_steering = look
 		else:
 			looks.append(look)
+			boxes.append(AABB(info.centre - info.extent * 0.5, info.extent))
 	_lamps = null
-	if not looks.is_empty():
-		var baked := KartMesh.bake(looks)
-		_looks.add_child(baked)
-		for look in looks:
-			look.free()
-		# Its own lamp lenses, so its lights go on and off by themselves.
-		for i in baked.mesh.get_surface_count():
-			if baked.mesh.surface_get_material(i) == KartMesh.material("lamp"):
-				_lamps = KartMesh.material("lamp").duplicate()
-				baked.set_surface_override_material(i, _lamps)
+	_body.clear()
+	_bake_body(looks, boxes)
 	# Lamps on the parts that turn, like a bike's fork, which aren't baked in.
 	for lamp in _looks.find_children("*", "MeshInstance3D", true, false):
 		if lamp.has_meta("light"):
@@ -688,6 +696,7 @@ func _assemble() -> void:
 		_rig = CharacterRig.new(driver if driver != null else default_driver(), true)
 		_rig.recline = stats.recline
 		_rig.astride = stats.astride
+		_rig.feet_forward = stats.feet_forward
 		_rig.head_layer = head_layer
 		_rig.lively = true
 		_rig.position = stats.seat_top
@@ -719,6 +728,75 @@ func _assemble() -> void:
 			_driven_count += 1
 		if w.steered:
 			_steered_count += 1
+	if ghost_left > 0.0:
+		_find_ghost_looks()
+
+
+## Bakes these part looks into the kart's body and frees them. With a
+## head_layer, the ones in the driver's way go in a mesh of their own, which
+## their first person camera leaves out, and a see-through copy of it that only
+## that camera draws (see RaceCamera).
+func _bake_body(looks: Array[Node3D], boxes: Array[AABB]) -> void:
+	for node in _body:
+		node.queue_free()
+	_body.clear()
+	if looks.is_empty():
+		return
+	var in_way: Array[int] = []
+	if head_layer > 0 and stats.has_seat:
+		var eye := stats.seat_top + CharacterRig.rest_eye(stats.recline, stats.astride)
+		var ground := 0.0
+		for w in wheels:
+			ground = minf(ground, w.rest.y - w.radius)
+		in_way = ViewBlockers.find(looks, boxes, eye, ground)
+	var clear: Array[Node3D] = []
+	var blocking: Array[Node3D] = []
+	for i in looks.size():
+		(blocking if in_way.has(i) else clear).append(looks[i])
+	for group in [clear, blocking]:
+		if group.is_empty():
+			continue
+		var baked := KartMesh.bake(group)
+		_looks.add_child(baked)
+		_body.append(baked)
+		# Its own lamp lenses, so its lights go on and off by themselves.
+		for i in baked.mesh.get_surface_count():
+			if baked.mesh.surface_get_material(i) == KartMesh.material("lamp"):
+				if _lamps == null:
+					_lamps = KartMesh.material("lamp").duplicate()
+				baked.set_surface_override_material(i, _lamps)
+		if group == blocking:
+			baked.layers = 1 << (ViewBlockers.blocking_layer(head_layer) - 1)
+			var copy := MeshInstance3D.new()
+			copy.mesh = baked.mesh
+			copy.layers = 1 << (ViewBlockers.see_through_layer(head_layer) - 1)
+			# A layer a camera leaves out casts no shadow there, so this casts it.
+			for i in baked.mesh.get_surface_count():
+				var solid := baked.get_active_material(i)
+				copy.set_surface_override_material(i, ViewBlockers.material(solid))
+			_looks.add_child(copy)
+			_body.append(copy)
+	for look in looks:
+		look.free()
+
+
+## Bakes the body again from its parts, for a head_layer set after the kart
+## was put together.
+func _rebake_body() -> void:
+	var looks: Array[Node3D] = []
+	var boxes: Array[AABB] = []
+	for info in stats.parts:
+		if info.def.kind == "wheel" or (info.def.get("steers", false) and _beside_steered_wheel(info)):
+			continue
+		var look := PartVisuals.make_turned(info.def, info.extent, info.basis)
+		if look is SteeringVisual:
+			look.free()
+			continue
+		look.position = info.centre
+		looks.append(look)
+		boxes.append(AABB(info.centre - info.extent * 0.5, info.extent))
+	_bake_body(looks, boxes)
+	_show_lights()
 	if ghost_left > 0.0:
 		_find_ghost_looks()
 
@@ -1549,7 +1627,9 @@ static func default_driver() -> CharacterDesign:
 func _pose_driver() -> void:
 	if _rig == null:
 		return
-	var amount := clampf(steer_angle / full_lock, -1.0, 1.0)
+	# With every wheel knocked off there's no lock at all, and 0/0 would send
+	# the driver's arms, head and wheel off to nowhere.
+	var amount := clampf(steer_angle / maxf(full_lock, 0.001), -1.0, 1.0)
 	_rig.look(amount)
 	# A motorbike's bars turn as far as the front wheel looks turned, along
 	# with the fork.
@@ -1999,7 +2079,8 @@ func _lean_looks(delta: float) -> void:
 	if _looks == null:
 		return
 	var want := 0.0
-	if upright >= 1.0:
+	var quad := upright == 0.0 and stats != null and stats.is_quad()
+	if upright >= 1.0 or quad:
 		var bend := tan(steer_angle) / maxf(wheelbase, 0.5)
 		var pull := forward_speed * absf(forward_speed) * bend / KartStats.gravity()
 		_lean_pull = lerpf(_lean_pull, pull, 1.0 - exp(-LEAN_SMOOTH * delta))
@@ -2007,6 +2088,15 @@ func _lean_looks(delta: float) -> void:
 		want = signf(_lean_pull) * MOST_LEAN * t * t * (3.0 - 2.0 * t)
 	else:
 		_lean_pull = 0.0
+	var rider_want := 0.0
+	if quad:
+		rider_want = want * QUAD_RIDER_LEAN
+		want = 0.0
+	rider_lean = move_toward(rider_lean, rider_want, LEAN_RATE * QUAD_RIDER_LEAN * delta)
+	if _rig != null and _rig.astride:
+		# The rider tips about the saddle; the hands still find the bars,
+		# since the grips are worked out in the rig's space.
+		_rig.basis = Basis(Vector3.FORWARD, rider_lean)
 	lean = move_toward(lean, want, LEAN_RATE * delta)
 	var pivot := Vector3(0.0, _ground_y, 0.0)
 	var tip := Basis(Vector3.FORWARD, lean)

@@ -1,0 +1,11 @@
+{
+	"name": "Scrambler",
+	"about": "A dirt bike up on big knobbly wheels. It rides over grass and bumps better than anything, but it's slow to turn on tarmac.",
+	"parts": [
+		{"id": "b_frame_scrambler", "pos": [181.0, 20, 57], "turn": 0, "color": "#1b1b1b"},
+		{"id": "b_body_scrambler", "pos": [186.0, 51, 66], "turn": 0, "color": "#da8540"},
+		{"id": "b_fork_dirt_small", "pos": [173.0, 26.4, 35], "turn": 0, "color": "#da8540"},
+		{"id": "w_scrambler", "pos": [192.0, 0, 15.0], "turn": 0},
+		{"id": "w_scrambler", "pos": [192.0, 0, 159.0], "turn": 0}
+	]
+}

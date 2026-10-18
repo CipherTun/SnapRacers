@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://dcdhnc8dx7ok8"
+path="res://.godot/imported/back_bat_wings_seated_dark.obj-c51799c0a5d1aa40af2cfcc2b0bad8cf.mesh"
+
+[deps]
+
+files=["res://.godot/imported/back_bat_wings_seated_dark.obj-c51799c0a5d1aa40af2cfcc2b0bad8cf.mesh"]
+
+source_file="res://characters/meshes/back_bat_wings_seated_dark.obj"
+dest_files=["res://.godot/imported/back_bat_wings_seated_dark.obj-c51799c0a5d1aa40af2cfcc2b0bad8cf.mesh", "res://.godot/imported/back_bat_wings_seated_dark.obj-c51799c0a5d1aa40af2cfcc2b0bad8cf.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

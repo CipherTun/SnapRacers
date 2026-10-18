@@ -9,7 +9,21 @@ extends Node
 
 ## The stock karts, which the AI drives and anyone can pick.
 const STOCK := "res://data/karts/stock"
-const STARTER := STOCK + "/starter.json"
+## The kart you start with, and the one player 2 starts with.
+const DEFAULT_STOCK := "kart_kid"
+const PLAYER_TWO_STOCK := "volt"
+const STARTER := STOCK + "/" + DEFAULT_STOCK + ".json"
+## The old stock karts, by id, and the new one each became, for settings
+## saved before they went.
+const OLD_STOCK := {
+	"starter": "kart_kid", "classic": "kart_kid", "sparky": "volt", "featherlight": "volt",
+	"downforce": "redline", "soapbox": "redline", "streamliner": "night_shift",
+	"rocket": "quarter_mile", "slingshot": "quarter_mile", "hot_rod": "flathead",
+	"brick_tank": "big_block", "bruiser": "long_haul", "monster": "crusher",
+	"six_wheeler": "six_pack", "mudlark": "mudlark_quad", "trike": "tiddler",
+	"tourer": "sunday_trike", "trikester": "twin_nose", "superbike": "streak",
+	"dirt_bike": "scrambler", "chopper": "long_fork", "scooter": "zippy",
+}
 ## The kart you were last working on, kept between launches.
 const CURRENT_KART := "user://current_kart.json"
 ## The driver you last built, kept between launches too.
@@ -76,6 +90,7 @@ func _ready() -> void:
 	# Esc and Back still work while a race is paused.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	settings.load(SETTINGS)
+	_move_old_stock()
 	if FileAccess.file_exists(CURRENT_KART):
 		design = KartDesign.load_file(CURRENT_KART)
 	if design == null or design.parts.is_empty():
@@ -415,10 +430,10 @@ func race_split() -> String:
 ## Which kart player 2 drives: a stock kart by its file name, or the one in
 ## the garage (OWN_KART).
 func player_two_kart() -> String:
-	var key: String = settings.get_value("race", "player_two", "sparky")
+	var key := stock_id(settings.get_value("race", "player_two", PLAYER_TWO_STOCK))
 	if key == OWN_KART and design.problems().is_empty():
 		return key
-	return key if stock_keys().has(key) else "sparky"
+	return key if stock_keys().has(key) else PLAYER_TWO_STOCK
 
 
 func player_two_design() -> KartDesign:
@@ -433,6 +448,11 @@ func player_two_name() -> String:
 	return name if name != "" and name != player_name() else "Player 2"
 
 
+## A stock kart id, with an old one swapped for its new id.
+func stock_id(key: String) -> String:
+	return OLD_STOCK.get(key, key)
+
+
 ## The stock karts' file names, without .json, in order.
 func stock_keys() -> Array[String]:
 	var keys: Array[String] = []
@@ -444,7 +464,19 @@ func stock_keys() -> Array[String]:
 
 
 func stock_kart(key: String) -> KartDesign:
-	return KartDesign.load_file("%s/%s.json" % [STOCK, key])
+	return KartDesign.load_file("%s/%s.json" % [STOCK, stock_id(key)])
+
+
+## Swaps old stock kart ids in the settings for the new ones and saves, once.
+func _move_old_stock() -> void:
+	var moved := false
+	for key in ["kart", "player_two"]:
+		var old: String = str(settings.get_value("race", key, ""))
+		if OLD_STOCK.has(old):
+			settings.set_value("race", key, OLD_STOCK[old])
+			moved = true
+	if moved:
+		save_settings()
 
 
 ## The AI drivers, by their file names in the roster. The Racer is yours.
@@ -486,7 +518,7 @@ func draw_ranks(drivers: Array) -> Dictionary:
 ## Which kart you race in: OWN_KART for the one from the garage, or a stock
 ## kart's key.
 func kart_choice() -> String:
-	var key: String = settings.get_value("race", "kart", OWN_KART)
+	var key := stock_id(settings.get_value("race", "kart", OWN_KART))
 	return key if key == OWN_KART or stock_keys().has(key) else OWN_KART
 
 

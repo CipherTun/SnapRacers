@@ -32,8 +32,8 @@ var map: CourseMap
 
 var _place: Label
 var _lap: Label
-## The power-ups you're holding, for when there are no touch buttons to show them.
-var _held: Label
+## The power-ups you're holding, in two boxes at the bottom in the middle.
+var _slots: PowerupSlots
 var _clock: Label
 var _corner: VBoxContainer
 var _safe: SafeArea
@@ -66,6 +66,8 @@ static var clock_at := "right"
 ## fades to after that.
 const LOST_SHOWN_FOR := 15.0
 const LOST_FADED := 0.2
+## How far up from the bottom the power-up boxes sit.
+const SLOTS_UP := 16.0
 ## The pills' colours.
 const PILL := Color(0.04, 0.04, 0.1, 0.55)
 const BEST := Color("#7dff8a")
@@ -84,9 +86,8 @@ func _ready() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 
-	# Your place and lap, and the power-ups you're holding, in pills together
-	# in the top left corner so they can move out of a camera hole's way as
-	# one.
+	# Your place and lap in a pill in the top left corner, with the map under
+	# it, so they can move out of a camera hole's way as one.
 	var corner := VBoxContainer.new()
 	_corner = corner
 	corner.mouse_filter = MOUSE_FILTER_IGNORE
@@ -99,8 +100,6 @@ func _ready() -> void:
 	standing.add_child(lines)
 	_place = _label(44, lines)
 	_lap = _label(24, lines)
-	_held = _label(22, _pill(corner))
-	_held.add_theme_color_override("font_color", Color("#f2cd37"))
 	# With two on one phone they share one map between them (see Race).
 	if race != null and me != null and race.humans.size() < 2:
 		map = CourseMap.new()
@@ -168,14 +167,24 @@ func _ready() -> void:
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.get_parent().visible = false
 
-	# What's going on, at the bottom in the middle between the controls.
+	# The power-ups you're holding, at the bottom in the middle between the
+	# controls, always there so nothing moves when one's picked up.
+	_slots = PowerupSlots.new()
+	add_child(_slots)
+	_slots.set_anchors_and_offsets_preset(PRESET_CENTER_BOTTOM)
+	_slots.offset_left = -_slots.custom_minimum_size.x * 0.5
+	_slots.offset_right = _slots.custom_minimum_size.x * 0.5
+	_slots.offset_top = -SLOTS_UP - PowerupSlots.BOX
+	_slots.offset_bottom = -SLOTS_UP
+
+	# What's going on, just above the power-ups.
 	var bottom := HBoxContainer.new()
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
-	bottom.offset_top = -78.0
-	bottom.offset_bottom = -24.0
+	bottom.offset_bottom = -SLOTS_UP - PowerupSlots.BOX - 10.0
+	bottom.offset_top = bottom.offset_bottom - 54.0
 	var status_pill := _pill(bottom)
 	var status_lines := VBoxContainer.new()
 	status_lines.add_theme_constant_override("separation", 4)
@@ -247,7 +256,7 @@ func _ready() -> void:
 	var safe := SafeArea.new()
 	_safe = safe
 	add_child(safe)
-	for control in [corner, _menu, _camera, _fps, top, right, bottom]:
+	for control in [corner, _menu, _camera, _fps, top, right, bottom, _slots]:
 		safe.watch(control)
 
 
@@ -359,12 +368,8 @@ func _process(delta: float) -> void:
 		_lap.text = "Lap %d / %d" % [me.progress.current_lap(), race.laps]
 	if me.progress.finished:
 		_lap.text = "Finished"
-	var names := []
-	for slot in Powerups.HOLD:
-		if me.kart.held[slot] != "":
-			names.append(held_name(me.kart, slot))
-	_held.get_parent().visible = not trial and not names.is_empty()
-	_held.text = "  ".join(names)
+	_slots.visible = not trial and not _results.visible
+	_slots.show_held(me.kart.held, me.kart.held_uses)
 	if touch != null:
 		for slot in Powerups.HOLD:
 			touch.gadget_names[slot] = held_name(me.kart, slot).replace(" x", "\n") if me.kart.held[slot] != "" else ""

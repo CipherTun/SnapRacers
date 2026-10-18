@@ -1,5 +1,5 @@
 {
-	"_comment": "Every piece a driver can be built from. Mass is in kg and adds up to the driver's weight, which sets their class and how the kart handles with them in it. The shapes are made in scripts/character/looks, one file for each kind of piece, by style name. Faces and facial hair are printed on the head in scripts/character/face_print.gd. Hair has its own colours. A hat that covers the top of the head hides the top of the hair and leaves what hangs below it.",
+	"_comment": "Every piece a driver can be built from. Mass is in kg and adds up to the driver's weight, which sets their class and how the kart handles with them in it. The shapes are modelled in tools/characters, by style name, and listed in pieces_made.json. Faces and most facial hair are printed on the head in scripts/character/face_print.gd. Hair has its own colours. A hat that covers the top of the head hides the top of the hair and leaves what hangs below it.",
 	"palette": [
 		"#f2cd37",
 		"#f5c8a8",
@@ -304,8 +304,7 @@
 	"headgear": {
 		"none": {
 			"name": "Nothing",
-			"mass": 0.0,
-			"covers": false
+			"mass": 0.0
 		},
 		"racing_helmet": {
 			"name": "Racing helmet",
@@ -329,8 +328,7 @@
 		},
 		"headband": {
 			"name": "Headband and goggles",
-			"mass": 0.5,
-			"covers": false
+			"mass": 0.5
 		},
 		"top_hat": {
 			"name": "Top hat",
@@ -338,13 +336,11 @@
 		},
 		"crown": {
 			"name": "Crown",
-			"mass": 1.2,
-			"covers": false
+			"mass": 1.2
 		},
 		"tiara": {
 			"name": "Tiara",
-			"mass": 0.4,
-			"covers": false
+			"mass": 0.4
 		},
 		"mushroom": {
 			"name": "Spotted mushroom hat",
@@ -384,8 +380,7 @@
 		},
 		"party": {
 			"name": "Party hat",
-			"mass": 0.2,
-			"covers": false
+			"mass": 0.2
 		},
 		"beret": {
 			"name": "Beret",
@@ -393,8 +388,7 @@
 		},
 		"horns": {
 			"name": "Horns",
-			"mass": 0.6,
-			"covers": false
+			"mass": 0.6
 		}
 	},
 	"neck": {

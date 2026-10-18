@@ -22,6 +22,8 @@ const TALL := 256
 const INK := Color("#1b1b1b")
 const LIPS := Color("#c4283c")
 const CHEEKS := Color("#f08c8c")
+const TONGUE := Color("#ea6f84")
+const MOUTH := Color("#9c2235")
 
 ## The moods a face can be painted in.
 const MOODS := ["blink", "surprised", "happy", "laugh", "cross"]
@@ -232,19 +234,21 @@ static func _mouth(kind: String) -> Array:
 		"grin":
 			out.append(_custom(func(p): return maxf(p.distance_to(Vector2.ZERO) - 0.05, p.y + 0.012), Rect2(-0.05, -0.05, 0.1, 0.04), INK))
 			out.append(_custom(func(p): return maxf(p.distance_to(Vector2.ZERO) - 0.046, maxf(p.y + 0.014, -p.y - 0.026)), Rect2(-0.046, -0.026, 0.092, 0.013), Color.WHITE))
+			out.append(_custom(func(p): return maxf(_ellipse_d(p, Vector2(0.0, -0.047), Vector2(0.024, 0.012)), p.distance_to(Vector2.ZERO) - 0.045), Rect2(-0.024, -0.05, 0.048, 0.015), TONGUE))
 		"flat":
 			out.append(_segment(Vector2(-0.025, -0.03), Vector2(0.025, -0.03), 0.003, INK))
 		"smirk":
 			out.append(_arc(Vector2(0.01, 0.0), 0.04, deg_to_rad(215.0), deg_to_rad(330.0), 0.003, INK))
 		"open":
 			out.append(_custom(func(p): return maxf(p.distance_to(Vector2(0.0, -0.012)) - 0.036, p.y + 0.018), Rect2(-0.036, -0.048, 0.072, 0.03), INK))
-			out.append(_ellipse(Vector2(0.0, -0.04), Vector2(0.018, 0.007), LIPS))
+			out.append(_ellipse(Vector2(0.0, -0.04), Vector2(0.018, 0.007), TONGUE))
 		"frown":
 			out.append(_arc(Vector2(0.0, -0.06), 0.035, deg_to_rad(40.0), deg_to_rad(140.0), 0.003, INK))
 		"small":
 			out.append(_arc(Vector2(0.0, -0.005), 0.025, deg_to_rad(235.0), deg_to_rad(305.0), 0.0028, INK))
 		"o":
-			out.append(_ellipse(Vector2(0.0, -0.032), Vector2(0.01, 0.013), INK))
+			out.append(_ellipse(Vector2(0.0, -0.032), Vector2(0.011, 0.014), INK))
+			out.append(_ellipse(Vector2(0.0, -0.035), Vector2(0.0065, 0.008), MOUTH))
 		"gritted":
 			out.append(_box(Vector2(0.0, -0.032), Vector2(0.03, 0.011), 0.004, INK))
 			out.append(_box(Vector2(0.0, -0.032), Vector2(0.027, 0.008), 0.003, Color.WHITE))
@@ -264,14 +268,15 @@ static func _mouth(kind: String) -> Array:
 				out.append(_custom(func(p): return _triangle(p, Vector2(x - 0.006, -0.0135), Vector2(x + 0.006, -0.0135), tip), Rect2(x - 0.006, -0.03, 0.012, 0.017), Color.WHITE))
 		"laugh":
 			out.append(_custom(func(p): return maxf(p.distance_to(Vector2(0.0, 0.0)) - 0.045, p.y + 0.01), Rect2(-0.045, -0.045, 0.09, 0.035), INK))
-			out.append(_ellipse(Vector2(0.0, -0.036), Vector2(0.022, 0.008), LIPS))
+			out.append(_ellipse(Vector2(0.0, -0.036), Vector2(0.022, 0.008), TONGUE))
 		"wobbly":
 			for k in 4:
 				var a := Vector2(-0.028 + k * 0.014, -0.03 + (0.004 if k % 2 == 0 else -0.004))
 				var b := Vector2(-0.014 + k * 0.014, -0.03 + (-0.004 if k % 2 == 0 else 0.004))
 				out.append(_segment(a, b, 0.0025, INK))
 		_:
-			out.append(_arc(Vector2(0.0, 0.025), 0.05, deg_to_rad(210.0), deg_to_rad(330.0), 0.003, INK))
+			# A thin smile, its ends clear of the eyes.
+			out.append(_arc(Vector2(0.0, 0.019), 0.05, deg_to_rad(222.0), deg_to_rad(318.0), 0.003, INK))
 	return out
 
 
@@ -305,7 +310,9 @@ static func _extras(extras: Array, under: bool) -> Array:
 	return out
 
 
-## Facial hair, printed under the face's features in its own colour.
+## Facial hair, printed under the face's features in its own colour. Sideburns
+## and the beard part of full, long and braided beards are raised pieces
+## instead, made in tools/characters/beards.py.
 static func _beard(style: String, c: Color) -> Array:
 	var out := []
 	var moustache := func(width: float, depth: float, y := -0.008) -> Array:
@@ -335,11 +342,9 @@ static func _beard(style: String, c: Color) -> Array:
 		"chinstrap":
 			out.append(_custom(func(p): return absf(_ellipse_d(p, Vector2(0.0, -0.01), Vector2(0.09, 0.085))) - 0.006 if p.y < -0.01 else 1.0, Rect2(-0.1, -0.1, 0.2, 0.09), c))
 		"full", "long", "braided":
-			out.append(_custom(func(p): return maxf(_ellipse_d(p, Vector2(0.0, -0.03), Vector2(0.095, 0.085)), p.y + 0.005), Rect2(-0.095, -0.1, 0.19, 0.095), c))
+			# The beard itself is raised (tools/characters/beards.py), with the
+			# moustache printed over the mouth inside it.
 			out.append_array(moustache.call(0.036, 0.011))
-		"sideburns":
-			for side in [-1.0, 1.0]:
-				out.append(_box(Vector2(0.105 * side, 0.01), Vector2(0.012, 0.04), 0.005, c))
 		"mutton":
 			for side in [-1.0, 1.0]:
 				out.append(_custom(func(p): return minf(_box_d(p, Vector2(0.1 * side, 0.01), Vector2(0.014, 0.04), 0.005), _ellipse_d(p, Vector2(0.075 * side, -0.035), Vector2(0.035, 0.028))), Rect2(-0.12 if side < 0.0 else 0.04, -0.065, 0.08, 0.12), c))

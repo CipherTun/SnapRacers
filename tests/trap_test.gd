@@ -17,7 +17,7 @@ class Runner:
 
 	func make_kart(key: String, at: Vector3) -> Kart:
 		var kart := Kart.new()
-		kart.build(KartDesign.load_file("res://data/karts/stock/%s.json" % key))
+		kart.build(KartDesign.load_file("res://tests/data/legacy/%s.json" % key))
 		kart.position = at
 		add_child(kart)
 		return kart

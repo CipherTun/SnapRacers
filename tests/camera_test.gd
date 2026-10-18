@@ -28,7 +28,7 @@ func _ready() -> void:
 	add_child(host)
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
-	Game.settings.set_value("race", "kart", "starter")
+	Game.settings.set_value("race", "kart", "kart_kid")
 	var was_view := Game.camera_view(0)
 	Game.settings.set_value("camera", "player_1", "chase")
 	Game.start_practice(Tracks.path_of("peach_pit"))
@@ -87,11 +87,26 @@ func _ready() -> void:
 	check(not camera.get_cull_mask_value(camera.head_layer), "and leaves out their own head")
 	var head_layers := kart.find_children("*", "VisualInstance3D", true, false).filter(func(n): return n.layers == 1 << (camera.head_layer - 1))
 	check(not head_layers.is_empty(), "which is on its own layer (%d pieces)" % head_layers.size())
+	var see_through := ViewBlockers.see_through_layer(camera.head_layer)
+	var blocking := ViewBlockers.blocking_layer(camera.head_layer)
+	check(camera.get_cull_mask_value(see_through) and not camera.get_cull_mask_value(blocking), "and draws the parts in the way see-through")
+	check(not camera.get_cull_mask_value(ViewBlockers.see_through_layer(RaceCamera.head_layer_of(1))), "but not player 2's")
+	# A truck's cab is in the way, and its see-through copy goes with it.
+	var truck := Kart.new()
+	truck.build(Game.stock_kart("crusher"))
+	truck.head_layer = camera.head_layer
+	var on_layer := func(layer: int) -> Array:
+		return truck.find_children("*", "MeshInstance3D", true, false).filter(func(n): return n.layers == 1 << (layer - 1) and not n.is_queued_for_deletion())
+	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "a truck's cab is drawn twice, solid and see-through")
+	truck.repair_now()
+	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "and still just once each when it's put back together")
+	truck.free()
 
 	camera.set_view("bumper")
 	await physics_frames(2)
 	check(gap.call().dot(ahead.call()) > 0.8 and gap.call().dot(kart.global_basis.y) < 0.6, "bumper is low down on the nose")
 	check(camera.get_cull_mask_value(camera.head_layer), "and shows the driver's head again")
+	check(camera.get_cull_mask_value(blocking) and not camera.get_cull_mask_value(see_through), "and the parts in the way solid")
 
 	camera.set_view("overhead")
 	await physics_frames(60)

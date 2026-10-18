@@ -14,9 +14,9 @@ func _ready() -> void:
 	host = Node.new()
 	add_child(host)
 	Game.start(host, false)
-	Game.design = Game.stock_kart("rocket").duplicate_design()
+	Game.design = Game.stock_kart("quarter_mile").duplicate_design()
 	Game.character = Game.roster_driver("racer").duplicate_design()
-	Game.settings.set_value("race", "kart", "rocket")
+	Game.settings.set_value("race", "kart", "quarter_mile")
 
 	Game.show_garage()
 	var garage: Garage = await screen_of(Garage)
@@ -27,7 +27,7 @@ func _ready() -> void:
 	Game.show_kart_picker(Game.show_menu, Game.show_menu, true)
 	var picker: KartPicker = await screen_of(KartPicker)
 	await ready_pictures()
-	var card: Control = picker._cards["streamliner"]
+	var card: Control = picker._cards["night_shift"]
 	for node in picker.find_children("*", "ScrollContainer", true, false):
 		if node.is_ancestor_of(card):
 			node.scroll_vertical = roundi(card.position.y)

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://63lwb4ivvxor"
+path="res://.godot/imported/headgear_racing_helmet_glass.obj-a6c57e5ac7fc1a6a702a14c9d572c21d.mesh"
+
+[deps]
+
+files=["res://.godot/imported/headgear_racing_helmet_glass.obj-a6c57e5ac7fc1a6a702a14c9d572c21d.mesh"]
+
+source_file="res://characters/meshes/headgear_racing_helmet_glass.obj"
+dest_files=["res://.godot/imported/headgear_racing_helmet_glass.obj-a6c57e5ac7fc1a6a702a14c9d572c21d.mesh", "res://.godot/imported/headgear_racing_helmet_glass.obj-a6c57e5ac7fc1a6a702a14c9d572c21d.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

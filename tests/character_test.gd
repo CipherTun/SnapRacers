@@ -1,7 +1,9 @@
 extends SceneTree
 
-## Builds every driver piece, checks the roster, and checks that drivers
-## really do hold the steering wheel and follow it around.
+## Builds every driver piece, baked a mesh a bone, checks the figure made in
+## tools/characters matches the rig and doesn't clip, checks the roster, and
+## checks that drivers really do hold the steering wheel and follow it
+## around.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/character_test.gd
 
@@ -90,8 +92,239 @@ class Runner:
 	func _ready() -> void:
 		add_child(TestTrack.new())
 
-		# Every style of every piece builds, sitting and standing.
+		# The meshes made in tools/characters are for this rig, and they all
+		# loaded with something in them.
+		var mismatches := CharacterRig.figure_mismatches()
+		check(mismatches.is_empty(), "figure.json matches the rig %s" % [mismatches])
+		var empty := []
+		var figure: Dictionary = CharacterMesh.made().get("figure", {})
+		for piece in figure:
+			for sitting in [false, true]:
+				var regions := CharacterMesh.figure_regions(piece, sitting)
+				for region in regions:
+					var mesh: Mesh = regions[region]
+					if mesh == null or mesh.get_surface_count() == 0 or mesh.get_aabb().size.length() < 0.01:
+						empty.append("%s %s" % [piece, region])
+		check(figure.size() >= 10 and empty.is_empty(), "the figure's %d pieces all load %s" % [figure.size(), empty])
+
+		# Every neck piece is made in tools/characters, and its meshes load.
+		var missing := []
+		for style in CharacterDesign.styles("neck"):
+			if style == "none":
+				continue
+			var entry := CharacterMesh.style("neck", style)
+			if entry.is_empty():
+				missing.append(style)
+				continue
+			for region in entry.regions:
+				var mesh := CharacterMesh.mesh(entry.regions[region])
+				if mesh == null or mesh.get_surface_count() == 0:
+					missing.append("%s %s" % [style, region])
+		check(missing.is_empty(), "every neck piece is made and loads %s" % [missing])
+
+		# Every hairdo and its cut version for under hats, and the raised
+		# facial hair, are made in tools/characters and load.
+		missing = []
+		var raised := ["full", "long", "braided", "sideburns"]
+		for slot in ["hair", "facial_hair"]:
+			for style in CharacterDesign.styles(slot):
+				if style == "none" or (slot == "facial_hair" and not style in raised):
+					continue
+				var entry := CharacterMesh.style(slot, style)
+				var shapes := [entry.get("regions", {})]
+				if slot == "hair":
+					shapes.append(entry.get("cut", {}).get("regions", {}))
+				for regions in shapes:
+					if regions.is_empty():
+						missing.append("%s %s" % [slot, style])
+					for region in regions:
+						var mesh := CharacterMesh.mesh(regions[region])
+						if mesh == null or mesh.get_surface_count() == 0:
+							missing.append("%s %s %s" % [slot, style, region])
+		check(missing.is_empty() and CharacterDesign.styles("hair").size() >= 20 and CharacterDesign.styles("facial_hair").size() >= 20,
+				"every hairdo, its cut version and the raised facial hair are made and load %s" % [missing])
+
+		# Every piece of headgear is made in tools/characters and loads, says
+		# what hair shows under it, and what's worn on the hair is made for
+		# or fits every hairdo.
+		missing = []
+		for style in CharacterDesign.styles("headgear"):
+			if style == "none":
+				continue
+			var entry := CharacterMesh.style("headgear", style)
+			var regions: Dictionary = entry.get("regions", {})
+			if regions.is_empty() or not entry.get("hair", "") in ["cut", "hidden", "full"]:
+				missing.append(style)
+			for region in regions:
+				var mesh := CharacterMesh.mesh(regions[region])
+				if mesh == null or mesh.get_surface_count() == 0:
+					missing.append("%s %s" % [style, region])
+			if entry.get("hair", "") == "full":
+				for hair in CharacterDesign.styles("hair"):
+					var made_on: Dictionary = entry.get("on_" + str(hair), {})
+					if not made_on.is_empty():
+						for region in made_on.get("regions", {}):
+							var on_mesh := CharacterMesh.mesh(made_on.regions[region])
+							if on_mesh == null or on_mesh.get_surface_count() == 0:
+								missing.append("%s on %s %s" % [style, hair, region])
+					elif not entry.get("fit", {}).has(hair) and not (hair == "none" and entry.has("on_short")):
+						missing.append("%s on %s" % [style, hair])
+		check(missing.is_empty() and CharacterDesign.styles("headgear").size() >= 20, "every piece of headgear is made and loads %s" % [missing])
+
+		# Every torso and arm style is made in tools/characters and loads,
+		# each arm and hand on its own bone.
+		missing = []
+		for slot in ["torso", "arms"]:
+			for style in CharacterDesign.styles(slot):
+				var entry := CharacterMesh.style(slot, style)
+				var shapes := {"": entry}
+				if slot == "arms":
+					for part in ["arm_r", "hand_l", "hand_r"]:
+						shapes[part] = entry.get(part, {})
+				for part in shapes:
+					var regions: Dictionary = shapes[part].get("regions", {})
+					if regions.is_empty():
+						missing.append("%s %s %s" % [slot, style, part])
+					for region in regions:
+						var mesh := CharacterMesh.mesh(regions[region])
+						if mesh == null or mesh.get_surface_count() == 0:
+							missing.append("%s %s %s %s" % [slot, style, part, region])
+				if slot == "arms" and (entry.get("bone", "") != "arm_l" or entry.get("arm_r", {}).get("bone", "") != "arm_r" or entry.get("hand_r", {}).get("bone", "") != "hand_r"):
+					missing.append("%s on the wrong bones" % style)
+		check(missing.is_empty() and CharacterDesign.styles("torso").size() >= 20 and CharacterDesign.styles("arms").size() >= 20,
+				"every torso and arm style is made and loads %s" % [missing])
+
+		# Every leg style is made in tools/characters and loads: the hips on
+		# the rig and each leg standing, seated and astride on the legs bone.
+		missing = []
+		for style in CharacterDesign.styles("legs"):
+			var entry := CharacterMesh.style("legs", style)
+			var shapes := {"": entry}
+			for pose in ["standing", "seated", "astride"]:
+				for side in ["l", "r"]:
+					shapes["%s_%s" % [pose, side]] = entry.get("%s_%s" % [pose, side], {})
+			for part in shapes:
+				var regions: Dictionary = shapes[part].get("regions", {})
+				if regions.is_empty():
+					missing.append("%s %s" % [style, part])
+				for region in regions:
+					var mesh := CharacterMesh.mesh(regions[region])
+					if mesh == null or mesh.get_surface_count() == 0:
+						missing.append("%s %s %s" % [style, part, region])
+				if part != "" and shapes[part].get("bone", "") != "legs":
+					missing.append("%s %s on the wrong bone" % [style, part])
+			if entry.get("bone", "") != "hips":
+				missing.append("%s hips on the wrong bone" % style)
+		check(missing.is_empty() and CharacterDesign.styles("legs").size() >= 20, "every leg style is made and loads %s" % [missing])
+
+		# Every back piece is made in tools/characters and loads, standing,
+		# seated, reclined and astride, all on the upper body, and a rig
+		# wears the shape for how it sits.
+		missing = []
+		for style in CharacterDesign.styles("back"):
+			if style == "none":
+				continue
+			var entry := CharacterMesh.style("back", style)
+			var shapes := {"": entry}
+			for pose in ["seated", "reclined", "astride"]:
+				shapes[pose] = entry.get(pose, {})
+			for part in shapes:
+				var regions: Dictionary = shapes[part].get("regions", {})
+				if regions.is_empty():
+					missing.append("%s %s" % [style, part])
+				for region in regions:
+					var mesh := CharacterMesh.mesh(regions[region])
+					if mesh == null or mesh.get_surface_count() == 0:
+						missing.append("%s %s %s" % [style, part, region])
+			if entry.get("bone", "") != "upper":
+				missing.append("%s on the wrong bone" % style)
+		check(missing.is_empty() and CharacterDesign.styles("back").size() >= 20, "every back piece is made and loads %s" % [missing])
+		var wearing := []
+		for way in [[false, false, 0.0, ""], [true, false, 0.0, "seated"], [true, false, 0.4, "seated"], [true, false, 1.0, "reclined"], [true, true, 0.0, "astride"]]:
+			var rig := CharacterRig.new(CharacterDesign.new(), way[0])
+			rig.astride = way[1]
+			rig.recline = way[2]
+			if rig.back_variant() != way[3]:
+				wearing.append("%s wanted, %s worn" % [way[3], rig.back_variant()])
+			rig.free()
+		check(wearing.is_empty(), "the rig wears the back piece's shape for how it sits %s" % [wearing])
+
+		# How far the figure's pieces go into each other in the rig's poses,
+		# measured in tools/characters on the real meshes.
+		var report = JSON.parse_string(FileAccess.get_file_as_string("res://data/characters/clipping.json"))
+		var fresh: bool = typeof(report) == TYPE_DICTIONARY
+		if fresh:
+			var made_for: Dictionary = report.get("figure", {})
+			for name in CharacterMesh.figure():
+				if name != "_comment" and str(made_for.get(name)) != str(CharacterMesh.figure()[name]):
+					fresh = false
+		check(fresh, "the clipping report is for this figure")
+		if fresh:
+			var clips := []
+			for overlap in report.overlaps:
+				if overlap.cm3 > report.limit_cm3:
+					clips.append("%s: %s into %s %.2f cm3" % [overlap.pose, overlap.a, overlap.b, overlap.cm3])
+			check(clips.is_empty() and report.poses.size() >= 10, "nothing clips in %d poses (worst %.3f cm3) %s" % [report.poses.size(), report.worst_cm3, clips])
+			var unchecked := []
+			for style in CharacterMesh.made().get("styles", {}).get("neck", {}):
+				if not report.get("styles", []).has("neck " + style):
+					unchecked.append(style)
+			check(unchecked.is_empty(), "the clipping report checks every neck piece %s" % [unchecked])
+			unchecked = []
+			for slot in ["hair", "facial_hair"]:
+				for style in CharacterMesh.made().get("styles", {}).get(slot, {}):
+					var names := ["%s %s" % [slot, style]]
+					if slot == "hair":
+						names.append("hair %s cut" % style)
+					for name in names:
+						if not report.get("styles", []).has(name):
+							unchecked.append(name)
+			check(unchecked.is_empty(), "the clipping report checks every hairdo, cut version and raised facial hair %s" % [unchecked])
+			unchecked = []
+			for slot in ["torso", "arms"]:
+				for style in CharacterMesh.made().get("styles", {}).get(slot, {}):
+					if not report.get("styles", []).has("%s %s" % [slot, style]):
+						unchecked.append("%s %s" % [slot, style])
+			check(unchecked.is_empty() and report.has("raised"), "the clipping report checks every torso and arm style %s" % [unchecked])
+			unchecked = []
+			for style in CharacterMesh.made().get("styles", {}).get("legs", {}):
+				if not report.get("styles", []).has("legs " + style):
+					unchecked.append(style)
+			check(unchecked.is_empty(), "the clipping report checks every leg style %s" % [unchecked])
+			unchecked = []
+			for style in CharacterMesh.made().get("styles", {}).get("back", {}):
+				if not report.get("styles", []).has("back " + style):
+					unchecked.append(style)
+			for seat in ["driver's seat", "bucket seat", "racing seat", "lay-down seat", "saddle"]:
+				if not report.get("seats", []).has(seat):
+					unchecked.append(seat)
+			check(unchecked.is_empty(), "the clipping report checks every back piece against the seats %s" % [unchecked])
+			# Every piece of headgear against every hairdo it shows: the cut
+			# version under a hat, the full one under what's worn on the hair.
+			unchecked = []
+			var checked: Dictionary = report.get("headgear_hair", {})
+			for style in CharacterMesh.made().get("styles", {}).get("headgear", {}):
+				if not report.get("styles", []).has("headgear " + style):
+					unchecked.append(style)
+				var under := CharacterRig.hair_under(style)
+				if under == "hidden":
+					continue
+				for hair in CharacterMesh.made().styles.hair:
+					var name: String = "hair %s cut" % hair if under == "cut" else "hair " + hair
+					if not checked.get(style, []).has(name):
+						unchecked.append("%s / %s" % [style, name])
+			check(unchecked.is_empty(), "the clipping report checks every headgear against every hairdo under it %s" % [unchecked])
+			var showing := []
+			for spot in report.get("uncovered", []):
+				showing.append("%s over %s at %s" % [spot.headgear, spot.hair, spot.degrees])
+			check(report.has("uncovered") and showing.is_empty(), "every hat covers the top edge of the cut hair under it %s" % [showing])
+
+		# Every style of every piece builds, sitting and standing, baked into
+		# a mesh a bone, with the face on its own.
 		var built := 0
+		var most_calls := 0
+		var bones_short := []
+		var started := Time.get_ticks_usec()
 		for slot in CharacterDesign.SLOTS:
 			for style in CharacterDesign.styles(slot):
 				var who := CharacterDesign.load_file("res://data/characters/roster/racer.json")
@@ -99,12 +332,64 @@ class Runner:
 				for sitting in [true, false]:
 					var rig := CharacterRig.new(who, sitting)
 					add_child(rig)
-					built += 1 if rig.find_children("*", "MeshInstance3D", true, false).size() > 10 else 0
+					var meshes := rig.find_children("*", "MeshInstance3D", true, false)
+					var calls := 0
+					for node in meshes:
+						calls += node.mesh.get_surface_count()
+					most_calls = maxi(most_calls, calls)
+					var on := {}
+					for node in meshes:
+						if node.name == "Baked":
+							on[node.get_parent()] = true
+					var wanted := [rig, rig.upper(), rig.head(), rig._arm[0], rig._arm[1], rig._hand[0], rig._hand[1]]
+					var all_on := wanted.all(func(n): return on.has(n))
+					if meshes.size() <= 9 and all_on:
+						built += 1
+					elif bones_short.size() < 5:
+						bones_short.append("%s %s (%d meshes)" % [slot, style, meshes.size()])
 					rig.queue_free()
 		var styles := 0
 		for slot in CharacterDesign.SLOTS:
 			styles += CharacterDesign.styles(slot).size()
-		check(built == styles * 2, "every piece builds, sitting and standing (%d of %d)" % [built, styles * 2])
+		check(built == styles * 2, "every piece builds sitting and standing, a mesh a bone (%d of %d) %s" % [built, styles * 2, bones_short])
+		check(most_calls <= 24, "a driver is at most %d surfaces to draw" % most_calls)
+		print("  (built %d drivers in %.0f ms, %.1f ms each)" % [styles * 2, (Time.get_ticks_usec() - started) / 1000.0, (Time.get_ticks_usec() - started) / 1000.0 / (styles * 2)])
+
+		# The same driver again is the same bake, not a new one.
+		var again_who := CharacterDesign.load_file("res://data/characters/roster/racer.json")
+		var first := CharacterRig.new(again_who, true)
+		add_child(first)
+		var second := CharacterRig.new(again_who.duplicate_design(), true)
+		add_child(second)
+		check(first.upper().get_node("Baked").mesh == second.upper().get_node("Baked").mesh, "a driver built twice is baked once")
+		# The same driver in an upright seat and lying back wears a different back piece.
+		var caped := again_who.duplicate_design()
+		caped.set_piece("back", "cape")
+		var upright := CharacterRig.new(caped, true)
+		add_child(upright)
+		var lying := CharacterRig.new(caped.duplicate_design(), true)
+		lying.recline = 1.0
+		add_child(lying)
+		check(upright.upper().get_node("Baked").mesh != lying.upper().get_node("Baked").mesh, "lying back is baked with the back piece's own shape")
+		for r in [upright, lying]:
+			r.free()
+		# Astride, the legs are a bone of their own, swung down.
+		var rider := CharacterRig.new(again_who, true)
+		rider.astride = true
+		add_child(rider)
+		check(rider.legs() != rider and rider.legs().has_node("Baked") and rider.has_node("Baked"), "astride, the legs are baked on their own bone")
+		for r in [first, second, rider]:
+			r.queue_free()
+
+		# Every driver on the roster builds.
+		var roster_ok := 0
+		var roster_files := DirAccess.get_files_at("res://data/characters/roster")
+		for file in roster_files:
+			var rig := CharacterRig.new(CharacterDesign.load_file("res://data/characters/roster/" + file), true)
+			add_child(rig)
+			roster_ok += 1 if rig.upper().has_node("Baked") else 0
+			rig.queue_free()
+		check(roster_ok == roster_files.size(), "every driver on the roster builds (%d)" % roster_ok)
 
 		# Every piece of headgear, hair, neckwear and backwear is joined on, to
 		# the head or the torso or to another piece that is. Nothing floats.
@@ -117,6 +402,7 @@ class Runner:
 				who.set_piece("headgear", "none")
 				who.set_piece(slot, style)
 				var rig := CharacterRig.new(who, false)
+				rig.bake = false
 				add_child(rig)
 				var loose := loose_headgear(rig) if slot in ["headgear", "hair"] else loose_on_torso(rig)
 				if loose > 0:
@@ -155,12 +441,12 @@ class Runner:
 		check(tread.weight_class() == "Heavy" and pip.weight_class() == "Light", "Tread is heavy (%.0f kg) and Pip is light (%.0f kg)" % [tread.mass(), pip.mass()])
 
 		# A kart has to have something to steer with.
-		var no_wheel := KartDesign.load_file("res://data/karts/stock/starter.json")
+		var no_wheel := KartDesign.load_file("res://tests/data/legacy/starter.json")
 		no_wheel.parts = no_wheel.parts.filter(func(p): return PartCatalog.get_part(p.id).kind != "steering")
 		check(no_wheel.problems().has("It needs a steering wheel or handlebars in front of the seat."), "a kart with no steering wheel says so")
 
 		# A heavy driver and a light one make different karts.
-		var design := KartDesign.load_file("res://data/karts/stock/starter.json")
+		var design := KartDesign.load_file("res://tests/data/legacy/starter.json")
 		kart = Kart.new()
 		kart.build(design, tread)
 		kart.transform = Transform3D(Basis.IDENTITY, Vector3(60.0, 0.05, 100.0))

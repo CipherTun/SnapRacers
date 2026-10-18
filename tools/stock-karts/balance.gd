@@ -4,7 +4,7 @@ extends Node
 ## they're close enough to each other that any of them can win. Each kart does
 ## two laps on its own, from a standing start. Run it with:
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tools/stock-karts/balance.tscn
-## Name karts or courses after -- to only do those, like -- rocket peach_pit.
+## Name karts or courses after -- to only do those, like -- redline peach_pit.
 ## With BALANCE_OUT set it also writes the times there, for balance.sh, which
 ## runs several of these at once and puts their times together. BALANCE_WEATHER
 ## selects the weather (clear by default); daytime and seed 12345 stay fixed.

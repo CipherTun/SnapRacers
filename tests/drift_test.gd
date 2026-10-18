@@ -35,7 +35,7 @@ class Runner:
 
 	func kart_at(x: float) -> Kart:
 		var kart := Kart.new()
-		kart.build(KartDesign.load_file("res://data/karts/stock/starter.json"))
+		kart.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
 		kart.transform = Transform3D(Basis.IDENTITY, Vector3(x, 0.05, 110.0))
 		add_child(kart)
 		return kart

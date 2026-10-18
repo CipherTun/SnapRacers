@@ -46,6 +46,10 @@ var ui: GarageUI
 ## your finger isn't covering it.
 var finger_lift := 90.0 if DisplayServer.is_touchscreen_available() else 0.0
 var mirror := false
+## Whether the wind is shown on the kart (see AirView).
+var air := false
+var _air: AirView
+var _rig: CharacterRig
 
 var _camera: Camera3D
 var _yaw := deg_to_rad(215.0)
@@ -90,6 +94,8 @@ var _known_cells := {}
 var _node_keys: Array[String] = []
 ## The stats for the card to show on the next frame, or null.
 var _card_stats: KartStats
+## The stats of the kart as it is now.
+var _stats: KartStats
 ## Whether the part in hand's spots are still to be found.
 var _spots_due := false
 ## The kart's open spots, and the parts they were worked out for (see
@@ -135,6 +141,8 @@ func _ready() -> void:
 	_add_baseplate()
 	_parts_root = Node3D.new()
 	add_child(_parts_root)
+	_air = AirView.new()
+	add_child(_air)
 	_make_dots()
 
 	_camera = Camera3D.new()
@@ -165,6 +173,7 @@ func _ready() -> void:
 	ui.redo_pressed.connect(redo)
 	ui.mirror_toggled.connect(set_mirror)
 	ui.paint_toggled.connect(set_painting)
+	ui.air_toggled.connect(set_air)
 	ui.view_pressed.connect(show_view)
 	ui.new_pressed.connect(_new_kart)
 	ui.save_pressed.connect(_save)
@@ -491,6 +500,24 @@ func set_mirror(on: bool) -> void:
 	_show_ghost()
 
 
+func set_air(on: bool) -> void:
+	air = on
+	ui.set_air(on)
+	_show_air()
+
+
+func _show_air() -> void:
+	_air.visible = air
+	if not air:
+		_air.clear()
+		return
+	var shapes: Array[Node3D] = []
+	shapes.append_array(_part_nodes)
+	if _rig != null:
+		shapes.append(_rig)
+	_air.show_for(_stats, shapes)
+
+
 func set_painting(on: bool) -> void:
 	_stop_placing()
 	select(-1)
@@ -609,6 +636,7 @@ func _rebuild() -> void:
 	for child in _parts_root.get_children():
 		if child is CharacterRig:
 			child.queue_free()
+	_rig = null
 	_part_nodes.clear()
 	_node_keys.clear()
 	_last_aim = []
@@ -635,8 +663,10 @@ func _rebuild() -> void:
 		# The stats put the kart's origin under the middle of it, so put that
 		# back onto the grid to find the seat.
 		var rig := CharacterRig.new(Game.character, true)
+		_rig = rig
 		rig.recline = stats.recline
 		rig.astride = stats.astride
+		rig.feet_forward = stats.feet_forward
 		rig.lively = true
 		rig.position = stats.seat_top + Grid.to_metres(stats.origin_cell)
 		_parts_root.add_child(rig)
@@ -658,6 +688,9 @@ func _rebuild() -> void:
 	# Checking for problems takes a while, so the card catches up on the
 	# next frame instead of holding this one up.
 	_card_stats = stats
+	_stats = stats
+	if air:
+		_show_air()
 	_refresh_ui()
 
 

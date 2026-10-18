@@ -11,7 +11,7 @@ import math
 import os
 
 import numpy as np
-from manifold3d import CrossSection, Manifold
+from manifold3d import CrossSection, Manifold, Mesh
 
 STUD = 0.25
 PLATE = 0.1
@@ -72,6 +72,34 @@ def profile_x(points, x0, x1):
     return solid.transform(np.array([[0, 0, 1, x0], [0, 1, 0, 0], [-1, 0, 0, 0]], dtype=float))
 
 
+def side(points):
+    """A side view, as (z, y) points going round, as a cross-section for
+    push_x. Cross-sections can be offset, rounded and cut before pushing."""
+    return CrossSection([_anticlockwise([(-z, y) for z, y in points])])
+
+
+def push_x(section, x0, x1):
+    """Pushes a side view cross-section out across from x0 to x1."""
+    solid = section.extrude(x1 - x0)
+    return solid.transform(np.array([[0, 0, 1, x0], [0, 1, 0, 0], [-1, 0, 0, 0]], dtype=float))
+
+
+def front(points):
+    """A front view, as (x, y) points going round, as a cross-section for
+    push_z."""
+    return CrossSection([_anticlockwise(list(points))])
+
+
+def push_z(section, z0, z1):
+    """Pushes a front view cross-section back from z0 to z1."""
+    return section.extrude(z1 - z0).translate([0, 0, z0])
+
+
+def rounded(section, r):
+    """The same cross-section with its outside corners rounded by r."""
+    return section.offset(-r).offset(r)
+
+
 def plan_y(points, y0, y1):
     """A top view, as (x, z) points going round, pushed up from y0 to y1."""
     section = CrossSection([_anticlockwise([(x, -z) for x, z in points])])
@@ -98,6 +126,16 @@ def union(parts):
 def manifold_op_add():
     from manifold3d import OpType
     return OpType.Add
+
+
+def mirror_x(solid):
+    """The solid mirrored across x = 0. It's made again from its triangles,
+    since manifold3d works out a mirrored solid's normals wrong, which shades
+    curves in ribs."""
+    mesh = solid.mirror([1, 0, 0]).to_mesh()
+    verts = np.array(np.asarray(mesh.vert_properties)[:, :3], np.float32)
+    tris = np.array(np.asarray(mesh.tri_verts), np.uint32)
+    return Manifold(Mesh(vert_properties=verts, tri_verts=tris))
 
 
 def cut(solid, *holes):

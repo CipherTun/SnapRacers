@@ -1,0 +1,14 @@
+{
+	"name": "Flat Track",
+	"about": "A low racing quad on wide grippy wheels. Fast and sharp in the bends, but it doesn't like the grass.",
+	"parts": [
+		{"id": "b_frame_quad_flat_track", "pos": [128.0, 18, 26], "turn": 0, "color": "#1b1b1b"},
+		{"id": "b_quad_front_flat_track", "pos": [146.0, 30, 8], "turn": 0, "color": "#f2cd37"},
+		{"id": "b_quad_back_flat_track", "pos": [146.0, 30, 128], "turn": 0, "color": "#f2cd37"},
+		{"id": "b_quad_bars", "pos": [180.0, 58, 60], "turn": 0},
+		{"id": "w_kart_wide", "pos": [128.0, 0, 16.0], "turn": 0, "color": "#635f61"},
+		{"id": "w_kart_wide", "pos": [272.0, 0, 64.0], "turn": 2, "color": "#635f61"},
+		{"id": "w_kart_wide", "pos": [128.0, 0, 136.0], "turn": 0, "color": "#635f61"},
+		{"id": "w_kart_wide", "pos": [272.0, 0, 184.0], "turn": 2, "color": "#635f61"}
+	]
+}
