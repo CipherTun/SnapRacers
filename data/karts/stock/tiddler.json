@@ -8,6 +8,6 @@
 		{"id": "w_scooter_small", "pos": [194.0, 0, 10.0], "turn": 0},
 		{"id": "w_scooter_small", "pos": [156.0, 0, 114.0], "turn": 0},
 		{"id": "w_scooter_small", "pos": [244.0, 0, 154.0], "turn": 2},
-		{"id": "p_brick_2x2", "pos": [180.0, 42, 124], "turn": 0, "color": "#7fd8be"}
+		{"id": "b_box_delta_trike", "pos": [180.0, 42, 124], "turn": 0}
 	]
 }

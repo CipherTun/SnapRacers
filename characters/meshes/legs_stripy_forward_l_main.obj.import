@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bguvreekrt1go"
+path="res://.godot/imported/legs_stripy_forward_l_main.obj-e85564039f67aaa193e75b51e1300a1c.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_stripy_forward_l_main.obj-e85564039f67aaa193e75b51e1300a1c.mesh"]
+
+source_file="res://characters/meshes/legs_stripy_forward_l_main.obj"
+dest_files=["res://.godot/imported/legs_stripy_forward_l_main.obj-e85564039f67aaa193e75b51e1300a1c.mesh", "res://.godot/imported/legs_stripy_forward_l_main.obj-e85564039f67aaa193e75b51e1300a1c.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

@@ -6,7 +6,8 @@ Each leg is made standing, in the rig's space (see figure.py), and turned to
 stick straight out for sitting. Skirts and gowns have their own shape for
 each pose: a bell standing, a drape over both legs sitting, and a drape round
 each leg on its own astride, kept up off the seat and out from between the
-legs. The hips stay the same in every pose.
+legs. Astride and forward (a chopper's pegs) the leg bends at the knee. The
+hips stay the same in every pose.
 
 Pieces are made for each side. The hips are on the rig and the legs on the
 legs bone, which swings down astride.
@@ -358,7 +359,7 @@ STYLES = {
 }
 # Styles whose own colour is shiny.
 METAL = {"robot_legs": 0.5}
-POSES = ("standing", "seated", "astride")
+POSES = ("standing", "seated", "astride", "forward")
 
 
 # Making them.
@@ -368,6 +369,17 @@ def seat(shape):
     the seat."""
     b = F.rot_x(math.pi * 0.5)
     return np.hstack([b, np.array([[0.0], [shape["depth"]], [0.0]])])
+
+
+def ride(solid, side, pose, top):
+    """A seated leg (or what's on it) riding a bike in `pose` (see
+    figure.RIDES): cut at the knee, the thigh swung down and out and the
+    shin bent down from it. `top` is how high the seated leg's top is."""
+    thigh_m, shin_m = F.ride_leg(side, pose, top)
+    thigh = solid.trim_by_plane([0.0, 0.0, 1.0], F.KNEE_Z)
+    shin = solid.trim_by_plane([0.0, 0.0, -1.0], -F.KNEE_Z)
+    # Lightly simplified, since the cut adds triangles.
+    return (thigh.transform(thigh_m) + shin.transform(shin_m)).simplify(0.0002)
 
 
 def _paint(regions, name, zone):
@@ -451,6 +463,9 @@ def make(style, hips_solid, keepout):
                 lap = _half(keep(rbox(-0.03, 0.13, -0.175, 0.03, 0.156, -0.112, 0.008)), side)
                 _cover(seated, "brown", lap)
                 _cover(astride, "brown", lap)
-        for pose, regions_ in (("standing", standing), ("seated", seated), ("astride", astride)):
+        top = 2.0 * st.shape["depth"]
+        forward = {k: ride(v, side, "forward", top) - keepout for k, v in astride.items()}
+        astride = {k: ride(v, side, "astride", top) - keepout for k, v in astride.items()}
+        for pose, regions_ in (("standing", standing), ("seated", seated), ("astride", astride), ("forward", forward)):
             out[(pose, side)] = {k: v for k, v in regions_.items() if not v.is_empty() and v.volume() > 1e-9}
     return out

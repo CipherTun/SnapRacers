@@ -1,6 +1,6 @@
 {
 	"name": "Sunday Trike",
-	"about": "A chopper trike with a long fork and a box of studs on the back. Steady and comfy, but slow to turn and heavy to stop.",
+	"about": "A chopper trike with a long fork and a big rounded body on the back. Steady and comfy, but slow to turn and heavy to stop.",
 	"parts": [
 		{"id": "b_frame_chopper_trike", "pos": [138.0, 20, 46], "turn": 0, "color": "#1b1b1b"},
 		{"id": "b_tank_chopper", "pos": [186.0, 71, 69], "turn": 0, "color": "#f2cd37"},

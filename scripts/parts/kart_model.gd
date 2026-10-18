@@ -30,6 +30,7 @@ static func make(design: KartDesign, driver: CharacterDesign = null) -> Node3D:
 		var rig := CharacterRig.new(driver if driver != null else Kart.default_driver(), true)
 		rig.recline = stats.recline
 		rig.astride = stats.astride
+		rig.feet_forward = stats.feet_forward
 		rig.position = stats.seat_top
 		root.add_child(rig)
 		if steering != null:

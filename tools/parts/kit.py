@@ -11,7 +11,7 @@ import math
 import os
 
 import numpy as np
-from manifold3d import CrossSection, Manifold
+from manifold3d import CrossSection, Manifold, Mesh
 
 STUD = 0.25
 PLATE = 0.1
@@ -126,6 +126,16 @@ def union(parts):
 def manifold_op_add():
     from manifold3d import OpType
     return OpType.Add
+
+
+def mirror_x(solid):
+    """The solid mirrored across x = 0. It's made again from its triangles,
+    since manifold3d works out a mirrored solid's normals wrong, which shades
+    curves in ribs."""
+    mesh = solid.mirror([1, 0, 0]).to_mesh()
+    verts = np.array(np.asarray(mesh.vert_properties)[:, :3], np.float32)
+    tris = np.array(np.asarray(mesh.tri_verts), np.uint32)
+    return Manifold(Mesh(vert_properties=verts, tri_verts=tris))
 
 
 def cut(solid, *holes):

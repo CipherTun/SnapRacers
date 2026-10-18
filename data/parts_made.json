@@ -32691,6 +32691,7 @@
 				"side": 0.8
 			},
 			"astride": true,
+			"feet_forward": true,
 			"driver_height": 7,
 			"control": 1.05,
 			"recline": 0,
@@ -32924,6 +32925,7 @@
 				"side": 0.8
 			},
 			"astride": true,
+			"feet_forward": true,
 			"driver_height": 7,
 			"control": 1.05,
 			"recline": 0,
@@ -33375,6 +33377,7 @@
 				"side": 0.8
 			},
 			"astride": true,
+			"feet_forward": true,
 			"driver_height": 7,
 			"control": 1.0,
 			"recline": 0,
@@ -33642,6 +33645,7 @@
 				"side": 0.8
 			},
 			"astride": true,
+			"feet_forward": true,
 			"driver_height": 7,
 			"control": 1.0,
 			"recline": 0,
@@ -33796,7 +33800,7 @@
 			"strength": 600.0
 		},
 		"b_body_chopper_trike": {
-			"name": "Chopper trike body",
+			"name": "Smooth chopper trike body",
 			"kind": "body",
 			"group": "bike",
 			"size": [
@@ -33889,162 +33893,6 @@
 						-1,
 						0
 					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						11.0,
-						26.0,
-						7.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						11.0,
-						26.0,
-						27.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						11.0,
-						26.0,
-						47.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						11.0,
-						26.0,
-						67.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						31.0,
-						26.0,
-						7.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						31.0,
-						26.0,
-						27.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						31.0,
-						26.0,
-						47.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						31.0,
-						26.0,
-						67.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						51.0,
-						26.0,
-						7.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						51.0,
-						26.0,
-						27.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						51.0,
-						26.0,
-						47.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
-				},
-				{
-					"type": "stud",
-					"at": [
-						51.0,
-						26.0,
-						67.0
-					],
-					"axis": [
-						0,
-						1,
-						0
-					]
 				}
 			],
 			"solids": [
@@ -34063,7 +33911,7 @@
 				"finish": "glass"
 			},
 			"light": "tail",
-			"about": "A chopper trike's body 3\u00d74 over the back axle, with studs on top.",
+			"about": "A chopper trike's smooth rounded body 3\u00d74 over the back axle.",
 			"aero": {
 				"front": 0.7,
 				"back": 0.9,
@@ -34175,6 +34023,95 @@
 			},
 			"mass": 0.4,
 			"strength": 500.0
+		},
+		"b_box_delta_trike": {
+			"name": "Little trike box",
+			"kind": "body",
+			"group": "bike",
+			"size": [
+				2,
+				3,
+				2
+			],
+			"fine_size": [
+				40.0,
+				24.0,
+				40.0
+			],
+			"color": "#7fd8be",
+			"mesh": "res://parts/meshes/b_box_delta_trike.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						30.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					40.0,
+					24.0,
+					40.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/b_box_delta_trike_trim.obj",
+				"color": "#f2f3f2",
+				"finish": "plastic"
+			},
+			"about": "A rounded box with a lid, for the deck on the back of the little trike.",
+			"mass": 1.0,
+			"strength": 600.0
 		}
 	}
 }

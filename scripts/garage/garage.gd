@@ -666,6 +666,7 @@ func _rebuild() -> void:
 		_rig = rig
 		rig.recline = stats.recline
 		rig.astride = stats.astride
+		rig.feet_forward = stats.feet_forward
 		rig.lively = true
 		rig.position = stats.seat_top + Grid.to_metres(stats.origin_cell)
 		_parts_root.add_child(rig)

@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bguyus1tlowcx"
+path="res://.godot/imported/legs_sneakers_astride_r_white.obj-a1110e3a900e22e2e5d3e6377469b4ee.mesh"
+
+[deps]
+
+files=["res://.godot/imported/legs_sneakers_astride_r_white.obj-a1110e3a900e22e2e5d3e6377469b4ee.mesh"]
+
+source_file="res://characters/meshes/legs_sneakers_astride_r_white.obj"
+dest_files=["res://.godot/imported/legs_sneakers_astride_r_white.obj-a1110e3a900e22e2e5d3e6377469b4ee.mesh", "res://.godot/imported/legs_sneakers_astride_r_white.obj-a1110e3a900e22e2e5d3e6377469b4ee.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

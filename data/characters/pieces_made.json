@@ -1,5 +1,5 @@
 {
-	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
+	"_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l', 'forward_r' (astride with the feet forward on a chopper's pegs) and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
 	"colours": {
 		"white": [
 			"#f2f2f2",
@@ -6071,29 +6071,57 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_trousers_seated_l_main.obj"
+						"main": "res://characters/meshes/legs_trousers_astride_l_main.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_trousers_seated_r_main.obj"
+						"main": "res://characters/meshes/legs_trousers_astride_r_main.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_trousers_forward_l_main.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_trousers_forward_r_main.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -6181,35 +6209,69 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_shorts_seated_l_main.obj",
-						"skin": "res://characters/meshes/legs_shorts_seated_l_skin.obj",
-						"white": "res://characters/meshes/legs_shorts_seated_l_white.obj",
-						"ink": "res://characters/meshes/legs_shorts_seated_l_ink.obj"
+						"main": "res://characters/meshes/legs_shorts_astride_l_main.obj",
+						"skin": "res://characters/meshes/legs_shorts_astride_l_skin.obj",
+						"white": "res://characters/meshes/legs_shorts_astride_l_white.obj",
+						"ink": "res://characters/meshes/legs_shorts_astride_l_ink.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_shorts_seated_r_main.obj",
-						"skin": "res://characters/meshes/legs_shorts_seated_r_skin.obj",
-						"white": "res://characters/meshes/legs_shorts_seated_r_white.obj",
-						"ink": "res://characters/meshes/legs_shorts_seated_r_ink.obj"
+						"main": "res://characters/meshes/legs_shorts_astride_r_main.obj",
+						"skin": "res://characters/meshes/legs_shorts_astride_r_skin.obj",
+						"white": "res://characters/meshes/legs_shorts_astride_r_white.obj",
+						"ink": "res://characters/meshes/legs_shorts_astride_r_ink.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_shorts_forward_l_main.obj",
+						"skin": "res://characters/meshes/legs_shorts_forward_l_skin.obj",
+						"white": "res://characters/meshes/legs_shorts_forward_l_white.obj",
+						"ink": "res://characters/meshes/legs_shorts_forward_l_ink.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_shorts_forward_r_main.obj",
+						"skin": "res://characters/meshes/legs_shorts_forward_r_skin.obj",
+						"white": "res://characters/meshes/legs_shorts_forward_r_white.obj",
+						"ink": "res://characters/meshes/legs_shorts_forward_r_ink.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -6289,31 +6351,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_boots_seated_l_main.obj",
-						"boot": "res://characters/meshes/legs_boots_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_boots_astride_l_main.obj",
+						"boot": "res://characters/meshes/legs_boots_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1822,
-						-0.0,
-						-0.3,
-						-0.0078,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0393,
+						0.0669,
+						-0.0493
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_boots_seated_r_main.obj",
-						"boot": "res://characters/meshes/legs_boots_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_boots_astride_r_main.obj",
+						"boot": "res://characters/meshes/legs_boots_astride_r_boot.obj"
 					},
 					"box": [
-						0.0078,
-						-0.0,
-						-0.3,
-						0.1822,
-						0.2,
-						-0.0948
+						0.0393,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0493
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_boots_forward_l_main.obj",
+						"boot": "res://characters/meshes/legs_boots_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2339,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_boots_forward_r_main.obj",
+						"boot": "res://characters/meshes/legs_boots_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2339,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -6393,31 +6485,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_skinny_seated_l_main.obj",
-						"boot": "res://characters/meshes/legs_skinny_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_skinny_astride_l_main.obj",
+						"boot": "res://characters/meshes/legs_skinny_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1554,
-						-0.0,
-						-0.3,
-						-0.0346,
-						0.191,
-						-0.0948
+						-0.2255,
+						-0.1206,
+						-0.2722,
+						-0.0664,
+						0.0514,
+						-0.0664
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_skinny_seated_r_main.obj",
-						"boot": "res://characters/meshes/legs_skinny_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_skinny_astride_r_main.obj",
+						"boot": "res://characters/meshes/legs_skinny_astride_r_boot.obj"
 					},
 					"box": [
-						0.0346,
-						-0.0,
-						-0.3,
-						0.1554,
-						0.191,
-						-0.0948
+						0.0664,
+						-0.1206,
+						-0.2722,
+						0.2255,
+						0.0514,
+						-0.0664
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_skinny_forward_l_main.obj",
+						"boot": "res://characters/meshes/legs_skinny_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2129,
+						-0.0025,
+						-0.32,
+						-0.0568,
+						0.1887,
+						-0.1006
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_skinny_forward_r_main.obj",
+						"boot": "res://characters/meshes/legs_skinny_forward_r_boot.obj"
+					},
+					"box": [
+						0.0568,
+						-0.0025,
+						-0.32,
+						0.2129,
+						0.1887,
+						-0.1006
 					]
 				}
 			},
@@ -6498,31 +6620,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_jeans_seated_l_main.obj",
-						"light": "res://characters/meshes/legs_jeans_seated_l_light.obj"
+						"main": "res://characters/meshes/legs_jeans_astride_l_main.obj",
+						"light": "res://characters/meshes/legs_jeans_astride_l_light.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_jeans_seated_r_main.obj",
-						"light": "res://characters/meshes/legs_jeans_seated_r_light.obj"
+						"main": "res://characters/meshes/legs_jeans_astride_r_main.obj",
+						"light": "res://characters/meshes/legs_jeans_astride_r_light.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_jeans_forward_l_main.obj",
+						"light": "res://characters/meshes/legs_jeans_forward_l_light.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_jeans_forward_r_main.obj",
+						"light": "res://characters/meshes/legs_jeans_forward_r_light.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -6606,12 +6758,12 @@
 						"gold": "res://characters/meshes/legs_gown_astride_l_gold.obj"
 					},
 					"box": [
-						-0.196,
-						-0.0,
-						-0.3,
-						-0.004,
-						0.2,
-						-0.0856
+						-0.2526,
+						-0.1034,
+						-0.2781,
+						-0.0432,
+						0.0675,
+						-0.0511
 					]
 				},
 				"astride_r": {
@@ -6621,12 +6773,42 @@
 						"gold": "res://characters/meshes/legs_gown_astride_r_gold.obj"
 					},
 					"box": [
-						0.004,
-						-0.0,
-						-0.3,
-						0.196,
-						0.2,
-						-0.0856
+						0.0432,
+						-0.1034,
+						-0.2781,
+						0.2526,
+						0.0675,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_gown_forward_l_main.obj",
+						"gold": "res://characters/meshes/legs_gown_forward_l_gold.obj"
+					},
+					"box": [
+						-0.2368,
+						-0.0023,
+						-0.3208,
+						-0.0268,
+						0.1978,
+						-0.0851
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_gown_forward_r_main.obj",
+						"gold": "res://characters/meshes/legs_gown_forward_r_gold.obj"
+					},
+					"box": [
+						0.0268,
+						-0.0023,
+						-0.3208,
+						0.2368,
+						0.1978,
+						-0.0851
 					]
 				}
 			},
@@ -6710,12 +6892,12 @@
 						"skin": "res://characters/meshes/legs_skirt_astride_l_skin.obj"
 					},
 					"box": [
-						-0.196,
-						-0.0,
-						-0.3,
-						-0.004,
-						0.2,
-						-0.0856
+						-0.2526,
+						-0.1034,
+						-0.2781,
+						-0.0432,
+						0.0675,
+						-0.0511
 					]
 				},
 				"astride_r": {
@@ -6725,12 +6907,42 @@
 						"skin": "res://characters/meshes/legs_skirt_astride_r_skin.obj"
 					},
 					"box": [
-						0.004,
-						-0.0,
-						-0.3,
-						0.196,
-						0.2,
-						-0.0856
+						0.0432,
+						-0.1034,
+						-0.2781,
+						0.2526,
+						0.0675,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_skirt_forward_l_main.obj",
+						"skin": "res://characters/meshes/legs_skirt_forward_l_skin.obj"
+					},
+					"box": [
+						-0.2306,
+						-0.0023,
+						-0.3208,
+						-0.0268,
+						0.1978,
+						-0.0851
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_skirt_forward_r_main.obj",
+						"skin": "res://characters/meshes/legs_skirt_forward_r_skin.obj"
+					},
+					"box": [
+						0.0268,
+						-0.0023,
+						-0.3208,
+						0.2306,
+						0.1978,
+						-0.0851
 					]
 				}
 			},
@@ -6829,17 +7041,17 @@
 						"main": "res://characters/meshes/legs_kilt_astride_l_main.obj",
 						"skin": "res://characters/meshes/legs_kilt_astride_l_skin.obj",
 						"white": "res://characters/meshes/legs_kilt_astride_l_white.obj",
-						"boot": "res://characters/meshes/legs_kilt_seated_l_boot.obj",
+						"boot": "res://characters/meshes/legs_kilt_astride_l_boot.obj",
 						"dark": "res://characters/meshes/legs_kilt_astride_l_dark.obj",
-						"brown": "res://characters/meshes/legs_kilt_seated_l_brown.obj"
+						"brown": "res://characters/meshes/legs_kilt_astride_l_brown.obj"
 					},
 					"box": [
-						-0.196,
-						-0.0,
-						-0.3,
-						0.0,
-						0.2,
-						-0.0856
+						-0.2526,
+						-0.1034,
+						-0.2781,
+						-0.0432,
+						0.0815,
+						-0.0511
 					]
 				},
 				"astride_r": {
@@ -6848,17 +7060,55 @@
 						"main": "res://characters/meshes/legs_kilt_astride_r_main.obj",
 						"skin": "res://characters/meshes/legs_kilt_astride_r_skin.obj",
 						"white": "res://characters/meshes/legs_kilt_astride_r_white.obj",
-						"boot": "res://characters/meshes/legs_kilt_seated_r_boot.obj",
-						"dark": "res://characters/meshes/legs_kilt_seated_r_dark.obj",
-						"brown": "res://characters/meshes/legs_kilt_seated_r_brown.obj"
+						"boot": "res://characters/meshes/legs_kilt_astride_r_boot.obj",
+						"dark": "res://characters/meshes/legs_kilt_astride_r_dark.obj",
+						"brown": "res://characters/meshes/legs_kilt_astride_r_brown.obj"
 					},
 					"box": [
-						0.0,
-						-0.0,
-						-0.3,
-						0.196,
-						0.2,
-						-0.0856
+						0.0432,
+						-0.1034,
+						-0.2781,
+						0.2526,
+						0.0815,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_kilt_forward_l_main.obj",
+						"skin": "res://characters/meshes/legs_kilt_forward_l_skin.obj",
+						"white": "res://characters/meshes/legs_kilt_forward_l_white.obj",
+						"boot": "res://characters/meshes/legs_kilt_forward_l_boot.obj",
+						"dark": "res://characters/meshes/legs_kilt_forward_l_dark.obj",
+						"brown": "res://characters/meshes/legs_kilt_forward_l_brown.obj"
+					},
+					"box": [
+						-0.2306,
+						-0.0023,
+						-0.3208,
+						-0.0252,
+						0.1978,
+						-0.0851
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_kilt_forward_r_main.obj",
+						"skin": "res://characters/meshes/legs_kilt_forward_r_skin.obj",
+						"white": "res://characters/meshes/legs_kilt_forward_r_white.obj",
+						"boot": "res://characters/meshes/legs_kilt_forward_r_boot.obj",
+						"dark": "res://characters/meshes/legs_kilt_forward_r_dark.obj",
+						"brown": "res://characters/meshes/legs_kilt_forward_r_brown.obj"
+					},
+					"box": [
+						0.0252,
+						-0.0023,
+						-0.3208,
+						0.2306,
+						0.1978,
+						-0.0851
 					]
 				}
 			},
@@ -6938,31 +7188,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_dino_feet_seated_l_main.obj",
-						"white": "res://characters/meshes/legs_dino_feet_seated_l_white.obj"
+						"main": "res://characters/meshes/legs_dino_feet_astride_l_main.obj",
+						"white": "res://characters/meshes/legs_dino_feet_astride_l_white.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.007,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_dino_feet_seated_r_main.obj",
-						"white": "res://characters/meshes/legs_dino_feet_seated_r_white.obj"
+						"main": "res://characters/meshes/legs_dino_feet_astride_r_main.obj",
+						"white": "res://characters/meshes/legs_dino_feet_astride_r_white.obj"
 					},
 					"box": [
-						0.007,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_dino_feet_forward_l_main.obj",
+						"white": "res://characters/meshes/legs_dino_feet_forward_l_white.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_dino_feet_forward_r_main.obj",
+						"white": "res://characters/meshes/legs_dino_feet_forward_r_white.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7047,33 +7327,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_robot_legs_seated_l_main.obj",
-						"dark": "res://characters/meshes/legs_robot_legs_seated_l_dark.obj",
-						"silver": "res://characters/meshes/legs_robot_legs_seated_l_silver.obj"
+						"main": "res://characters/meshes/legs_robot_legs_astride_l_main.obj",
+						"dark": "res://characters/meshes/legs_robot_legs_astride_l_dark.obj",
+						"silver": "res://characters/meshes/legs_robot_legs_astride_l_silver.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0726,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_robot_legs_seated_r_main.obj",
-						"dark": "res://characters/meshes/legs_robot_legs_seated_r_dark.obj",
-						"silver": "res://characters/meshes/legs_robot_legs_seated_r_silver.obj"
+						"main": "res://characters/meshes/legs_robot_legs_astride_r_main.obj",
+						"dark": "res://characters/meshes/legs_robot_legs_astride_r_dark.obj",
+						"silver": "res://characters/meshes/legs_robot_legs_astride_r_silver.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0726,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_robot_legs_forward_l_main.obj",
+						"dark": "res://characters/meshes/legs_robot_legs_forward_l_dark.obj",
+						"silver": "res://characters/meshes/legs_robot_legs_forward_l_silver.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_robot_legs_forward_r_main.obj",
+						"dark": "res://characters/meshes/legs_robot_legs_forward_r_dark.obj",
+						"silver": "res://characters/meshes/legs_robot_legs_forward_r_silver.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				},
 				"metallic": 0.5
@@ -7159,33 +7471,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_armoured_seated_l_main.obj",
-						"boot": "res://characters/meshes/legs_boots_seated_l_boot.obj",
-						"silver": "res://characters/meshes/legs_armoured_seated_l_silver.obj"
+						"main": "res://characters/meshes/legs_armoured_astride_l_main.obj",
+						"boot": "res://characters/meshes/legs_boots_astride_l_boot.obj",
+						"silver": "res://characters/meshes/legs_armoured_astride_l_silver.obj"
 					},
 					"box": [
-						-0.1822,
-						-0.0,
-						-0.3,
-						-0.0078,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0393,
+						0.075,
+						-0.0493
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_armoured_seated_r_main.obj",
-						"boot": "res://characters/meshes/legs_boots_seated_r_boot.obj",
-						"silver": "res://characters/meshes/legs_armoured_seated_r_silver.obj"
+						"main": "res://characters/meshes/legs_armoured_astride_r_main.obj",
+						"boot": "res://characters/meshes/legs_boots_astride_r_boot.obj",
+						"silver": "res://characters/meshes/legs_armoured_astride_r_silver.obj"
 					},
 					"box": [
-						0.0078,
-						-0.0,
-						-0.3,
-						0.1822,
-						0.2,
-						-0.0948
+						0.0393,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.075,
+						-0.0493
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_armoured_forward_l_main.obj",
+						"boot": "res://characters/meshes/legs_boots_forward_l_boot.obj",
+						"silver": "res://characters/meshes/legs_armoured_forward_l_silver.obj"
+					},
+					"box": [
+						-0.2339,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_armoured_forward_r_main.obj",
+						"boot": "res://characters/meshes/legs_boots_forward_r_boot.obj",
+						"silver": "res://characters/meshes/legs_armoured_forward_r_silver.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2339,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7269,33 +7613,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_stripy_seated_l_main.obj",
-						"white": "res://characters/meshes/legs_stripy_seated_l_white.obj",
-						"boot": "res://characters/meshes/legs_stripy_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_stripy_astride_l_main.obj",
+						"white": "res://characters/meshes/legs_stripy_astride_l_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_stripy_seated_r_main.obj",
-						"white": "res://characters/meshes/legs_stripy_seated_r_white.obj",
-						"boot": "res://characters/meshes/legs_stripy_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_stripy_astride_r_main.obj",
+						"white": "res://characters/meshes/legs_stripy_astride_r_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_astride_r_boot.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_stripy_forward_l_main.obj",
+						"white": "res://characters/meshes/legs_stripy_forward_l_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_stripy_forward_r_main.obj",
+						"white": "res://characters/meshes/legs_stripy_forward_r_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7375,31 +7751,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_flares_seated_l_main.obj",
-						"boot": "res://characters/meshes/legs_flares_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_flares_astride_l_main.obj",
+						"boot": "res://characters/meshes/legs_flares_astride_l_boot.obj"
 					},
 					"box": [
-						-0.19,
-						-0.0,
-						-0.3,
-						-0.01,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0428,
+						0.0669,
+						-0.0463
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_flares_seated_r_main.obj",
-						"boot": "res://characters/meshes/legs_flares_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_flares_astride_r_main.obj",
+						"boot": "res://characters/meshes/legs_flares_astride_r_boot.obj"
 					},
 					"box": [
-						0.01,
-						-0.0,
-						-0.3,
-						0.19,
-						0.2,
-						-0.0948
+						0.0428,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0463
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_flares_forward_l_main.obj",
+						"boot": "res://characters/meshes/legs_flares_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2439,
+						-0.0023,
+						-0.3208,
+						-0.0327,
+						0.1978,
+						-0.0955
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_flares_forward_r_main.obj",
+						"boot": "res://characters/meshes/legs_flares_forward_r_boot.obj"
+					},
+					"box": [
+						0.0327,
+						-0.0023,
+						-0.3208,
+						0.2439,
+						0.1978,
+						-0.0955
 					]
 				}
 			},
@@ -7485,33 +7891,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_cowboy_seated_l_main.obj",
-						"tan": "res://characters/meshes/legs_cowboy_seated_l_tan.obj",
-						"brown": "res://characters/meshes/legs_boots_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_cowboy_astride_l_main.obj",
+						"tan": "res://characters/meshes/legs_cowboy_astride_l_tan.obj",
+						"brown": "res://characters/meshes/legs_boots_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1822,
-						-0.0,
-						-0.3,
-						-0.0078,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0393,
+						0.0669,
+						-0.0493
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_cowboy_seated_r_main.obj",
-						"tan": "res://characters/meshes/legs_cowboy_seated_r_tan.obj",
-						"brown": "res://characters/meshes/legs_boots_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_cowboy_astride_r_main.obj",
+						"tan": "res://characters/meshes/legs_cowboy_astride_r_tan.obj",
+						"brown": "res://characters/meshes/legs_boots_astride_r_boot.obj"
 					},
 					"box": [
-						0.0078,
-						-0.0,
-						-0.3,
-						0.1822,
-						0.2,
-						-0.0948
+						0.0393,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0493
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_cowboy_forward_l_main.obj",
+						"tan": "res://characters/meshes/legs_cowboy_forward_l_tan.obj",
+						"brown": "res://characters/meshes/legs_boots_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2339,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_cowboy_forward_r_main.obj",
+						"tan": "res://characters/meshes/legs_cowboy_forward_r_tan.obj",
+						"brown": "res://characters/meshes/legs_boots_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2339,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7595,33 +8033,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_sneakers_seated_l_main.obj",
-						"white": "res://characters/meshes/legs_sneakers_seated_l_white.obj",
-						"ink": "res://characters/meshes/legs_sneakers_seated_l_ink.obj"
+						"main": "res://characters/meshes/legs_sneakers_astride_l_main.obj",
+						"white": "res://characters/meshes/legs_sneakers_astride_l_white.obj",
+						"ink": "res://characters/meshes/legs_sneakers_astride_l_ink.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_sneakers_seated_r_main.obj",
-						"white": "res://characters/meshes/legs_sneakers_seated_r_white.obj",
-						"ink": "res://characters/meshes/legs_sneakers_seated_r_ink.obj"
+						"main": "res://characters/meshes/legs_sneakers_astride_r_main.obj",
+						"white": "res://characters/meshes/legs_sneakers_astride_r_white.obj",
+						"ink": "res://characters/meshes/legs_sneakers_astride_r_ink.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_sneakers_forward_l_main.obj",
+						"white": "res://characters/meshes/legs_sneakers_forward_l_white.obj",
+						"ink": "res://characters/meshes/legs_sneakers_forward_l_ink.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_sneakers_forward_r_main.obj",
+						"white": "res://characters/meshes/legs_sneakers_forward_r_white.obj",
+						"ink": "res://characters/meshes/legs_sneakers_forward_r_ink.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7705,33 +8175,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_barefoot_seated_l_main.obj",
-						"skin": "res://characters/meshes/legs_barefoot_seated_l_skin.obj",
-						"light": "res://characters/meshes/legs_barefoot_seated_l_light.obj"
+						"main": "res://characters/meshes/legs_barefoot_astride_l_main.obj",
+						"skin": "res://characters/meshes/legs_barefoot_astride_l_skin.obj",
+						"light": "res://characters/meshes/legs_barefoot_astride_l_light.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_barefoot_seated_r_main.obj",
-						"skin": "res://characters/meshes/legs_barefoot_seated_r_skin.obj",
-						"light": "res://characters/meshes/legs_barefoot_seated_r_light.obj"
+						"main": "res://characters/meshes/legs_barefoot_astride_r_main.obj",
+						"skin": "res://characters/meshes/legs_barefoot_astride_r_skin.obj",
+						"light": "res://characters/meshes/legs_barefoot_astride_r_light.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_barefoot_forward_l_main.obj",
+						"skin": "res://characters/meshes/legs_barefoot_forward_l_skin.obj",
+						"light": "res://characters/meshes/legs_barefoot_forward_l_light.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_barefoot_forward_r_main.obj",
+						"skin": "res://characters/meshes/legs_barefoot_forward_r_skin.obj",
+						"light": "res://characters/meshes/legs_barefoot_forward_r_light.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7815,33 +8317,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_racing_boots_seated_l_main.obj",
-						"white": "res://characters/meshes/legs_racing_boots_seated_l_white.obj",
-						"boot": "res://characters/meshes/legs_racing_boots_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_racing_boots_astride_l_main.obj",
+						"white": "res://characters/meshes/legs_racing_boots_astride_l_white.obj",
+						"boot": "res://characters/meshes/legs_racing_boots_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1822,
-						-0.0,
-						-0.3,
-						-0.0078,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0393,
+						0.0669,
+						-0.0493
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_racing_boots_seated_r_main.obj",
-						"white": "res://characters/meshes/legs_racing_boots_seated_r_white.obj",
-						"boot": "res://characters/meshes/legs_racing_boots_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_racing_boots_astride_r_main.obj",
+						"white": "res://characters/meshes/legs_racing_boots_astride_r_white.obj",
+						"boot": "res://characters/meshes/legs_racing_boots_astride_r_boot.obj"
 					},
 					"box": [
-						0.0078,
-						-0.0,
-						-0.3,
-						0.1822,
-						0.2,
-						-0.0948
+						0.0393,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0493
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_racing_boots_forward_l_main.obj",
+						"white": "res://characters/meshes/legs_racing_boots_forward_l_white.obj",
+						"boot": "res://characters/meshes/legs_racing_boots_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2339,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_racing_boots_forward_r_main.obj",
+						"white": "res://characters/meshes/legs_racing_boots_forward_r_white.obj",
+						"boot": "res://characters/meshes/legs_racing_boots_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2339,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -7929,35 +8463,69 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_socks_seated_l_main.obj",
-						"skin": "res://characters/meshes/legs_socks_seated_l_skin.obj",
-						"white": "res://characters/meshes/legs_socks_seated_l_white.obj",
-						"boot": "res://characters/meshes/legs_stripy_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_socks_astride_l_main.obj",
+						"skin": "res://characters/meshes/legs_socks_astride_l_skin.obj",
+						"white": "res://characters/meshes/legs_socks_astride_l_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_socks_seated_r_main.obj",
-						"skin": "res://characters/meshes/legs_socks_seated_r_skin.obj",
-						"white": "res://characters/meshes/legs_socks_seated_r_white.obj",
-						"boot": "res://characters/meshes/legs_stripy_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_socks_astride_r_main.obj",
+						"skin": "res://characters/meshes/legs_socks_astride_r_skin.obj",
+						"white": "res://characters/meshes/legs_socks_astride_r_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_astride_r_boot.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_socks_forward_l_main.obj",
+						"skin": "res://characters/meshes/legs_socks_forward_l_skin.obj",
+						"white": "res://characters/meshes/legs_socks_forward_l_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_socks_forward_r_main.obj",
+						"skin": "res://characters/meshes/legs_socks_forward_r_skin.obj",
+						"white": "res://characters/meshes/legs_socks_forward_r_white.obj",
+						"boot": "res://characters/meshes/legs_stripy_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -8042,33 +8610,65 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_overalls_seated_l_main.obj",
-						"light": "res://characters/meshes/legs_overalls_seated_l_light.obj",
-						"boot": "res://characters/meshes/legs_overalls_seated_l_boot.obj"
+						"main": "res://characters/meshes/legs_overalls_astride_l_main.obj",
+						"light": "res://characters/meshes/legs_overalls_astride_l_light.obj",
+						"boot": "res://characters/meshes/legs_overalls_astride_l_boot.obj"
 					},
 					"box": [
-						-0.1784,
-						-0.0,
-						-0.3,
-						-0.0116,
-						0.2,
-						-0.0948
+						-0.2433,
+						-0.1034,
+						-0.2781,
+						-0.0446,
+						0.0669,
+						-0.0511
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_overalls_seated_r_main.obj",
-						"light": "res://characters/meshes/legs_overalls_seated_r_light.obj",
-						"boot": "res://characters/meshes/legs_overalls_seated_r_boot.obj"
+						"main": "res://characters/meshes/legs_overalls_astride_r_main.obj",
+						"light": "res://characters/meshes/legs_overalls_astride_r_light.obj",
+						"boot": "res://characters/meshes/legs_overalls_astride_r_boot.obj"
 					},
 					"box": [
-						0.0116,
-						-0.0,
-						-0.3,
-						0.1784,
-						0.2,
-						-0.0948
+						0.0446,
+						-0.1034,
+						-0.2781,
+						0.2433,
+						0.0669,
+						-0.0511
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_overalls_forward_l_main.obj",
+						"light": "res://characters/meshes/legs_overalls_forward_l_light.obj",
+						"boot": "res://characters/meshes/legs_overalls_forward_l_boot.obj"
+					},
+					"box": [
+						-0.2305,
+						-0.0023,
+						-0.3208,
+						-0.0343,
+						0.1978,
+						-0.0958
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_overalls_forward_r_main.obj",
+						"light": "res://characters/meshes/legs_overalls_forward_r_light.obj",
+						"boot": "res://characters/meshes/legs_overalls_forward_r_boot.obj"
+					},
+					"box": [
+						0.0343,
+						-0.0023,
+						-0.3208,
+						0.2305,
+						0.1978,
+						-0.0958
 					]
 				}
 			},
@@ -8148,31 +8748,61 @@
 				"astride_l": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_leggings_seated_l_main.obj",
-						"white": "res://characters/meshes/legs_leggings_seated_l_white.obj"
+						"main": "res://characters/meshes/legs_leggings_astride_l_main.obj",
+						"white": "res://characters/meshes/legs_leggings_astride_l_white.obj"
 					},
 					"box": [
-						-0.1554,
-						-0.0,
-						-0.3,
-						-0.0346,
-						0.191,
-						-0.0948
+						-0.2255,
+						-0.1206,
+						-0.2722,
+						-0.0664,
+						0.0514,
+						-0.0664
 					]
 				},
 				"astride_r": {
 					"bone": "legs",
 					"regions": {
-						"main": "res://characters/meshes/legs_leggings_seated_r_main.obj",
-						"white": "res://characters/meshes/legs_leggings_seated_r_white.obj"
+						"main": "res://characters/meshes/legs_leggings_astride_r_main.obj",
+						"white": "res://characters/meshes/legs_leggings_astride_r_white.obj"
 					},
 					"box": [
-						0.0346,
-						-0.0,
-						-0.3,
-						0.1554,
-						0.191,
-						-0.0948
+						0.0664,
+						-0.1206,
+						-0.2722,
+						0.2255,
+						0.0514,
+						-0.0664
+					]
+				},
+				"forward_l": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_leggings_forward_l_main.obj",
+						"white": "res://characters/meshes/legs_leggings_forward_l_white.obj"
+					},
+					"box": [
+						-0.2129,
+						-0.0025,
+						-0.32,
+						-0.0568,
+						0.1887,
+						-0.1006
+					]
+				},
+				"forward_r": {
+					"bone": "legs",
+					"regions": {
+						"main": "res://characters/meshes/legs_leggings_forward_r_main.obj",
+						"white": "res://characters/meshes/legs_leggings_forward_r_white.obj"
+					},
+					"box": [
+						0.0568,
+						-0.0025,
+						-0.32,
+						0.2129,
+						0.1887,
+						-0.1006
 					]
 				}
 			}

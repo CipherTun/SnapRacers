@@ -10,7 +10,7 @@ scripts/parts/connectors.gd for which types go together.
 
 import math
 
-from kit import BRICK, EDGE, FINE, PLATE, STUD, STUD_HEIGHT, STUD_RADIUS, box, cut, cylinder, front, grid_cells, plan_y, profile_x, push_x, push_z, rounded, side, studs, union
+from kit import BRICK, EDGE, FINE, PLATE, STUD, STUD_HEIGHT, STUD_RADIUS, box, cut, cylinder, front, grid_cells, mirror_x, plan_y, profile_x, push_x, push_z, rounded, side, studs, union
 
 # Colours, the classic brick ones.
 RED = "#c4281c"
@@ -1765,7 +1765,7 @@ def _cycle_wing(id, name, side_):
     solids = [[40, 0, 20, 60, 8, 60], [xs[0], yc + r0 - 1, zc - 14, xs[1], yc + r1, zc + 14], [42, 8, 34, 52, yc + r0, 46]]
     con = sockets(cells)
     if side_ == "right":
-        body = body.mirror([1, 0, 0]).translate([w * FINE, 0, 0])
+        body = mirror_x(body).translate([w * FINE, 0, 0])
         cells = [(0, 1), (0, 2)]
         con = sockets(cells)
         solids = [[w - b[3], b[1], b[2], w - b[0], b[4], b[5]] for b in solids]
@@ -2407,7 +2407,7 @@ def _scooter_frame(id, name, trike, about):
         at = (-17, 16, 11)
     return _vpart(id, name, "seat", at, union(black), BLACK, con=con, solids=solids, seat_box=[-12, 46, 52, 12, 54, 96],
                   trim=(union(metal), METAL, "metal") if metal else None, about=about, aero={"front": 0.7, "back": 0.7, "side": 0.8},
-                  astride=True, driver_height=7, control=1.05, recline=0, **stats)
+                  astride=True, feet_forward=True, driver_height=7, control=1.05, recline=0, **stats)
 
 
 part(lambda: _scooter_frame("b_frame_scooter_small", "Little scooter frame", False,
@@ -2456,6 +2456,19 @@ def body_delta_trike():
                   aero={"front": 0.5, "back": 0.6, "side": 0.8}, mass=2.0, strength=800.0)
 
 
+@part
+def box_delta_trike():
+    # The size, weight and strength of a 2×2 brick, so it drives the same as one.
+    box_ = _lofted([(94.5, 18, 42, 65.5, 6, 2), (98, 19.5, 42, 66, 7, 2), (130, 19.5, 42, 66, 7, 2), (133.5, 18, 42, 65.5, 6, 2)])
+    d = 0.003
+    over = union([box_.translate(v) for v in ([d, 0, 0], [-d, 0, 0], [0, d, 0], [0, 0, d], [0, 0, -d])]) - box_
+    lid = over ^ _vbox(-30, 61, 80, 30, 80, 150, edge=0)
+    con = [("socket", (x, 42, z), (0, -1, 0)) for x in (-10, 10) for z in (104, 124)]
+    return _vpart("b_box_delta_trike", "Little trike box", "body", (-20, 42, 94), box_, "#7fd8be", con=con, solids=[[-20, 42, 94, 20, 66, 134]],
+                  trim=(lid, WHITE, "plastic"), size=(40, 24, 40), about="A rounded box with a lid, for the deck on the back of the little trike.",
+                  mass=1.0, strength=600.0)
+
+
 # Long Fork, a chopper, and Sunday Trike, a chopper trike: the long fork out
 # in front on a small wheel, the rider low, 200 back to the back axle.
 
@@ -2467,6 +2480,9 @@ def _chopper_frame(id, name, trike, about):
     black.append(_lofted([(116, 11, 54, 60, 4, 2), (124, 13, 54, 62, 5, 2), (152, 13, 54, 62, 5, 2), (158, 12, 55, 64, 4, 2)]))
     metal = [_vbox(-10, 26, 104, 10, 46, 140, edge=0.03), _tube((0, 44, 114), (0, 64, 101), 6.0), _tube((0, 44, 130), (0, 53, 135), 6.0)]
     metal += [_tube((0, 46 + 4 * k, 114 - 2.6 * k), (0, 46 + 4 * k, 114 - 2.6 * k), 7.5) for k in range(3)]
+    # Pegs out in front for the rider's feet, on posts up off the engine.
+    for s in (-1, 1):
+        metal += [_tube((s * 8, 52, 117), (s * 19.5, 52, 117), 2.0), _tube((s * 9, 44, 117), (s * 9, 52, 117), 1.8)]
     con = [("socket", (x, 78, 44), (0, -1, 0)) for x in (-10, 10)]
     con += [("stud", (0, 72, z), (0, 1, 0)) for z in (80, 96)]
     solids = [[-8, 78, 38, 8, 90, 50], [-10, 26, 104, 10, 46, 140], [-13, 54, 116, 13, 64, 156.5], [-14, 58, 160, 14, 62, 174]]
@@ -2500,7 +2516,7 @@ def _chopper_frame(id, name, trike, about):
         at = (-22, 20, 36)
     return _vpart(id, name, "seat", at, union(black), BLACK, con=con, solids=solids, seat_box=[-13, 54, 116, 13, 62, 162],
                   trim=(union(metal), METAL, "metal"), about=about, aero={"front": 0.6, "back": 0.7, "side": 0.8},
-                  astride=True, driver_height=7, control=1.0, recline=0, **stats)
+                  astride=True, feet_forward=True, driver_height=7, control=1.0, recline=0, **stats)
 
 
 part(lambda: _chopper_frame("b_frame_chopper_long", "Long chopper frame", False,
@@ -2532,14 +2548,14 @@ def fender_chopper():
 
 @part
 def body_chopper_trike():
-    shell = _lofted([(174, 30, 36, 62, 4, 2), (250, 30, 36, 62, 4, 2)])
-    tops = [(x, z) for x in (-20, 0, 20) for z in (180, 200, 220, 240)]
-    nubs = [cylinder(STUD_RADIUS, STUD_HEIGHT, "y", tuple(_f(x, 61.92, z)), 12) for x, z in tops]
-    lights = [_vbox(x - 6, 52, 249.5, x + 6, 57, 250.6, edge=0.003) for x in (-20, 20)]
+    # A smooth tub with rounded ends and top edges. The size is kept from
+    # when it had studs on top, so it drives the same.
+    shell = _lofted([(174, 27, 36, 59, 6, 2), (179, 30, 36, 62, 9, 2), (245, 30, 36, 62, 9, 2), (250, 27, 36, 59, 6, 2)])
+    lights = [_vbox(x - 5, 50, 249.2, x + 5, 55, 250.4, edge=0.003) for x in (-15, 15)]
     con = [("socket", (x, 36, z), (0, -1, 0)) for x in (-20, 0, 20) for z in (180, 220)]
-    con += [("stud", (x, 62, z), (0, 1, 0)) for x, z in tops]
-    return _vpart("b_body_chopper_trike", "Chopper trike body", "body", (-31, 36, 173), union([shell] + nubs), YELLOW, con=con, solids=[[-30, 36, 174, 30, 62, 250]],
-                  trim=(union(lights), TRANS_RED, "glass"), light="tail", about="A chopper trike's body 3×4 over the back axle, with studs on top.",
+    return _vpart("b_body_chopper_trike", "Smooth chopper trike body", "body", (-31, 36, 173), shell, YELLOW, con=con, solids=[[-30, 36, 174, 30, 62, 250]],
+                  trim=(union(lights), TRANS_RED, "glass"), light="tail", size=(61, 30, 78),
+                  about="A chopper trike's smooth rounded body 3×4 over the back axle.",
                   aero={"front": 0.7, "back": 0.9, "side": 0.9}, mass=3.0, strength=1200.0)
 
 
@@ -2577,13 +2593,13 @@ def _trike_wing(id, twin, side_):
     """A small wing over a front wheel of the reverse trike, on an upright
     that clips to the end of the frame's beam. It turns with the wheel."""
     R = 24
-    # Made on the other side and mirrored across, which shades smoothly.
+    # Made on the other side and mirrored across.
     k = -1 if side_ == "right" else 1
     band = cylinder((R + 7) * FINE, 24 * FINE, "x", tuple(_f(33 if k > 0 else -57, R, 0)), 64)
     band = band - cylinder((R + 4) * FINE, 30 * FINE, "x", tuple(_f(30 if k > 0 else -60, R, 0)), 64)
     arc = band ^ _vbox(min(32 * k, 58 * k), R + 14, -40, max(32 * k, 58 * k), R + 40, 40, edge=0)
     post = _vbox(min(32 * k, 33.8 * k), 22, -4, max(32 * k, 33.8 * k), R + 26, 4, edge=0.004)
-    body = union([arc, post]).mirror([1, 0, 0])
+    body = mirror_x(union([arc, post]))
     solids = [[-57 * k, R + 24.5, -20, -34 * k, R + 31, 20]]
     solids = [[min(b[0], b[3]), b[1], b[2], max(b[0], b[3]), b[4], b[5]] for b in solids]
     con = [("clip", (-32 * k, 24, 0), (k, 0, 0))]

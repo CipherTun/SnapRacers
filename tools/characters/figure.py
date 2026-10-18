@@ -161,6 +161,46 @@ def legs_astride():
     return np.hstack([b, (hip - b @ hip).reshape(3, 1)])
 
 
+# How the legs ride, on top of the astride legs bone: each thigh swings down
+# a little more and out to the side, and the shin bends down at the knee.
+# "astride" has the knees down by the tank and the feet under the rider,
+# "forward" the feet out in front on a chopper's pegs. Degrees.
+RIDES = {
+    "astride": {"down": 30.0, "splay": 18.0, "bend": 70.0},
+    "forward": {"down": -5.0, "splay": 12.0, "bend": 15.0},
+}
+# Where the knee is along a seated leg, from the hip.
+KNEE_Z = -0.17
+# How far out from the leg's middle its outside is, which it swings out about.
+LEG_OUT = 0.085
+
+
+def _about(b, pivot):
+    pivot = np.asarray(pivot, dtype=float)
+    return np.hstack([b, (pivot - b @ pivot).reshape(3, 1)])
+
+
+def rot_y(a):
+    c, s = math.cos(a), math.sin(a)
+    return np.array([[c, 0, s], [0, 1, 0], [-s, 0, c]], dtype=float)
+
+
+def ride_leg(side, ride, top):
+    """The thigh's and the shin's transforms (3x4) for a seated leg riding,
+    in the legs bone's space. `top` is how high the seated leg's top (its
+    front standing) is, where the knee bends about."""
+    r = RIDES[ride]
+    s = side_sign(side)
+    down = _about(rot_x(-math.radians(r["down"])), [0.0, HIPS_TOP * 0.5, 0.0])
+    splay = _about(rot_y(-s * math.radians(r["splay"])), [s * (LEG_X + LEG_OUT), 0.0, 0.0])
+    thigh = compose(splay, down)
+    bend = _about(rot_x(-math.radians(r["bend"])), [0.0, top, KNEE_Z])
+    # The shin a hair narrower, so where it tucks into the thigh behind the
+    # knee their sides don't fight.
+    narrow = _about(np.diag([0.985, 1.0, 1.0]), [s * LEG_X, 0.0, 0.0])
+    return thigh, compose(thigh, compose(bend, narrow))
+
+
 def compose(a, b):
     """a then b, as 3x4 transforms: a * b."""
     return np.hstack([a[:, :3] @ b[:, :3], (a[:, :3] @ b[:, 3] + a[:, 3]).reshape(3, 1)])

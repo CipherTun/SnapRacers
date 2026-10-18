@@ -339,6 +339,8 @@ def make():
         entry_seated = save_regions(name + "_seated", seated, made)
         piece(name, "legs", standing, seated={"regions": entry_seated, "box": box_of(seated.values())})
         solids[name + "_seated"] = union(list(seated.values()))
+        for ride in ("astride", "forward"):
+            solids[name + "_" + ride] = legs.ride(solids[name + "_seated"], side, ride, 0.13) - keepout
     piece("torso", "upper", {"main": torso()})
     piece("neck", "upper", {"skin": neck()})
     piece("stud", "head", {"skin": stud()})
@@ -577,7 +579,7 @@ def make():
     clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids, back_solids)
 
     data = {
-        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l' and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
+        "_comment": "Made by tools/characters/make_characters.py, so change the pieces there. Meshes are in their bone's own space, in metres. 'figure' is the bare figure; 'styles' are the remodelled styles by slot and style. A style's regions are coloured: main in its own colour (shiny metal if it has 'metallic'), dark and light a shade of it, the rest from 'colours' as colour and metallic. Hair has 'top', how high it reaches, and 'radius_at', how far out it reaches at heights up the head, in the head's own space before it's scaled up, for fitting what sits on it, and 'cut', the version under a hat: cut flat at 'top' and kept within 'radius' of the middle for the band under that. Headgear has 'hair', what's shown under it: the cut hair, the full hair or none ('hidden'). Bands worn on the hair have a variant 'on_<hair>' made for each hairdo, their own regions for none; the rest worn on the hair have 'fit', by hairdo ('none' for none), how it's placed to sit on it: [scale across, scale up, lift, move back], scaled from the middle of the head. Torsos are on the upper body. Legs are the hips, on the rig ('hips'), with each leg in each pose as 'standing_l', 'seated_r', 'astride_l', 'forward_r' (astride with the feet forward on a chopper's pegs) and so on, on the legs bone. Arms are the left arm, with 'arm_r', 'hand_l' and 'hand_r' each on its own 'bone'. Back pieces are on the upper body standing, with 'seated' (in an upright seat), 'reclined' (lying back in a lay-down seat) and 'astride' variants; their 'clear' region is the piece's colour, see through. A 'skin' region is in the driver's skin.",
         "colours": {**necks.COLOURS, **headgear.COLOURS, **torsos.COLOURS, **legs.COLOURS, **backs.COLOURS},
         "figure": pieces,
         "styles": styles,
@@ -604,13 +606,21 @@ def posed(solids, seated, astride=False, swings=None, along=(0.0, 0.0, -1.0)):
     out = {"hips": solids["hips"], "torso": apply(solids["torso"], lean), "neck": apply(solids["neck"], lean)}
     legs = F.legs_astride() if astride else np.hstack([np.eye(3), np.zeros((3, 1))])
     for name in ("leg_l", "leg_r"):
-        out[name] = apply(solids[name + ("_seated" if seated else "")], legs)
+        out[name] = apply(solids[name + leg_pose(seated, astride)], legs)
     for side, suffix in ((0, "l"), (1, "r")):
         angle, spread = swings[side]
         arm_m, hand_m = F.arm_pose(side, angle, spread, along)
         out["arm_" + suffix] = apply(solids["arm_" + suffix], F.compose(lean, arm_m))
         out["hand_" + suffix] = apply(solids["hand_" + suffix], F.compose(lean, hand_m))
     return out
+
+
+def leg_pose(seated, astride):
+    """The bare figure's leg solid's suffix for a pose. `astride` is False
+    or how the legs ride (see figure.RIDES)."""
+    if astride:
+        return "_" + astride
+    return "_seated" if seated else ""
 
 
 def inverse(m):
@@ -629,7 +639,9 @@ def lower_body():
         seat = seated_from_standing()
         standing = union([union(list(leg_regions(leg_standing(side)).values())) for side in (0, 1)])
         seated = union([union([apply(v, seat) - keepout for v in leg_regions(leg_standing(side)).values()]) for side in (0, 1)])
-        _lower.extend([hips(), standing, seated, apply(seated, F.legs_astride())])
+        riding = union([legs.ride(apply(v, seat), side, ride, 0.13) - keepout for side in (0, 1)
+                        for ride in ("astride", "forward") for v in leg_regions(leg_standing(side)).values()])
+        _lower.extend([hips(), standing, seated, apply(riding, F.legs_astride())])
     return _lower
 
 
@@ -898,13 +910,13 @@ def back_clipping(back_solids, solids, neck_styles, raised_torsos, raised_arms, 
         reclined.append(("reclined in the %s, arms swung %d degrees" % (lay[0], degrees), True, False, [(a, 0.0), (a, 0.0)], (0.0, 0.0, 1.0)))
     for name, seated, astride, swings, along in list(poses) + reclined:
         lying = name.startswith("reclined")
-        kind = "astride" if astride else ("seated" if seated else "standing")
-        variant = "reclined" if lying else kind
+        kind = astride if astride else ("seated" if seated else "standing")
+        variant = "reclined" if lying else ("astride" if astride else kind)
         lean = seat_lean(lay) if lying else F.upper_lean(-math.radians(F.ASTRIDE_LEAN) if astride else 0.0)
         legs_m = F.legs_astride() if astride else np.hstack([np.eye(3), np.zeros((3, 1))])
         others = {"hips": solids["hips"]}
         for leg in ("leg_l", "leg_r"):
-            others[leg] = apply(solids[leg + ("_seated" if seated else "")], legs_m)
+            others[leg] = apply(solids[leg + leg_pose(seated, astride)], legs_m)
         for side, suffix in ((0, "l"), (1, "r")):
             angle, spread = swings[side]
             arm_m, hand_m = F.arm_pose(side, angle, spread, along)
@@ -922,7 +934,7 @@ def back_clipping(back_solids, solids, neck_styles, raised_torsos, raised_arms, 
             others["legs %s leg_r" % style] = apply(parts[(kind, 1)], legs_m)
         if lying:
             others[lay[0]] = seat_solid(lay)
-        elif kind == "astride":
+        elif astride:
             others["saddle"] = saddle_solid()
         for style, parts in back_solids.items():
             label = "back %s" % style if variant == "standing" else "back %s %s" % (style, variant)
@@ -958,7 +970,8 @@ def clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids, b
         poses.append(("seated, arms swung %d degrees" % degrees, True, False, [(a, 0.0), (a, 0.0)], (0.0, 0.0, 1.0)))
     for degrees in (55, 75, 100):
         a = math.radians(degrees)
-        poses.append(("astride, arms swung %d degrees" % degrees, True, True, [(a, 0.3), (a, 0.3)], (0.0, 0.0, 1.0)))
+        poses.append(("astride, arms swung %d degrees" % degrees, True, "astride", [(a, 0.3), (a, 0.3)], (0.0, 0.0, 1.0)))
+        poses.append(("feet forward, arms swung %d degrees" % degrees, True, "forward", [(a, 0.3), (a, 0.3)], (0.0, 0.0, 1.0)))
     poses.append(("cheering", True, False, [(math.pi * 0.6, 0.0), (math.pi * 0.6, 0.0)], (0.0, 1.0, 0.0)))
 
     report = []
@@ -1001,7 +1014,7 @@ def clipping(solids, style_solids, gear, torso_solids, arm_solids, leg_solids, b
                 placed[a] = on["arm_" + suffix]
                 pairs += [(a, b) for b in ["torso", "hips", "leg_l", "leg_r", "hand_" + suffix] + neck_names + list(raised_torsos)]
         legs_m = F.legs_astride() if astride else np.hstack([np.eye(3), np.zeros((3, 1))])
-        kind = "astride" if astride else ("seated" if seated else "standing")
+        kind = astride if astride else ("seated" if seated else "standing")
         placed["seat"] = SEAT
         movers = ["torso", "arm_l", "arm_r", "hand_l", "hand_r"] + list(raised_torsos) + ["arms %s arm_%s" % (a, sfx) for a in raised_arms for sfx in ("l", "r")]
         for style, parts in leg_solids.items():

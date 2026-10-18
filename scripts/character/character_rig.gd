@@ -83,6 +83,8 @@ var seated := true
 ## Set it before the rig goes into the scene.
 var recline := 0.0
 var astride := false
+## Astride, whether the feet go forward on a chopper's pegs.
+var feet_forward := false
 ## Off leaves every piece its own mesh, for tests that look at the pieces.
 var bake := true
 
@@ -512,10 +514,10 @@ func _build() -> void:
 	_build_arms()
 	var bones := _bones()
 	# The back piece has its own shape lying back, so the recline is in the key too.
-	var key := "%s %s %s %s" % [JSON.stringify(design.to_dict()), seated, astride, back_variant()]
+	var key := "%s %s %s %s %s" % [JSON.stringify(design.to_dict()), seated, astride, feet_forward, back_variant()]
 	var baked := CharacterMesh.kept(key) if bake else {}
 	if baked.is_empty():
-		var pose := "astride" if astride else ("seated" if seated else "standing")
+		var pose := leg_pose()
 		_wear("legs")
 		_wear("legs", pose + "_l")
 		_wear("legs", pose + "_r")
@@ -655,6 +657,14 @@ static func headgear_fit(headgear: String, hair: String) -> Transform3D:
 	var fits: Dictionary = CharacterMesh.style("headgear", headgear).get("fit", {})
 	var f: Array = fits.get(hair, fits.get("none", [1.0, 1.0, 0.0, 0.0]))
 	return Transform3D(Basis.from_scale(Vector3(f[0], f[1], f[0])), Vector3(0.0, f[2], f[3]))
+
+
+## Which shape of the legs the rig wears: "standing", "seated", "astride",
+## or "forward" astride with the feet on a chopper's pegs.
+func leg_pose() -> String:
+	if astride:
+		return "forward" if feet_forward else "astride"
+	return "seated" if seated else "standing"
 
 
 ## Which shape of the back piece the rig wears: its own standing, or the one

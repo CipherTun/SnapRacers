@@ -695,6 +695,7 @@ func _assemble() -> void:
 		_rig = CharacterRig.new(driver if driver != null else default_driver(), true)
 		_rig.recline = stats.recline
 		_rig.astride = stats.astride
+		_rig.feet_forward = stats.feet_forward
 		_rig.head_layer = head_layer
 		_rig.lively = true
 		_rig.position = stats.seat_top
