@@ -31,3 +31,4 @@ core.[0-9]*
 
 # The Android network plugin, built by tools/build-plugin.sh.
 /addons/snapracers_net/bin/
+HANDOFF.md
