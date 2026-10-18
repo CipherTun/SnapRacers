@@ -1,0 +1,11 @@
+{
+	"name": "Zippy",
+	"about": "A little scooter on little wheels. Quick off the line and easy to flick about, but it runs out of puff on the straights.",
+	"parts": [
+		{"id": "b_frame_scooter_small", "pos": [183.0, 16, 41], "turn": 0, "color": "#1b1b1b"},
+		{"id": "b_body_scooter", "pos": [179.0, 18, 53], "turn": 0, "color": "#6db3e8"},
+		{"id": "b_fork_scooter_small", "pos": [175.0, 16.4, 20], "turn": 0, "color": "#6db3e8"},
+		{"id": "w_scooter_small", "pos": [194.0, 0, 10.0], "turn": 0},
+		{"id": "w_scooter_small", "pos": [194.0, 0, 114.0], "turn": 0}
+	]
+}

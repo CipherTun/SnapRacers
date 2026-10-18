@@ -1,0 +1,25 @@
+[remap]
+
+importer="wavefront_obj"
+importer_version=1
+type="Mesh"
+uid="uid://bof6tw136kkya"
+path="res://.godot/imported/b_body_delta_trike_trim.obj-08f42b4ffd1534729c215c9a7638e1c1.mesh"
+
+[deps]
+
+files=["res://.godot/imported/b_body_delta_trike_trim.obj-08f42b4ffd1534729c215c9a7638e1c1.mesh"]
+
+source_file="res://parts/meshes/b_body_delta_trike_trim.obj"
+dest_files=["res://.godot/imported/b_body_delta_trike_trim.obj-08f42b4ffd1534729c215c9a7638e1c1.mesh", "res://.godot/imported/b_body_delta_trike_trim.obj-08f42b4ffd1534729c215c9a7638e1c1.mesh"]
+
+[params]
+
+generate_tangents=true
+generate_lods=true
+generate_shadow_mesh=true
+generate_lightmap_uv2=false
+generate_lightmap_uv2_texel_size=0.2
+scale_mesh=Vector3(1, 1, 1)
+offset_mesh=Vector3(0, 0, 0)
+force_disable_mesh_compression=false

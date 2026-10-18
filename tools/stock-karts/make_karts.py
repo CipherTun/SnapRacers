@@ -831,6 +831,71 @@ moto("trikester", "Trikester", "A trike with a knobbly tire up front, a bike's f
      "b_frame_trike", "b_moto_fork_dirt", "w_moto_trail", ORANGE, BLACK, back_wheel="w_moto")
 
 
+# The new bikes and trikes. Their parts are modelled in each one's own space
+# (see the end of tools/parts/library.py): x across from the middle, y up from
+# the ground and z back from the front axle, in the fine unit. Each part goes
+# down with its corner where it was modelled, so these corners match the ones
+# in library.py. The front axle is `za` back in the build area.
+
+def bike(key, name, about, za, parts, wheels):
+    """`parts` are (part, corner, colour). `wheels` are (wheel, axle z,
+    rims, across): one wheel in the middle, or a pair `across` either side
+    of the middle (from the middle to its inside face)."""
+    k = kart(key, name, about)
+    for part, (x, y, z), colour in parts:
+        k.fine(part, MID + x, y, za + z, colour=colour)
+    for wheel, z, rims, across in wheels:
+        w, h = fine_size(wheel)[0], fine_size(wheel)[1]
+        r = h / 2
+        if across:
+            k.pair_fine(wheel, MID - across - w, 0, za + z - r, colour=rims)
+        else:
+            k.fine(wheel, MID - w / 2, 0, za + z - r, colour=rims)
+    return k
+
+
+# 31. A superbike in green with a white stripe and a number.
+bike("streak", "Streak", "A superbike, low and faired in. Very fast and quick to flick about, but it can't hold a bend like a kart and it gets knocked about.", 30,
+     [("b_frame_superbike", (-20, 16, 16), DARK), ("b_body_superbike", (-21, 17, 27), KART_GREEN), ("b_nose_superbike", (-21, 39, -26), KART_GREEN),
+      ("b_fork_sport", (-25, 20.4, -10), None)],
+     [("w_scooter", 0, None, 0), ("w_scooter", 140, None, 0)])
+
+# 32. A scrambler in orange with a white number, up high on knobbly wheels.
+bike("scrambler", "Scrambler", "A dirt bike up on big knobbly wheels. It rides over grass and bumps better than anything, but it's slow to turn on tarmac.", 45,
+     [("b_frame_scrambler", (-19, 20, 12), DARK), ("b_body_scrambler", (-14, 51, 21), ORANGE), ("b_fork_dirt_small", (-27, 26.4, -10), ORANGE)],
+     [("w_scrambler", 0, None, 0), ("w_scrambler", 144, None, 0)])
+
+# 33. A little scooter in light blue and cream.
+bike("zippy", "Zippy", "A little scooter on little wheels. Quick off the line and easy to flick about, but it runs out of puff on the straights.", 30,
+     [("b_frame_scooter_small", (-17, 16, 11), DARK), ("b_body_scooter", (-21, 18, 23), "#6db3e8"), ("b_fork_scooter_small", (-25, 16.4, -10), "#6db3e8")],
+     [("w_scooter_small", 0, None, 0), ("w_scooter_small", 104, None, 0)])
+
+# 34. A chopper with a long fork, a blue tank and a sissy bar.
+bike("long_fork", "Long Fork", "A chopper with its fork way out in front and the rider sat low. Fast on the straights and steady, but it turns like a bus.", 10,
+     [("b_frame_chopper_long", (-22, 20, 36), DARK), ("b_tank_chopper", (-14, 71, 59), BLUE), ("b_fender_chopper", (-20, 18, 173), None),
+      ("b_sissy_bar", (-20, 62, 157), None), ("b_fork_chopper_long", (-27, 20.4, -10), None)],
+     [("w_scooter", 0, None, 0), ("w_racing", 200, None, 0)])
+
+# 35. A reverse trike: two wheels in front under cycle wings, one behind.
+k = bike("twin_nose", "Twin Nose", "A reverse trike with two wheels in front and one behind. It holds a bend nearly like a kart and still leans into it.", 45,
+         [("b_frame_reverse_trike", (-55, 19, -21), DARK), ("b_nose_reverse_trike", (-27, 29, -43), ORANGE),
+          ("b_tail_reverse_trike", (-23, 41, 117), ORANGE), ("b_quad_bars", (-20, 52, 52), None)],
+         [("w_kart", 0, None, 34), ("w_kart", 140, None, 0)])
+k.pair_fine("b_wing_trike_left", MID - 57, 20, 45 - 28, colour=ORANGE)
+
+# 36. A chopper trike with a yellow studded body over the back wheels.
+bike("sunday_trike", "Sunday Trike", "A chopper trike with a long fork and a box of studs on the back. Steady and comfy, but slow to turn and heavy to stop.", 10,
+     [("b_frame_chopper_trike", (-62, 20, 36), DARK), ("b_tank_chopper", (-14, 71, 59), YELLOW), ("b_body_chopper_trike", (-31, 36, 173), YELLOW),
+      ("b_sissy_bar", (-20, 62, 157), None), ("b_fork_chopper_long", (-27, 20.4, -10), None)],
+     [("w_scooter", 0, None, 0), ("w_racing", 200, None, 30)])
+
+# 37. A little pink trike with a mint box on the back.
+k = bike("tiddler", "Tiddler", "A little electric trike with a box on the back. Slow but very steady, and easy for anyone to drive.", 30,
+         [("b_frame_delta_trike", (-45, 16, 11), DARK), ("b_body_delta_trike", (-47, 18, 23), None), ("b_fork_scooter_small", (-25, 16.4, -10), "#e86a9a")],
+         [("w_scooter_small", 0, None, 0), ("w_scooter_small", 104, None, 32)])
+k.fine("p_brick_2x2", MID - 20, 42, 30 + 94, colour="#7fd8be")
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for k in karts:

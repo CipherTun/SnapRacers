@@ -1,0 +1,12 @@
+{
+	"name": "Streak",
+	"about": "A superbike, low and faired in. Very fast and quick to flick about, but it can't hold a bend like a kart and it gets knocked about.",
+	"parts": [
+		{"id": "b_frame_superbike", "pos": [180.0, 16, 46], "turn": 0, "color": "#1b1b1b"},
+		{"id": "b_body_superbike", "pos": [179.0, 17, 57], "turn": 0, "color": "#4b9f4a"},
+		{"id": "b_nose_superbike", "pos": [179.0, 39, 4], "turn": 0, "color": "#4b9f4a"},
+		{"id": "b_fork_sport", "pos": [175.0, 20.4, 20], "turn": 0},
+		{"id": "w_scooter", "pos": [192.8, 0, 6.0], "turn": 0},
+		{"id": "w_scooter", "pos": [192.8, 0, 146.0], "turn": 0}
+	]
+}

@@ -1,8 +1,8 @@
 # Stock kart tools
 
-These build and check the stock karts, bikes and trikes in `data/karts/stock`, twenty-nine karts, four bikes and three trikes, which the AI drivers race in and you can pick too.
+These build and check the stock karts, bikes and trikes in `data/karts/stock`, twenty-nine karts, eight bikes and six trikes, which the AI drivers race in and you can pick too.
 
-`make_karts.py` writes them. Each one is laid out part by part in there, and most parts go down in pairs, one on each side, like Mirror in the garage. Karts sit on a chassis of kart axle plates with the wheels on their pins, and bikes are built round a fork, a swingarm and a bike body. Change one there and run it again instead of editing the JSON.
+`make_karts.py` writes them. Each one is laid out part by part in there, and most parts go down in pairs, one on each side, like Mirror in the garage. Karts sit on a chassis of kart axle plates with the wheels on their pins, and bikes are built round a fork, a swingarm and a bike body. The new bikes and trikes go down with `bike()`, each part at its corner measured from the front axle. Change one there and run it again instead of editing the JSON.
 
 ```
 python3 tools/stock-karts/make_karts.py
