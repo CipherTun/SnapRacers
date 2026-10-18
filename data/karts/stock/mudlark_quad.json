@@ -1,0 +1,14 @@
+{
+	"name": "Mudlark Quad",
+	"about": "A mud quad up on big knobbly wheels, with racks front and back. Slow on tarmac but happy anywhere off it.",
+	"parts": [
+		{"id": "b_frame_quad_mudlark", "pos": [126.0, 27.6, 26], "turn": 0, "color": "#1b1b1b"},
+		{"id": "b_quad_front_mudlark", "pos": [148.0, 39.6, -1.6], "turn": 0, "color": "#5fa83a"},
+		{"id": "b_quad_back_mudlark", "pos": [148.0, 39.6, 138.4], "turn": 0, "color": "#5fa83a"},
+		{"id": "b_quad_bars", "pos": [180.0, 76, 70.4], "turn": 0},
+		{"id": "w_offroad", "pos": [126.0, 0, 6.4], "turn": 0, "color": "#da8540"},
+		{"id": "w_offroad", "pos": [274.0, 0, 73.6], "turn": 2, "color": "#da8540"},
+		{"id": "w_offroad", "pos": [126.0, 0, 146.4], "turn": 0, "color": "#da8540"},
+		{"id": "w_offroad", "pos": [274.0, 0, 213.6], "turn": 2, "color": "#da8540"}
+	]
+}

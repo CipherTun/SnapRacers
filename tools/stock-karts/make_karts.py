@@ -883,8 +883,8 @@ k = bike("twin_nose", "Twin Nose", "A reverse trike with two wheels in front and
          [("w_kart", 0, None, 34), ("w_kart", 140, None, 0)])
 k.pair_fine("b_wing_trike_left", MID - 57, 20, 45 - 28, colour=ORANGE)
 
-# 36. A chopper trike with a yellow studded body over the back wheels.
-bike("sunday_trike", "Sunday Trike", "A chopper trike with a long fork and a box of studs on the back. Steady and comfy, but slow to turn and heavy to stop.", 10,
+# 36. A chopper trike with a yellow rounded body over the back wheels.
+bike("sunday_trike", "Sunday Trike", "A chopper trike with a long fork and a big rounded body on the back. Steady and comfy, but slow to turn and heavy to stop.", 10,
      [("b_frame_chopper_trike", (-62, 20, 36), DARK), ("b_tank_chopper", (-14, 71, 59), YELLOW), ("b_body_chopper_trike", (-31, 36, 173), YELLOW),
       ("b_sissy_bar", (-20, 62, 157), None), ("b_fork_chopper_long", (-27, 20.4, -10), None)],
      [("w_scooter", 0, None, 0), ("w_racing", 200, None, 30)])
@@ -893,7 +893,40 @@ bike("sunday_trike", "Sunday Trike", "A chopper trike with a long fork and a box
 k = bike("tiddler", "Tiddler", "A little electric trike with a box on the back. Slow but very steady, and easy for anyone to drive.", 30,
          [("b_frame_delta_trike", (-45, 16, 11), DARK), ("b_body_delta_trike", (-47, 18, 23), None), ("b_fork_scooter_small", (-25, 16.4, -10), "#e86a9a")],
          [("w_scooter_small", 0, None, 0), ("w_scooter_small", 104, None, 32)])
-k.fine("p_brick_2x2", MID - 20, 42, 30 + 94, colour="#7fd8be")
+k.fine("b_box_delta_trike", MID - 20, 42, 30 + 94)
+
+
+# The quads, laid out like the bikes from the same numbers as in library.py:
+# (wheel radius, wheel width, wheelbase, the wheels' outside face across,
+# half width of the bodies, top of the bodies, top of the saddle). The rider
+# sits 28 in front of the back wheel's arch with quad bars on the tank.
+
+QUADS = {"zipper": (22.4, 32, 120, 68, 50, 56, 64),
+         "mudlark": (33.6, 32, 140, 74, 52, 75, 84),
+         "flat_track": (24, 36, 120, 72, 54, 56, 66)}
+
+
+def quad(key, part_key, name, about, colour, wheel, rims):
+    R, ww, wb, xo, hw, yt, ys = QUADS[part_key]
+    zs = wb - R - 28
+    return bike(key, name, about, 40,
+                [("b_frame_quad_" + part_key, (-xo, R - 6, -14), DARK), ("b_quad_front_" + part_key, (-hw, R + 6, -R - 8), colour),
+                 ("b_quad_back_" + part_key, (-hw, R + 6, wb - R - 8), colour), ("b_quad_bars", (-20, ys - 8, zs - 48), None)],
+                [(wheel, 0, rims, xo - ww), (wheel, wb, rims, xo - ww)])
+
+
+# 38. A sport quad in blue with a white stripe and studs on the back.
+quad("zipper", "zipper", "Zipper", "A sport quad, quick and nimble. It sits flat in the bends like a kart and handles grass better than one.",
+     "#1f7fd6", "w_quad", None)
+
+# 39. A tall green mud quad on big knobbly wheels with racks front and back.
+# Called Mudlark Quad while the old Mudlark kart is still in the roster.
+quad("mudlark_quad", "mudlark", "Mudlark Quad", "A mud quad up on big knobbly wheels, with racks front and back. Slow on tarmac but happy anywhere off it.",
+     "#5fa83a", "w_offroad", ORANGE)
+
+# 40. A low yellow racing quad on wide wheels.
+quad("flat_track", "flat_track", "Flat Track", "A low racing quad on wide grippy wheels. Fast and sharp in the bends, but it doesn't like the grass.",
+     YELLOW, "w_kart_wide", GREY)
 
 
 if __name__ == "__main__":
