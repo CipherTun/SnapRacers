@@ -719,8 +719,9 @@ func leave() -> void:
 		return
 	match mode:
 		Game.MODE_GRAND_PRIX:
+			var two: bool = Game.grand_prix != null and Game.grand_prix.two
 			Game.grand_prix = null
-			Game.show_cups()
+			Game.show_cups(two)
 		Game.MODE_TIME_TRIAL, Game.MODE_PRACTICE:
 			Game.show_tracks(mode, false, true)
 		_:

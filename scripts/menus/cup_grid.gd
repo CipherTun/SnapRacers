@@ -8,6 +8,8 @@ extends Control
 ## In a Grand Prix you pick a cup to race. For a single race, a time trial,
 ## practice or a race for two you pick a cup and then one of its courses (see
 ## CourseGrid). Your own cups and courses are behind their own cards at the end.
+## A Grand Prix from the Multiplayer menu is for two on this phone (see
+## Game.cups_for_two), and both players pick a kart.
 
 const TROPHIES := { 1: "Gold trophy", 2: "Silver trophy", 3: "Bronze trophy" }
 const MEDALS := { 1: Color("#f2b632"), 2: Color("#cdd3db"), 3: Color("#c47a45") }
@@ -108,8 +110,9 @@ static func best_place(id: String) -> int:
 
 func _pick(id: String) -> void:
 	if mode == Game.MODE_GRAND_PRIX:
+		var two := Game.cups_for_two
 		Game.mode = Game.MODE_GRAND_PRIX
-		Game.show_kart_picker(Game.start_grand_prix.bind(id), Game.show_cups, true)
+		Game.show_kart_picker(Game.start_grand_prix.bind(id, two), Game.show_cups.bind(two), true, two)
 	else:
 		Game.show_course_grid(mode, alone, id)
 
@@ -160,7 +163,7 @@ func _your_cup(mine: CupDesign, path: String) -> void:
 	var card := _cup_card(id, mine.name, TrophyModel.spec_for(mine.name), TrophyModel.colour_for(mine.name), paths)
 	card.tapped.connect(func() -> void:
 		Game.mode = Game.MODE_GRAND_PRIX
-		Game.show_kart_picker(_starter(mine, id), Game.show_your_cups, true))
+		Game.show_kart_picker(_starter(mine, id, Game.cups_for_two), Game.show_your_cups, true, Game.cups_for_two))
 	var links := HBoxContainer.new()
 	links.alignment = BoxContainer.ALIGNMENT_CENTER
 	links.add_theme_constant_override("separation", 24)
@@ -190,8 +193,8 @@ func _card_with_words(text: String, more: String, action: Callable) -> MenuCard:
 
 ## What starts a cup of yours once a kart's picked. Its courses are put out to
 ## race then, and it's made here because this screen is gone by then.
-static func _starter(mine: CupDesign, id: String) -> Callable:
-	return func() -> void: Game.start_grand_prix(mine.to_cup(id))
+static func _starter(mine: CupDesign, id: String, two: bool) -> Callable:
+	return func() -> void: Game.start_grand_prix(mine.to_cup(id), two)
 
 
 func _on_picture(key: String, picture: Texture2D) -> void:
@@ -202,7 +205,9 @@ func _on_picture(key: String, picture: Texture2D) -> void:
 
 func go_back() -> void:
 	if yours:
-		Game.show_cups()
+		Game.show_cups(Game.cups_for_two)
+	elif mode == Game.MODE_GRAND_PRIX and Game.cups_for_two:
+		Game.show_multiplayer()
 	elif mode == Game.MODE_RACE and not alone:
 		Game.show_multiplayer()
 	else:
