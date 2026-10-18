@@ -161,7 +161,7 @@ func check_race(race: Race, mode: String) -> void:
 	await _pad(pad, JOY_BUTTON_A, false)
 	await _pad(pad, JOY_BUTTON_START, true)
 	await frames(2)
-	check(race.menu_open(second) and not race.menu_open(race.player), "and its Start opens player 2's menu")
+	check(race.menu_open(second) and race._menus[second].focus_on_open and not race._menus[race.player].focus_on_open and get_tree().paused, "and its Start opens player 2's menu, pausing for both")
 	await _pad(pad, JOY_BUTTON_START, false)
 	race.close_menu(second)
 	Game.controllers._on_connection(pad, false)

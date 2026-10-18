@@ -3,7 +3,8 @@ extends Node
 ## The single player modes. It runs a whole Grand Prix with the races cut
 ## short (each one "finishes" straight away in a set order), and checks the
 ## points, the grid order and the trophy at the end. Then a time trial and its
-## records, practice, which never finishes, and the difficulty levels.
+## records, practice, which never finishes, and the difficulty levels. A Grand
+## Prix for two in split screen too.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tests/modes_test.tscn
 
@@ -51,6 +52,7 @@ func _ready() -> void:
 	# Normal difficulty, whatever was last picked, without saving over it.
 	Game.settings.set_value("race", "difficulty", Difficulty.DEFAULT)
 	await _grand_prix()
+	await _grand_prix_for_two()
 	await _difficulty()
 	await _time_trial()
 	await _practice()
@@ -129,6 +131,126 @@ func _grand_prix() -> void:
 	check(Records.best_cup_place("baseplate") == place, "which is kept as your best in the cup")
 	var labels := screen().find_children("*", "Label", true, false).map(func(l): return l.text)
 	check(labels.any(func(t): return t.contains("trophy")), "and the last screen gives you a trophy")
+
+
+## A Grand Prix for two from the Multiplayer menu: both people race every round
+## against the AI in split screen, both score, and the trophy goes by the
+## better of them.
+func _grand_prix_for_two() -> void:
+	print("-- Grand Prix for two")
+	var was := {}
+	for key in ["split", "kart", "player_two"]:
+		was[key] = Game.settings.get_value("race", key, null)
+	var stock := Game.stock_keys()
+	Game.settings.set_value("race", "split", Game.SIDE_BY_SIDE)
+	Game.settings.set_value("race", "kart", stock[0])
+	Game.settings.set_value("race", "player_two", stock[1])
+	Game.show_multiplayer()
+	await frames(2)
+	var cup_button := screen().find_children("*", "Button", true, false).filter(func(b): return b.text == "Grand Prix")
+	check(cup_button.size() == 1, "the Multiplayer menu has a Grand Prix")
+	cup_button[0].pressed.emit()
+	await frames(2)
+	check(screen() is CupGrid and screen().mode == Game.MODE_GRAND_PRIX and Game.cups_for_two, "which opens the cups for two")
+	screen().find_children("*", "Button", true, false).filter(func(b): return b.get_meta("cup", "") == "gearbox")[0].pressed.emit()
+	await frames(2)
+	check(screen() is KartPicker and screen().player == 1, "and picking a cup asks player 1 for a kart, then player 2")
+	Game._go_back()
+	await frames(2)
+	check(screen() is CupGrid and Game.cups_for_two, "back from the picker goes to the cups for two")
+
+	# The two people never share a name, or their points would be kept as one.
+	var names_were := [Game.settings.get_value("player", "name", ""), Game.settings.get_value("player", "name_two", "")]
+	for pair in [["", ""], ["", "Player 1"], ["Player 2", ""], ["Sam", "Sam"], ["Player 2", "Player 2"], ["Sam", "Gina"]]:
+		Game.settings.set_value("player", "name", pair[0])
+		Game.settings.set_value("player", "name_two", pair[1])
+		check(Game.player_one_name() != Game.player_two_name(), "names %s give %s and %s" % [pair, Game.player_one_name(), Game.player_two_name()])
+	check(Game.player_two_name() == "Gina", "and player 2's own name is kept when it's different")
+	Game.settings.set_value("player", "name", names_were[0])
+	Game.settings.set_value("player", "name_two", names_were[1])
+
+	var single_gearbox := Records.best_cup_place("gearbox")
+	Game.start_grand_prix("gearbox", true)
+	var one := Game.player_one_name()
+	var two := Game.player_two_name()
+	check(Game.grand_prix.people == [one, two], "both people are in the cup (%s and %s)" % [one, two])
+	var mine := [Game.stock_kart(stock[0]).name, Game.stock_kart(stock[1]).name]
+	var rounds := Game.grand_prix.track_ids().size()
+	for round in rounds:
+		var race: Race = await wait_for(Race)
+		check(race != null and race.split == Game.SIDE_BY_SIDE, "race %d is in split screen" % (round + 1))
+		check(race.humans.size() == 2 and race.humans.map(func(h): return h.name) == [one, two], "with both people racing")
+		check(race.racers.size() == Race.KARTS, "and the same number of karts as on your own (%d)" % race.racers.size())
+		var ai: Array = race.racers.filter(func(r): return not r.player)
+		check(ai.all(func(r): return not mine.has(r.kart.design.name)), "no AI driver's in either player's kart")
+		if round == 1:
+			# Player 2 won the first race, so starts last; player 1 came third.
+			check(race.racers.find(race.humans[1]) == Race.KARTS - 1, "the grid goes by points for player 2")
+			check(race.racers.find(race.humans[0]) == Race.KARTS - 3, "and for player 1")
+		if round == 0:
+			# Player 1 home first can't move on while player 2's still racing.
+			race.humans[0].progress.finished = true
+			race.humans[0].progress.finish_time = race.time
+			race._player_finished(race.humans[0])
+			await frames(2)
+			var hud: RaceHud = race.humans[0].hud
+			check(hud._next.disabled and hud._waiting.visible and hud._waiting.text == "%s is still racing" % two, "Standings waits for player 2 (%s)" % hud._waiting.text)
+			hud.next_pressed.emit()
+			await frames(2)
+			check(screen() == race, "and the race doesn't end before player 2 is home")
+			# Everyone but player 2 home lets it move on.
+			var cpus: Array = race.racers.filter(func(r): return not r.player)
+			for r in cpus:
+				r.progress.finished = true
+			await frames(2)
+			check(not hud._next.disabled and not hud._waiting.visible, "once all but one are home, Standings can be pressed without player 2")
+			for i in cpus.size():
+				cpus[i].progress.finished = i < cpus.size() - 1
+			await frames(2)
+			check(hud._next.disabled, "and not with two still racing")
+			for r in cpus:
+				r.progress.finished = false
+			race.humans[1].progress.finished = true
+			race._player_finished(race.humans[1])
+			await frames(2)
+			check(not hud._next.disabled and not hud._waiting.visible, "once they are, Standings can be pressed")
+		# Player 2 wins every race and player 1 comes third.
+		var others: Array = race.racers.map(func(r): return r.name).filter(func(n): return n != one and n != two)
+		var order: Array = [two, others[0], one] + others.slice(1)
+		Game.finish_grand_prix_race(order)
+		await frames(2)
+		var standings := screen() as GrandPrixStandings
+		check(standings != null, "after race %d the standings come up" % (round + 1))
+		var coloured := standings.find_children("*", "Label", true, false).filter(func(l): return l.text in [one, two] and l.has_theme_color_override("font_color"))
+		check(coloured.size() == 2 and coloured.all(func(l): return KartPicker.PLAYER_COLOURS.has(l.get_theme_color("font_color"))), "with both people in their colours")
+		if round < rounds - 1:
+			standings.find_children("*", "Button", true, false).filter(func(b): return b.text.begins_with("Next race"))[0].pressed.emit()
+	check(Game.grand_prix.finished(), "the cup's over")
+	check(Game.grand_prix.points[two] == 15 * rounds and Game.grand_prix.points[one] == 10 * rounds, "both people scored (%s)" % [Game.grand_prix.points])
+	check(Records.best_cup_place("gearbox", Difficulty.DEFAULT, true) == 1, "the trophy for two goes by the better place (%d)" % Records.best_cup_place("gearbox", Difficulty.DEFAULT, true))
+	check(Records.best_cup_place("gearbox") == single_gearbox, "and single player's trophy isn't touched")
+	check(CupGrid.best_place("gearbox", true) == 1 and CupGrid.best_place("gearbox") == single_gearbox, "the cups for two show their own trophy")
+	Game._go_back()
+	await frames(2)
+	check(screen() is CupGrid and Game.cups_for_two, "leaving goes back to the cups for two")
+	Game._go_back()
+	await frames(2)
+	check(screen() is MultiplayerMenu, "and back from there to the Multiplayer menu")
+
+	# Quitting mid-cup goes back the same way.
+	Game.start_grand_prix("gearbox", true)
+	var race: Race = await wait_for(Race)
+	race.leave()
+	await frames(2)
+	check(screen() is CupGrid and Game.cups_for_two and Game.grand_prix == null, "quitting a cup for two goes back to its cups")
+	Game.show_cups()
+	await frames(2)
+	check(not Game.cups_for_two, "and Single player's Grand Prix stays for one")
+	for key in was:
+		if was[key] == null:
+			Game.settings.erase_section_key("race", key)
+		else:
+			Game.settings.set_value("race", key, was[key])
 
 
 var check_ranks := []

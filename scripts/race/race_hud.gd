@@ -77,6 +77,9 @@ var _fps: Label
 var _results: PanelContainer
 var _results_title: Label
 var _results_list: GridContainer
+## Standings in a Grand Prix, which waits for the other player to finish.
+var _next: Button
+var _waiting: Label
 ## The on-screen driving controls, hidden once you've finished.
 var touch: Control
 
@@ -447,6 +450,7 @@ func _process(delta: float) -> void:
 
 	if _results.visible:
 		_fill_results()
+		_show_waiting()
 
 
 func _build_results() -> void:
@@ -500,6 +504,28 @@ func _build_results() -> void:
 		var signal_to_send: Signal = pair[1]
 		button.pressed.connect(func() -> void: signal_to_send.emit())
 		row.add_child(button)
+		if signal_to_send == next_pressed:
+			_next = button
+	if _next != null and race.humans.size() > 1:
+		_waiting = Label.new()
+		_waiting.add_theme_font_size_override("font_size", 18)
+		_waiting.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+		_waiting.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		box.add_child(_waiting)
+
+
+## The other player's still racing, so Standings waits for them, or until
+## all but one of the racers are home.
+func _show_waiting() -> void:
+	if _next == null:
+		return
+	var ready := race.can_move_on()
+	_next.disabled = not ready
+	if _waiting != null:
+		_waiting.visible = not ready
+		if not ready:
+			var out := race.humans.filter(func(r: Race.Racer) -> bool: return not r.progress.finished)
+			_waiting.text = "%s is still racing" % out[0].name
 
 
 func show_results() -> void:
@@ -509,6 +535,7 @@ func show_results() -> void:
 	if touch != null:
 		touch.visible = false
 	_fill_results()
+	_show_waiting()
 	_results.reset_size()
 	_results.set_anchors_and_offsets_preset(PRESET_CENTER)
 

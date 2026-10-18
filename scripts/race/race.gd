@@ -64,6 +64,11 @@ var racers: Array[Racer] = []
 var humans: Array[Racer] = []
 ## The menus open now, by whose they are.
 var _menus := {}
+## The map on the line between the halves in split screen, which sits over
+## both halves' menus and so goes while one's open.
+var _shared_map: CourseMap
+## The physics frame a menu last closed on.
+var _closed_at := -100
 ## Player 1.
 var player: Racer
 ## How the screen is shared (Game.SOLO and so on). Setting it before this is
@@ -118,6 +123,9 @@ func _init(split_override: Variant = null) -> void:
 func _ready() -> void:
 	# The menu pauses a race whatever it's under (see open_menu).
 	process_mode = Node.PROCESS_MODE_PAUSABLE
+	var keys := MenuKeys.new()
+	keys.race = self
+	add_child(keys)
 	mode = Game.mode
 	if not _split_set:
 		split = Game.race_split()
@@ -328,6 +336,8 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 		for other in humans.size():
 			if other != index:
 				view.set_cull_mask_value(PowerupField.layer_of(other), false)
+	# In split screen it's in a half that keeps running while paused.
+	view.process_mode = Node.PROCESS_MODE_PAUSABLE
 	world_parent.add_child(view)
 	view.make_current()
 	view.snap()
@@ -352,11 +362,16 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 	racer_hud.garage_pressed.connect(Game.show_garage)
 	racer_hud.menu_pressed.connect(leave)
 	racer_hud.next_pressed.connect(func() -> void:
-		Game.finish_grand_prix_race(standings().map(func(r): return r.name)))
+		# Someone still racing is scored where they are now.
+		if can_move_on():
+			Game.finish_grand_prix_race(standings().map(func(r): return r.name)))
 	racer_hud.courses_pressed.connect(func() -> void: Game.show_tracks(mode, Game.racing_alone, true))
 	racer_hud.camera_pressed.connect(input.press_view)
 	racer_hud.pause_pressed.connect(open_menu.bind(racer))
-	input.menu_pressed.connect(open_menu.bind(racer))
+	input.menu_pressed.connect(func() -> void:
+		# Start that just closed the menu is still down when the race carries on.
+		if Engine.get_physics_frames() - _closed_at > 2:
+			open_menu(racer))
 
 
 ## Two halves of the screen, each with its own SubViewport looking at this
@@ -379,6 +394,9 @@ func _add_split_views() -> void:
 	for i in humans.size():
 		var holder := SubViewportContainer.new()
 		holder.stretch = true
+		# A paused container passes no taps on, and the menus in here have to
+		# work while the race is paused. The HUD inside still pauses.
+		holder.process_mode = Node.PROCESS_MODE_ALWAYS
 		root.add_child(holder)
 		if split == Game.FACE_TO_FACE:
 			holder.anchor_right = 1.0
@@ -408,6 +426,7 @@ func _add_split_views() -> void:
 		holder.add_child(viewport)
 		holder.resized.connect(_fit_hud.bind(viewport, humans[i]), CONNECT_DEFERRED)
 		var hud_layer := CanvasLayer.new()
+		hud_layer.process_mode = Node.PROCESS_MODE_PAUSABLE
 		viewport.add_child(hud_layer)
 		_add_view(humans[i], viewport, hud_layer)
 		# The screen may already be its final size, so resized won't come.
@@ -441,6 +460,7 @@ func _add_shared_map(root: Control) -> void:
 	map.across = SHARED_MAP * (2.0 if split == Game.FACE_TO_FACE else 1.0)
 	map.mode = Game.map_view(0)
 	root.add_child(map)
+	_shared_map = map
 	var place := func() -> void:
 		var size := map.get_combined_minimum_size()
 		var middle := Vector2(0.5, SHARED_MAP_DOWN if split == Game.SIDE_BY_SIDE else 0.5) * root.size
@@ -719,8 +739,9 @@ func leave() -> void:
 		return
 	match mode:
 		Game.MODE_GRAND_PRIX:
+			var two: bool = Game.grand_prix != null and Game.grand_prix.two
 			Game.grand_prix = null
-			Game.show_cups()
+			Game.show_cups(two)
 		Game.MODE_TIME_TRIAL, Game.MODE_PRACTICE:
 			Game.show_tracks(mode, false, true)
 		_:
@@ -739,15 +760,39 @@ func go_back() -> void:
 		for racer in _menus.keys():
 			close_menu(racer)
 		return
-	if humans.is_empty() or humans.all(func(r: Racer) -> bool: return r.progress.finished):
+	if all_humans_home():
 		leave()
 		return
-	open_menu(humans[0])
+	_open_any()
 
 
-## Opens this player's menu over their view. In a single player race that
-## pauses everything.
+## Whether every person on this device has finished.
+func all_humans_home() -> bool:
+	return humans.all(func(r: Racer) -> bool: return r.progress.finished)
+
+
+## Whether the race can move on to the standings: once everyone here is
+## home, or everyone in the race but one is, so a player a lap behind
+## doesn't hold it up for long.
+func can_move_on() -> bool:
+	return all_humans_home() or racers.filter(func(r: Racer) -> bool: return r.progress.finished).size() >= racers.size() - 1
+
+
+## Opens this player's menu over their view. Off the network that pauses
+## everything, and in split screen the other player gets a menu in their half
+## too, so either of you can carry on.
 func open_menu(racer: Racer) -> void:
+	if _menus.has(racer) or racer.hud == null or racer.progress.finished:
+		return
+	_add_menu(racer, true)
+	if _can_pause():
+		for other in humans:
+			if other != racer:
+				_add_menu(other, false)
+	_update_pause()
+
+
+func _add_menu(racer: Racer, opened: bool) -> void:
 	if _menus.has(racer) or racer.hud == null or racer.progress.finished:
 		return
 	var menu := RaceMenu.new()
@@ -755,6 +800,7 @@ func open_menu(racer: Racer) -> void:
 	menu.racer = racer
 	menu.person = humans.find(racer)
 	menu.pauses = _can_pause()
+	menu.focus_on_open = opened
 	menu.can_restart = mode != Game.MODE_GRAND_PRIX and not Game.net.is_online()
 	menu.resume_pressed.connect(close_menu.bind(racer))
 	menu.restart_pressed.connect(func() -> void:
@@ -765,14 +811,16 @@ func open_menu(racer: Racer) -> void:
 		leave())
 	racer.hud.add_child(menu)
 	_menus[racer] = menu
-	_update_pause()
 
 
+## Closes this player's menu, or while the race is paused, everyone's.
 func close_menu(racer: Racer) -> void:
 	if not _menus.has(racer):
 		return
-	_menus[racer].queue_free()
-	_menus.erase(racer)
+	for other in (_menus.keys() if _can_pause() else [racer]):
+		_menus[other].queue_free()
+		_menus.erase(other)
+	_closed_at = Engine.get_physics_frames()
 	_update_pause()
 
 
@@ -780,32 +828,70 @@ func menu_open(racer: Racer) -> bool:
 	return _menus.has(racer)
 
 
-## Only a single player race on this device pauses. With someone else
-## playing, here or online, it carries on.
+## A race on this device pauses, with one person or two. Online it carries
+## on, since the others are still racing.
 func _can_pause() -> bool:
-	return humans.size() == 1 and not Game.net.is_online()
+	return not Game.net.is_online()
 
 
 func _update_pause() -> void:
+	if _shared_map != null:
+		_shared_map.visible = _menus.is_empty()
 	if is_inside_tree():
 		get_tree().paused = _can_pause() and not _menus.is_empty()
+
+
+## Start or B on a player's controller closes their menu, or everyone's while
+## paused. It's here rather than in the menu, since in split screen the menu's
+## in a half that stops taking input while the race is paused.
+func _menu_keys(event: InputEvent) -> void:
+	if _menus.is_empty() or not (event is InputEventJoypadButton and event.pressed and event.button_index in [JOY_BUTTON_START, JOY_BUTTON_B]):
+		return
+	for racer in _menus.keys():
+		if racer.input == null or racer.input.owns_joypad(event.device):
+			get_viewport().set_input_as_handled()
+			close_menu(racer)
+			return
+	# A finished player's controller can carry on a paused race too.
+	if get_tree().paused and humans.any(func(r: Racer) -> bool: return r.input != null and r.input.owns_joypad(event.device)):
+		get_viewport().set_input_as_handled()
+		close_menu(_menus.keys()[0])
 
 
 func _exit_tree() -> void:
 	get_tree().paused = false
 
 
-## A controller coming unplugged pauses a single player race with the menu
-## open, and in split screen says so in that player's half.
+## A controller coming unplugged pauses the race with that player's menu
+## open, and in split screen says so in their half.
 func _on_unplugged(person: int) -> void:
 	if not started or person >= humans.size() or humans[person].progress.finished:
 		return
 	if _can_pause():
-		open_menu(humans[0])
+		open_menu(humans[person])
 	humans[person].hud.flash("Controller unplugged" if humans.size() == 1 else "Player %d's controller came unplugged" % (person + 1))
 
 
-## Going off to another app pauses a single player race, with the menu open.
+## Going off to another app pauses the race, with the menu open.
 func _notification(what: int) -> void:
-	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED] and _can_pause() and started and not humans.is_empty():
-		open_menu(humans[0])
+	if what in [NOTIFICATION_APPLICATION_FOCUS_OUT, NOTIFICATION_APPLICATION_PAUSED] and _can_pause() and started:
+		_open_any()
+
+
+## Opens the menu of the first player still racing.
+func _open_any() -> void:
+	for racer in humans:
+		if not racer.progress.finished:
+			open_menu(racer)
+			return
+
+
+## Passes the controller's Start and B to the race while it's paused.
+class MenuKeys extends Node:
+	var race: Race
+
+	func _ready() -> void:
+		process_mode = Node.PROCESS_MODE_ALWAYS
+
+	func _input(event: InputEvent) -> void:
+		race._menu_keys(event)

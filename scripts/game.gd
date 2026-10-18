@@ -67,6 +67,8 @@ var came_from_editor := false
 ## Whether a race against the AI is just you (a single race), rather than
 ## the two of you from the Multiplayer menu.
 var racing_alone := false
+## The Grand Prix cups showing are for two on this phone (see show_cups).
+var cups_for_two := false
 ## Whether the perflog switch has started its race (see show_menu()).
 var _perf_started := false
 ## Racing with people on other devices (see NetSession).
@@ -207,11 +209,14 @@ func show_multiplayer() -> void:
 	_swap(MultiplayerMenu.new())
 
 
-func show_cups() -> void:
+## The Grand Prix cups, for one, or with `two` for two on this phone (from the
+## Multiplayer menu).
+func show_cups(two := false) -> void:
+	cups_for_two = two
 	_swap(CupGrid.new(MODE_GRAND_PRIX))
 
 
-## The cups you've made.
+## The cups you've made, for one or two as the cups were last shown.
 func show_your_cups() -> void:
 	_swap(CupGrid.new(MODE_GRAND_PRIX, false, true))
 
@@ -271,15 +276,23 @@ func show_kart_picker(go: Callable, back: Callable, ai := false, two := false) -
 
 
 ## Starts a Grand Prix, of one of the game's cups by its id, or of a cup of
-## your own (as CupDesign.to_cup() makes it).
-func start_grand_prix(which: Variant) -> void:
+## your own (as CupDesign.to_cup() makes it). With `two`, it's for two on this
+## phone in split screen, and no AI driver gets either player's kart.
+func start_grand_prix(which: Variant, two := false) -> void:
 	mode = MODE_GRAND_PRIX
 	came_from_editor = false
+	racing_alone = false
 	grand_prix = GrandPrix.new(which)
-	# Everyone keeps the same kart for the whole cup.
-	grand_prix.karts = draw_karts(ai_driver_keys())
-	grand_prix.ranks = draw_ranks(ai_driver_keys())
+	grand_prix.two = two
 	grand_prix.player_kart = kart_choice()
+	grand_prix.people = [player_name()]
+	if two:
+		grand_prix.player_two_kart = player_two_kart()
+		grand_prix.people = [player_one_name(), player_two_name()]
+	# Everyone keeps the same kart for the whole cup.
+	var leave_out := [grand_prix.player_kart, grand_prix.player_two_kart] if two else []
+	grand_prix.karts = draw_karts(ai_driver_keys(), leave_out)
+	grand_prix.ranks = draw_ranks(ai_driver_keys())
 	grand_prix.difficulty = difficulty()
 	grand_prix.weather = weather()
 	grand_prix.time = time_of_day()
@@ -422,8 +435,11 @@ func players() -> int:
 
 
 ## How the screen is shared in the race about to start. Only races against the
-## AI can be for two. Everything else is for one player.
+## AI and Grand Prix cups started for two can be for two. Everything else is
+## for one player.
 func race_split() -> String:
+	if mode == MODE_GRAND_PRIX:
+		return split() if grand_prix != null and grand_prix.two else SOLO
 	return split() if mode == MODE_RACE and not racing_alone else SOLO
 
 
@@ -436,16 +452,25 @@ func player_two_kart() -> String:
 	return key if stock_keys().has(key) else PLAYER_TWO_STOCK
 
 
+## Player 2's kart. In a Grand Prix it's the one they started the cup with.
 func player_two_design() -> KartDesign:
 	var key := player_two_kart()
+	if mode == MODE_GRAND_PRIX and grand_prix != null and grand_prix.player_two_kart != "":
+		key = grand_prix.player_two_kart
 	return design if key == OWN_KART else stock_kart(key)
 
 
 ## Player 2's name, for two on one phone. It's "Player 2" until they give
-## one, or if it's the same as player 1's.
+## one, or if it's the same as player 1's, and never the same as player 1's,
+## since a Grand Prix keeps the points by name.
 func player_two_name() -> String:
+	var one := player_one_name()
 	var name := str(settings.get_value("player", "name_two", "")).strip_edges()
-	return name if name != "" and name != player_name() else "Player 2"
+	if name == "" or name == one:
+		name = "Player 2"
+	if name == one:
+		name = "Player Two"
+	return name
 
 
 ## A stock kart id, with an old one swapped for its new id.

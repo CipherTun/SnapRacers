@@ -3,9 +3,9 @@ extends Control
 
 ## Racing with other people: two people on one phone, sharing the screen
 ## side by side (landscape, half each) or face to face (portrait, with the
-## phone flat between them), against six AI karts, or online against people
-## on other devices. Each player picks their kart once the course is picked
-## (see KartPicker).
+## phone flat between them), against six AI karts in one race or a Grand
+## Prix, or online against people on other devices. Each player picks their
+## kart once the course or cup is picked (see KartPicker).
 
 const LAYOUTS := [
 	[Game.SIDE_BY_SIDE, "Side by side", "Landscape, half the screen each"],
@@ -34,9 +34,15 @@ func _ready() -> void:
 	var owners := ControlsPage.new()
 	owners.owners_only = true
 	column.add_child(owners)
+	var choices := HBoxContainer.new()
+	choices.add_theme_constant_override("separation", 14)
+	column.add_child(choices)
 	var go := MenuStyle.button("Pick a course", Game.show_tracks.bind(Game.MODE_RACE))
-	go.custom_minimum_size.y = 72.0
-	column.add_child(go)
+	var cup := MenuStyle.button("Grand Prix", Game.show_cups.bind(true))
+	for button in [go, cup]:
+		button.custom_minimum_size.y = 72.0
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		choices.add_child(button)
 	column.add_child(MenuStyle.heading("Online"))
 	var online := MenuStyle.button("Host or join a game", Game.show_online)
 	online.custom_minimum_size.y = 72.0

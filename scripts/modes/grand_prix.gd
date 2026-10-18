@@ -24,6 +24,11 @@ var results: Array = []
 var karts := {}
 ## The kart you started the cup in (see Game.kart_choice()).
 var player_kart := ""
+## For two on this phone in split screen, and the kart player 2 started in.
+var two := false
+var player_two_kart := ""
+## The names of the people racing, player 1 first, as the races know them.
+var people: Array = []
 ## The AI drivers' pecking order for the whole cup, as { driver: rank }.
 var ranks := {}
 ## How good the AI drivers are, for the whole cup (see Difficulty).
@@ -102,3 +107,14 @@ func grid_order() -> Array:
 	var order := standings().map(func(s): return s[0])
 	order.reverse()
 	return order
+
+
+## The best place any of the people has in the standings, or 0.
+func best_place() -> int:
+	var names := standings().map(func(s): return s[0])
+	var best := 0
+	for name in people:
+		var place: int = names.find(name) + 1
+		if place > 0 and (best == 0 or place < best):
+			best = place
+	return best
