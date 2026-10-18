@@ -2103,7 +2103,7 @@ def _arc(r0, r1, axle, x0, x1, a0, a1, n=24):
 
 
 # Seven segment digits, for race numbers: the segments each lights.
-_DIGITS = {"7": "abc", "9": "abcdfg", "3": "abcdg", "1": "bc"}
+_DIGITS = {"7": "abc", "9": "abcdfg", "3": "abcdg", "1": "bc", "2": "abged", "5": "afgcd"}
 
 
 def _number(text, at, h, side_):
@@ -2635,3 +2635,153 @@ def tail_reverse_trike():
     return _vpart("b_tail_reverse_trike", "Reverse trike tail", "body", (-23, 41, 117), shell, ORANGE, con=con,
                   solids=[[-22, 54, 124, 22, 60, 164]], trim=(lights, TRANS_RED, "glass"), light="tail",
                   about="A tail over the reverse trike's back wheel, with a tail light.", aero={"front": 0.6, "back": 0.8, "side": 0.8}, mass=1.2, strength=700.0)
+
+
+# The stock quads: Zipper, Mudlark and Flat Track. Each has a black frame
+# with the saddle on it, a body over the front wheels with the tank and a
+# body over the back wheels. In each quad's own space like the bikes, the
+# front axle at z 0. A quad is (wheel radius, wheel width, wheelbase, the
+# wheels' outside face across, half width of the bodies, top of the bodies,
+# top of the saddle). The rider's hips are QUAD_HIPS in front of the back
+# wheel's arch.
+
+_QUADS = {"zipper": (22.4, 32, 120, 68, 50, 56, 64),
+          "mudlark": (33.6, 32, 140, 74, 52, 75, 84),
+          "flat_track": (24, 36, 120, 72, 54, 56, 66)}
+QUAD_HIPS = 28
+
+
+def _quad_hips(q):
+    R, ww, wb, xo, hw, yt, ys = q
+    return wb - R - QUAD_HIPS
+
+
+def _quad_frame_v(key, name, about, **stats):
+    """A quad's frame: a spine joining the axles, the engine under the
+    saddle, footboards each side and an exhaust down the right."""
+    q = _QUADS[key]
+    R, ww, wb, xo, hw, yt, ys = q
+    zs = _quad_hips(q)
+    sy = R + 6                                       # top of the spine, where the bodies sit
+    spine = _lofted([(-14, 8, R - 6, sy, 3), (-10, 10, R - 6, sy, 4), (wb + 10, 10, R - 6, sy, 4), (wb + 14, 8, R - 6, sy, 3)])
+    # The saddle narrows in front so the rider's thighs clear it.
+    saddle = _lofted([(zs - 26, 5, ys - 14, ys - 4, 2), (zs - 20, 6, ys - 14, ys - 1, 3, 2), (zs - 4, 6, ys - 14, ys, 3, 2), (zs + 6, 12, ys - 14, ys, 5, 2),
+                      (zs + 18, 12, ys - 14, ys, 5, 2), (zs + 26, 10, ys - 12, ys - 3, 4, 2)])
+    black = [spine, saddle]
+    inner = 22                                       # footboards out to here
+    metal = [_vbox(-13, sy - 1, zs - 22, 13, ys - 13, zs + 18, edge=0.02)]
+    fins = max(1, int((ys - 14 - sy) // 5))
+    metal += [_vbox(-14, sy + 2 + 5 * k, zs - 18, 14, sy + 3.4 + 5 * k, zs + 8, edge=0.004) for k in range(fins)]
+    metal += [cylinder(3 * FINE, 2 * xo * FINE, "x", tuple(_f(-xo, R, z)), 14) for z in (0, wb)]
+    metal += [_vbox(s * 9 if s > 0 else -inner, R - 4, R + 4, inner if s > 0 else -9, R - 1.5, wb - R - 4, edge=0.006) for s in (-1, 1)]
+    metal += [_tube((13, sy + 4, zs + 6), (16, R + 2, zs + 22), 2.2), _tube((16, R + 2, zs + 22), (16, R + 2, wb - R - 6), 2.2)]
+    metal.append(cylinder(4 * FINE, (R + 2) * FINE, "z", tuple(_f(16, R + 2, wb - R - 8)), 14))
+    con = [("stud", (x, sy, z), (0, 1, 0)) for x in (-6, 6) for z in (-6, 6, wb - 6, wb + 6)]
+    con += [("axle", (-xo, R, z), (1, 0, 0), 2 * xo) for z in (0, wb)]
+    # The saddle's back end rests on the back body.
+    solids = [[-10, R - 6, -14, 10, sy, wb + 14], [-12, ys - 14, zs - 26, 12, ys, zs + 23], [-12, yt, zs + 23, 12, ys, zs + 26],
+              [-13, sy, zs - 22, 13, ys - 14, zs + 18]]
+    return _vpart("b_frame_quad_" + key, name + " frame", "seat", (-xo, R - 6, -14), union(black), BLACK, con=con, solids=solids,
+                  seat_box=[-12, ys - 8, zs - 22, 12, ys, zs + 22], trim=(union(metal), METAL, "metal"), about=about,
+                  engine_twin="engine_twin", aero={"front": 0.7, "back": 0.8, "side": 0.8}, astride=True, driver_height=7, recline=0, **stats)
+
+
+def _quad_shell(q, z0, z1, axle):
+    """A smooth body across the quad from z0 to z1: a mudguard over each
+    wheel that drops down at both ends, and a rounded block between the
+    wheels under it."""
+    R, ww, wb, xo, hw, yt, ys = q
+    yb = R + 6
+    xi = xo - ww
+    lo = yt - 7                                      # underside of the top over the wheels
+    guard = _lofted([(z0, hw - 5, R + 12, yt - 5, 4), (z0 + 4, hw, R + 9, yt - 1, 5, 2), (z0 + 14, hw, lo, yt, 6, 2),
+                     (z1 - 14, hw, lo, yt, 6, 2), (z1 - 4, hw, R + 9, yt - 1, 5, 2), (z1, hw - 5, R + 12, yt - 5, 4)])
+    m0, m1 = axle - R + 4, axle + R - 4               # hidden behind the wheels from the side
+    middle = _lofted([(m0, xi - 4, yb, yt - 2, 4, 2), (m1, xi - 4, yb, yt - 2, 4, 2)])
+    wells = [cylinder((R + 4) * FINE, (ww + 6) * FINE, "x", tuple(_f(x, R, axle)), 48) for x in (-xo - 3, xo - ww - 3)]
+    under = _vbox(-xo - 4, R - 20, z0 - 4, xo + 4, yb, z1 + 4, edge=0)
+    return union([guard, middle]) - union(wells) - under
+
+
+def _quad_solids(q, z0, z1, axle):
+    """Solid boxes for a quad body from z0 to z1: the top, and the block
+    between the wheels down to the frame."""
+    R, ww, wb, xo, hw, yt, ys = q
+    xi = xo - ww
+    return [[-hw, max(2 * R, yt - 9), z0, hw, yt, z1], [-xi + 4, R + 6, axle - R + 4, xi - 4, max(2 * R, yt - 9), axle + R - 4]]
+
+
+def _quad_rack(q, z0, z1):
+    """A tube rack over a quad body from z0 to z1."""
+    R, ww, wb, xo, hw, yt, ys = q
+    y = yt + 5
+    x = hw - 4
+    a, b = z0 + 4, z1 - 4
+    rods = [_rods([_f(-x, y, a), _f(x, y, a), _f(x, y, b), _f(-x, y, b), _f(-x, y, a)], 1.6 * FINE)]
+    rods += [_tube((-x, y, z), (x, y, z), 1.3) for z in (a + (b - a) / 3, a + 2 * (b - a) / 3)]
+    rods += [_tube((s * x, yt - 1, z), (s * x, y, z), 1.5) for s in (-1, 1) for z in (a + 2, b - 2)]
+    return union(rods)
+
+
+def _quad_front_v(key, name, colour, trim_colour, number, about, rack=False):
+    """The body over a quad's front wheels with two lamps and the tank back
+    to the bars. Quad bars go on the studs on the back of the tank."""
+    q = _QUADS[key]
+    R, ww, wb, xo, hw, yt, ys = q
+    zs = _quad_hips(q)
+    yb = R + 6
+    z0, z1 = -R - 8, R + 8
+    shell = _quad_shell(q, z0, z1, 0)
+    tank = _lofted([(R - 6, 14, yb, yt - 1, 5, 2), (zs - 36, 13, yb, ys - 8, 5, 2), (zs - 28, 11, yb, ys - 8, 4, 2)])
+    body = union([shell, tank])
+    ym = (yb + 5 + yt - 3) / 2
+    lamps = union([cylinder(3.4 * FINE, 1.0 * FINE, "-z", tuple(_f(x, ym, z0 + 0.5)), 18) for x in (-hw + 16, hw - 16)])
+    if rack:
+        trim = _quad_rack(q, z0 + 3, min(z1 - 3, zs - 50))
+    else:
+        trim = union([_coat(body, [_vbox(-3, 0, -100, 3, 200, 300, edge=0)]), _roundel(tank, ((R - 6 + zs - 28) / 2, (yb + ys - 8) / 2), 6.5, number)])
+    con = [("socket", (x, yb, z), (0, -1, 0)) for x in (-6, 6) for z in (-6, 6)]
+    con += [("stud", (x, ys - 8, zs - 38), (0, 1, 0)) for x in (-10, 10)]
+    solids = _quad_solids(q, z0 + 3, z1 - 3, 0) + [[-12, yb, z1 - 3, 12, ys - 8, zs - 28]]
+    return _vpart("b_quad_front_" + key, name + " front", "body", (-hw, yb, z0), body, colour, con=con, solids=solids,
+                  trim=(trim, trim_colour, "plastic"), lamp=(lamps, TRANS_CLEAR), light="head", about=about,
+                  aero={"front": 0.4, "back": 0.8, "side": 0.8}, mass=1.8, strength=800.0)
+
+
+def _quad_back_v(key, name, colour, about, style):
+    """The body over a quad's back wheels: studs on top and tail lights
+    ("studs"), or a rack and a tow hitch ("rack")."""
+    q = _QUADS[key]
+    R, ww, wb, xo, hw, yt, ys = q
+    yb = R + 6
+    z0, z1 = wb - R - 8, wb + R + 8
+    body = _quad_shell(q, z0, z1, wb)
+    con = [("socket", (x, yb, z), (0, -1, 0)) for x in (-6, 6) for z in (wb - 6, wb + 6)]
+    solids = _quad_solids(q, z0 + 3, z1 - 3, wb)
+    stats = {}
+    if style == "studs":
+        tops = [(x, z) for x in (-30, -10, 10, 30) for z in (wb - 10, wb + 10)]
+        body = union([body] + [cylinder(STUD_RADIUS, STUD_HEIGHT, "y", tuple(_f(x, yt - 0.08, z)), 12) for x, z in tops])
+        con += [("stud", (x, yt, z), (0, 1, 0)) for x, z in tops]
+        ym = (yb + 5 + yt - 3) / 2
+        lights = union([_vbox(s * (hw - 18) - 6, ym - 2.5, z1 - 0.6, s * (hw - 18) + 6, ym + 2.5, z1 + 0.6, edge=0.003) for s in (-1, 1)])
+        stats.update(trim=(lights, TRANS_RED, "glass"), light="tail")
+    else:
+        hitch = union([_vbox(-4, yb, z1 - 2, 4, yb + 4, z1 + 6, edge=0.004), cylinder(2.5 * FINE, 4 * FINE, "y", tuple(_f(0, yb + 4, z1 + 3)), 12)])
+        stats["trim"] = (union([_quad_rack(q, z0 + 3, z1 - 3), hitch]), BLACK, "plastic")
+    return _vpart("b_quad_back_" + key, name + " back", "body", (-hw, yb, z0), body, colour, con=con, solids=solids, about=about,
+                  aero={"front": 0.6, "back": 0.8, "side": 0.8}, mass=1.8, strength=800.0, **stats)
+
+
+part(lambda: _quad_frame_v("zipper", "Sport quad", "A sport quad's frame with the engine and saddle on it and an axle across each end for quad wheels. Put its bodies over the wheels.",
+                           power=7400.0, max_force=1500.0, control=1.1))
+part(lambda: _quad_front_v("zipper", "Sport quad", BLUE, WHITE, "2", "A sport quad's front body over both front wheels, with lamps, a stripe and the tank."))
+part(lambda: _quad_back_v("zipper", "Sport quad", BLUE, "A sport quad's back body over both back wheels, with studs on top and tail lights.", "studs"))
+part(lambda: _quad_frame_v("mudlark", "Mud quad", "A tall mud quad's frame with the engine and saddle on it and an axle across each end for big knobbly wheels. Put its bodies over the wheels.",
+                           power=7000.0, max_force=1700.0, control=1.0))
+part(lambda: _quad_front_v("mudlark", "Mud quad", GREEN, BLACK, "", "A mud quad's front body over both front wheels, with lamps, a rack and the tank.", rack=True))
+part(lambda: _quad_back_v("mudlark", "Mud quad", GREEN, "A mud quad's back body over both back wheels, with a rack and a tow hitch.", "rack"))
+part(lambda: _quad_frame_v("flat_track", "Racing quad", "A low racing quad's frame with the engine and saddle on it and an axle across each end. Put its bodies over the wheels.",
+                           power=7800.0, max_force=1400.0, control=1.15))
+part(lambda: _quad_front_v("flat_track", "Racing quad", YELLOW, BLACK, "5", "A racing quad's low front body over both front wheels, with lamps, a stripe and the tank."))
+part(lambda: _quad_back_v("flat_track", "Racing quad", YELLOW, "A racing quad's low back body over both back wheels, with studs on top and tail lights.", "studs"))
