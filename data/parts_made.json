@@ -30467,6 +30467,509 @@
 			},
 			"mass": 2.4,
 			"strength": 800.0
+		},
+		"p_cab_4x4": {
+			"name": "Car cab 4\u00d74",
+			"kind": "body",
+			"group": "curves",
+			"size": [
+				4,
+				6,
+				4
+			],
+			"fine_size": [
+				80.0,
+				48.0,
+				80.0
+			],
+			"color": "#f2f3f2",
+			"mesh": "res://parts/meshes/p_cab_4x4.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						30.0,
+						48.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						50.0,
+						48.0,
+						50.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					80.0
+				],
+				[
+					60.0,
+					0.0,
+					0.0,
+					80.0,
+					8.0,
+					80.0
+				],
+				[
+					0.0,
+					40.0,
+					27.2,
+					80.0,
+					48.0,
+					67.2
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_cab_4x4_trim.obj",
+				"color": "#8fd3f4",
+				"finish": "glass"
+			},
+			"aero": {
+				"front": 0.5,
+				"back": 0.65,
+				"side": 0.8
+			},
+			"mass": 3.0,
+			"strength": 900.0
+		},
+		"p_truck_cab_4x4": {
+			"name": "Truck cab 4\u00d74",
+			"kind": "body",
+			"group": "curves",
+			"size": [
+				4,
+				7,
+				4
+			],
+			"fine_size": [
+				80.0,
+				52.0,
+				80.0
+			],
+			"color": "#f2f3f2",
+			"mesh": "res://parts/meshes/p_truck_cab_4x4.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						30.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						50.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						70.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					80.0
+				],
+				[
+					60.0,
+					0.0,
+					0.0,
+					80.0,
+					8.0,
+					80.0
+				],
+				[
+					0.0,
+					44.0,
+					8.0,
+					80.0,
+					52.0,
+					80.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/p_truck_cab_4x4_trim.obj",
+				"color": "#8fd3f4",
+				"finish": "glass"
+			},
+			"aero": {
+				"front": 0.85,
+				"back": 1.0,
+				"side": 0.9
+			},
+			"mass": 4.5,
+			"strength": 1100.0
+		},
+		"d_number_brick": {
+			"name": "Brick 1\u00d71 with a race number",
+			"kind": "brick",
+			"group": "details",
+			"size": [
+				1,
+				3,
+				1
+			],
+			"fine_size": [
+				20.0,
+				24.0,
+				20.0
+			],
+			"color": "#f2f3f2",
+			"mesh": "res://parts/meshes/d_number_brick.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "stud",
+					"at": [
+						10.0,
+						24.0,
+						10.0
+					],
+					"axis": [
+						0,
+						1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					24.0,
+					20.0
+				]
+			],
+			"trim": {
+				"mesh": "res://parts/meshes/d_number_brick_trim.obj",
+				"color": "#1b2a34",
+				"finish": "plastic"
+			},
+			"mass": 0.22,
+			"strength": 438.0
+		},
+		"d_roll_bar": {
+			"name": "Roll bar",
+			"kind": "body",
+			"group": "details",
+			"size": [
+				4,
+				7,
+				1
+			],
+			"fine_size": [
+				80.0,
+				56.0,
+				20.0
+			],
+			"color": "#1b2a34",
+			"mesh": "res://parts/meshes/d_roll_bar.obj",
+			"connectors": [
+				{
+					"type": "socket",
+					"at": [
+						10.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				},
+				{
+					"type": "socket",
+					"at": [
+						70.0,
+						0.0,
+						10.0
+					],
+					"axis": [
+						0,
+						-1,
+						0
+					]
+				}
+			],
+			"solids": [
+				[
+					0.0,
+					0.0,
+					0.0,
+					20.0,
+					8.0,
+					20.0
+				],
+				[
+					60.0,
+					0.0,
+					0.0,
+					80.0,
+					8.0,
+					20.0
+				],
+				[
+					0.0,
+					8.0,
+					6.4,
+					20.0,
+					56.0,
+					13.6
+				],
+				[
+					60.0,
+					8.0,
+					6.4,
+					80.0,
+					56.0,
+					13.6
+				],
+				[
+					0.0,
+					48.0,
+					6.4,
+					80.0,
+					56.0,
+					13.6
+				]
+			],
+			"aero": {
+				"front": 0.5,
+				"back": 0.8
+			},
+			"mass": 1.0,
+			"strength": 1000.0
 		}
 	}
 }

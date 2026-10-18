@@ -1967,3 +1967,81 @@ def truck_fender():
 
 
 part(lambda: _bonnet("p_bonnet_4x4_red_stripe", "Low bonnet 4×4 with a red stripe", 4, 2, stripes=True, stripe_colour=RED, lanes=((1.5, 1),), across=4, top=False))
+
+
+@part
+def car_cab_4x4():
+    """A short car cab 4×4 with a steep windscreen, a window down each side
+    and two studs on the roof for lamps. The driver sits inside."""
+    w, l, h = 4 * STUD, 4 * STUD, 0.6
+    sv = [(0.0, -0.3), (0.0, 0.08), (0.34, h), (0.84, h), (l, 0.2), (l, -0.3)]
+    fv = [(0.002, -0.3), (w - 0.002, -0.3), (w - 0.002, 0.12), (w - 0.09, h), (0.09, h), (0.002, 0.12)]
+    outer, shell, glass_layer = _shell(sv, fv, w, l, 0.04, 0.05, 0.08)
+    side_view = rounded(side(sv), 0.05).offset(-0.08) - side([(-1, -1), (-1, 0.16), (3, 0.16), (3, -1)])
+    cutters = union([
+        push_x(side_view, -0.1, 0.3), push_x(side_view, w - 0.3, w + 0.1),
+        box(0.13, 0.14, -0.2, w - 0.13, h - 0.07, 0.3, edge=0),
+        box(0.15, 0.22, 0.9, w - 0.15, h - 0.08, l + 0.2, edge=0),
+    ])
+    roof = [(1, 2), (2, 2)]
+    body = union([shell - cutters, _sills(outer, w, l, 4), studs(roof, h)])
+    cells = [(i, k) for i in (0, 3) for k in range(4)]
+    return Part("p_cab_4x4", "Car cab 4×4", "body", "curves", (w, h, l), body, sockets(cells) + top_studs(roof, h), WHITE,
+                trim=(glass_layer ^ cutters, GLASS, "glass"), aero={"front": 0.5, "back": 0.65, "side": 0.8}, mass=3.0, strength=900.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0.34, w, h, 0.84]])
+
+
+@part
+def truck_cab_4x4():
+    """A tall truck cab 4×4 with a big upright windscreen, side windows, a
+    small back window and a smooth roof. The driver sits inside."""
+    w, l, h = 4 * STUD, 4 * STUD, 0.65
+    sv = [(0.0, -0.3), (0.0, 0.28), (0.1, h), (l, h), (l, -0.3)]
+    fv = [(0.002, -0.3), (w - 0.002, -0.3), (w - 0.002, 0.26), (w - 0.04, h), (0.04, h), (0.002, 0.26)]
+    outer, shell, glass_layer = _shell(sv, fv, w, l, 0.04, 0.04, 0.06)
+    cutters = union([
+        box(0.12, 0.32, -0.2, w - 0.12, h - 0.07, 0.2, edge=0),
+        box(-0.1, 0.32, 0.22, 0.3, h - 0.07, l - 0.12, edge=0), box(w - 0.3, 0.32, 0.22, w + 0.1, h - 0.07, l - 0.12, edge=0),
+        box(0.3, 0.38, l - 0.2, w - 0.3, h - 0.1, l + 0.2, edge=0),
+    ])
+    body = union([shell - cutters, _sills(outer, w, l, 4)])
+    cells = [(i, k) for i in (0, 3) for k in range(4)]
+    return Part("p_truck_cab_4x4", "Truck cab 4×4", "body", "curves", (w, h, l), body, sockets(cells), WHITE,
+                trim=(glass_layer ^ cutters, GLASS, "glass"), aero={"front": 0.85, "back": 1.0, "side": 0.9}, mass=4.5, strength=1100.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, h - PLATE, 0.1, w, h, l]])
+
+
+@part
+def number_brick():
+    """A brick 1×1 with a race number roundel on its left side, 47 printed
+    in black inside a black ring. Turned round it faces right."""
+    disc_r, cy, cz = 0.11, BRICK * 0.5, STUD * 0.5
+    disc = cylinder(disc_r, 0.01, "x", (-0.008, cy, cz), 32)
+    ring = cylinder(disc_r - 0.004, 0.006, "x", (-0.013, cy, cz), 32) - cylinder(disc_r - 0.018, 0.01, "x", (-0.015, cy, cz), 32)
+    s, dw, dh = 0.014, 0.05, 0.09
+
+    def seg(z0, y0, z1, y1):
+        return box(-0.013, y0, z0, -0.006, y1, z1, edge=0)
+
+    lo, hi = cy - dh / 2, cy + dh / 2
+    four_z, seven_z = cz - 0.06, cz + 0.01
+    four = [seg(four_z, cy - s / 2, four_z + s, hi), seg(four_z, cy - s / 2, four_z + dw, cy + s / 2), seg(four_z + dw - s, lo, four_z + dw, hi)]
+    seven = [seg(seven_z, hi - s, seven_z + dw, hi), seg(seven_z + dw - s, lo, seven_z + dw, hi)]
+    body = union([box(0, 0, 0, STUD, BRICK, STUD), studs([(0, 0)], BRICK), disc])
+    return Part("d_number_brick", "Brick 1×1 with a race number", "brick", "details", (STUD, BRICK, STUD), body,
+                sockets([(0, 0)]) + top_studs([(0, 0)], BRICK), WHITE, trim=(union([ring] + four + seven), BLACK, "plastic"),
+                solids=[[0, 0, 0, STUD, BRICK, STUD]])
+
+
+@part
+def roll_bar():
+    """A plain roll bar 4 wide and 1 long to stand behind the driver."""
+    w, l, h = 4 * STUD, STUD, 0.7
+    feet = [box(x, 0, 0, x + STUD, PLATE, l) for x in (0.0, w - STUD)]
+    top = h - TUBE
+    hoop = _rods([(STUD * 0.5, PLATE, l * 0.5), (STUD * 0.5, top - 0.12, l * 0.5), (STUD * 0.5 + 0.1, top, l * 0.5),
+                  (w - STUD * 0.5 - 0.1, top, l * 0.5), (w - STUD * 0.5, top - 0.12, l * 0.5), (w - STUD * 0.5, PLATE, l * 0.5)], TUBE)
+    cells = [(0, 0), (3, 0)]
+    return Part("d_roll_bar", "Roll bar", "body", "details", (w, h, l), union(feet + [hoop]), sockets(cells), BLACK,
+                aero={"front": 0.5, "back": 0.8}, mass=1.0, strength=1000.0,
+                solids=[[0, 0, 0, STUD, PLATE, l], [w - STUD, 0, 0, w, PLATE, l], [0, PLATE, 0.08, STUD, h, 0.17], [w - STUD, PLATE, 0.08, w, h, 0.17], [0, h - 0.1, 0.08, w, h, 0.17]])
