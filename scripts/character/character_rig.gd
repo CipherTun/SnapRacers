@@ -91,6 +91,9 @@ var bake := true
 var _head: Node3D
 ## Everything above the hips, which leans back with `recline`.
 var _upper: Node3D
+## The neck post, on its own node on the upper body so the driver's own first
+## person camera can leave it out with the head.
+var _neck: Node3D
 ## The legs, which swing down astride. Otherwise it's the rig itself.
 var _legs: Node3D
 ## A grip asked for before the rig was built, to do once it is.
@@ -227,8 +230,9 @@ static func _upper_at(lean_back: float, on_bike: bool) -> Transform3D:
 func _apply_head_layer() -> void:
 	if _head == null:
 		return
-	for node in _head.find_children("*", "VisualInstance3D", true, false):
-		node.layers = 1 << (head_layer - 1) if head_layer > 0 else 1
+	for part in [_head, _neck]:
+		for node in part.find_children("*", "VisualInstance3D", true, false):
+			node.layers = 1 << (head_layer - 1) if head_layer > 0 else 1
 
 
 ## Turns the head a little toward where the kart's going, -1 left to 1 right.
@@ -510,6 +514,9 @@ func _build() -> void:
 		_legs = Node3D.new()
 		_legs.transform = Transform3D(down, hip - down * hip)
 		add_child(_legs)
+	_neck = Node3D.new()
+	_neck.name = "Neck"
+	_upper.add_child(_neck)
 	_build_head()
 	_build_arms()
 	var bones := _bones()
@@ -523,7 +530,7 @@ func _build() -> void:
 		_wear("legs", pose + "_r")
 		_wear("torso")
 		# The neck post the head sits on.
-		_add_figure("neck", _upper, {"skin": design.skin()})
+		_add_figure("neck", _neck, {"skin": design.skin()})
 		_wear("neck")
 		_wear("back", back_variant())
 		_dress_head()
@@ -548,7 +555,7 @@ func _build() -> void:
 ## The nodes each bone's pieces go on. Without astride the legs are on the
 ## rig with the hips.
 func _bones() -> Dictionary:
-	var out := { "hips": self, "upper": _upper, "head": _head, "arm_l": _arm[0], "arm_r": _arm[1], "hand_l": _hand[0], "hand_r": _hand[1] }
+	var out := { "hips": self, "upper": _upper, "neck": _neck, "head": _head, "arm_l": _arm[0], "arm_r": _arm[1], "hand_l": _hand[0], "hand_r": _hand[1] }
 	if _legs != self:
 		out["legs"] = _legs
 	return out
