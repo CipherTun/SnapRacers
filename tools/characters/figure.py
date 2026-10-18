@@ -166,7 +166,7 @@ def legs_astride():
 # "astride" has the knees down by the tank and the feet under the rider,
 # "forward" the feet out in front on a chopper's pegs. Degrees.
 RIDES = {
-    "astride": {"down": 30.0, "splay": 18.0, "bend": 70.0},
+    "astride": {"down": 10.0, "splay": 40.0, "bend": 85.0},
     "forward": {"down": -5.0, "splay": 12.0, "bend": 15.0},
 }
 # Where the knee is along a seated leg, from the hip.

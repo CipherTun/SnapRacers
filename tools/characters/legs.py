@@ -466,6 +466,9 @@ def make(style, hips_solid, keepout):
         top = 2.0 * st.shape["depth"]
         forward = {k: ride(v, side, "forward", top) - keepout for k, v in astride.items()}
         astride = {k: ride(v, side, "astride", top) - keepout for k, v in astride.items()}
+        if st.skirt:
+            # A little simpler, so the drape cut at the knee stays under 1,500 triangles.
+            astride = {k: v.simplify(0.0002) for k, v in astride.items()}
         for pose, regions_ in (("standing", standing), ("seated", seated), ("astride", astride), ("forward", forward)):
             out[(pose, side)] = {k: v for k, v in regions_.items() if not v.is_empty() and v.volume() > 1e-9}
     return out
