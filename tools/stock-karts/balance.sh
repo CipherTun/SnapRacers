@@ -5,7 +5,7 @@
 # middle of the field. Name vehicles or courses to only do those, and the
 # others keep their last times:
 #   tools/stock-karts/balance.sh
-#   tools/stock-karts/balance.sh superbike chopper launchpad_loop
+#   tools/stock-karts/balance.sh streak long_fork launchpad_loop
 # JOBS sets how many copies run at once (8 to start with).
 # BALANCE_WEATHER selects the weather; results are kept separately for each.
 set -euo pipefail

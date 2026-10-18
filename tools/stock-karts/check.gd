@@ -3,7 +3,7 @@ extends SceneTree
 ## Says which parts of the stock karts are inside each other and which
 ## aren't joined to the rest, for working out what's wrong when report.gd
 ## says so. Name karts after -- to only check those.
-##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tools/stock-karts/check.gd -- superbike
+##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tools/stock-karts/check.gd -- streak
 
 const DIR := "res://data/karts/stock"
 
