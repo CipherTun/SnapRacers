@@ -7,7 +7,8 @@ extends Node
 ## Name karts or courses after -- to only do those, like -- redline peach_pit.
 ## With BALANCE_OUT set it also writes the times there, for balance.sh, which
 ## runs several of these at once and puts their times together. BALANCE_WEATHER
-## selects the weather (clear by default); daytime and seed 12345 stay fixed.
+## selects the weather (clear by default); BALANCE_SEED selects the random
+## seed (12345 by default). Every run uses daytime.
 
 const COURSES := ["peach_pit", "foundry_flats", "launchpad_loop", "dune_drift"]
 const LAPS := 2
@@ -15,6 +16,7 @@ const GIVE_UP := 400.0
 
 var host: Node
 var _last: Race
+var _seed := 12345
 
 
 func _ready() -> void:
@@ -28,6 +30,14 @@ func _ready() -> void:
 		push_error("Unknown balance weather: " + weather)
 		get_tree().quit(1)
 		return
+	var seed_text := OS.get_environment("BALANCE_SEED")
+	if seed_text != "":
+		if not seed_text.is_valid_int() or seed_text.to_int() < 0:
+			push_error("BALANCE_SEED must be a nonnegative integer")
+			get_tree().quit(1)
+			return
+		_seed = seed_text.to_int()
+	print("Balance: %s, daytime, seed %d" % [weather, _seed])
 	Game.settings.set_value("race", "weather", weather)
 	Game.settings.set_value("race", "time", "day")
 	Records.use_file("user://balance_records_%s.cfg" % OS.get_process_id())
@@ -75,7 +85,7 @@ func _ready() -> void:
 func _time(key: String, course: String) -> Array:
 	Game.settings.set_value("race", "kart", key)
 	Game.mode = Game.MODE_TIME_TRIAL
-	seed(12345) # Same race seed and puddle layout for each vehicle.
+	seed(_seed) # Same race seed and puddle layout for each vehicle.
 	Game.show_race(Game.TRACKS + "/" + course + ".json")
 	var race: Race = null
 	while race == null:

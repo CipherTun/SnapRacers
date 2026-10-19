@@ -36,13 +36,14 @@ DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . -s tools/shots/
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --path . -s tools/stock-karts/report.gd
 ```
 
-`balance.sh` is the quick way to balance them. It runs several copies of `balance.tscn` at once, each timing a few of them, and puts their times together with the last run in the same weather (kept in `build/balance/<weather>/results.json`). Then it shows how each compares with the middle of the field, with the ones it just timed starred. All 24 take about 5 minutes. Name some to only time those, and the rest keep their last times. Name courses to only do those. `JOBS` sets how many copies run at once. `BALANCE_WEATHER` picks clear (the default), rain, snow, fog, storm or dust, and each has its own results and logs. Every run is in daytime and resets the random seed before each race, so every vehicle gets the same conditions and puddles.
+`balance.sh` is the quick way to balance them. It runs several copies of `balance.tscn` at once, each timing a few of them, and puts their times together with the last run in the same weather (kept in `build/balance/<weather>/results.json`). Then it shows how each compares with the middle of the field, with the ones it just timed starred. All 24 take about 5 minutes. Name some to only time those, and the rest keep their last times. Name courses to only do those. `JOBS` sets how many copies run at once. `BALANCE_WEATHER` picks clear (the default), rain, snow, fog, storm or dust, and each has its own results and logs. Every run is in daytime and resets the random seed before each race, so every vehicle gets the same conditions and puddles. `BALANCE_SEED` defaults to 12345; other seeds keep their results in `build/balance/<weather>/seed_<seed>/`, separately from the default seed and each other.
 
 ```
 tools/stock-karts/balance.sh
 tools/stock-karts/balance.sh streak long_fork launchpad_loop
 BALANCE_WEATHER=rain tools/stock-karts/balance.sh
 BALANCE_WEATHER=snow tools/stock-karts/balance.sh
+BALANCE_WEATHER=rain BALANCE_SEED=54321 tools/stock-karts/balance.sh
 ```
 
 `last_balance.json` is a copy of the last full clear run of all 24, kept in git as the dry times to compare against. To update it, copy `build/balance/clear/results.json` over it after a full clear run. `balance_table.py` reads it when you run it on its own.
@@ -59,4 +60,6 @@ tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . 
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tools/stock-karts/handling.gd
 ```
 
-After full clear, rain and snow runs, `python3 tools/stock-karts/weather_report.py > tools/stock-karts/weather_balance.md` compares every vehicle against the field in each weather and lists the raw two-lap times and resets. [weather_balance.md](weather_balance.md) is still from the old 22 and needs a new run.
+After full clear, rain and snow runs, `python3 tools/stock-karts/weather_report.py > tools/stock-karts/weather_balance.md` compares every vehicle against the field in each weather and lists the raw two-lap times and resets. Pass `--seeds 12345 54321 8675309` after running rain and snow with those seeds to average their relative pace and show the results for each seed. Clear always uses the seed 12345 dry baseline. See [weather_balance.md](weather_balance.md) for the measured roster and results.
+
+The 0.8.0 roster passed the weather check on 2026-10-18 without vehicle or driving changes: all 24 were within ±10% overall on each of three rain and snow seeds. All 576 two-lap races finished, with 13 rain resets and 16 snow resets, all on Foundry Flats. Kart Kid tipped over at its jump twice per rain run; the diagnostic log is `build/weather-kart-kid-debug.log`. The report lists the individual course times and the larger course-specific gaps too.

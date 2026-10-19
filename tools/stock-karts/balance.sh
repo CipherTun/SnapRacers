@@ -7,7 +7,8 @@
 #   tools/stock-karts/balance.sh
 #   tools/stock-karts/balance.sh streak long_fork launchpad_loop
 # JOBS sets how many copies run at once (8 to start with).
-# BALANCE_WEATHER selects the weather; results are kept separately for each.
+# BALANCE_WEATHER selects the weather; BALANCE_SEED selects the puddle seed.
+# Non-default seeds have their own subfolder, so partial runs never mix seeds.
 set -euo pipefail
 
 cd "$(dirname "$0")/../.."
@@ -15,8 +16,13 @@ GODOT="tools/godot/Godot_v4.7.2-stable_linux.x86_64"
 JOBS="${JOBS:-8}"
 BALANCE_WEATHER="${BALANCE_WEATHER:-clear}"
 case "$BALANCE_WEATHER" in clear|rain|snow|fog|storm|dust) ;; *) echo "Unknown weather: $BALANCE_WEATHER" >&2; exit 1 ;; esac
-export BALANCE_WEATHER
+BALANCE_SEED="${BALANCE_SEED:-12345}"
+case "$BALANCE_SEED" in ""|*[!0-9]*) echo "BALANCE_SEED must be a nonnegative integer" >&2; exit 1 ;; esac
+export BALANCE_WEATHER BALANCE_SEED
 OUT="$PWD/build/balance/$BALANCE_WEATHER"
+if [ "$BALANCE_SEED" != 12345 ]; then
+	OUT="$OUT/seed_$BALANCE_SEED"
+fi
 export BALANCE_KEPT="$OUT/results.json"
 mkdir -p "$OUT"
 rm -f "$OUT"/part_*.json "$OUT"/log_*.txt
