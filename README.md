@@ -51,23 +51,25 @@ The kart fills the screen and everything else floats over it.
 - Paint any part in sixteen brick colours.
 - Undo and redo anything, and save as many karts as you like. You can start from any of the stock karts too.
 - The card in the corner shows top speed, pull, cornering, control, off-road grip, weight and drag, and where most of the drag comes from.
+- The wind button shows the air over the kart, with each square tinted by how much drag it makes.
 - You can take it straight out for a test drive.
 
-### 196 parts
+### 289 parts
 
 I modelled most of the parts for the game in `tools/parts`, and they join by their studs, clips, pins and axles like real bricks do.
 
 | | |
 |---|---|
-| Plates | Thirty-eight, from 1x1 to long and wide chassis plates, with smooth tiles, round plates, a grille and wedge plates for a pointed nose. |
-| Bricks | Fourteen, from 1x1 to 2x6, with a tall brick, round bricks, a bracket, a brick with a stud on its side, a headlight brick and a heavy ballast brick to keep the kart low. |
+| Plates | Forty-four, from 1x1 to long and wide chassis plates and kart axle plates, with smooth and pinstriped tiles, round plates, a grille and wedge plates for a pointed nose. |
+| Bricks | Fifteen, from 1x1 to 2x6, with a tall brick, a race number brick, round bricks, a bracket, a brick with a stud on its side, a headlight brick and a heavy ballast brick to keep the kart low. |
 | Curves | Thirty-seven: slopes, curved and inverted slopes, nose cones, bows, wheel arches, mudguards, a racing nose with or without headlights, an engine cowl, a tail fin, wheel fairings, side pods and a ram plate that knocks other karts' parts off. Face them forward and the air slides over them, or turn them around to smooth the back. |
+| Car bodies | Thirty-two: bonnets plain and striped, car and truck cabs, smooth wheel arches, a formula nose, an engine cover with a fin, a scoop, a dragster body and tub sides with flames, a hot rod grille, roll hoops, bars and cages, a bull bar, mudguards and mud flaps, a wheelie bar and exhausts. |
 | Rods and joints | Twenty-five: bars, clips and handles, beams with holes, pins and axles, axle plates, hinges and ball joints. |
-| Wheels | Twenty-one, from tiny wheels to monster wheels, with kart wheels and motorbike wheels. Slicks grip the road best and hate grass, knobbly and studded tires bite into grass, dirt and ice, balloon tires float over sand and curbs, and skinny wheels roll the furthest. |
-| Engines | Thirteen: small and big engines, a micro engine, a rotary, a flat four, a twin, a hybrid, two electric motors, a diesel, a V8, a jet and pedals. Each one sounds different. |
-| Cockpit | Twenty-four: seats (upright, racing, bucket and lay-down), a steering wheel, a racing wheel, handlebars, a yoke, a tiller, windscreens and a canopy, lights (round, tail, amber, a light bar, spotlights and a big round lamp) that come on by themselves when it's dark, a mirror and an exhaust. |
-| Bikes | Sixteen: frames for a sports bike, a dirt bike, a cruiser, a scooter and a trike, with forks, a swingarm, a fuel tank, a saddle, bike bars, footpegs and fairings. |
-| Wings | Eight: spoilers, a ducktail, front wings and big rear wings, single and double. |
+| Wheels | Twenty-eight, from tiny wheels to monster truck wheels, with kart, dragster, truck, quad, scooter and motorbike wheels. Slicks grip the road best and hate grass, knobbly and studded tires bite into grass, dirt and ice, balloon tires float over sand and curbs, and skinny wheels roll the furthest. |
+| Engines | Fourteen: small and big engines, a micro engine, a rotary, a flat four, a twin, a hybrid, two electric motors, a diesel, a V8, a blower V8, a jet and pedals. Each one sounds different. |
+| Cockpit | Twenty-five: seats (upright, racing, bucket and lay-down), a steering wheel, a racing wheel, handlebars, a yoke, a tiller, windscreens and canopies, lights (round, tail, amber, a light bar, spotlights and a big round lamp) that come on by themselves when it's dark, a mirror and an exhaust. |
+| Bikes, trikes and quads | Fifty-nine: frames for sports bikes, dirt bikes, choppers, scooters, trikes and quads, with their bodywork, forks, a swingarm, tanks, saddles, bars, footpegs, fairings, cycle wings, a sissy bar and quad fenders. |
+| Wings | Ten: spoilers, a ducktail, front wings, one with endplates, and big rear wings, single and double. |
 
 ### Air and seating
 
@@ -75,34 +77,36 @@ The shape of the kart decides its drag. From the front, a flat brick face catche
 
 How the driver sits matters too. Lying down keeps them out of the wind but they steer more slowly. The steering has to be right in front of the seat, and every stud they have to reach for it slows their hands.
 
-### Stock karts, bikes and trikes
+### Stock karts, trucks, bikes and quads
 
-If you'd rather not build, you can pick one of the 22 stock karts, bikes and trikes before any race. The AI drivers race in them too, each getting one at random for a race or a whole Grand Prix. They're all within about ten percent of each other around a lap, they just get there in different ways.
+If you'd rather not build, you can pick one of the 24 stock karts, trucks, bikes, trikes and quads before any race. The AI drivers race in them too, each getting one at random for a race or a whole Grand Prix. They're all within about ten percent of each other around a lap, they just get there in different ways.
 
 | | |
 |---|---|
-| Starter | A bit of everything, good to learn on and to build from. |
-| Featherlight | Light and low, with skinny front wheels, handlebars and a little rotary engine. |
-| Bruiser | A heavy slab with a diesel and a ram. |
-| Slingshot | A dragster with the driver lying down, a V8 in the back and big slicks right at the tail. |
-| Streamliner | Faired in from nose to tail, with the driver lying down under a bubble. |
-| Mudlark | Knobbly tires and a diesel, sitting up high. |
-| Six-wheeler | Four small wheels steering at the front, and a flat four at the back. |
-| Monster | Monster wheels and a hybrid engine. |
-| Rocket | A jet engine, slicks and wings. |
-| Classic | A proper go-kart, with a nose cone, a little engine off to one side and handlebars. |
-| Downforce | Big wings front and back, and slicks. |
-| Brick Tank | Thick armour all around and a diesel. |
-| Sparky | An electric all rounder, quick off the line. |
-| Hot Rod | A V8 out in front and big wheels at the back. |
-| Soapbox | Tall thin wheels, a nose cone and a little rotary engine. |
-| Superbike | A light sports bike with a fairing and a twin. |
-| Dirt Bike | Knobbly tires and a light little engine. |
-| Chopper | Long and low, with a big engine. |
-| Scooter | Little wheels and a quiet electric motor. |
-| Trike | One wheel at the front and an electric motor at the back. |
-| Tourer | A big touring trike with two wheels at the back. |
-| Trikester | A trike with a knobbly tire up front and two wheels at the back. |
+| Kart Kid | A proper little go-kart, light and nippy with the engine beside the seat. Easy to learn on. |
+| Redline | A formula racer with open wheels and wings at both ends. Light and quick through the fast corners. |
+| Big Block | A muscle car with a big engine under a long striped bonnet. Heavy and strong, and quick once it gets going. |
+| Oval Ace | A stock car with a roof over the driver and a spoiler on the boot. Steady and easy to drive. |
+| Gravel Rat | A rally car on knobbly tires with four lamps on the bonnet. At home on dirt and gravel. |
+| Night Shift | An endurance racer with the driver lying down under a bubble. Fast and smooth. |
+| Quarter Mile | A dragster with a blower V8, huge slicks and a wheelie bar. Unbeatable in a straight line, and it hates corners. |
+| Flathead | A hot rod with a blower V8 out in the open. Loads of pull, and a bit of a handful. |
+| Sandhopper | A dune buggy with a roll cage. Happiest off the road, in sand and on grass. |
+| Volt | An electric racer with wings at both ends. Quick away and easy to drive. |
+| Crusher | A monster truck that rolls over anything, but it's tall, so take the corners steady. |
+| Long Haul | A big rig without its trailer. Slow to get going, hard to stop, and it shoves everyone out of the way. |
+| Desert Pro | A desert racer on big knobbly tires. Fast over the rough stuff and happy on the road too. |
+| Six Pack | A truck with two axles at the back. It grips like nothing else, but it's slow to turn. |
+| Streak | A superbike, low and faired in. Very fast, but it can't hold a bend like a kart and it gets knocked about. |
+| Scrambler | A dirt bike that rides over grass and bumps better than anything, but it's slow to turn on tarmac. |
+| Zippy | A little scooter, quick off the line, but it runs out of puff on the straights. |
+| Long Fork | A chopper with its fork way out in front. Fast on the straights, but it turns like a bus. |
+| Twin Nose | A trike with two wheels in front. It holds a bend nearly like a kart and still leans into it. |
+| Sunday Trike | A chopper trike with a big rounded body on the back. Steady and comfy, but slow to turn. |
+| Tiddler | A little electric trike with a box on the back. Slow but very steady, and easy for anyone to drive. |
+| Zipper | A sport quad that sits flat in the bends like a kart and handles grass better than one. |
+| Mudlark | A mud quad up on big knobbly wheels. Slow on tarmac but happy anywhere off it. |
+| Flat Track | A low racing quad on wide wheels. Sharp in the bends, but it doesn't like the grass. |
 
 ### Power-ups
 
@@ -175,8 +179,8 @@ There's a crowd too. Little brick figures fill the grandstands and stand along t
 - Single race is one race against the AI on any course. Pick a cup, then one of its courses.
 - Time trial is you against the clock, with your best times kept.
 - Practice lets you drive any course on your own for as long as you like.
-- Two players can share one phone, side by side in landscape or face to face in portrait with the phone flat between you. Each player picks a kart and gives their name in turn, and one map sits on the line between the halves.
-- There are six camera views: close and far chase, first person from your driver's eyes, a bumper cam, overhead and TV cameras beside the track. Hold look back to see who's coming. After the finish the camera circles your kart and the AI drives you home.
+- Two players can share one phone, side by side in landscape or face to face in portrait with the phone flat between you. Each player picks a kart and gives their name in turn, and one map sits on the line between the halves. From the Multiplayer menu you can race one course or a whole Grand Prix together against the AI.
+- There are six camera views: close and far chase, first person from your driver's eyes (your own parts in the way go see-through), a bumper cam, overhead and TV cameras beside the track. Hold look back to see who's coming. After the finish the camera circles your kart and the AI drives you home.
 - To slide, hold the gas and brake together while steering, or slide your thumb from GO down onto the brake and back up. Keep the gas on and keep steering into the bend and the slide holds, with the tail out further the harder you steer. Straighten up or let go of the gas and it grips again. A held slide keeps its speed around a hairpin better than braking for it, but the longer you hold it the more it scrubs off. Hold it at least half a second and straighten up out of it with the gas still on and you get a little turbo, longer the longer you held it. Expert drivers slide too.
 - The button in the corner, or Start on a controller, opens a menu in races. In a race on your own it pauses everything, and in split screen each player has their own while the race carries on.
 - There are four AI levels, picked before a race or a cup. Easy drivers take it gently, slip up now and then and wait for you. Expert drivers are right on the limit. Trophies are kept for each level.
@@ -291,7 +295,7 @@ tools/run-tests.sh
 
 They check things like:
 
-- the starter kart settles on its wheels, gets up to speed, turns, brakes and resets (`drive_test`)
+- a simple test kart settles on its wheels, gets up to speed, turns, brakes and resets (`drive_test`)
 - the building rules (`design_test`)
 - every part can be built and turned, and shapes, windscreens, seats, jets and tires do what they should (`parts_test`)
 - a gentle bump costs nothing, a crash at full speed knocks parts off and a reset puts them back (`damage_test`)
@@ -311,7 +315,7 @@ They check things like:
 - a course or cup goes to a share code and back the same, even split over lines in a message, a tampered one is turned away, and adding one never makes a second copy (`sharing_test`)
 - each player's keys and controller buttons, the menus with a controller, typing with one, and the menu in a race (`bindings_test`, `focus_test`, `pause_test`)
 - every camera view looks where it should (`camera_test`), every sound is there (`sound_test`), and the cups' trophies hold together (`trophy_test`)
-- every stock kart gets around a lap with the AI driving (`stock_test`)
+- every stock vehicle gets around a lap with the AI driving (`stock_test`)
 - each AI level laps about as far behind Expert as it should (`difficulty_test`)
 - whole races with eight karts, around the loop too (`race_test`)
 - curbs throw you in the air at speed, grass slows you without stopping you dead, tire stacks bounce you back and there are no walls beside the road (`runoff_test`)

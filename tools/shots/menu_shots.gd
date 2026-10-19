@@ -34,6 +34,7 @@ func _ready() -> void:
 	await get_tree().process_frame
 	await shot("karts")
 
+	Game.character = Game.roster_driver("brickley").duplicate_design()
 	Game.show_driver()
 	var driver: DriverBuilder = await screen_of(DriverBuilder)
 	await ready_pictures()
