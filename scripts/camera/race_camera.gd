@@ -85,6 +85,7 @@ static func head_layer_of(person: int) -> int:
 
 
 func _ready() -> void:
+	add_to_group("race_cameras")
 	top_level = true
 	fov = 70.0
 	near = 0.05

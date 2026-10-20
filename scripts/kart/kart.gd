@@ -2015,10 +2015,30 @@ func _reset(state: PhysicsDirectBodyState3D) -> void:
 	was_reset.emit.call_deferred()
 
 
+## Whether this kart should throw its headlight beam (the screen-space box).
+## The glowing lenses stay on whenever the lights are. With no race camera
+## (the garage, tests, the splash) every beam is drawn.
+func _headlight_beam_wanted() -> bool:
+	if not lights_on:
+		return false
+	if not is_inside_tree():
+		return true
+	var cams := get_tree().get_nodes_in_group("race_cameras")
+	if cams.is_empty():
+		return true
+	var reach: float = Graphics.beams()
+	var nearest := INF
+	for cam in cams:
+		if cam.target == self:
+			return true
+		nearest = minf(nearest, global_position.distance_squared_to(cam.global_position))
+	return nearest <= reach * reach
+
+
 ## Shows its lights on or off, and its brake lights.
 func _show_lights() -> void:
 	if _pool != null:
-		_pool.visible = lights_on
+		_pool.visible = _headlight_beam_wanted()
 	if _lamps == null:
 		return
 	_lamps.set_shader_parameter("on", 1.0 if lights_on else 0.0)
@@ -2062,11 +2082,14 @@ func _process(delta: float) -> void:
 			w.spin += forward_speed / w.radius * delta
 	_pose_driver()
 	_lean_looks(delta)
-	# The brake lights, only changed when they change.
+	# The brake lights, only changed when they change. Headlight beams also
+	# come and go as karts move in and out of range (see Graphics.beams()).
 	var braking := controls.brake > 0.1 and forward_speed > 0.5
 	if braking != _braking_shown:
 		_braking_shown = braking
 		_show_lights()
+	elif _pool != null and lights_on:
+		_pool.visible = _headlight_beam_wanted()
 	if remote:
 		full_lock = steer_limit(remote_velocity.length())
 	if _steering != null and _steering.style == "bikebars":

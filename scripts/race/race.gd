@@ -501,7 +501,7 @@ func _process(_delta: float) -> void:
 	_frames_drawn += 1
 	# The perflog switch (see Game.show_menu()) logs how it's running.
 	if started and Engine.get_process_frames() % 300 == 0 and FileAccess.file_exists("user://perflog"):
-		print("PERF %s, %s, %s graphics: %.0f fps, %.1f ms process, %.1f ms physics" % [track.name, conditions.describe(), Graphics.level, Engine.get_frames_per_second(), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0])
+		print("PERF %s, %s, %s graphics: %.0f fps, %.1f ms process, %.1f ms physics, %.0f draws" % [track.name, conditions.describe(), Graphics.level, Engine.get_frames_per_second(), Performance.get_monitor(Performance.TIME_PROCESS) * 1000.0, Performance.get_monitor(Performance.TIME_PHYSICS_PROCESS) * 1000.0, Performance.get_monitor(Performance.RENDER_TOTAL_DRAW_CALLS_IN_FRAME)])
 	if _frames_drawn == FRAMES_BEFORE_COUNTDOWN:
 		Game.show_loading(false)
 

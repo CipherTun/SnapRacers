@@ -41,8 +41,8 @@ func _checks(holder: Node) -> void:
 	var shapes := func(kit: SceneryKit) -> int: return kit.boxes.size() + kit.cylinders.size() + kit.cones.size()
 	check(shapes.call(low) < shapes.call(high), "but it draws less far off scenery (%d shapes against %d)" % [shapes.call(low), shapes.call(high)])
 	Graphics.level = "low"
-	check(not Graphics.value("crowd") and Graphics.shadows() == 0.0 and Graphics.value("scale") < 1.0, "and no crowd, no shadows and a lower resolution")
+	check(not Graphics.value("crowd") and Graphics.shadows() == 0.0 and Graphics.value("scale") < 1.0 and Graphics.beams() == 0.0, "and no crowd, no shadows, a lower resolution and only your own headlight beams")
 	Graphics.level = "high"
-	check(Graphics.value("crowd") and Graphics.shadows() == 1.0 and Graphics.value("scale") == 1.0, "while High draws everything")
+	check(Graphics.value("crowd") and Graphics.shadows() == 1.0 and Graphics.value("scale") == 1.0 and Graphics.beams() > 0.0, "while High draws everything")
 	print("All graphics checks passed." if failures == 0 else "%d graphics checks failed." % failures)
 	quit(1 if failures > 0 else 0)
