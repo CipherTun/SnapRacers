@@ -8,7 +8,9 @@ extends Camera3D
 ##   and higher up. They swing around to follow the way the kart is actually
 ##   moving, so a slide looks like a slide.
 ## - First person is from the driver's eyes, looking over their hands on the
-##   steering wheel. Their own head is left out of this camera's view.
+##   steering wheel. Their own head is left out of this camera's view. The
+##   kart stays solid, so in a cab you see the dashboard and the glass.
+## - Hood sits just outside the windshield, looking forward over the nose.
 ## - Bumper is low down on the nose of the kart.
 ## - Overhead looks straight down from high above, turned so the kart always
 ##   points up the screen.
@@ -16,17 +18,19 @@ extends Camera3D
 ##   kart goes by, like a race on TV.
 ##
 ## Holding look back turns the view around. In first person it sits behind
-## the head looking down the road behind, instead of spinning in place at
-## the eyes. When you cross the line the camera circles your kart for a
-## moment, then goes to the TV cameras while the AI drives you home.
+## the head looking down the road behind. Hood looking back is the same
+## height at the tail, behind wings and the rest. When you cross the line
+## the camera circles your kart for a moment, then goes to the TV cameras
+## while the AI drives you home.
 
 signal view_changed(view: String)
 
-const VIEWS := ["chase", "far", "driver", "bumper", "overhead", "tv"]
+const VIEWS := ["chase", "far", "driver", "hood", "bumper", "overhead", "tv"]
 const NAMES := {
 	"chase": "Chase",
 	"far": "Far chase",
 	"driver": "First person",
+	"hood": "Hood",
 	"bumper": "Bumper",
 	"overhead": "Overhead",
 	"tv": "TV cameras",
@@ -58,9 +62,6 @@ const ORBIT_RADIUS := 6.0
 ## so their own first person camera can leave it out (see Kart.head_layer).
 ## The next person's is the one after.
 const FIRST_HEAD_LAYER := 13
-## Layers 15 and 16 have see-through copies of the parts in each person's
-## first person view, and 17 and 18 the solid ones (see ViewBlockers).
-const PEOPLE := 2
 
 var target: Kart
 ## The track, for the TV cameras. A test drive has none, so no TV cameras.
@@ -94,8 +95,6 @@ func _ready() -> void:
 	top_level = true
 	fov = 70.0
 	near = 0.05
-	for person in PEOPLE:
-		set_cull_mask_value(ViewBlockers.see_through_layer(head_layer_of(person)), false)
 	if track != null:
 		_place_tv_cameras()
 	_show_view()
@@ -130,14 +129,11 @@ func _views() -> Array:
 
 func _show_view() -> void:
 	# Leave out your own head in first person looking forward, and nowhere
-	# else, and draw the parts in your way see-through there. Looking back
-	# from behind the head shows the head and the cab solid.
+	# else. The kart itself stays solid.
 	if head_layer > 0:
 		var inside := view == "driver" and _orbit_left <= 0.0 and not _looking_back
 		set_cull_mask_value(head_layer, not inside)
-		set_cull_mask_value(ViewBlockers.see_through_layer(head_layer), inside)
-		set_cull_mask_value(ViewBlockers.blocking_layer(head_layer), not inside)
-	fov = 75.0 if view in ["driver", "bumper"] else 70.0
+	fov = 75.0 if view in ["driver", "hood", "bumper"] else 70.0
 
 
 func _physics_process(delta: float) -> void:
@@ -160,16 +156,17 @@ func _physics_process(delta: float) -> void:
 		_move(delta)
 
 
-## First person and bumper are fixed to the kart, so they're placed after the
-## physics step has moved it, each time the screen's drawn. Placed before it,
-## they'd always be a step behind, and the steering wheel would shake.
+## First person, hood and bumper are fixed to the kart, so they're placed
+## after the physics step has moved it, each time the screen's drawn. Placed
+## before it, they'd always be a step behind, and the steering wheel would
+## shake.
 func _process(_delta: float) -> void:
 	if target != null and _orbit_left <= 0.0 and _fixed_to_kart():
 		_move(0.0, true)
 
 
 func _fixed_to_kart() -> bool:
-	return view == "driver" or view == "bumper"
+	return view in ["driver", "hood", "bumper"]
 
 
 ## Puts the camera straight where it should be, without easing into it.
@@ -183,11 +180,13 @@ func snap() -> void:
 func _move(delta: float, instantly := false) -> void:
 	var blend := 1.0 if instantly else 1.0 - exp(-FOLLOW * delta)
 	match view:
-		"driver", "bumper":
+		"driver", "hood", "bumper":
 			var at := target.eye_point()
 			if view == "bumper":
 				# Looking back, it's the back bumper's view instead.
 				at = target.to_global(target.rear_bumper_point() if _looking_back else target.bumper_point())
+			elif view == "hood":
+				at = target.to_global(target.rear_hood_point() if _looking_back else target.hood_point())
 			elif view == "driver" and _looking_back:
 				# Behind the head, looking down the road behind.
 				var from := target.global_basis.orthonormalized()

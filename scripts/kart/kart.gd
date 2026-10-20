@@ -452,16 +452,11 @@ var slowdown_left := 0.0
 ## Whether it's said a force or speed came out as nonsense (see _ok()).
 var _said_bad := false
 ## The render layer the driver's head is drawn on (see RaceCamera), or 0.
-## With one, the parts in the driver's way in first person are drawn twice:
-## solid for everyone else and a little see-through for them.
 var head_layer := 0:
 	set(value):
-		var changed := value != head_layer
 		head_layer = value
 		if _rig != null:
 			_rig.head_layer = value
-		if changed and _looks != null:
-			_rebake_body()
 ## How hard the engine pushes compared with usual. The AI's difficulty uses it
 ## to catch up or ease off (see Difficulty).
 var push := 1.0
@@ -649,7 +644,6 @@ func _assemble() -> void:
 
 	# Everything but the wheels and steering is drawn as one mesh.
 	var looks: Array[Node3D] = []
-	var boxes: Array[AABB] = []
 	for info in stats.parts:
 		if info.def.kind == "wheel":
 			var w := Wheel.new()
@@ -689,10 +683,9 @@ func _assemble() -> void:
 				_steering = look
 		else:
 			looks.append(look)
-			boxes.append(AABB(info.centre - info.extent * 0.5, info.extent))
 	_lamps = null
 	_body.clear()
-	_bake_body(looks, boxes)
+	_bake_body(looks)
 	# Lamps on the parts that turn, like a bike's fork, which aren't baked in.
 	for lamp in _looks.find_children("*", "MeshInstance3D", true, false):
 		if lamp.has_meta("light"):
@@ -741,73 +734,24 @@ func _assemble() -> void:
 		_find_ghost_looks()
 
 
-## Bakes these part looks into the kart's body and frees them. With a
-## head_layer, the ones in the driver's way go in a mesh of their own, which
-## their first person camera leaves out, and a see-through copy of it that only
-## that camera draws (see RaceCamera).
-func _bake_body(looks: Array[Node3D], boxes: Array[AABB]) -> void:
+## Bakes these part looks into the kart's body and frees them.
+func _bake_body(looks: Array[Node3D]) -> void:
 	for node in _body:
 		node.queue_free()
 	_body.clear()
 	if looks.is_empty():
 		return
-	var in_way: Array[int] = []
-	if head_layer > 0 and stats.has_seat:
-		var eye := stats.seat_top + CharacterRig.rest_eye(stats.recline, stats.astride)
-		var ground := 0.0
-		for w in wheels:
-			ground = minf(ground, w.rest.y - w.radius)
-		in_way = ViewBlockers.find(looks, boxes, eye, ground)
-	var clear: Array[Node3D] = []
-	var blocking: Array[Node3D] = []
-	for i in looks.size():
-		(blocking if in_way.has(i) else clear).append(looks[i])
-	for group in [clear, blocking]:
-		if group.is_empty():
-			continue
-		var baked := KartMesh.bake(group)
-		_looks.add_child(baked)
-		_body.append(baked)
-		# Its own lamp lenses, so its lights go on and off by themselves.
-		for i in baked.mesh.get_surface_count():
-			if baked.mesh.surface_get_material(i) == KartMesh.material("lamp"):
-				if _lamps == null:
-					_lamps = KartMesh.material("lamp").duplicate()
-				baked.set_surface_override_material(i, _lamps)
-		if group == blocking:
-			baked.layers = 1 << (ViewBlockers.blocking_layer(head_layer) - 1)
-			var copy := MeshInstance3D.new()
-			copy.mesh = baked.mesh
-			copy.layers = 1 << (ViewBlockers.see_through_layer(head_layer) - 1)
-			# A layer a camera leaves out casts no shadow there, so this casts it.
-			for i in baked.mesh.get_surface_count():
-				var solid := baked.get_active_material(i)
-				copy.set_surface_override_material(i, ViewBlockers.material(solid))
-			_looks.add_child(copy)
-			_body.append(copy)
+	var baked := KartMesh.bake(looks)
+	_looks.add_child(baked)
+	_body.append(baked)
+	# Its own lamp lenses, so its lights go on and off by themselves.
+	for i in baked.mesh.get_surface_count():
+		if baked.mesh.surface_get_material(i) == KartMesh.material("lamp"):
+			if _lamps == null:
+				_lamps = KartMesh.material("lamp").duplicate()
+			baked.set_surface_override_material(i, _lamps)
 	for look in looks:
 		look.free()
-
-
-## Bakes the body again from its parts, for a head_layer set after the kart
-## was put together.
-func _rebake_body() -> void:
-	var looks: Array[Node3D] = []
-	var boxes: Array[AABB] = []
-	for info in stats.parts:
-		if info.def.kind == "wheel" or (info.def.get("steers", false) and _beside_steered_wheel(info)):
-			continue
-		var look := PartVisuals.make_turned(info.def, info.extent, info.basis)
-		if look is SteeringVisual:
-			look.free()
-			continue
-		look.position = info.centre
-		looks.append(look)
-		boxes.append(AABB(info.centre - info.extent * 0.5, info.extent))
-	_bake_body(looks, boxes)
-	_show_lights()
-	if ghost_left > 0.0:
-		_find_ghost_looks()
 
 
 ## The part's collision shapes: its box, or for a modelled part with gaps in
@@ -866,6 +810,37 @@ func rear_bumper_point() -> Vector3:
 		for info in stats.parts:
 			back = maxf(back, info.centre.z + info.extent.z * 0.5)
 	return Vector3(0.0, 0.3, back + 0.05)
+
+
+## Just outside the windshield, at the driver's eye height, in the kart's
+## space, for the hood camera.
+func hood_point() -> Vector3:
+	var height := 0.7
+	var front := bumper_point().z + 0.2
+	if stats != null:
+		var eye := stats.seat_top + CharacterRig.rest_eye(stats.recline, stats.astride)
+		height = eye.y
+		var seat_z := stats.seat_top.z
+		var glass_z := seat_z
+		var found := false
+		for info in stats.parts:
+			if info.def.kind == "wheel":
+				continue
+			var z0: float = info.centre.z - info.extent.z * 0.5
+			var z1: float = info.centre.z + info.extent.z * 0.5
+			var top: float = info.centre.y + info.extent.y * 0.5
+			if z1 < seat_z + 0.1 and top > height - 0.25:
+				found = true
+				glass_z = minf(glass_z, z0)
+		if found:
+			front = glass_z - 0.08
+	return Vector3(0.0, height, front)
+
+
+## The same height at the tail, behind wings and anything else in the way,
+## for the hood camera looking back.
+func rear_hood_point() -> Vector3:
+	return Vector3(0.0, hood_point().y, rear_bumper_point().z + 0.05)
 
 
 ## Every kart in the race, fetched once a physics step for all of them.

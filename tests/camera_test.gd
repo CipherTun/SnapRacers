@@ -3,9 +3,9 @@ extends Node
 ## Checks every camera view in a practice session on Peach Pit, with the AI
 ## driving. Each view has to be where it should be and look the right way,
 ## looking back has to turn it around, your own head has to be hidden only in
-## first person, the camera button has to go through the views (and be
-## remembered), and finishing has to circle the kart and then cut to the TV
-## cameras.
+## first person, the kart stays solid, hood sits outside the windshield, the
+## camera button has to go through the views (and be remembered), and
+## finishing has to circle the kart and then cut to the TV cameras.
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tests/camera_test.tscn
 
 var failures := 0
@@ -87,33 +87,22 @@ func _ready() -> void:
 	check(not camera.get_cull_mask_value(camera.head_layer), "and leaves out their own head")
 	var head_layers := kart.find_children("*", "VisualInstance3D", true, false).filter(func(n): return n.layers == 1 << (camera.head_layer - 1))
 	check(not head_layers.is_empty(), "which is on its own layer (%d pieces)" % head_layers.size())
-	var see_through := ViewBlockers.see_through_layer(camera.head_layer)
-	var blocking := ViewBlockers.blocking_layer(camera.head_layer)
-	check(camera.get_cull_mask_value(see_through) and not camera.get_cull_mask_value(blocking), "and draws the parts in the way see-through")
-	check(not camera.get_cull_mask_value(ViewBlockers.see_through_layer(RaceCamera.head_layer_of(1))), "but not player 2's")
-	# A truck's cab is in the way, and its see-through copy goes with it.
-	var truck := Kart.new()
-	truck.build(Game.stock_kart("crusher"))
-	truck.head_layer = camera.head_layer
-	var on_layer := func(layer: int) -> Array:
-		return truck.find_children("*", "MeshInstance3D", true, false).filter(func(n): return n.layers == 1 << (layer - 1) and not n.is_queued_for_deletion())
-	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "a truck's cab is drawn twice, solid and see-through")
-	var copy: MeshInstance3D = on_layer.call(see_through)[0]
-	var glass_gone := false
-	for i in copy.mesh.get_surface_count():
-		var mat := copy.get_surface_override_material(i)
-		if mat is BaseMaterial3D and mat.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
-			glass_gone = true
-	check(glass_gone, "from inside, the cab's glass isn't drawn")
-	truck.repair_now()
-	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "and still just once each when it's put back together")
-	truck.free()
+	var bodies := kart.find_children("*", "MeshInstance3D", true, false).filter(func(n): return n.layers == 1 and not n.is_queued_for_deletion())
+	check(not bodies.is_empty(), "the kart itself stays on the solid layer (%d meshes)" % bodies.size())
+
+	camera.set_view("hood")
+	await physics_frames(2)
+	camera._process(0.0)
+	var from_eyes: Vector3 = camera.global_position - kart.eye_point()
+	check(looking.call().dot(ahead.call()) > 0.95, "hood looks ahead")
+	check(from_eyes.dot(ahead.call()) > 0.05, "from outside the windshield, in front of the eyes (%.2f m)" % from_eyes.dot(ahead.call()))
+	check(camera.global_position.y > kart.to_global(kart.bumper_point()).y + 0.15, "higher than the bumper")
+	check(camera.get_cull_mask_value(camera.head_layer), "and shows the driver's head")
 
 	camera.set_view("bumper")
 	await physics_frames(2)
 	check(gap.call().dot(ahead.call()) > 0.8 and gap.call().dot(kart.global_basis.y) < 0.6, "bumper is low down on the nose")
-	check(camera.get_cull_mask_value(camera.head_layer), "and shows the driver's head again")
-	check(camera.get_cull_mask_value(blocking) and not camera.get_cull_mask_value(see_through), "and the parts in the way solid")
+	check(camera.get_cull_mask_value(camera.head_layer), "and still shows the driver's head")
 
 	camera.set_view("overhead")
 	await physics_frames(60)
@@ -145,6 +134,12 @@ func _ready() -> void:
 	camera._looking_back = true
 	camera.snap()
 	check(gap.call().dot(ahead.call()) < -0.8 and looking.call().dot(ahead.call()) < -0.95, "and bumper moves to the back bumper, looking back (%.1f m behind)" % -gap.call().dot(ahead.call()))
+	camera.set_view("hood")
+	camera._looking_back = true
+	camera.snap()
+	check(looking.call().dot(ahead.call()) < -0.95, "hood looking back looks down the road behind")
+	check(gap.call().dot(ahead.call()) < -0.3, "from behind the tail (%.1f m)" % -gap.call().dot(ahead.call()))
+	check(is_equal_approx(kart.hood_point().y, kart.rear_hood_point().y), "at the same height as looking forward")
 	camera._looking_back = false
 	camera.input = race.player.input
 
