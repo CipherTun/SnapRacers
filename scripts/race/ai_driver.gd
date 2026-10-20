@@ -474,7 +474,7 @@ func _worth_using(kind: String, speed: float) -> bool:
 		"spikes":
 			return _nearest(-14.0, -2.0, 4.0) != null
 		"shockwave":
-			return _count_near(6.0) >= 2 or _nearest(-3.0, 3.0, 3.0) != null
+			return _count_near(Kart.SHOCK_REACH * 0.7) >= 2 or _nearest(-4.0, 4.0, 4.0) != null
 	return false
 
 

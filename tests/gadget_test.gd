@@ -218,7 +218,7 @@ class Runner:
 
 	func _shockwave_check() -> int:
 		var moved: float = karts.shocked.get_meta("was").x - karts.shocked.global_position.x
-		check(moved > 0.5, "a shockwave shoves a kart beside it away (%.1f m)" % moved)
+		check(moved > 2.0, "a shockwave shoves a kart beside it away (%.1f m)" % moved)
 		check(karts.shocked.lost.size() >= 1, "and knocks a part off it, being so close (%d)" % karts.shocked.lost.size())
 		check(karts.shocked_shielded.lost.is_empty(), "but not off a kart with its shield up")
 		var far_moved: float = karts.shocked_far.global_position.distance_to(karts.shocked_far.get_meta("was"))

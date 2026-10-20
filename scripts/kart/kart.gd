@@ -135,17 +135,20 @@ const TURBO_FORCE := 1000.0
 const TURBO_TOP_SPEED := 1.3 # how much further past its usual top speed a turbo can push
 ## A shockwave shoves karts this far away from it, up to this hard (as a
 ## change in speed, in m/s) nearest, and closer than KNOCK_REACH knocks a
-## part loose.
-const SHOCK_REACH := 8.0
-const SHOCK_SHOVE := 7.0
-const SHOCK_KNOCK_REACH := 4.0
+## part loose. The hop is extra upward speed, in m/s.
+const SHOCK_REACH := 12.0
+const SHOCK_SHOVE := 16.0
+const SHOCK_KNOCK_REACH := 6.0
+const SHOCK_HOP := 5.0
 ## A kart going over a spike trap faster than this loses a part, and can't
 ## lose another to it for SPIKE_EVERY seconds.
 const SPIKE_SPEED := 10.0
 const SPIKE_EVERY := 1.0
 const SHIELD_TIME := 4.0
-## How long a ghost goes through karts, bricks and traps.
+## How long a ghost goes through karts, bricks and traps. A reset is shorter,
+## just long enough to get out of the pack's way.
 const GHOST_TIME := 3.0
+const RESET_GHOST_TIME := 1.0
 ## A ghost and its driver fade to half see-through over this many seconds at
 ## the start, and back at the end.
 const GHOST_FADE := 0.35
@@ -401,8 +404,9 @@ var zapped_left := 0.0
 var shield_left := 0.0
 ## The tow rope it's on the end of, if any (see TowRope).
 var tow: TowRope
-## A shove from a shockwave, to be added to its speed next step.
+## A shove from a shockwave, to be added to its speed next step, and a spin.
 var _shove := Vector3.ZERO
+var _spin := Vector3.ZERO
 var _spike_wait := 0.0
 ## Whether it's sliding right now (see SLIDE_SPEED), whether that's still the
 ## kick, which way round (1 right, -1 left), and how far into the slide it
@@ -1033,6 +1037,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	if _shove != Vector3.ZERO:
 		state.linear_velocity += _ok(_shove)
 		_shove = Vector3.ZERO
+	if _spin != Vector3.ZERO:
+		state.angular_velocity += _ok(_spin)
+		_spin = Vector3.ZERO
 	if tow != null and is_instance_valid(tow):
 		var pull := tow.pull_on(self)
 		state.apply_central_force(_ok(pull))
@@ -1765,11 +1772,13 @@ func use_gadget(slot: int) -> bool:
 	return true
 
 
-## Goes through karts, bricks and traps for a while, see-through.
-func start_ghost() -> void:
+## Goes through karts, bricks and traps for a while, see-through. A reset
+## passes how long; a power-up uses the full time. Already ghosted, it keeps
+## whichever is longer.
+func start_ghost(seconds := GHOST_TIME) -> void:
 	if ghost_left <= 0.0:
 		_set_ghostly(true)
-	ghost_left = GHOST_TIME
+	ghost_left = maxf(ghost_left, seconds)
 
 
 ## Shoved by a shockwave from `from`, harder the closer it is, and knocked
@@ -1783,7 +1792,12 @@ func shoved_from(from: Vector3) -> void:
 	if far > SHOCK_REACH:
 		return
 	var push := SHOCK_SHOVE * (1.0 - far / SHOCK_REACH * 0.6)
-	_shove += (away.normalized() if far > 0.1 else -global_basis.x) * push + Vector3.UP * 1.0
+	var out := away.normalized() if far > 0.1 else -global_basis.x
+	_shove += out * push + Vector3.UP * SHOCK_HOP
+	var side := signf(out.dot(global_basis.x))
+	if side == 0.0:
+		side = 1.0
+	_spin += Vector3.UP * push * 0.3 * side
 	if far < SHOCK_KNOCK_REACH and shield_left <= 0.0:
 		knock_off_a_part.call_deferred()
 
@@ -2011,6 +2025,7 @@ func _reset(state: PhysicsDirectBodyState3D) -> void:
 	slowdown_left = 0.0 if run_up_reset else RESET_SLOWDOWN_TIME
 	run_up_reset = false
 	_repair_pending = true
+	start_ghost(RESET_GHOST_TIME)
 	Sounds.play_at.call_deferred("fx/reset", sound)
 	was_reset.emit.call_deferred()
 

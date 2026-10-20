@@ -179,6 +179,7 @@ func got_event(sender: int, slot: int, kind: String, data: Variant) -> void:
 			kart.repair_now()
 		"reset":
 			Sounds.play_at("fx/reset", kart.sound)
+			kart.start_ghost(Kart.RESET_GHOST_TIME)
 		"tow":
 			var to := _kart_in(int(data))
 			if to != null:

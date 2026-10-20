@@ -698,7 +698,7 @@ func strike_from(kart: Kart) -> void:
 
 ## A shockwave from this kart shoves every kart near it that's driven here
 ## away. Over a network each device does the same for its own karts, when it
-## hears the kart used it (see NetRace). The ring shows everywhere.
+## hears the kart used it (see NetRace). The burst shows everywhere.
 func shockwave_from(kart: Kart) -> void:
 	var ring := ShockRing.new()
 	ring.reach = Kart.SHOCK_REACH
