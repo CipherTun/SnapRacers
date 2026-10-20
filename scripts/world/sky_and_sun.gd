@@ -111,6 +111,22 @@ static func add_to(parent: Node, shadow_distance := 60.0, backdrop := Color.TRAN
 	sun.shadow_enabled = weather not in ["rain", "storm"] and Graphics.shadows() > 0.0
 	sun.shadow_opacity = look.get("shadow_opacity", 1.0) * (0.6 if cloudy > 0.0 or weather in ["fog", "dust"] else 1.0)
 	sun.directional_shadow_max_distance = minf(shadow_distance, look.get("shadow_reach", shadow_distance)) * maxf(Graphics.shadows(), 0.1)
+	# A tight first split keeps shadows sharp on close things like the
+	# steering wheel. Four splits at High, two otherwise. Bias and a little
+	# blur stop the sawtooth you get on a rim a metre from the camera.
+	if Graphics.shadows() >= 1.0:
+		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_4_SPLITS
+		sun.directional_shadow_split_1 = 0.04
+		sun.directional_shadow_split_2 = 0.12
+		sun.directional_shadow_split_3 = 0.35
+	else:
+		sun.directional_shadow_mode = DirectionalLight3D.SHADOW_PARALLEL_2_SPLITS
+		sun.directional_shadow_split_1 = 0.08
+	sun.directional_shadow_blend_splits = true
+	sun.directional_shadow_pancake_size = 6.0
+	sun.shadow_bias = 0.06
+	sun.shadow_normal_bias = 2.5
+	sun.shadow_blur = 1.5
 	parent.add_child(sun)
 
 	# What the world's shaders need to know: how wet the road is, how much

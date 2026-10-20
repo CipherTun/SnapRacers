@@ -15,9 +15,10 @@ extends Camera3D
 ## - TV cameras stand beside the track and cut from one to the next as the
 ##   kart goes by, like a race on TV.
 ##
-## Holding look back turns the view around. When you cross the line the camera
-## circles your kart for a moment, then goes to the TV cameras while the AI
-## drives you home.
+## Holding look back turns the view around. In first person it sits behind
+## the head looking down the road behind, instead of spinning in place at
+## the eyes. When you cross the line the camera circles your kart for a
+## moment, then goes to the TV cameras while the AI drives you home.
 
 signal view_changed(view: String)
 
@@ -41,6 +42,10 @@ const SWING := 12.0
 ## the chase cameras look along, so a slide still looks like a slide.
 const FOLLOW_SLIDE := 0.3
 const LOOK_HEIGHT := 0.9
+## First person looking back: metres behind the eyes and up, so the camera
+## starts behind the head instead of from the eyes looking backwards.
+const LOOK_BACK_BEHIND := 0.5
+const LOOK_BACK_UP := 0.1
 const OVERHEAD_HEIGHT := 16.0
 ## How far apart the TV cameras are along the track, how far out from the
 ## middle of the road, and how high.
@@ -124,10 +129,11 @@ func _views() -> Array:
 
 
 func _show_view() -> void:
-	# Leave out your own head in first person, and nowhere else, and draw the
-	# parts in your way see-through there.
+	# Leave out your own head in first person looking forward, and nowhere
+	# else, and draw the parts in your way see-through there. Looking back
+	# from behind the head shows the head and the cab solid.
 	if head_layer > 0:
-		var inside := view == "driver" and _orbit_left <= 0.0
+		var inside := view == "driver" and _orbit_left <= 0.0 and not _looking_back
 		set_cull_mask_value(head_layer, not inside)
 		set_cull_mask_value(ViewBlockers.see_through_layer(head_layer), inside)
 		set_cull_mask_value(ViewBlockers.blocking_layer(head_layer), not inside)
@@ -168,6 +174,7 @@ func _fixed_to_kart() -> bool:
 
 ## Puts the camera straight where it should be, without easing into it.
 func snap() -> void:
+	_show_view()
 	if target == null:
 		return
 	_move(0.0, true)
@@ -181,6 +188,10 @@ func _move(delta: float, instantly := false) -> void:
 			if view == "bumper":
 				# Looking back, it's the back bumper's view instead.
 				at = target.to_global(target.rear_bumper_point() if _looking_back else target.bumper_point())
+			elif view == "driver" and _looking_back:
+				# Behind the head, looking down the road behind.
+				var from := target.global_basis.orthonormalized()
+				at += from.z * LOOK_BACK_BEHIND + from.y * LOOK_BACK_UP
 			var turn := target.global_basis.orthonormalized()
 			if _looking_back:
 				turn = turn.rotated(turn.y, PI)

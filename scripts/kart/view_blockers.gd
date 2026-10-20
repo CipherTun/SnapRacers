@@ -3,8 +3,9 @@ extends RefCounted
 
 ## Works out which of a kart's parts get in the way of its driver's view
 ## ahead in first person, so their own camera can draw those a little
-## see-through (see Kart.head_layer and RaceCamera). It's worked out when the
-## kart's put together, never while racing.
+## see-through (see Kart.head_layer and RaceCamera). Glass in the way is left
+## out, so from inside a cab the windows are fully see-through. It's worked
+## out when the kart's put together, never while racing.
 ##
 ## A part is in the way if any of it shows inside the first person camera's
 ## view above the line from the eyes down to the road ROAD_AHEAD metres out.
@@ -47,17 +48,24 @@ static func find(looks: Array[Node3D], boxes: Array[AABB], eye: Vector3, ground_
 
 
 ## The see-through material for one of KartMesh's, shared by every kart.
-## Lamps stay as they are.
+## Lamps stay as they are. Glass is dropped altogether, so from inside a
+## cab the windows are fully see-through.
 static func material(solid: Material) -> Material:
 	if not solid is BaseMaterial3D:
 		return solid
 	if not _materials.has(solid):
 		var m: BaseMaterial3D = solid.duplicate()
-		if m.transparency == BaseMaterial3D.TRANSPARENCY_DISABLED:
+		if m.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
+			# Discard every pixel. Vertex colours still carry an alpha, so a
+			# scissor at 1 leaves none of them.
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR
+			m.alpha_scissor_threshold = 1.0
+			m.albedo_color.a = 0.0
+		else:
 			# The depth pass first, so only the nearest side of the part shows
 			# and its insides don't flicker through.
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA_DEPTH_PRE_PASS
-		m.albedo_color.a *= OPACITY
+			m.albedo_color.a *= OPACITY
 		_materials[solid] = m
 	return _materials[solid]
 

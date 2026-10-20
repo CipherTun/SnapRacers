@@ -129,5 +129,12 @@ func _init() -> void:
 	var floating := { "id": "p_curve_2x4", "place": Transform3D(Basis.IDENTITY, plate_place.origin + Vector3(20.0, 20.0, 0.0)) }
 	check(not KartDesign.joined(floating, axle_plate), "but not when it's held up off them")
 
+	var window: BaseMaterial3D = PartVisuals.glass(Color("#8fd3f4"))
+	check(window.cull_mode == BaseMaterial3D.CULL_BACK, "glass culls its inside")
+	check(window.albedo_color.a < 0.15 and window.albedo_color.b - window.albedo_color.r < 0.05, "window glass is almost clear, not blue (a=%.2f)" % window.albedo_color.a)
+	var red_glass: BaseMaterial3D = PartVisuals.glass(Color("#c4281c"))
+	check(red_glass.albedo_color.r > 0.5 and red_glass.albedo_color.a > 0.2, "red lamp glass keeps its colour")
+	check(KartMesh.material("glass").cull_mode == BaseMaterial3D.CULL_BACK, "baked kart glass culls its inside too")
+
 	print("All parts checks passed." if failures == 0 else "%d parts checks failed." % failures)
 	quit(1 if failures > 0 else 0)

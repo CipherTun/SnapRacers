@@ -77,8 +77,12 @@ static func material(kind: String) -> Material:
 	m.metallic_specular = 0.35
 	match kind:
 		"glass":
+			# One side only, so a windshield doesn't fill the screen twice
+			# and looking out from a cab the glass isn't there.
 			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-			m.cull_mode = BaseMaterial3D.CULL_DISABLED
+			m.cull_mode = BaseMaterial3D.CULL_BACK
+			m.roughness = 0.12
+			m.metallic_specular = 0.6
 		"metal":
 			m.metallic = 0.7
 			m.roughness = 0.3
@@ -111,6 +115,8 @@ static func _add(arrays: Array, where: Transform3D, mat: Material, surfaces: Dic
 		colour = mat.albedo_color
 		if mat.transparency != BaseMaterial3D.TRANSPARENCY_DISABLED:
 			kind = "lamp" if light else "glass"
+			if kind == "glass":
+				colour = PartVisuals.glass_colour(colour)
 		elif mat.metallic > 0.3:
 			kind = "metal"
 	if not surfaces.has(kind):

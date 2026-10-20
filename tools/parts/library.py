@@ -25,10 +25,11 @@ ORANGE = "#da8540"
 LIME = "#a4bd46"
 TYRE = "#202020"
 METAL = "#9aa0a6"
-GLASS = "#8fd3f4"
 TRANS_RED = "#c4281c"
 TRANS_CLEAR = "#e8f4f8"
 TRANS_AMBER = "#f5a623"
+# Almost clear. The game draws window glass see-through, not blue.
+GLASS = TRANS_CLEAR
 
 # Mass for each cubic metre of a part's box, the same as the first parts.
 DENSITY = 12.0

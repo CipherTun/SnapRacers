@@ -98,6 +98,13 @@ func _ready() -> void:
 	var on_layer := func(layer: int) -> Array:
 		return truck.find_children("*", "MeshInstance3D", true, false).filter(func(n): return n.layers == 1 << (layer - 1) and not n.is_queued_for_deletion())
 	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "a truck's cab is drawn twice, solid and see-through")
+	var copy: MeshInstance3D = on_layer.call(see_through)[0]
+	var glass_gone := false
+	for i in copy.mesh.get_surface_count():
+		var mat := copy.get_surface_override_material(i)
+		if mat is BaseMaterial3D and mat.transparency == BaseMaterial3D.TRANSPARENCY_ALPHA_SCISSOR:
+			glass_gone = true
+	check(glass_gone, "from inside, the cab's glass isn't drawn")
 	truck.repair_now()
 	check(on_layer.call(see_through).size() == 1 and on_layer.call(blocking).size() == 1, "and still just once each when it's put back together")
 	truck.free()
@@ -130,7 +137,10 @@ func _ready() -> void:
 	camera.set_view("driver")
 	camera._looking_back = true
 	camera.snap()
-	check(looking.call().dot(ahead.call()) < -0.95, "and first person turns around")
+	var behind: Vector3 = camera.global_position - kart.eye_point()
+	check(looking.call().dot(ahead.call()) < -0.95, "and first person looks back down the road")
+	check(behind.dot(ahead.call()) < -0.3, "from behind the head (%.2f m)" % -behind.dot(ahead.call()))
+	check(camera.get_cull_mask_value(camera.head_layer), "and shows the driver's head")
 	camera.set_view("bumper")
 	camera._looking_back = true
 	camera.snap()

@@ -406,14 +406,25 @@ static func shiny(color: Color) -> StandardMaterial3D:
 	return _materials[key]
 
 
-## See-through tinted plastic, for windscreens.
+## Window glass is almost clear. Lamp colours (red, amber) keep their tint.
+static func glass_colour(color: Color) -> Color:
+	if color.b >= color.r * 0.95 and color.g > 0.45:
+		return Color(0.94, 0.96, 0.97, 0.08)
+	return Color(color.r, color.g, color.b, 0.35)
+
+
+## See-through tinted plastic, for windscreens. Back faces are culled so
+## looking out from inside a cab the glass isn't there, and drawing it costs
+## half as much as drawing both sides.
 static func glass(color: Color) -> StandardMaterial3D:
 	var key := "glass " + color.to_html()
 	if not _materials.has(key):
 		var m := material(color).duplicate() as StandardMaterial3D
-		m.albedo_color = Color(color, 0.4)
+		m.albedo_color = glass_colour(color)
 		m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-		m.cull_mode = BaseMaterial3D.CULL_DISABLED
+		m.cull_mode = BaseMaterial3D.CULL_BACK
+		m.roughness = 0.12
+		m.metallic_specular = 0.6
 		_materials[key] = m
 	return _materials[key]
 

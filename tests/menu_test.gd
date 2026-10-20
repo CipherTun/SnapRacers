@@ -168,6 +168,12 @@ func _ready() -> void:
 	var was_choice := Game.kart_choice()
 	cards.filter(func(b): return b.get_meta("kart") == "quarter_mile")[0].pressed.emit()
 	check(Game.kart_choice() == "quarter_mile", "tapping one picks it")
+	var lists := screen().find_children("*", "ScrollContainer", true, false)
+	if not lists.is_empty():
+		lists[0].scroll_vertical = 180
+	cards.filter(func(b): return b.get_meta("kart") == "scrambler")[0].pressed.emit()
+	check(Game.kart_choice() == "scrambler", "A on a card picks it after the list has scrolled")
+	cards.filter(func(b): return b.get_meta("kart") == "quarter_mile")[0].pressed.emit()
 	screen().find_children("*", "Button", true, false).filter(func(b): return b.text == "Race")[0].pressed.emit()
 	await frames(4)
 	check(screen() is Race, "Race starts a practice session")
