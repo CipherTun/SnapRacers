@@ -59,8 +59,9 @@ const LAMP_EVERY := 20.0
 ## Each theme: ground colour, curb and wall colours, the sky, its landmarks
 ## (placed first, biggest first) and its fillers with how often each turns
 ## up. A theme by the sea has "sea", and the sea runs along one side of the
-## course with a sandy beach, a pier and boats. An indoor theme also has the colour behind everything, what the floor
-## is, and the colours of the hall and its lights.
+## course with a sandy beach, a pier and boats. "floor" is what you drive on
+## beside the road (grass, sand, snow, dirt, hall). An indoor theme also has
+## the colour behind everything, and the colours of the hall and its lights.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -89,11 +90,13 @@ const THEMES := {
 	},
 	"pit": {
 		"ground": "#a08058", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#da8540",
+		"floor": "dirt",
 		"landmarks": ["excavator", "wind_turbine", "wind_turbine", "slag_heap"],
 		"fillers": {"rocks": 4, "containers": 1, "wind_turbine": 1, "bush": 2},
 	},
 	"industry": {
 		"ground": "#8f978f", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#0d69ab",
+		"floor": "dirt",
 		"landmarks": ["factory", "factory", "crane", "tanks"],
 		"fillers": {"containers": 4, "chimney": 1, "tanks": 1, "bush": 1},
 	},
@@ -110,12 +113,14 @@ const THEMES := {
 	"frost": {
 		"ground": "#e6edf2", "curbs": ["#0d69ab", "#f2f2f2"], "wall": "#0d69ab",
 		"sky": ["#7ea7d8", "#e6eef6"],
+		"floor": "snow",
 		"landmarks": ["mountain", "cottage", "cottage", "church"],
 		"fillers": {"snowy_pine": 7, "cottage": 1, "snowman": 1, "rocks": 1},
 	},
 	"desert": {
 		"ground": "#d9c38c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#d7c599",
 		"sky": ["#4d8fd6", "#f2e2c4"],
+		"floor": "sand",
 		"landmarks": ["skyscraper", "skyscraper", "skyscraper", "skyscraper", "skyscraper", "dune"],
 		"fillers": {"dune": 3, "palm": 4, "tent": 1, "rocks": 1},
 	},
@@ -127,6 +132,7 @@ const THEMES := {
 	"windmill": {
 		"ground": "#c9aa6c", "curbs": ["#d8261c", "#f2cd37"], "wall": "#c4281c",
 		"sky": ["#3f86d6", "#dce8f2"],
+		"floor": "sand",
 		"landmarks": ["big_windmill", "big_windmill", "big_windmill", "house"],
 		"fillers": {"windmill": 2, "olive": 3, "rocks": 2, "house": 1, "bush": 1},
 	},
@@ -138,6 +144,7 @@ const THEMES := {
 	"volcano": {
 		"ground": "#5c534c", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#7b2e2f",
 		"sky": ["#6d7c96", "#e8b98a"],
+		"floor": "dirt",
 		"landmarks": ["volcano", "ruins", "ruins", "lava_pool", "lava_pool"],
 		"fillers": {"rocks": 4, "lava_pool": 1, "cypress": 2, "ruins": 1},
 	},
@@ -184,25 +191,25 @@ const THEMES := {
 		"fillers": {"pine": 4, "birch": 3, "rocks": 2, "cabin": 1},
 	},
 	"hall_red": {
-		"indoor": true, "backdrop": "#1a1c22", "floor": "concrete", "hall": "#e4e4e0", "lights": "#fff4d6",
+		"indoor": true, "backdrop": "#1a1c22", "floor": "hall", "hall": "#e4e4e0", "lights": "#fff4d6",
 		"ground": "#9b9b99", "curbs": ["#c4281c", "#f2f3f2"], "wall": "#c4281c",
 		"landmarks": ["viewing_deck", "kart_office", "kart_row", "kart_row"],
 		"fillers": {"tire_pile": 3, "pallets": 2, "kart_row": 1},
 	},
 	"hall_green": {
-		"indoor": true, "backdrop": "#161c1a", "floor": "concrete", "hall": "#dfe6e0", "lights": "#e8f6ff",
+		"indoor": true, "backdrop": "#161c1a", "floor": "hall", "hall": "#dfe6e0", "lights": "#e8f6ff",
 		"ground": "#959794", "curbs": ["#4b9f4a", "#f2f3f2"], "wall": "#237841",
 		"landmarks": ["viewing_deck", "kart_office", "kart_row"],
 		"fillers": {"tire_pile": 2, "pallets": 2, "kart_row": 1},
 	},
 	"hall_blue": {
-		"indoor": true, "backdrop": "#161a22", "floor": "concrete", "hall": "#e0e4ea", "lights": "#f4f8ff",
+		"indoor": true, "backdrop": "#161a22", "floor": "hall", "hall": "#e0e4ea", "lights": "#f4f8ff",
 		"ground": "#999a9d", "curbs": ["#0d69ab", "#f2f3f2"], "wall": "#0d69ab",
 		"landmarks": ["viewing_deck", "kart_office", "kart_row", "kart_row"],
 		"fillers": {"tire_pile": 3, "pallets": 1, "kart_row": 1},
 	},
 	"hall_neon": {
-		"indoor": true, "backdrop": "#120d1c", "floor": "concrete", "hall": "#3a3346", "lights": "#e4adc8",
+		"indoor": true, "backdrop": "#120d1c", "floor": "hall", "hall": "#3a3346", "lights": "#e4adc8",
 		"ground": "#7b7982", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#7a3fa0",
 		"landmarks": ["viewing_deck", "kart_office", "kart_row"],
 		"fillers": {"tire_pile": 3, "pallets": 1, "kart_row": 1},
@@ -227,7 +234,7 @@ const THEMES := {
 	},
 	"gran_canaria": {
 		"ground": "#dcc693", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#f2f3f2",
-		"sky": ["#3e8fe0", "#f6ead2"], "sea": true,
+		"sky": ["#3e8fe0", "#f6ead2"], "sea": true, "floor": "sand",
 		"landmarks": ["beach_hotel", "lighthouse", "sandcastle", "beach_hotel"],
 		"fillers": {"palm": 5, "parasols": 3, "beach_hut": 2, "windsurf": 2, "lifeguard_tower": 1, "dune": 1},
 	},
@@ -239,7 +246,7 @@ const THEMES := {
 	},
 	"malta": {
 		"ground": "#cdb984", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#d9b77e",
-		"sky": ["#3f8ad8", "#f4ead6"], "sea": true,
+		"sky": ["#3f8ad8", "#f4ead6"], "sea": true, "floor": "sand",
 		"landmarks": ["harbour_fort", "church", "harbour_fort", "watchtower"],
 		"fillers": {"rocks": 3, "palm": 2, "cactus": 2, "olive": 1, "house": 1},
 	},
@@ -252,12 +259,13 @@ const THEMES := {
 	"park_desert": {
 		"ground": "#d9c38c", "curbs": ["#c4281c", "#f2f3f2"], "wall": "#c4281c",
 		"supports": "lattice", "supports_colour": "#c4281c", "sky": ["#3f86d6", "#f4e9d0"],
+		"floor": "sand",
 		"landmarks": ["red_roof", "skyscraper", "dune", "dune"],
 		"fillers": {"palm": 4, "dune": 1, "cactus": 1, "rocks": 1},
 	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
-		"sky": ["#3f86d6", "#e8eef2"],
+		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
 		"landmarks": ["mountain", "mountain", "barn", "house"],
 		"fillers": {"broadleaf": 4, "rocks": 3, "bush": 2, "fence": 1},
 	},

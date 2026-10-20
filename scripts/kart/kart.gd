@@ -73,7 +73,7 @@ const RESET_LIFT := 1.0
 ## wheels slide with only some of their grip, the engine drives, and the kart
 ## holds its tail out at a steady angle, more the harder you steer, so it
 ## won't spin. Straighten up or let go of the gas and it grips again over
-## SLIDE_RECOVER seconds.
+## SLIDE_RECOVER seconds. Off the road it ends at once.
 ##
 ## A held slide keeps its speed, losing slide_scrub a second, and corners up
 ## to slide_corner times as hard as gripping, so it's quicker round a hairpin
@@ -177,6 +177,9 @@ const WHEEL_BODY := 0.55
 const PUDDLE_GRIP := 0.65
 const PUDDLE_DRAG := 1.8
 const LEAST_GRIP := 0.25
+## Off the road the ground also drags with speed, so the engine can't hold
+## racing speed there the way rolling resistance alone would let you.
+const OFFROAD_DRAG := 0.01
 ## How likely a power-up hit is to take a wheel or the steering, instead of
 ## only bodywork (see knock_off_a_part()). Tests set it.
 static var wheel_knock_chance := 0.2
@@ -436,6 +439,8 @@ var sound: KartSound
 ## How much of the kart's weight is on grass or dirt right now, 0 to 1, for
 ## its rumble.
 var rough := 0.0
+## How much of it is off the road, 0 to 1. A slide can't start or hold there.
+var off_road := 0.0
 ## A kart the race says is close by, which the driver turns to look at.
 var alongside: Kart
 var _rammed_wait := 0.0
@@ -1098,6 +1103,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	# The corkscrew's line, if a wheel is on one.
 	var rail := []
 	var on_rough := 0
+	var on_off := 0
 	var on_any := 0
 	var room := INF
 	var turned := clampf(absf(steer_angle) / maxf(full_lock, 0.001), 0.0, 1.0)
@@ -1158,10 +1164,12 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var f_lat := -v_lat * stop_force * 0.5
 		var f_long := drive_per_wheel if w.driven else 0.0
 		# Grass and dirt grip less and drag more than the road. The ground
-		# says how much through its "grip" and "drag" metadata.
+		# says how much through its "grip" and "drag" metadata. Off the road
+		# (the floor, the hills, a cut infield) is tagged, and slipperier.
 		var ground: Object = hit.get("collider")
 		var grip_here: float = ground.get_meta("grip", 1.0) if ground != null else 1.0
 		var drag_here: float = ground.get_meta("drag", 1.0) if ground != null else 1.0
+		var off: bool = ground != null and bool(ground.get_meta("offroad", false))
 		# A ghost drives over a trap as if it isn't there, and spikes hit fast
 		# knock a part off.
 		if ground != null and ground.get_meta("trap", "") == "spikes" and speed > SPIKE_SPEED and _spike_wait <= 0.0 and ghost_left <= 0.0 and shield_left <= 0.0 and not remote:
@@ -1173,6 +1181,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		on_any += 1
 		if grip_here < 1.0:
 			on_rough += 1
+		if off:
+			on_off += 1
 		# The weather makes any ground slippier, and a puddle more so. A trap
 		# is the same whatever the weather. It never takes a tire below
 		# LEAST_GRIP, unless it was already below that in the dry, like
@@ -1191,6 +1201,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 				var kick := KERB_KICK * absf(v_long) * KERB_WHEEL / maxf(w.radius, 0.1)
 				state.apply_impulse(_ok(normal * share * kick), _ok(contact - origin))
 		var resist := w.rolling * load * drag_here
+		if off:
+			resist += load * maxf(drag_here - 1.0, 0.0) * OFFROAD_DRAG * absf(v_long)
 		if braking:
 			resist += BRAKE_FORCE * (1.0 if locked else controls.brake) / wheels.size()
 		elif slide_kick and not w.steered:
@@ -1230,6 +1242,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		applied += push * load + side * tire.y + heading * tire.x
 
 	rough = float(on_rough) / on_any if on_any > 0 else 0.0
+	if on_any > 0:
+		off_road = float(on_off) / on_any
 	_drive_room = room
 
 	# Sticky road. Gravity already pulls everything down, so this cancels that
@@ -1312,9 +1326,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_last_applied = applied
 
 
-## Starts, holds and ends a slide (see SLIDE_SPEED) from the controls.
+## Starts, holds and ends a slide (see SLIDE_SPEED) from the controls. Off
+## the road it ends at once, and you can't start one there.
 func _update_slide(dt: float) -> void:
-	var can := not locked and stats.steering != null and forward_speed > (SLIDE_KEEP_SPEED if sliding else SLIDE_SPEED) and not sticking
+	var can := not locked and stats.steering != null and forward_speed > (SLIDE_KEEP_SPEED if sliding else SLIDE_SPEED) and not sticking and off_road <= 0.0
 	var into := controls.steer * slide_way
 	if not sliding:
 		if can and controls.throttle > 0.5 and controls.brake > 0.5 and absf(controls.steer) > 0.2:

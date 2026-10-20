@@ -1,9 +1,9 @@
 extends SceneTree
 
 ## The edges of the road, with bumpy curbs on the corners that throw you into
-## the air at speed, grass that slows you down without stopping you dead, and
-## soft tire stacks you bounce off. It builds a little course of hairpins and
-## straights and drives the Starter over each.
+## the air at speed, grass that slows you down without stopping you dead, no
+## sliding off the road, and soft tire stacks you bounce off. It builds a
+## little course of hairpins and straights and drives the Starter over each.
 ##
 ## Run it with:
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/runoff_test.gd
@@ -27,6 +27,20 @@ func _initialize() -> void:
 func frames(n: int) -> void:
 	for i in n:
 		await physics_frame
+
+
+func road_pad(at: Vector3, size: Vector3) -> StaticBody3D:
+	var body := StaticBody3D.new()
+	body.collision_layer = Kart.LAYER_WORLD
+	body.set_meta("grip", 1.0)
+	body.set_meta("drag", 1.0)
+	var shape := CollisionShape3D.new()
+	shape.shape = BoxShape3D.new()
+	shape.shape.size = size
+	body.add_child(shape)
+	body.position = at
+	world.add_child(body)
+	return body
 
 
 func kart_at(where: Transform3D, speed: float) -> Kart:
@@ -75,8 +89,9 @@ func _run() -> void:
 				walls += 1
 	check(walls == 0, "there are no walls beside the road at ground level (%d)" % walls)
 
-	# Riding a curb, fast and then slowly. It's a long straight one out on the
-	# grass, with the kart's right hand wheels on it and nothing steering.
+	# Riding a curb, fast and then slowly. It's a long straight one on a strip
+	# of road, with the kart's right hand wheels on it and nothing steering.
+	road_pad(Vector3(-82.0, 0.04, -50.0), Vector3(8.0, 0.08, 400.0))
 	var strip := StaticBody3D.new()
 	strip.collision_layer = Kart.LAYER_WORLD
 	strip.set_meta("kerb", true)
@@ -101,12 +116,52 @@ func _run() -> void:
 	await frames(30)
 	var after_half := kart.forward_speed
 	check(after_half > 24.0 * 0.6, "running onto the grass doesn't stop you dead (%.1f m/s after half a second)" % after_half)
+	check(kart.off_road > 0.5, "the wheels know they're off the road (%.2f)" % kart.off_road)
 	await frames(180)
 	check(kart.forward_speed < 24.0 * 0.55, "but coasting on it slows you right down (%.1f m/s after 3.5 s)" % kart.forward_speed)
 	check(kart.global_basis.y.y > 0.8, "and you stay on your wheels (up.y %.2f)" % kart.global_basis.y.y)
 	kart.queue_free()
 
-	# A line of tire stacks, out on the grass, and a kart driving into it.
+	# Even on the gas, grass is slower than the road, and you can't slide there.
+	var road := StaticBody3D.new()
+	road.collision_layer = Kart.LAYER_WORLD
+	road.set_meta("grip", 1.0)
+	road.set_meta("drag", 1.0)
+	var road_box := CollisionShape3D.new()
+	road_box.shape = BoxShape3D.new()
+	road_box.shape.size = Vector3(8.0, 0.08, 400.0)
+	road.add_child(road_box)
+	road.position = Vector3(-100.0, 0.04, -50.0)
+	world.add_child(road)
+	var on_road := kart_at(Transform3D(Basis.IDENTITY, Vector3(-100.0, 0.35, 60.0)), 22.0)
+	on_road.controls.throttle = 1.0
+	var on_grass := kart_at(off, 22.0)
+	on_grass.controls.throttle = 1.0
+	await frames(120)
+	check(on_grass.forward_speed < on_road.forward_speed * 0.85, "on the gas, grass is slower than the road (%.1f against %.1f m/s)" % [on_grass.forward_speed, on_road.forward_speed])
+	check(on_grass.forward_speed > 6.0, "without stopping you dead (%.1f m/s)" % on_grass.forward_speed)
+	on_grass.controls.brake = 1.0
+	on_grass.controls.steer = 1.0
+	await frames(12)
+	check(not on_grass.sliding, "you can't start a slide on the grass")
+	on_grass.sliding = true
+	on_grass.slide_way = 1.0
+	on_grass.slide_amount = 1.0
+	await frames(4)
+	check(not on_grass.sliding, "and a slide already going ends as soon as you're off the road")
+	on_road.queue_free()
+	on_grass.queue_free()
+	road.queue_free()
+
+	var sand: Array = TrackPath.OFFROAD["sand"]
+	var grass: Array = TrackPath.OFFROAD["grass"]
+	var snow: Array = TrackPath.OFFROAD["snow"]
+	check(sand[0] < grass[0] and grass[0] < TrackPath.SURFACES["asphalt"][0], "sand off the road grips less than grass, and both less than the road (sand %.2f, grass %.2f)" % [sand[0], grass[0]])
+	check(sand[1] > grass[1] and grass[1] > TrackPath.SURFACES["asphalt"][1], "and both drag more, sand the most (sand %.1f, grass %.1f)" % [sand[1], grass[1]])
+	check(snow[0] < grass[0] and snow[1] > 1.0, "snow off the road is slipperier than grass and still slow")
+
+	# A line of tire stacks, out on the grass, and a kart driving into it on a
+	# short strip of road so the grass doesn't eat its speed first.
 	var kit := SceneryKit.new()
 	var line_at := Vector3(-60.0, 0.0, 70.0)
 	for i in 20:
@@ -114,6 +169,7 @@ func _run() -> void:
 	var holder := Node3D.new()
 	world.add_child(holder)
 	kit.build(holder)
+	road_pad(Vector3(-60.0, 0.04, 80.0), Vector3(8.0, 0.08, 24.0))
 	kart = kart_at(Transform3D(Basis.IDENTITY, line_at + Vector3(0.0, 0.3, 20.0)), 15.0)
 	await frames(120)
 	check(kart.global_position.z > line_at.z + 0.5, "a kart doesn't go through the tire stacks (%.1f m in front)" % (kart.global_position.z - line_at.z))

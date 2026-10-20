@@ -183,11 +183,12 @@ func _add_grass() -> void:
 	# Wide enough for the scenery and the big landmarks around the outside.
 	bounds = bounds.grow(Scenery.REACH + 45.0)
 	var centre := bounds.get_center()
-	# Outdoors it's grass, and indoors it's the floor of the hall.
-	var grass: Array = track.grip_and_drag(_theme.get("floor", "grass"))
+	# Outdoors it's grass (or sand, snow, dirt), and indoors it's the hall.
+	var grass: Array = track.offroad_grip_and_drag(_theme.get("floor", "grass"))
 
 	var body := StaticBody3D.new()
 	body.collision_layer = Kart.LAYER_WORLD
+	body.set_meta("offroad", true)
 	body.set_meta("grip", grass[0])
 	body.set_meta("drag", grass[1])
 	var shape := CollisionShape3D.new()
@@ -475,7 +476,8 @@ func _add_cut(index: int, piece: TrackPiece) -> void:
 				tool.add_vertex(v)
 	var body := StaticBody3D.new()
 	body.collision_layer = Kart.LAYER_WORLD
-	var feel: Array = track.grip_and_drag("dirt")
+	var feel: Array = track.offroad_grip_and_drag("dirt")
+	body.set_meta("offroad", true)
 	body.set_meta("grip", feel[0])
 	body.set_meta("drag", feel[1])
 	var mesh := tool.commit()

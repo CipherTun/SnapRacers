@@ -25,7 +25,8 @@ const GRID_ACROSS := 3.5
 ## About the steepest the hills make the road, as a slope.
 const STEEPEST := 0.07
 
-## Grip and drag for each surface, as multiples of plain road.
+## Grip and drag for each surface, as multiples of plain road. These are for
+## the road itself. The ground beside it uses OFFROAD.
 const SURFACES := {
 	"asphalt": [1.0, 1.0],
 	"dirt": [0.8, 2.0],
@@ -34,6 +35,19 @@ const SURFACES := {
 	"grass": [0.7, 5.0],
 	"sand": [0.6, 4.0],
 	"ice": [0.35, 0.8],
+}
+## The ground beside the road: slower and slipperier than the same surface as
+## a road piece, so running wide costs you. Sand is worse than grass, snow is
+## slippy and slow, and a hall floor is in between.
+const OFFROAD := {
+	"grass": [0.45, 8.0],
+	"sand": [0.32, 10.0],
+	"dirt": [0.5, 6.0],
+	"snow": [0.4, 7.0],
+	"hall": [0.55, 5.0],
+	"concrete": [0.55, 5.0],
+	"gravel": [0.48, 5.5],
+	"ice": [0.28, 3.0],
 }
 
 var name := "Track"
@@ -416,6 +430,11 @@ func grid_slot(index: int) -> Transform3D:
 
 func grip_and_drag(surface: String) -> Array:
 	return SURFACES.get(surface, SURFACES["asphalt"])
+
+
+## Grip and drag off the road, for the ground beside it.
+func offroad_grip_and_drag(surface: String) -> Array:
+	return OFFROAD.get(surface, OFFROAD["grass"])
 
 
 ## Places where two bits of road that aren't next to each other along the
