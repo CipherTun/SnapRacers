@@ -140,6 +140,13 @@ const SHOCK_REACH := 12.0
 const SHOCK_SHOVE := 16.0
 const SHOCK_KNOCK_REACH := 6.0
 const SHOCK_HOP := 5.0
+## A cannonball knocks this many parts off, this often taking a wheel or the
+## steering as one of them, and shoves the kart this hard (m/s) along the ball
+## with this hop.
+const CANNON_PARTS := 3
+const CANNON_WHEEL_CHANCE := 0.5
+const CANNON_SHOVE := 14.0
+const CANNON_HOP := 4.0
 ## A kart going over a spike trap faster than this loses a part, and can't
 ## lose another to it for SPIKE_EVERY seconds.
 const SPIKE_SPEED := 10.0
@@ -1898,28 +1905,60 @@ func rammed_with(point: Vector3) -> bool:
 	return false
 
 
-## When a fired brick hits, one part comes off, working from the outside in,
-## unless a shield is up. Mostly it's bodywork, but now and then (see
-## wheel_knock_chance) it can be a wheel or the steering, which leaves the
-## kart limping until it's reset or repaired. Karts, bikes and trikes all take
-## the same chance, so a bike with no bodywork mostly loses nothing.
-func knock_off_a_part() -> void:
+## When a fired brick hits, parts come off, working from the outside in, unless
+## a shield is up. `count` is how many to take (a cannonball takes several).
+## Mostly it's bodywork, but now and then (`chance`, or wheel_knock_chance) one
+## of them can be a wheel or the steering, which leaves the kart limping until
+## it's reset or repaired. Karts, bikes and trikes all take the same chance, so
+## a bike with no bodywork mostly loses nothing.
+func knock_off_a_part(count := 1, chance := -1.0) -> void:
 	if shield_left > 0.0 or stats == null:
 		return
 	Sounds.play_at("fx/hit", sound)
-	var anything := randf() < wheel_knock_chance
-	var outermost := -1
-	var furthest := -1.0
-	for info in stats.parts:
-		if info.def.kind in ["seat", "plate"] or (not anything and _needed_to_drive(info.index)):
-			continue
-		var reach := (info.centre - center_of_mass).length()
-		if reach > furthest and (anything or not _takes_with_it_what_drives(info.index)):
-			furthest = reach
-			outermost = info.index
-	if outermost != -1:
-		var one: Array[int] = [outermost]
-		lose_parts(one)
+	var roll := chance if chance >= 0.0 else wheel_knock_chance
+	var allow_drive := randf() < roll
+	var taken: Array[int] = []
+	for _n in count:
+		var gone := lost.duplicate()
+		for i in taken:
+			gone[i] = true
+		var outermost := -1
+		var furthest := -1.0
+		for info in stats.parts:
+			if gone.has(info.index):
+				continue
+			if info.def.kind in ["seat", "plate"] or (not allow_drive and _needed_to_drive(info.index)):
+				continue
+			var reach := (info.centre - center_of_mass).length()
+			if reach > furthest and (allow_drive or not _takes_with_it_what_drives(info.index, gone)):
+				furthest = reach
+				outermost = info.index
+		if outermost == -1:
+			break
+		taken.append(outermost)
+		if _needed_to_drive(outermost) or _takes_with_it_what_drives(outermost, gone):
+			allow_drive = false
+	if not taken.is_empty():
+		lose_parts(taken)
+
+
+## A cannonball hit: shoved along the ball and several parts knocked off. A
+## shield holds the parts on and still gets shoved.
+func struck_by_cannon(along: Vector3) -> void:
+	if ghost_left > 0.0:
+		return
+	var dir := along
+	dir.y = 0.0
+	if dir.length() < 0.1:
+		dir = -global_basis.z
+	else:
+		dir = dir.normalized()
+	_shove += dir * CANNON_SHOVE + Vector3.UP * CANNON_HOP
+	var side := signf(dir.dot(global_basis.x))
+	if side == 0.0:
+		side = 1.0
+	_spin += Vector3.UP * CANNON_SHOVE * 0.3 * side
+	knock_off_a_part(CANNON_PARTS, CANNON_WHEEL_CHANCE)
 
 
 ## Whether this part is a wheel or the steering.
@@ -1928,11 +1967,13 @@ func _needed_to_drive(index: int) -> bool:
 
 
 ## Whether knocking this part off would take a wheel or the steering with it.
-func _takes_with_it_what_drives(index: int) -> bool:
+## `already` is parts treated as gone already, so several knocks in one hit
+## don't drop a wheel between them.
+func _takes_with_it_what_drives(index: int, already: Dictionary = {}) -> bool:
 	var seat := design.seat_index()
 	if seat == -1:
 		return false
-	var gone := lost.duplicate()
+	var gone := already.duplicate() if not already.is_empty() else lost.duplicate()
 	gone[index] = true
 	for i in design.detached_after(gone, seat):
 		if _needed_to_drive(i):

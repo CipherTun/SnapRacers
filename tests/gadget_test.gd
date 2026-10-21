@@ -131,6 +131,8 @@ class Runner:
 		return 1
 
 	func _others() -> int:
+		karts.target.set_meta("was", karts.target.global_position)
+		karts.shielded.set_meta("was", karts.shielded.global_position)
 		for name in ["gunner", "shielded", "gunner2", "dropper", "big_turbo", "homer"]:
 			karts[name].use_gadget(0)
 		# A tow rope onto the kart ahead. Here there's no race to say who's
@@ -156,8 +158,14 @@ class Runner:
 
 	func _others_check() -> int:
 		check(karts.big_turbo.boost_left > 0.0, "a big turbo lasts longer than a plain one (%.1f s left)" % karts.big_turbo.boost_left)
-		check(karts.target.lost.size() >= 1, "a cannon brick knocks a part off the kart it hits (%d lost)" % karts.target.lost.size())
+		check(Kart.CANNON_PARTS >= 3, "a cannonball knocks several parts off (%d)" % Kart.CANNON_PARTS)
+		check(Kart.CANNON_WHEEL_CHANCE >= 0.5, "and often a wheel (chance %.2f)" % Kart.CANNON_WHEEL_CHANCE)
+		check(karts.target.lost.size() >= Kart.CANNON_PARTS, "a cannonball knocks several parts off the kart it hits (%d lost)" % karts.target.lost.size())
+		var shoved: float = karts.target.get_meta("was").distance_to(karts.target.global_position)
+		check(shoved > 2.0, "and shoves it (%.1f m)" % shoved)
 		check(karts.shielded.lost.is_empty(), "but not off a kart with its shield up")
+		var shielded_shove: float = karts.shielded.get_meta("was").distance_to(karts.shielded.global_position)
+		check(shielded_shove > 2.0, "though the shield still gets shoved (%.1f m)" % shielded_shove)
 		check(karts.hunted.lost.size() >= 1, "a homing brick turns and finds a kart off to one side (%d lost)" % karts.hunted.lost.size())
 		var piles := get_children().filter(func(n): return n is BrickPile).size()
 		check(piles == BrickPile.DROP.size(), "a brick dropper leaves a pile of bricks behind (%d)" % piles)

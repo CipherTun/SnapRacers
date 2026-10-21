@@ -3,7 +3,8 @@ extends RigidBody3D
 
 ## A cannonball, or a homing brick. A cannonball goes off with a flash and
 ## smoke, flies fast and nearly flat trailing fire, and the first kart it hits
-## loses a part with a bang. It's gone after a couple of seconds either way.
+## loses several parts and is shoved, with a bang. A homing brick knocks one
+## part off. It's gone after a couple of seconds either way.
 
 const SPEED := 34.0
 const LIFETIME := 2.5
@@ -140,7 +141,10 @@ func _on_hit(body: Node) -> void:
 		# change, so the part comes off just after. A kart driven on another
 		# device loses it there instead, when its own copy of the brick hits.
 		if not body.remote:
-			body.knock_off_a_part.call_deferred()
+			if homing:
+				body.knock_off_a_part.call_deferred()
+			else:
+				body.struck_by_cannon.call_deferred(linear_velocity)
 		if not homing:
 			CannonFx.bang.call_deferred(get_parent(), global_position)
 		queue_free()

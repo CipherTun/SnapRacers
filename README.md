@@ -118,7 +118,7 @@ Every 400 m or so there's a row of giant see-through gold studs across the road.
 | Tow rope | Latches onto the kart ahead and pulls you along behind it for three seconds, then lets go with a burst. |
 | Bricks, walls, marbles and spikes | Drop a pile of bricks, a brick wall across the road, a scatter of round bricks that roll under the wheels, or a spike trap that slows karts and knocks parts off, behind you for whoever's following. |
 | Shockwave | Shoves every kart near you away hard, and knocks parts off any close by. |
-| Cannon | Fires a brick straight ahead, and a homing brick follows the road to the kart in front. Whoever it hits loses a part. |
+| Cannon | Fires a cannonball straight ahead that knocks several parts off and shoves the kart it hits. A homing brick follows the road to the kart in front and knocks a part off. |
 | Shield | Nothing can knock your parts off for four seconds. |
 | Repair kit | Puts back everything you've lost, without the reset slowdown. |
 | Ghost | For three seconds you go straight through karts, bricks and traps. |
