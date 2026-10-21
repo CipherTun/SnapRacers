@@ -22,8 +22,52 @@ func scenery_at(level: String, holder: Node) -> SceneryKit:
 	var dressing := Scenery.new(track, track.theme)
 	holder.add_child(dressing)
 	var kit: SceneryKit = dressing._kit
+	if level == "high":
+		check_cells(dressing, kit)
 	dressing.free()
 	return kit
+
+
+func check_cells(dressing: Node, kit: SceneryKit) -> void:
+	var damage: WorldDamage = null
+	for child in dressing.get_children():
+		if child is WorldDamage:
+			damage = child
+			break
+	var cells: Array = []
+	if damage != null:
+		cells = damage.get_children().filter(func(n): return n is MultiMeshInstance3D and n.get_meta("scenery_cell", false))
+	check(cells.size() > 1, "scenery is drawn in cells (%d)" % cells.size())
+	var far_end := false
+	var stay_end := false
+	var shadows_on := true
+	for draw in cells:
+		if draw.get_meta("far"):
+			far_end = far_end or is_equal_approx(draw.visibility_range_end, WorldDamage.FAR_RANGE)
+		else:
+			stay_end = stay_end or is_equal_approx(draw.visibility_range_end, 0.0)
+		if draw.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+			shadows_on = false
+	check(far_end, "far-off fillers drop out past %.0f m" % WorldDamage.FAR_RANGE)
+	check(stay_end, "buildings and trackside stay drawn")
+	check(shadows_on, "and they still cast shadows")
+	var far_boxes := 0
+	var stay_boxes := 0
+	for box in kit.boxes:
+		if box.size() > 4 and box[4]:
+			far_boxes += 1
+		else:
+			stay_boxes += 1
+	check(far_boxes > 0 and stay_boxes > 0, "the kit marks fillers far (%d far, %d stay)" % [far_boxes, stay_boxes])
+	var empty_aabb := 0
+	var wide := 0
+	for draw in cells:
+		var aabb: AABB = draw.multimesh.custom_aabb
+		if aabb.size == Vector3.ZERO:
+			empty_aabb += 1
+		if aabb.size.x > WorldDamage.CELL * 2.0 or aabb.size.z > WorldDamage.CELL * 2.0:
+			wide += 1
+	check(empty_aabb == 0 and wide == 0, "each cell's bounds are the cell (%d empty, %d wide)" % [empty_aabb, wide])
 
 
 func _initialize() -> void:

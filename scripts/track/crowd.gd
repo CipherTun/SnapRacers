@@ -1,10 +1,9 @@
 class_name Crowd
 extends Node3D
 
-## The brick figures watching the race, from a SceneryKit's fans. However many
-## there are, they're drawn as one batch for each piece of them (legs, body,
-## head, hair, face and each arm), so a full grandstand costs the phone the same
-## as one fan.
+## The brick figures watching the race, from a SceneryKit's fans. They're
+## cheap brick shapes, drawn in nearby bunches so a far-off grandstand is
+## skipped, and they don't cast shadows.
 ##
 ## They move in the shader: a little bob and a look around while they wait,
 ## and when a kart comes by, the bunch nearest it jumps up and down and waves
@@ -22,9 +21,14 @@ const COOL_DOWN := 0.6
 const LOOK_EVERY := 0.25
 ## A little of the excitement stays all race, so they never stand quite still.
 const AT_REST := 0.12
+## Fans in one cell are drawn together. Past RANGE metres from a cell's
+## middle, that cell is skipped.
+const CELL := 32.0
+const RANGE := 90.0
 
 const SHADER := """
 shader_type spatial;
+render_mode unshaded, shadows_disabled;
 uniform float part = 0.0;
 
 varying vec3 tint;
@@ -60,15 +64,16 @@ void vertex() {
 
 void fragment() {
 	ALBEDO = tint;
-	ROUGHNESS = 0.45;
-	SPECULAR = 0.4;
 }
 """
 
 static var _shader: Shader
 static var _meshes := {}
 
-var _multis := {}
+## Each cell's MultiMeshes, piece name to MultiMesh.
+var _cell_multis: Array = []
+var _home: PackedInt32Array = PackedInt32Array()
+var _local: PackedInt32Array = PackedInt32Array()
 ## Each bunch of fans: where its middle is, which fans are in it, and how
 ## excited it is.
 var _bunches := {}
@@ -82,6 +87,35 @@ func _init(fans: Array) -> void:
 	name = "Crowd"
 	if _shader == null:
 		_shader = TrackBuilder.shader_for(SHADER)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = fans.size()
+	_phases.resize(fans.size())
+	_home.resize(fans.size())
+	_local.resize(fans.size())
+	var grouped := {}
+	for i in fans.size():
+		var fan: Array = fans[i]
+		var feet: Transform3D = fan[0]
+		_phases[i] = rng.randf()
+		var bunch: int = fan[4]
+		if not _bunches.has(bunch):
+			_bunches[bunch] = { "middle": Vector3.ZERO, "fans": [], "cheer": AT_REST }
+		_bunches[bunch].fans.append(i)
+		_bunches[bunch].middle += feet.origin
+		var key := Vector2i(floori(feet.origin.x / CELL), floori(feet.origin.z / CELL))
+		if not grouped.has(key):
+			grouped[key] = []
+		grouped[key].append(i)
+	for bunch in _bunches.values():
+		bunch.middle /= bunch.fans.size()
+	for key in grouped:
+		_add_cell(fans, grouped[key], Vector3((key.x + 0.5) * CELL, 0.0, (key.y + 0.5) * CELL))
+
+
+func _add_cell(fans: Array, indices: Array, origin: Vector3) -> void:
+	var cell := _cell_multis.size()
+	var pack := {}
+	var draws := {}
 	for p in PIECES.size():
 		var piece: String = PIECES[p]
 		var multi := MultiMesh.new()
@@ -89,37 +123,39 @@ func _init(fans: Array) -> void:
 		multi.use_colors = true
 		multi.use_custom_data = true
 		multi.mesh = mesh_of(piece)
-		multi.instance_count = fans.size()
+		multi.instance_count = indices.size()
 		var draw := MultiMeshInstance3D.new()
 		draw.multimesh = multi
 		var material := ShaderMaterial.new()
 		material.shader = _shader
 		material.set_shader_parameter("part", float(p))
 		draw.material_override = material
-		# Far off they're too small to see.
-		draw.visibility_range_end = 220.0
+		draw.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		draw.gi_mode = GeometryInstance3D.GI_MODE_DISABLED
+		draw.position = origin
+		draw.visibility_range_end = RANGE
 		add_child(draw)
-		_multis[piece] = multi
-	var rng := RandomNumberGenerator.new()
-	rng.seed = fans.size()
-	_phases.resize(fans.size())
-	for i in fans.size():
+		pack[piece] = multi
+		draws[piece] = draw
+	_cell_multis.append(pack)
+	for k in indices.size():
+		var i: int = indices[k]
 		var fan: Array = fans[i]
 		var feet: Transform3D = fan[0]
-		_phases[i] = rng.randf()
+		_home[i] = cell
+		_local[i] = k
 		var colours := { "legs": fan[2], "body": fan[1], "head": SKIN, "hair": fan[3], "face": FACE, "left_arm": fan[1], "right_arm": fan[1] }
+		var where := Transform3D(feet.basis, feet.origin - origin)
+		var rest := Color(_phases[i], AT_REST, 0.0, 0.0)
 		for piece in PIECES:
-			var multi: MultiMesh = _multis[piece]
-			multi.set_instance_transform(i, feet)
-			multi.set_instance_color(i, colours[piece])
-			multi.set_instance_custom_data(i, Color(_phases[i], AT_REST, 0.0, 0.0))
-		var bunch: int = fan[4]
-		if not _bunches.has(bunch):
-			_bunches[bunch] = { "middle": Vector3.ZERO, "fans": [], "cheer": AT_REST }
-		_bunches[bunch].fans.append(i)
-		_bunches[bunch].middle += feet.origin
-	for bunch in _bunches.values():
-		bunch.middle /= bunch.fans.size()
+			var multi: MultiMesh = pack[piece]
+			multi.set_instance_transform(k, where)
+			multi.set_instance_color(k, colours[piece])
+			multi.set_instance_custom_data(k, rest)
+	var bounds := AABB(Vector3(-CELL * 0.5 - 2.0, -1.0, -CELL * 0.5 - 2.0), Vector3(CELL + 4.0, 12.0, CELL + 4.0))
+	for piece in PIECES:
+		pack[piece].custom_aabb = bounds
+		draws[piece].custom_aabb = bounds
 
 
 ## The mesh for one piece of a fan, standing on the origin and facing -Z. An
@@ -130,28 +166,41 @@ static func mesh_of(piece: String) -> Mesh:
 	var made: Mesh
 	match piece:
 		"legs":
-			made = _join([[MeshKit.rounded_box(Vector3(0.17, 0.4, 0.2), 0.03), Vector3(-0.1, 0.2, 0.0)],
-				[MeshKit.rounded_box(Vector3(0.17, 0.4, 0.2), 0.03), Vector3(0.1, 0.2, 0.0)],
-				[MeshKit.rounded_box(Vector3(0.4, 0.1, 0.2), 0.03), Vector3(0.0, 0.42, 0.0)]])
+			made = _join([[_box(Vector3(0.17, 0.4, 0.2)), Vector3(-0.1, 0.2, 0.0)],
+				[_box(Vector3(0.17, 0.4, 0.2)), Vector3(0.1, 0.2, 0.0)],
+				[_box(Vector3(0.4, 0.1, 0.2)), Vector3(0.0, 0.42, 0.0)]])
 		"body":
-			made = _join([[MeshKit.rounded_box(Vector3(0.42, 0.36, 0.2), 0.04, 0.75), Vector3(0.0, 0.65, 0.0)]])
+			made = _join([[_box(Vector3(0.42, 0.36, 0.2)), Vector3(0.0, 0.65, 0.0)]])
 		"head":
-			made = _join([[MeshKit.rounded_cylinder(0.12, 0.22, 0.04, 16), Vector3(0.0, 0.96, 0.0)],
-				[MeshKit.rounded_cylinder(0.06, 0.06, 0.015, 10), Vector3(0.0, 1.08, 0.0)]])
+			made = _join([[_cyl(0.12, 0.22), Vector3(0.0, 0.96, 0.0)],
+				[_cyl(0.06, 0.06), Vector3(0.0, 1.08, 0.0)]])
 		"hair":
-			made = _join([[MeshKit.rounded_box(Vector3(0.27, 0.12, 0.26), 0.05), Vector3(0.0, 1.07, 0.02)]])
+			made = _join([[_box(Vector3(0.27, 0.12, 0.26)), Vector3(0.0, 1.07, 0.02)]])
 		"face":
-			# Two eyes and a smile on the front of the head.
-			var eye := MeshKit.rounded_cylinder(0.024, 0.02, 0.008, 10)
-			var facing := Basis(Vector3.RIGHT, PI * 0.5)
-			made = _join([[eye, Transform3D(facing, Vector3(-0.045, 0.995, -0.115))],
-				[eye, Transform3D(facing, Vector3(0.045, 0.995, -0.115))],
-				[MeshKit.arc_tube(0.05, 0.011, PI * 1.2, PI * 1.8, 8, 6), Vector3(0.0, 0.975, -0.118)]])
+			made = _join([[_box(Vector3(0.05, 0.04, 0.02)), Vector3(-0.045, 0.995, -0.115)],
+				[_box(Vector3(0.05, 0.04, 0.02)), Vector3(0.045, 0.995, -0.115)],
+				[_box(Vector3(0.08, 0.02, 0.02)), Vector3(0.0, 0.955, -0.118)]])
 		_:
-			made = _join([[MeshKit.rounded_box(Vector3(0.1, 0.3, 0.12), 0.04), Vector3(0.0, -0.13, 0.0)],
-				[MeshKit.rounded_cylinder(0.05, 0.08, 0.02, 8), Vector3(0.0, -0.31, 0.0)]])
+			made = _join([[_box(Vector3(0.1, 0.3, 0.12)), Vector3(0.0, -0.13, 0.0)],
+				[_cyl(0.05, 0.08), Vector3(0.0, -0.31, 0.0)]])
 	_meshes[piece] = made
 	return made
+
+
+static func _box(size: Vector3) -> Mesh:
+	var mesh := BoxMesh.new()
+	mesh.size = size
+	return mesh
+
+
+static func _cyl(radius: float, height: float) -> Mesh:
+	var mesh := CylinderMesh.new()
+	mesh.top_radius = radius
+	mesh.bottom_radius = radius
+	mesh.height = height
+	mesh.radial_segments = 8
+	mesh.rings = 1
+	return mesh
 
 
 ## Several meshes, each moved by its offset or transform, as one.
@@ -186,5 +235,8 @@ func _process(delta: float) -> void:
 		for i in bunch.fans:
 			# Not all of them get quite as excited.
 			var each: float = bunch.cheer * (0.7 + 0.3 * _phases[i])
+			var data := Color(_phases[i], each, 0.0, 0.0)
+			var pack: Dictionary = _cell_multis[_home[i]]
+			var li := _local[i]
 			for piece in PIECES:
-				_multis[piece].set_instance_custom_data(i, Color(_phases[i], each, 0.0, 0.0))
+				pack[piece].set_instance_custom_data(li, data)

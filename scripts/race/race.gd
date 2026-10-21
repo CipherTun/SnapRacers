@@ -684,16 +684,14 @@ func _watch_the_drivers(delta: float) -> void:
 		racer.kart.alongside = nearest
 
 
-## Lightning from this kart slows every kart ahead of it that's driven here.
-## Over a network each device does the same for its own karts, when it hears
-## the kart used it (see NetRace).
+## Lightning from this kart strikes every kart ahead of it. Each device
+## slows the karts it drives and shows the bolt on all of them (see NetRace).
 func strike_from(kart: Kart) -> void:
 	var order := standings()
 	for racer in order:
 		if racer.kart == kart:
 			break
-		if not racer.kart.remote:
-			racer.kart.zap()
+		racer.kart.zap()
 
 
 ## A shockwave from this kart shoves every kart near it that's driven here

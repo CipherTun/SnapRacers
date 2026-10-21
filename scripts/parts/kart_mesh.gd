@@ -75,6 +75,9 @@ static func material(kind: String) -> Material:
 	m.vertex_color_is_srgb = true
 	m.roughness = 0.55
 	m.metallic_specular = 0.35
+	# The cab is the same mesh as the body, so sun shadows on it land on
+	# the dash and the wheel. Those stay off.
+	m.disable_receive_shadows = true
 	match kind:
 		"glass":
 			# One side only, so a windshield doesn't fill the screen twice

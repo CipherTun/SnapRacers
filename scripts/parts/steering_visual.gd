@@ -156,9 +156,9 @@ func grips(amount: float) -> Array:
 func _add(mesh: Mesh, colour: Color, where: Transform3D, metallic := 0.0, parent: Node3D = null) -> void:
 	var node := MeshInstance3D.new()
 	node.mesh = mesh
-	var material := PartVisuals.material(colour)
+	var material := PartVisuals.material(colour).duplicate() as StandardMaterial3D
+	material.disable_receive_shadows = true
 	if metallic > 0.0:
-		material = material.duplicate() as StandardMaterial3D
 		material.metallic = metallic
 		material.roughness = 0.3
 	node.material_override = material

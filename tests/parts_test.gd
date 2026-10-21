@@ -135,6 +135,7 @@ func _init() -> void:
 	var red_glass: BaseMaterial3D = PartVisuals.glass(Color("#c4281c"))
 	check(red_glass.albedo_color.r > 0.5 and red_glass.albedo_color.a > 0.2, "red lamp glass keeps its colour")
 	check(KartMesh.material("glass").cull_mode == BaseMaterial3D.CULL_BACK, "baked kart glass culls its inside too")
+	check(KartMesh.material("plastic").disable_receive_shadows and KartMesh.material("glass").disable_receive_shadows, "and the cab doesn't pick up sun shadows")
 
 	print("All parts checks passed." if failures == 0 else "%d parts checks failed." % failures)
 	quit(1 if failures > 0 else 0)

@@ -122,7 +122,7 @@ Every 400 m or so there's a row of giant see-through gold studs across the road.
 | Shield | Nothing can knock your parts off for four seconds. |
 | Repair kit | Puts back everything you've lost, without the reset slowdown. |
 | Ghost | For three seconds you go straight through karts, bricks and traps. |
-| Lightning | Every kart ahead of you slows right down for two seconds. |
+| Lightning | Every kart ahead of you is struck and slows right down for five seconds. |
 
 ### Drivers
 

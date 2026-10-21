@@ -131,6 +131,7 @@ func _ready() -> void:
 	kit.done()
 	kit.begin("fans", false)
 	Props.fan_line(kit, Vector3(10, 0.2, 0), 0, rng)
+	Props.fan_line(kit, Vector3(80, 0.2, 0), 0, rng)
 	kit.done()
 	damage = kit.build(stand)
 	await frames(2)
@@ -141,8 +142,22 @@ func _ready() -> void:
 	var crowds := damage.get_children().filter(func(n): return n is Crowd)
 	check(crowds.size() == 1 and crowds[0]._phases.size() >= 4, "there are fans behind the fence (%d)" % (crowds[0]._phases.size() if not crowds.is_empty() else 0))
 	if not crowds.is_empty():
-		var bunch: Dictionary = crowds[0]._bunches.values()[0]
-		check(is_equal_approx(bunch.cheer, Crowd.AT_REST), "they wait quietly")
+		var draws: Array = crowds[0].get_children().filter(func(n): return n is MultiMeshInstance3D)
+		check(draws.size() >= 14, "fans in two places are drawn apart so the far ones can be skipped (%d)" % draws.size())
+		var shadows := true
+		var most_tris := 0
+		for draw in draws:
+			if draw.cast_shadow != GeometryInstance3D.SHADOW_CASTING_SETTING_OFF:
+				shadows = false
+			most_tris = maxi(most_tris, draw.multimesh.mesh.get_faces().size() / 3)
+		check(shadows, "and they don't cast shadows")
+		check(most_tris < 120, "each piece is a cheap brick shape (%d triangles)" % most_tris)
+		var bunch: Dictionary = {}
+		for candidate in crowds[0]._bunches.values():
+			if candidate.middle.distance_to(Vector3(10, 0.2, 0)) < 20.0:
+				bunch = candidate
+				break
+		check(not bunch.is_empty() and is_equal_approx(bunch.cheer, Crowd.AT_REST), "they wait quietly")
 		var passing := Node3D.new()
 		passing.add_to_group("karts")
 		add_child(passing)
@@ -176,6 +191,9 @@ func _ready() -> void:
 		await frames(10)
 	var scenery := WorldDamage.in_tree(get_tree())
 	check(scenery != null, "the course's scenery can break")
+	if scenery != null:
+		var cells := scenery.get_children().filter(func(n): return n is MultiMeshInstance3D and n.get_meta("scenery_cell", false))
+		check(cells.size() > 1, "scenery is drawn in cells (%d)" % cells.size())
 	# Something small beside the road to drive into: a marshal post if there's
 	# one, or a billboard or a tree.
 	var target := -1

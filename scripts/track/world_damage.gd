@@ -14,8 +14,9 @@ extends Node3D
 ## can move at once, for the phone, so past that the oldest stop moving and
 ## stay where they lie as scenery you can drive through.
 ##
-## Everything's still drawn as one batch per shape, the scenery and the rubble
-## each, with room left over in the scenery's for the chunks that stay up.
+## Scenery is drawn in cells so far-off fillers can be skipped. Leftover
+## chunks after a hole's knocked have their own batch. Rubble is still one
+## batch per shape.
 ##
 ## The moving parts (see SceneryKit.begin_mover()) are drawn on their own, each
 ## turning or bobbing about its pivot, and go with their prop if it comes
@@ -31,10 +32,15 @@ const FLYING_CHUNK := 1.1
 ## metre a second the kart was doing.
 const REACH := 1.2
 const REACH_PER_SPEED := 0.03
-## How much rubble can move at once, and how much room the batches have.
+## How much rubble can move at once, and how much room the leftover-chunk
+## batch and the rubble batches have.
 const MOST_MOVING := 120
 const ROOM_FOR_RUBBLE := 600
 const ROOM_FOR_CHUNKS := 800
+## Scenery cells, and how far off fillers drop out.
+const CELL := 40.0
+const FAR_RANGE := 140.0
+const FAR_MARGIN := 20.0
 ## How heavy rubble is for its size, in kilograms a cubic metre, and the
 ## lightest and heaviest a piece can be, so a kart pushes it about.
 const DENSITY := 40.0
@@ -50,9 +56,16 @@ const KINDS := ["box", "cylinder", "cone"]
 ## Each group: { name, small, tires, pieces: [[kind, index]], shapes: [CollisionShape3D] }.
 var groups: Array = []
 
-## For each kind, every instance's [transform, colour, surface, group].
+## For each kind, every instance's [transform, colour, surface, group, far],
+## in world space. Breaking uses these.
 var _instances := {}
-var _scenery := {}
+## Parallel to `_instances`: which MultiMesh and index draws each piece, and
+## the cell origin the instance transform is relative to.
+var _slot := {}
+## Cell draws plus the leftover-chunk batch, added in _ready.
+var _scenery_draws: Array = []
+## Leftover wall pieces after a hole, in world space, kind box.
+var _chunks: MultiMeshInstance3D
 var _rubble_draw := {}
 var _rubble_used := {}
 var _pattern_images := {}
@@ -84,17 +97,18 @@ func _init(kit: SceneryKit) -> void:
 		group["pieces"] = []
 		group["shapes"] = []
 	_instances = { "box": kit.boxes, "cylinder": kit.cylinders, "cone": kit.cones }
+	_chunks = _batch("box", ROOM_FOR_CHUNKS)
+	_chunks.multimesh.visible_instance_count = 0
+	_chunks.set_meta("chunks", true)
 	for kind in KINDS:
 		var list: Array = _instances[kind]
+		_slot[kind] = []
+		_slot[kind].resize(list.size())
 		for i in list.size():
 			var group: int = list[i][3] if list[i].size() > 3 else -1
 			if group >= 0:
 				groups[group].pieces.append([kind, i])
-		_scenery[kind] = _batch(kind, list.size() + (ROOM_FOR_CHUNKS if kind == "box" else 0))
-		var multi: MultiMesh = _scenery[kind].multimesh
-		multi.visible_instance_count = list.size()
-		for i in list.size():
-			_place(multi, i, list[i][0], list[i][1], list[i][2])
+		_draw_cells(kind, list)
 		_rubble_draw[kind] = _batch(kind, ROOM_FOR_RUBBLE)
 		if _rubble_shader == null:
 			_rubble_shader = Shader.new()
@@ -109,6 +123,7 @@ func _init(kit: SceneryKit) -> void:
 		_rubble_draw[kind].material_override = material
 		_rubble_draw[kind].multimesh.visible_instance_count = 0
 		_rubble_used[kind] = 0
+	_scenery_draws.append(_chunks)
 	if not kit.soft.is_empty():
 		if _bouncy == null:
 			_bouncy = PhysicsMaterial.new()
@@ -154,8 +169,9 @@ func _init(kit: SceneryKit) -> void:
 func _ready() -> void:
 	if not groups.is_empty():
 		add_to_group("world_damage")
+	for draw in _scenery_draws:
+		add_child(draw)
 	for kind in KINDS:
-		add_child(_scenery[kind])
 		add_child(_rubble_draw[kind])
 		if _mover_draws.has(kind):
 			add_child(_mover_draws[kind])
@@ -178,6 +194,47 @@ static func _place(multi: MultiMesh, i: int, where: Transform3D, colour: Color, 
 	multi.set_instance_transform(i, where)
 	multi.set_instance_color(i, colour)
 	multi.set_instance_custom_data(i, Color(float(surface), 0.0, 0.0, 0.0))
+
+
+func _draw_cells(kind: String, list: Array) -> void:
+	var grouped := {}
+	for i in list.size():
+		var origin: Vector3 = list[i][0].origin
+		var key := Vector2i(floori(origin.x / CELL), floori(origin.z / CELL))
+		var far: bool = list[i].size() > 4 and bool(list[i][4])
+		if not grouped.has(key):
+			grouped[key] = { "stay": [], "far": [] }
+		grouped[key]["far" if far else "stay"].append(i)
+	for key in grouped:
+		var origin := Vector3((key.x + 0.5) * CELL, 0.0, (key.y + 0.5) * CELL)
+		for bucket in ["stay", "far"]:
+			var indices: Array = grouped[key][bucket]
+			if indices.is_empty():
+				continue
+			_scenery_draws.append(_cell_draw(kind, indices, origin, bucket == "far"))
+
+
+func _cell_draw(kind: String, indices: Array, origin: Vector3, far: bool) -> MultiMeshInstance3D:
+	var draw := _batch(kind, indices.size())
+	draw.position = origin
+	draw.set_meta("scenery_cell", true)
+	draw.set_meta("far", far)
+	if far:
+		draw.visibility_range_end = FAR_RANGE
+		draw.visibility_range_end_margin = FAR_MARGIN
+	var multi: MultiMesh = draw.multimesh
+	for n in indices.size():
+		var i: int = indices[n]
+		var inst: Array = _instances[kind][i]
+		var world: Transform3D = inst[0]
+		_place(multi, n, Transform3D(world.basis, world.origin - origin), inst[1], inst[2])
+		_slot[kind][i] = { "multi": multi, "index": n, "origin": origin }
+	# After the instances, or Compatibility leaves the AABB empty and every
+	# cell is drawn, vis range or not.
+	var bounds := AABB(Vector3(-CELL * 0.5 - 8.0, -4.0, -CELL * 0.5 - 8.0), Vector3(CELL + 16.0, 40.0, CELL + 16.0))
+	draw.custom_aabb = bounds
+	multi.custom_aabb = bounds
+	return draw
 
 
 func _shape_for(body: StaticBody3D, where: Transform3D, size: Vector3, group: int) -> CollisionShape3D:
@@ -242,7 +299,7 @@ func _bring_down(g: Dictionary, velocity: Vector3) -> void:
 			continue
 		_hide(kind, i)
 		if kind == "box":
-			for chunk in _chunks(where, FLYING_CHUNK, 5):
+			for chunk in _box_chunks(where, FLYING_CHUNK, 5):
 				_fly("box", chunk, inst[1], inst[2], velocity)
 		else:
 			_fly(kind, where, inst[1], inst[2], velocity)
@@ -376,7 +433,7 @@ static func _splits(size: Vector3, chunk: float, most: int) -> Vector3i:
 
 
 ## A box's chunks, as scaled transforms.
-static func _chunks(where: Transform3D, chunk: float, most: int) -> Array:
+static func _box_chunks(where: Transform3D, chunk: float, most: int) -> Array:
 	var size := where.basis.get_scale()
 	var turn := where.basis.orthonormalized()
 	var count := _splits(size, chunk, most)
@@ -393,19 +450,23 @@ static func _chunks(where: Transform3D, chunk: float, most: int) -> Array:
 func _hide(kind: String, i: int) -> void:
 	var inst: Array = _instances[kind][i]
 	inst[0] = Transform3D(Basis.from_scale(Vector3.ZERO), inst[0].origin)
-	_scenery[kind].multimesh.set_instance_transform(i, inst[0])
+	var slot: Dictionary = _slot[kind][i]
+	slot.multi.set_instance_transform(slot.index, Transform3D(Basis.from_scale(Vector3.ZERO), inst[0].origin - slot.origin))
 
 
-## Adds a brick that stays up after a hit, in the batch's spare room.
+## Adds a leftover wall piece after a hit, on the chunk batch.
 func _add_scenery(kind: String, where: Transform3D, colour: Color, surface: int, group: int) -> int:
-	var multi: MultiMesh = _scenery[kind].multimesh
-	var i := multi.visible_instance_count
-	if i >= multi.instance_count:
+	if kind != "box":
 		return -1
-	multi.visible_instance_count = i + 1
-	_instances[kind].append([where, colour, surface, group])
-	_place(multi, i, where, colour, surface)
-	return i
+	var multi: MultiMesh = _chunks.multimesh
+	var slot_i := multi.visible_instance_count
+	if slot_i >= multi.instance_count:
+		return -1
+	multi.visible_instance_count = slot_i + 1
+	_instances[kind].append([where, colour, surface, group, false])
+	_slot[kind].append({ "multi": multi, "index": slot_i, "origin": Vector3.ZERO })
+	_place(multi, slot_i, where, colour, surface)
+	return _instances[kind].size() - 1
 
 
 ## Sends a brick flying off as rubble.

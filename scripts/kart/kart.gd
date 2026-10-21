@@ -155,7 +155,7 @@ const GHOST_FADE := 0.35
 const GHOST_SEE_THROUGH := 0.5
 ## How long lightning slows the karts it hits, and how much of their push
 ## they keep meanwhile.
-const ZAP_TIME := 2.0
+const ZAP_TIME := 5.0
 const ZAP_DRIVE := 0.3
 ## How much harder a ram plate hits. A knock from one counts this many times
 ## over, and a solid one (more than RAM_HIT) knocks a part straight off, since
@@ -424,6 +424,7 @@ var _repair_asked := false
 var _gadget_held: Array[bool] = [false, false]
 var _gadget_wait: Array[float] = [0.0, 0.0]
 var _bubble: MeshInstance3D
+var _zap: ZapFx
 var _steering: SteeringVisual
 var _rig: CharacterRig
 ## The baked meshes of the kart's body (see _bake_body()).
@@ -622,7 +623,7 @@ func _assemble() -> void:
 		sound = KartSound.new(self)
 		add_child(sound)
 	for child in get_children():
-		if child == _bubble or child == sound:
+		if child == _bubble or child == sound or child == _zap:
 			continue
 		remove_child(child)
 		child.queue_free()
@@ -1777,12 +1778,25 @@ func shoved_from(from: Vector3) -> void:
 		knock_off_a_part.call_deferred()
 
 
-## Slows the kart right down for a moment, from lightning.
+## A lightning strike: the kart slows right down and a bolt stays on it
+## while it lasts. A shield stops it. Remote karts show the bolt, and their
+## own device applies the slowdown.
 func zap() -> void:
 	if shield_left > 0.0:
 		return
-	zapped_left = ZAP_TIME
+	if not remote:
+		zapped_left = ZAP_TIME
 	Sounds.play_at("fx/lightning", sound, -4.0)
+	react("surprised", 2.0)
+	_show_zap()
+
+
+func _show_zap() -> void:
+	if is_instance_valid(_zap):
+		_zap.restart()
+		return
+	_zap = ZapFx.new()
+	add_child(_zap)
 
 
 func _ghost_tick(delta: float) -> void:

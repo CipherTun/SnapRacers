@@ -942,6 +942,7 @@ func _fill() -> void:
 		var t = cells[i]
 		cells[i] = cells[j]
 		cells[j] = t
+	_kit.far = true
 	var count := 0
 	for i in cells:
 		if count >= MAX_FILLERS:
@@ -971,3 +972,4 @@ func _fill() -> void:
 			else:
 				_add(prop, at)
 			count += 1
+	_kit.far = false

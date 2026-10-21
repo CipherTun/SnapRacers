@@ -4,11 +4,13 @@ extends Node
 ## Drives a kart around a track.
 ##
 ## It aims at a point on the track a little way ahead (further the faster it's
-## going) and steers toward it. For speed it looks down the road for bends,
-## works out how fast its own kart can take each one from how well it grips,
-## and brakes in time to be at that speed when it gets there. If it runs into
-## something it backs off it, and if it's still stuck or upside down after a
-## couple of seconds it resets, the same as a player would.
+## going) and steers toward it. On a straight it eases the stick, so the
+## wheels don't wiggle as the lock shrinks at speed. For speed it looks down
+## the road for bends, works out how fast its own kart can take each one from
+## how well it grips, and brakes in time to be at that speed when it gets
+## there. A kart in its way it goes round, or sits behind until there's a
+## gap. If it runs into something it backs off it, and if it's still stuck or
+## upside down after a couple of seconds it resets, the same as a player would.
 
 ## How close to its kart's limit it dares to corner. 1 is right at the limit.
 @export var skill := 0.92
@@ -71,10 +73,18 @@ const LOOP_AHEAD := 40.0
 ## (LOOP_SKILL), so it doesn't come to the loop short of speed.
 const LOOP_RUN_IN := 90.0
 const LOOP_SKILL := 0.95
-const SEE_AHEAD := 12.0 # how far ahead it watches for karts in its way
+const SEE_AHEAD := 24.0 # how far ahead it watches for karts in its way
 ## How far to the side another kart has to be to be out of the way, past
 ## touching. Bikes are narrower, so they get by with less.
 const KART_GAP := 0.8
+## How quickly it can turn the stick on a straight, in full locks a second.
+## In a bend it puts the stick where it wants it.
+const STRAIGHT_STEER_RATE := 5.0
+## How bent the road can be and still count as a straight for that.
+const STRAIGHT_BEND := 0.01
+## This close behind a kart that's still in the way, it matches their speed
+## instead of driving into their back.
+const SIT_BEHIND := 8.0
 ## Pointing further than this from where it's going, it slows down enough
 ## to turn onto it, though never below TURN_ROUND_SPEED.
 const TURN_ROUND_ANGLE := 0.5
@@ -123,6 +133,12 @@ var _loop_looked := -1
 ## The brick walls in the race, fetched once a step for every driver.
 static var _walls: Array = []
 static var _walls_frame := -1
+## Last steering, so a straight can ease the stick instead of snapping it.
+var _steer := 0.0
+## The kart it's stuck behind, how far, and how fast they're going, for
+## sitting behind until there's a gap.
+var _block_ahead := INF
+var _block_speed := INF
 
 const THINK_EVERY := 0.3 # seconds between looking at its gadgets
 ## After holding a power-up this long it uses it at the next moment that
@@ -153,7 +169,8 @@ func _physics_process(delta: float) -> void:
 				look = maxf(to_roll - 2.0, LOOK_NEAR)
 				break
 			to_roll += 2.0
-	var target := track.point_at(offset + look) + track.right_at(offset + look) * (line + _dodge())
+	var dodge := _dodge()
+	var target := track.point_at(offset + look) + track.right_at(offset + look) * (line + dodge)
 	var up := kart.global_basis.y
 	var to_target := target - kart.global_position
 	to_target -= up * to_target.dot(up)
@@ -165,8 +182,16 @@ func _physics_process(delta: float) -> void:
 	if track.piece_type_at(offset) == "corkscrew":
 		var off_line := (kart.global_position - track.point_at(offset)).dot(track.right_at(offset)) - line
 		angle = atan(off_line / 20.0)
+	var straight := track.piece_type_at(offset) != "corkscrew" and not TrackPiece.turns_over(track.piece_type_at(offset)) and track.bend_at(offset) < STRAIGHT_BEND and track.bend_at(offset + look * 0.4) < STRAIGHT_BEND
+	# On a straight the kart's lock shrinks with speed, so aiming with that
+	# lock slams the stick for a tiny heading error and the wheels wiggle.
+	if straight:
+		angle += kart.angular_velocity.dot(up) * 0.12
+	var lock := Kart.MAX_STEER if straight else kart.full_lock
 	# A kart with no wheels left has no lock (see Kart._pose_driver()).
-	controls.steer = clampf(-angle / maxf(kart.full_lock, 0.001) * 1.2, -1.0, 1.0)
+	controls.steer = clampf(-angle / maxf(lock, 0.001) * 1.2, -1.0, 1.0)
+	if straight:
+		controls.steer = move_toward(_steer, controls.steer, STRAIGHT_STEER_RATE * delta)
 
 	# For speed, find the slowest it needs to be for anything coming up, with
 	# room to brake. A driver who can't steer quickly (see KartStats.control)
@@ -204,6 +229,10 @@ func _physics_process(delta: float) -> void:
 	if absf(angle) > TURN_ROUND_ANGLE and not kart.sliding:
 		var across := 1.0 if absf(angle) > PI * 0.5 else sin(absf(angle))
 		allowed = minf(allowed, maxf(sqrt(grip * to_target.length() / (2.0 * across)), TURN_ROUND_SPEED))
+	# Someone still in the way up close: match their speed until the pass
+	# has moved it aside, rather than driving into their back.
+	if _block_ahead < SIT_BEHIND and is_finite(_block_speed):
+		allowed = minf(allowed, maxf(_block_speed + maxf(_block_ahead - 2.5, 0.0) * 0.9, TURN_ROUND_SPEED))
 
 	# The bend coming up next, for sliding into.
 	var tight := maxf(here, track.bend_at(offset + speed * 0.3))
@@ -277,6 +306,7 @@ func _physics_process(delta: float) -> void:
 		controls.brake = 0.0
 
 	_stuck_check(delta, speed, up)
+	_steer = controls.steer
 	kart.push = pace * Difficulty.push_for(behind, catch_up, ease_off, track.length)
 	# A loop needs everything the kart's got, whatever the level.
 	if _on_loop and not _lost_nerve:
@@ -343,32 +373,78 @@ func _judge_bends() -> void:
 
 
 ## How far to move over to get around a kart close ahead, in metres to the
-## right. It goes whichever way is further from the kart and still on the
-## road.
+## right. It picks a side that's still on the road and empty, and holds that
+## until it's past, so it doesn't weave back into them.
 func _dodge() -> float:
+	_block_ahead = INF
+	_block_speed = INF
 	var facing := -kart.global_basis.z
-	var right := kart.global_basis.x
 	var half_road := track.width * 0.5 - 1.5
 	var here := (kart.global_position - track.point_at(offset)).dot(track.right_at(offset))
 	var wall := _dodge_wall(facing)
 	if not is_nan(wall):
 		return wall
+	if kart.ghost_left > 0.0 or TrackPiece.turns_over(track.piece_type_at(offset)):
+		return 0.0
+	var along := track.forward_at(offset)
+	var best_ahead := SEE_AHEAD + 1.0
+	var best: Kart = null
+	var best_across := 0.0
+	var best_need := 0.0
+	var best_speed := 0.0
 	for other in others:
 		# A kart can go mid-race, like when someone online leaves.
-		if other == kart or not is_instance_valid(other):
+		if other == kart or not is_instance_valid(other) or other.ghost_left > 0.0:
 			continue
 		var gap := other.global_position - kart.global_position
-		var ahead := gap.dot(facing)
-		var side := gap.dot(right)
-		var room := (kart.width() + other.width()) * 0.5 + KART_GAP
-		if ahead > 0.0 and ahead < SEE_AHEAD and absf(side) < room:
-			var go_right := side < 0.0
-			if here + room > half_road:
-				go_right = false
-			elif here - room < -half_road:
-				go_right = true
-			return (room if go_right else -room) * (1.0 - ahead / SEE_AHEAD * 0.5)
-	return 0.0
+		var ahead := gap.dot(along)
+		if ahead < -2.0 or ahead > SEE_AHEAD:
+			continue
+		var at := offset + maxf(ahead, 0.0)
+		var other_across := (other.global_position - track.point_at(at)).dot(track.right_at(at))
+		var need := (kart.width() + other.width()) * 0.5 + KART_GAP
+		if absf(other_across - line) < need and ahead < best_ahead:
+			best_ahead = ahead
+			best = other
+			best_across = other_across
+			best_need = need
+			best_speed = other.linear_velocity.dot(along)
+	if best == null:
+		return 0.0
+	# Still overlapping where it is now, and close: sit behind until the
+	# pass has moved it clear.
+	if best_ahead > 0.0 and absf(best_across - here) < best_need * 0.85:
+		_block_ahead = best_ahead
+		_block_speed = best_speed
+	var go_right := best_across < line
+	if line + best_need > half_road:
+		go_right = false
+	elif line - best_need < -half_road:
+		go_right = true
+	var cleared := best_across + (best_need if go_right else -best_need)
+	if not _side_clear(cleared, best_need, best, along) or absf(cleared) > half_road:
+		go_right = not go_right
+		cleared = best_across + (best_need if go_right else -best_need)
+	if not _side_clear(cleared, best_need, best, along) or absf(cleared) > half_road:
+		return 0.0
+	return clampf(cleared, -half_road, half_road) - line
+
+
+## Whether this line across the road is empty of other karts, besides the
+## one it's passing.
+func _side_clear(across: float, need: float, ignore: Kart, along: Vector3) -> bool:
+	for other in others:
+		if other == kart or other == ignore or not is_instance_valid(other) or other.ghost_left > 0.0:
+			continue
+		var gap := other.global_position - kart.global_position
+		var ahead := gap.dot(along)
+		if ahead < -2.0 or ahead > SEE_AHEAD:
+			continue
+		var at := offset + maxf(ahead, 0.0)
+		var other_across := (other.global_position - track.point_at(at)).dot(track.right_at(at))
+		if absf(other_across - across) < need:
+			return false
+	return true
 
 
 ## How far to move over to get past the end of a brick wall ahead, or NAN

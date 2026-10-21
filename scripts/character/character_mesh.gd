@@ -127,6 +127,7 @@ static func material(kind: String) -> Material:
 	m.vertex_color_is_srgb = true
 	m.roughness = 0.55
 	m.metallic_specular = 0.35
+	m.disable_receive_shadows = true
 	match kind:
 		"both":
 			m.cull_mode = BaseMaterial3D.CULL_DISABLED

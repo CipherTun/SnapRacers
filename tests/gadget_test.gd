@@ -84,6 +84,7 @@ class Runner:
 		karts.in_the_way = kart_with([], Vector3(-120, 0.05, 12))
 		karts.zapped = kart_with([], Vector3(-100, 0.05, 115))
 		karts.unzapped = kart_with([], Vector3(-110, 0.05, 115))
+		karts.zap_blocked = kart_with(["shield"], Vector3(-90, 0.05, 115))
 
 		steps = [_start, _turbo, _turbo_check, _others, _tow_check, _others_check, _repair_check, _ram_check, _marbles, _marbles_check, _wall, _wall_check, _shockwave, _shockwave_check, _spikes, _spikes_check, _ghost, _ghost_check, _boxes]
 
@@ -100,6 +101,14 @@ class Runner:
 			kart.controls.steer = 0.15
 			kart.set_meta("heading", kart.global_basis.z)
 		karts.zapped.zap()
+		check(Kart.ZAP_TIME >= 5.0, "lightning lasts five seconds (%.1f)" % Kart.ZAP_TIME)
+		check(karts.zapped.zapped_left > 4.5, "and starts with that time left (%.1f)" % karts.zapped.zapped_left)
+		var bolts: Array = karts.zapped.get_children().filter(func(n): return n is ZapFx)
+		check(bolts.size() == 1 and bolts[0].visible, "with a bolt on the kart")
+		karts.zap_blocked.shield_left = Kart.SHIELD_TIME
+		karts.zap_blocked.zap()
+		check(karts.zap_blocked.zapped_left <= 0.0, "a shield stops the lightning")
+		check(karts.zap_blocked.get_children().filter(func(n): return n is ZapFx).is_empty(), "and no bolt shows")
 		return 90
 
 	func _turbo_check() -> int:
@@ -114,6 +123,8 @@ class Runner:
 		var slowed: float = karts.zapped.forward_speed
 		var normal: float = karts.unzapped.forward_speed
 		check(slowed < normal - 2.0, "lightning slows a kart right down (%.1f against %.1f m/s)" % [slowed, normal])
+		check(karts.zapped.zapped_left > 3.0, "and it's still going after a second and a half (%.1f left)" % karts.zapped.zapped_left)
+		check(karts.zapped.get_children().filter(func(n): return n is ZapFx).size() == 1, "with the bolt still on")
 		for kart in [karts.turbo, karts.plain, karts.zapped, karts.unzapped]:
 			kart.controls.throttle = 0.0
 			kart.controls.brake = 1.0
