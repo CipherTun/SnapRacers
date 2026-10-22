@@ -17,6 +17,9 @@ var failures := 0
 var host: Node
 var role := "host"
 var order: Array = []
+## The puddles' sizes as they build up, by level, to compare with the other
+## copy's (see tools/run-net-test.sh).
+var puddle_sizes := {}
 
 
 func check(ok: bool, what: String) -> void:
@@ -98,9 +101,15 @@ func _ready() -> void:
 	var back := await until(func():
 		if is_instance_valid(race) and screen() == race:
 			order = race.standings().map(func(r): return r.name)
+			var level := roundi(race.builder.puddles.level * 100.0)
+			if level in [25, 50, 75, 100] and not puddle_sizes.has(level):
+				puddle_sizes[level] = hash(race.builder.puddles.radius_now)
 		return screen() is Lobby, 180.0)
 	check(back, "when everyone's home, it's back to the lobby")
 	check(order.size() == 8, "and the race had a finishing order")
+	check(puddle_sizes.has(100) and puddle_sizes.size() >= 3, "the puddles built up to the end of the race (%s)" % [puddle_sizes.keys()])
+	for level in puddle_sizes:
+		print("[%s] puddles at %d%%: %d" % [role, level, puddle_sizes[level]])
 	print("[%s] order: %s" % [role, ", ".join(order)])
 
 	# A cup of two short races, with the standings in between.

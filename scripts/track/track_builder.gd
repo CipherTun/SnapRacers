@@ -73,6 +73,8 @@ var conditions: Conditions
 var lights: SkyAndSun.Lights
 ## The puddles on the road in the rain, or null when it's dry.
 var puddles: Puddles
+## The snow drifts on the road when it snows, or null.
+var drifts: Drifts
 var _material: ShaderMaterial
 ## The rolling ground, on a course with hills.
 var terrain: Terrain
@@ -144,6 +146,9 @@ func _ready() -> void:
 	if conditions.weather in ["rain", "storm"] and not conditions.indoor:
 		puddles = Puddles.new(track, conditions.seed, conditions.wet())
 		add_child(puddles)
+	if conditions.snow() > 0.0:
+		drifts = Drifts.new(track, conditions.seed, conditions.snow())
+		add_child(drifts)
 	for i in track.pieces.size():
 		_add_piece(i)
 	_add_kerbs()

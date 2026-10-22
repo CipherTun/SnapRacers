@@ -114,9 +114,11 @@ func _physics_process(delta: float) -> void:
 		for slot in racers:
 			if owners[slot] == session.my_id() and is_instance_valid(racers[slot].kart):
 				var state: PackedFloat32Array = racers[slot].kart.net_state()
-				# The host's train clock rides along (see Race.train_clock).
+				# The host's train clock rides along (see Race.train_clock),
+				# and how far the weather's built up (see Race.build_up).
 				if session.is_host():
 					state.append(race.train_clock.now)
+					state.append(race.build_up)
 				session.kart_state.rpc(slot, state)
 	for slot in _updates:
 		_show(slot)
@@ -135,10 +137,18 @@ func got_state(sender: int, slot: int, state: PackedFloat32Array) -> void:
 		return
 	if sender == HOST and state.size() > 12 and not session.is_host():
 		race.train_clock.from_host(state[12], _lag())
+		if state.size() > 13:
+			race.build_up = maxf(race.build_up, clampf(state[13], 0.0, 1.0))
 	var list: Array = _updates[slot]
 	list.append([_clock, state])
 	while list.size() > 8:
 		list.pop_front()
+
+
+## Whether the host drives any kart, so its updates bring its clock and
+## build-up. If not, each device works the build-up out for itself.
+func host_sends() -> bool:
+	return owners.values().has(HOST)
 
 
 ## Half the round trip to the host in seconds, where the connection knows it,

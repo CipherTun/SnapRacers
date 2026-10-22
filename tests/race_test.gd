@@ -146,6 +146,11 @@ func _sky_resets() -> void:
 var _last_touch := {}
 ## How many times the train's hit a kart.
 var train_hits := 0
+## The weather's build-up: whether it ever went back, and what it was when
+## the leader started lap two.
+var build_back := false
+var build_last := 0.0
+var build_lap_two := -1.0
 ## For RACE_DEBUG, each kart's last few seconds: where it was and what it
 ## was doing, printed when it's reset.
 var _history := {}
@@ -200,6 +205,11 @@ func _physics_process(delta: float) -> void:
 		for racer in race.racers:
 			if racer.kart.linear_velocity.length() < 1.0:
 				_last_touch[racer] = _stuck_on(racer)
+	if race.build_up < build_last:
+		build_back = true
+	build_last = race.build_up
+	if build_lap_two < 0.0 and race.racers.any(func(r): return r.progress.laps >= 1):
+		build_lap_two = race.build_up
 	for racer in race.racers:
 		if racer.progress.lap_times.size() >= 1 and not first_lap.has(racer.name):
 			first_lap[racer.name] = racer.progress.lap_times[0]
@@ -232,6 +242,9 @@ func _physics_process(delta: float) -> void:
 		check(all_resets <= 20, "not many resets across the whole field (%d)" % all_resets)
 		print("  gadgets used: %s" % [used])
 		print("  power-ups picked up: %s" % [race.racers.map(func(r): return "%s %d" % [r.name, r.kart.pickups])])
+		if race.builder.puddles != null or race.builder.drifts != null:
+			var share := 1.0 / race.laps
+			check(not build_back and build_lap_two >= share - 0.02 and build_lap_two <= share + 0.02 and race.build_up == 1.0, "the %s builds up with the leader, never going back (%.2f as lap two starts, %.2f at the end)" % ["snow" if race.builder.drifts != null else "rain", build_lap_two, race.build_up])
 		if not race.builder.crossings.is_empty():
 			check(train_hits <= 2, "the AI keeps out of the train's way (%d hit)" % train_hits)
 		check(used.size() >= 4, "the AI uses all sorts of power-ups (%d kinds)" % used.size())

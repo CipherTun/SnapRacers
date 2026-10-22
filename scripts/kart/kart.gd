@@ -196,6 +196,12 @@ const WHEEL_BODY := 0.55
 const PUDDLE_GRIP := 0.65
 const PUDDLE_DRAG := 1.8
 const LEAST_GRIP := 0.25
+## In a snow drift as deep as it gets, the grip is this much of the snowy
+## road's, and the snow holds a wheel back by this much of its load, plus
+## this much more for every m/s it's going (see Drifts).
+const DRIFT_GRIP := 0.8
+const DRIFT_PUSH := 0.08
+const DRIFT_DRAG := 0.03
 ## Off the road the ground also drags with speed, so the engine can't hold
 ## racing speed there the way rolling resistance alone would let you.
 const OFFROAD_DRAG := 0.01
@@ -350,6 +356,7 @@ var rider_lean := 0.0
 var weather_grip := 1.0
 var weather_drag := 1.0
 var puddles: Puddles
+var drifts: Drifts
 ## Whether its lights are on. The race turns them on when it's dark (see
 ## Conditions.dark()).
 var lights_on := false:
@@ -1187,9 +1194,11 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		# LEAST_GRIP, unless it was already below that in the dry, like
 		# slicks on ice.
 		var dry_grip := ground_grip(grip_here, w.offroad)
+		var drift := 0.0
 		if ground == null or not ground.has_meta("trap"):
 			var puddle := puddles.factor_at(contact) if puddles != null else 0.0
-			grip_here = maxf(grip_here * weather_grip * lerpf(1.0, PUDDLE_GRIP, puddle), LEAST_GRIP)
+			drift = drifts.factor_at(contact) if drifts != null else 0.0
+			grip_here = maxf(grip_here * weather_grip * lerpf(1.0, PUDDLE_GRIP, puddle) * lerpf(1.0, DRIFT_GRIP, drift), LEAST_GRIP)
 			drag_here *= weather_drag * lerpf(1.0, PUDDLE_DRAG, puddle)
 		grip_here = maxf(ground_grip(grip_here, w.offroad), minf(dry_grip, LEAST_GRIP))
 		drag_here = ground_drag(drag_here, w.offroad)
@@ -1202,6 +1211,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var resist := w.rolling * load * drag_here
 		if off:
 			resist += load * maxf(drag_here - 1.0, 0.0) * OFFROAD_DRAG * absf(v_long)
+		if drift > 0.0:
+			resist += load * drift * (DRIFT_PUSH + DRIFT_DRAG * absf(v_long))
 		if braking:
 			resist += BRAKE_FORCE * (1.0 if locked else controls.brake) / wheels.size()
 		elif slide_kick and not w.steered:

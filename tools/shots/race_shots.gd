@@ -43,6 +43,9 @@ func _ready() -> void:
 	race.add_child(driver)
 	race.player.ai = driver
 	race.player.kart.controls = driver.controls
+	# BUILD_UP=1 shows the rain or snow as it is by the end of the race.
+	if OS.has_environment("BUILD_UP"):
+		race.build_up = float(OS.get_environment("BUILD_UP"))
 	DirAccess.make_dir_recursive_absolute(OUT)
 	var moments: Array = AT if args.size() <= 4 else Array(args.slice(4)).map(func(value): return float(value))
 	for i in moments.size():

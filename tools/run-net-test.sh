@@ -15,4 +15,15 @@ JOIN=$?
 wait $HOST
 HOSTED=$?
 grep -hE "^  (ok|FAIL)|order:|passed|failed|SCRIPT ERROR" /tmp/snapracers-net-host.log /tmp/snapracers-net-join.log
-[ $HOSTED -eq 0 ] && [ $JOIN -eq 0 ]
+# Both copies have to have had the same puddles at each level of the build-up.
+HOST_PUDDLES=$(grep -oE "puddles at [0-9]+%: -?[0-9]+" /tmp/snapracers-net-host.log)
+JOIN_PUDDLES=$(grep -oE "puddles at [0-9]+%: -?[0-9]+" /tmp/snapracers-net-join.log)
+SAME=1
+if [ -n "$HOST_PUDDLES" ] && [ "$HOST_PUDDLES" = "$JOIN_PUDDLES" ]; then
+	echo "  ok    host and joiner have the same puddles as they build up ($(echo "$HOST_PUDDLES" | wc -l) levels)"
+else
+	echo "  FAIL  host and joiner have the same puddles as they build up"
+	echo "$HOST_PUDDLES" ; echo "$JOIN_PUDDLES"
+	SAME=0
+fi
+[ $HOSTED -eq 0 ] && [ $JOIN -eq 0 ] && [ $SAME -eq 1 ]

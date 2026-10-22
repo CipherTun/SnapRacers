@@ -14,6 +14,52 @@ func check(ok: bool, what: String) -> void:
 		failures += 1
 
 
+## How much road one kind covers at each point of the race, in square metres
+## (for drifts, times how deep).
+func _cover(patches: Puddles) -> float:
+	var total := 0.0
+	for i in patches.spots.size():
+		total += PI * patches.radius_now[i] * patches.radius_now[i] * (patches.growth(i) if patches is Drifts else 1.0)
+	return total
+
+
+## Puddles or drifts start few and small and build up over the race, only
+## ever up, and come out exactly the same however the progress gets there.
+func _check_build_up(peach: TrackPath, kind: GDScript, what: String, done: String) -> void:
+	var a: Puddles = kind.new(peach, 9, 1.0)
+	var b: Puddles = kind.new(peach, 9, 1.0)
+	var started := func(p: Puddles) -> int: return Array(p.radius_now).filter(func(r: float) -> bool: return r > 0.0).size()
+	var start_cover := _cover(a)
+	var start_count: int = started.call(a)
+	a.grow(0.5)
+	var middle_cover := _cover(a)
+	var middle_count: int = started.call(a)
+	a.grow(1.0)
+	var end_cover := _cover(a)
+	var all_full := true
+	for i in a.spots.size():
+		all_full = all_full and a.radius_now[i] == a.spots[i][1] and a.growth(i) == 1.0
+	check(start_count < a.spots.size() / 3 and start_cover < end_cover * 0.1, "%s start few and small (%d of %d, %.0f m2)" % [what, start_count, a.spots.size(), start_cover])
+	check(middle_count > start_count and middle_cover > start_cover * 3.0 and middle_cover < end_cover, "half way there are more and bigger (%d, %.0f m2)" % [middle_count, middle_cover])
+	check(all_full and end_cover > 0.0, "and by the end the road's %s, every one full (%.0f m2)" % [done, end_cover])
+	a.grow(0.3)
+	check(a.level == 1.0 and _cover(a) == end_cover, "%s never go back" % what)
+	# The other one gets there in little steps, the way a race does.
+	var steps := 0
+	var same_all_way := true
+	var c: Puddles = kind.new(peach, 9, 1.0)
+	while steps < 200:
+		steps += 1
+		b.grow(steps * 0.00737)
+		c.grow(steps * 0.00737)
+		same_all_way = same_all_way and b.radius_now == c.radius_now
+	b.grow(1.0)
+	check(same_all_way and b.radius_now == a.radius_now and b.level == a.level, "two lots of %s with the same seed and progress agree exactly, however they got there" % what)
+	a.free()
+	b.free()
+	c.free()
+
+
 ## Lightning only runs in a storm outdoors, checked once both are in the tree.
 func _check_lightning(hall: WeatherEffects, clear: WeatherEffects) -> void:
 	check(not hall.is_processing(), "no lightning indoors")
@@ -87,10 +133,18 @@ func _initialize() -> void:
 	var first := Puddles.new(peach, 5, 1.0)
 	var second := Puddles.new(peach, 5, 1.0)
 	check(first.spots.size() >= 10 and str(first.spots) == str(second.spots), "puddles come out the same for the same seed (%d of them)" % first.spots.size())
+	first.grow(1.0)
 	var spot: Array = first.spots[0]
 	check(first.factor_at(spot[0]) > 0.99 and first.factor_at(spot[0] + Vector3(spot[1] + 1.0, 0.0, 0.0)) == 0.0, "a point in the middle of one is in it, and one past its edge isn't")
 	first.free()
 	second.free()
+	_check_build_up(peach, Puddles, "puddles", "wet")
+	_check_build_up(peach, Drifts, "drifts", "snowed in")
+	var dry := Puddles.new(peach, 5, 1.0)
+	var snowy := Drifts.new(peach, 5, 1.0)
+	check(str(dry.spots) != str(snowy.spots), "the drifts aren't where the puddles would be")
+	dry.free()
+	snowy.free()
 
 	# At night the lamps light the ground around them and nothing far away.
 	var lamps: Array[Vector3] = [Vector3(0, 10, 0), Vector3(200, 10, 0)]
@@ -111,6 +165,7 @@ class Runner:
 
 	var test: SceneTree
 	var karts := {}
+	var rolling := {}
 	var start := {}
 	var tick := 0
 	var broken: Kart
@@ -135,6 +190,28 @@ class Runner:
 				add_child(kart.puddles)
 			add_child(kart)
 			karts[which] = kart
+			x += 30.0
+		# Karts rolling straight on: a wet road, through a puddle, a snowy
+		# road, and through a shallow and a deep drift.
+		x = 0.0
+		for which in ["wet", "puddle", "snow", "shallow", "deep"]:
+			var kart := Kart.new()
+			kart.build(KartDesign.load_file("res://tests/data/legacy/starter.json"))
+			kart.transform = Transform3D(Basis.IDENTITY, Vector3(x, 0.05, 110.0))
+			var snowy: bool = which in ["snow", "shallow", "deep"]
+			kart.weather_grip = Conditions.GRIP.snow if snowy else Conditions.GRIP.rain
+			kart.weather_drag = Conditions.DRAG.snow if snowy else 1.0
+			if which == "puddle":
+				kart.puddles = Puddles.new()
+				kart.puddles.add(Vector3(x, 0.0, 100.0), 30.0)
+				add_child(kart.puddles)
+			if which in ["shallow", "deep"]:
+				kart.drifts = Drifts.new()
+				# Started just now, or long since and full.
+				kart.drifts.add(Vector3(x, 0.0, 100.0), 30.0, -Puddles.GROW * 0.3 if which == "shallow" else -1.0)
+				add_child(kart.drifts)
+			add_child(kart)
+			rolling[which] = kart
 			x += 30.0
 		# A kart with headlights: they're off by day, on in the dark, and stay
 		# that way after it loses a part.
@@ -163,6 +240,9 @@ class Runner:
 				kart.controls.throttle = 0.4
 				kart.controls.steer = 1.0
 				start[kart] = kart.global_rotation.y
+			for kart in rolling.values():
+				kart.linear_velocity = Vector3(0, 0, -15.0)
+				kart.controls.throttle = 1.0
 			# A shove worked out as nonsense, which should never happen.
 			broken._shove = Vector3(NAN, 0.0, 0.0)
 		if tick == 100:
@@ -172,5 +252,10 @@ class Runner:
 				turned[which] = rad_to_deg(absf(Vector3.FORWARD.signed_angle_to(Vector3(velocity.x, 0.0, velocity.z), Vector3.UP)))
 			test.check(broken.global_transform.is_finite() and broken.linear_velocity.is_finite() and broken.global_position.distance_to(Vector3(100.0, 0.0, -100.0)) < 2.0, "a force that comes out as nonsense is left out, and the kart stays put (%s)" % broken.global_position)
 			test.check(turned.rain < turned.dry and turned.snow < turned.rain and turned.puddle < turned.rain, "the slippier it is, the less a kart gets round a hard turn (dry %.0f, rain %.0f, snow %.0f, through a puddle %.0f degrees)" % [turned.dry, turned.rain, turned.snow, turned.puddle])
+			var speeds := {}
+			for which in rolling:
+				speeds[which] = -rolling[which].linear_velocity.z
+			test.check(speeds.puddle < speeds.wet - 0.3, "a full puddle holds a kart back (%.1f m/s against %.1f on the wet road)" % [speeds.puddle, speeds.wet])
+			test.check(speeds.deep < speeds.shallow - 1.0 and speeds.shallow < speeds.snow - 0.3, "a deep drift holds a kart back hard, a shallow one less (deep %.1f, shallow %.1f, snowy road %.1f m/s)" % [speeds.deep, speeds.shallow, speeds.snow])
 			print("All weather checks passed." if test.failures == 0 else "%d weather checks failed." % test.failures)
 			test.quit(1 if test.failures > 0 else 0)

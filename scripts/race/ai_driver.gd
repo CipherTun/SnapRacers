@@ -167,6 +167,14 @@ const ARM_CLEAR := 2.5
 const ARM_BEFORE := 0.3
 
 const THINK_EVERY := 0.3 # seconds between looking at its gadgets
+## How far ahead it looks for big puddles and deep snow drifts to go round,
+## how often it looks, and the lines across the road it tries, in metres
+## from its own.
+const SEE_PATCH := 30.0
+const PATCH_EVERY := 0.2
+const PATCH_LINES := [0.0, -1.5, 1.5, -3.0, 3.0, -4.5, 4.5, -6.0, 6.0]
+var _patch_dodge := 0.0
+var _patch_wait := 0.0
 ## After holding a power-up this long it uses it at the next moment that
 ## isn't a bad one, so it has room for the next box.
 const HOLD_AT_MOST := 12.0
@@ -488,7 +496,7 @@ func _dodge() -> float:
 			best_need = need
 			best_speed = other.linear_velocity.dot(along)
 	if best == null:
-		return 0.0
+		return _dodge_patches()
 	# Still overlapping where it is now, and close: sit behind until the
 	# pass has moved it clear.
 	if best_ahead > 0.0 and absf(best_across - here) < best_need * 0.85:
@@ -506,6 +514,42 @@ func _dodge() -> float:
 	if not _side_clear(cleared, best_need, best, along) or absf(cleared) > half_road:
 		return 0.0
 	return clampf(cleared, -half_road, half_road) - line
+
+
+## How far to move over to keep out of big puddles and deep drifts ahead.
+## It goes back to its own line once that's clear from where it is, keeps
+## the way it's going round one while that's still clear, and otherwise
+## takes the nearest clear line to its own.
+func _dodge_patches() -> float:
+	if kart.puddles == null and kart.drifts == null:
+		return 0.0
+	_patch_wait -= get_physics_process_delta_time()
+	if _patch_wait > 0.0:
+		return _patch_dodge
+	_patch_wait = PATCH_EVERY
+	var edge := track.width * 0.5 - kart.width() * 0.5 - 0.3
+	var tries := [0.0, _patch_dodge]
+	tries.append_array(PATCH_LINES)
+	for shift in tries:
+		if absf(line + shift) > edge:
+			continue
+		if _patch_clear(line + shift):
+			_patch_dodge = shift
+			return shift
+	_patch_dodge = 0.0
+	return 0.0
+
+
+func _patch_clear(across: float) -> bool:
+	var margin := kart.width() * 0.5 + 0.3
+	var ahead := 0.0
+	while ahead <= SEE_PATCH:
+		var at := offset + ahead
+		var point := track.point_at(at) + track.right_at(at) * across
+		if (kart.puddles != null and kart.puddles.in_the_way(point, margin)) or (kart.drifts != null and kart.drifts.in_the_way(point, margin)):
+			return false
+		ahead += 3.0
+	return true
 
 
 ## Whether this line across the road is empty of other karts, besides the

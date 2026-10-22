@@ -98,6 +98,10 @@ var new_records := [false, false]
 var time := -COUNTDOWN
 ## The trains' clock, which online follows the host's.
 var train_clock := TrainClock.new(-COUNTDOWN)
+## How far the puddles or snow drifts have built up, from 0 to 1 (see
+## Puddles.grow()). It goes by how far the leader's got through the race and
+## never goes back. Online every device takes the host's.
+var build_up := 0.0
 var started := false
 
 ## The power-up boxes along the track, or null in a time trial.
@@ -216,6 +220,8 @@ func _finish_setting_up(people: int) -> void:
 	var karts: Array[Kart] = []
 	for racer in racers:
 		karts.append(racer.kart)
+	if builder.drifts != null:
+		builder.drifts.karts = karts
 	for racer in racers:
 		if racer.ai != null:
 			racer.ai.others = karts
@@ -504,6 +510,7 @@ func _add_racer(racer_name: String, design: KartDesign, slot: int, who: Characte
 	racer.kart.weather_grip = conditions.grip()
 	racer.kart.weather_drag = conditions.drag()
 	racer.kart.puddles = builder.puddles
+	racer.kart.drifts = builder.drifts
 	racer.kart.lights_on = conditions.dark()
 	var place := track.grid_slot(slot)
 	racer.kart.transform = place
@@ -586,6 +593,14 @@ func _physics_process(delta: float) -> void:
 			if racer.hud != null:
 				racer.hud.flash("Back on the track")
 
+	if builder.puddles != null or builder.drifts != null:
+		if net == null or net.session.is_host() or not net.host_sends():
+			build_up = maxf(build_up, race_share())
+		if builder.puddles != null:
+			builder.puddles.grow(build_up)
+		if builder.drifts != null:
+			builder.drifts.grow(build_up)
+
 	if started:
 		_watch_the_drivers(delta)
 
@@ -596,6 +611,16 @@ func _physics_process(delta: float) -> void:
 		for racer in racers:
 			if racer.ai != null and not racer.player:
 				racer.ai.behind = lead - racer.progress.distance()
+
+
+## How far through the race the leader is, from 0 to 1. Practice goes by
+## the course's own number of laps.
+func race_share() -> float:
+	var lead := 0.0
+	for racer in racers:
+		lead = maxf(lead, racer.progress.distance())
+	var whole := track.length * maxi(track.laps if mode == Game.MODE_PRACTICE else laps, 1)
+	return clampf(lead / whole, 0.0, 1.0)
 
 
 ## Somewhere on the track near this racer with no other kart in the way, so
