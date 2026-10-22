@@ -19,6 +19,8 @@ signal gadget_used(kind: String)
 signal towed(to: Kart)
 ## It broke some scenery (see WorldDamage), so other devices can too.
 signal broke_scenery(group: int, at: Vector3, velocity: Vector3)
+## It broke barrier arm `arm` of level crossing `crossing` (see LevelCrossing).
+signal broke_barrier(crossing: int, arm: int, velocity: Vector3)
 ## Its lost parts are back on, after a reset or from a repair kit.
 signal repaired
 
@@ -1542,6 +1544,10 @@ func _break_scenery(state: PhysicsDirectBodyState3D) -> void:
 		return
 	for i in state.get_contact_count():
 		var hit: Object = state.get_contact_collider_object(i)
+		if hit != null and hit.has_meta("barrier"):
+			if _break_barrier(state, hit, state.get_contact_collider_position(i)):
+				return
+			continue
 		if hit == null or not hit.has_meta("breakable"):
 			continue
 		var group := WorldDamage.group_of(hit, state.get_contact_collider_shape(i))
@@ -1559,6 +1565,24 @@ func _break_scenery(state: PhysicsDirectBodyState3D) -> void:
 		if damage.is_small(group):
 			state.linear_velocity = _ok(_last_velocity * PLOUGH, state.linear_velocity)
 		return
+
+
+## Breaks a level crossing's barrier arm the kart's gone into fast enough,
+## and loses some speed going through it. Slower, it just stops against it.
+func _break_barrier(state: PhysicsDirectBodyState3D, hit: Object, at: Vector3) -> bool:
+	var toward := at - state.transform.origin
+	toward.y = 0.0
+	if toward.length() < 0.01 or _last_velocity.dot(toward.normalized()) < BREAK_SPEED:
+		return false
+	var crossing: LevelCrossing = hit.get_meta("barrier")
+	var arm: int = hit.get_meta("arm")
+	if crossing.arm_broken(arm):
+		return false
+	_break_wait = BREAK_EVERY
+	crossing.break_arm.call_deferred(arm, _last_velocity)
+	broke_barrier.emit.call_deferred(crossing.index, arm, _last_velocity)
+	state.linear_velocity = _ok(_last_velocity * PLOUGH, state.linear_velocity)
+	return true
 
 
 func _feel_knocks(state: PhysicsDirectBodyState3D) -> void:

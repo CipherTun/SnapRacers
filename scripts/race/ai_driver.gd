@@ -160,6 +160,11 @@ const TRAIN_GO_EARLY := 1.0
 ## The slowest and quickest it reckons on getting to the rails at.
 const TRAIN_SLOWEST := 8.0
 const TRAIN_QUICKEST := 30.0
+## How far either side of a barrier arm a kart's middle is clear of it, in
+## metres, and how long before the arm's solid it wants to be past it, in
+## seconds.
+const ARM_CLEAR := 2.5
+const ARM_BEFORE := 0.3
 
 const THINK_EVERY := 0.3 # seconds between looking at its gadgets
 ## After holding a power-up this long it uses it at the next moment that
@@ -355,21 +360,34 @@ func _train_limit(speed: float, braking: float) -> float:
 		if to_stop > speed * speed / (2.0 * braking) + TRAIN_LOOK:
 			continue
 		var to_rails := to_stop + LevelCrossing.STOP_BACK
-		var window := crossing.timetable.next_window(clock)
+		# The train whose arms are still down, or the next one.
+		var window := crossing.timetable.next_window(clock - TrainTimetable.OPEN_AFTER - TrainTimetable.BARRIER_SWING)
 		var train := int(window.z)
+		var shut := crossing.arms_shut(train)
+		if clock > shut.y:
+			continue
 		if _train_waits.get(crossing.index, -1) != train:
 			var first_there := clock + maxf(to_rails - LevelCrossing.TRAIN_HALF - LevelCrossing.KART_ROOM, 0.0) / maxf(speed, TRAIN_QUICKEST)
 			var last_off := clock + (to_rails + LevelCrossing.TRAIN_HALF + LevelCrossing.KART_ROOM + 2.0) / maxf(speed, TRAIN_SLOWEST)
-			if last_off < window.x - TRAIN_BEFORE or first_there > window.y + TRAIN_AFTER:
+			# The barrier arm on the way in has to be up as it goes by.
+			var to_arm := to_rails - LevelCrossing.BARRIER_AT
+			var past_arm := clock + maxf(to_arm + ARM_CLEAR, 0.0) / maxf(speed, TRAIN_SLOWEST)
+			var at_arm := clock + maxf(to_arm - ARM_CLEAR, 0.0) / maxf(speed, TRAIN_QUICKEST)
+			var before := last_off < window.x - TRAIN_BEFORE and (to_arm + ARM_CLEAR < 0.0 or past_arm < shut.x - ARM_BEFORE)
+			var after := first_there > window.y + TRAIN_AFTER and at_arm > shut.y + ARM_BEFORE
+			if before or after:
 				continue
 			# Past the line, or too close to stop now, it keeps going.
 			if to_stop < 0.0 or speed * speed / (2.0 * braking) > to_stop + 4.0:
 				continue
 			_train_waits[crossing.index] = train
-		if clock > window.y - TRAIN_GO_EARLY:
-			continue
+		# It waits at the line, then once the train's nearly gone it can go
+		# as far as it could still stop short of the arm, until the arm lifts.
 		_waiting = true
-		limit = minf(limit, sqrt(2.0 * braking * maxf(to_stop - 1.0, 0.0)))
+		var stop_at := to_stop - 1.0
+		if clock > window.y - TRAIN_GO_EARLY:
+			stop_at = to_rails - LevelCrossing.BARRIER_AT - ARM_CLEAR
+		limit = minf(limit, sqrt(2.0 * braking * maxf(stop_at, 0.0)))
 	return limit
 
 

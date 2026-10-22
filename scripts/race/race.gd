@@ -612,10 +612,11 @@ func _clear_spot(racer: Racer) -> Transform3D:
 		backed = true
 	if backed:
 		start -= RUN_UP
-	# Never onto the rails with a train coming.
+	# Never onto the rails or between the barriers with a train coming.
 	for crossing in builder.crossings:
 		var to_rails := fposmod(crossing.offset - start + LevelCrossing.STOP_BACK, track.length)
-		if to_rails < LevelCrossing.STOP_BACK * 2.0 and crossing.timetable.blocked(train_clock.now, 4.0):
+		var t := train_clock.now
+		if to_rails < LevelCrossing.STOP_BACK * 2.0 and (crossing.timetable.blocked(t, 4.0) or crossing.timetable.lights_on(t)):
 			start = crossing.offset - LevelCrossing.STOP_BACK
 	racer.kart.run_up_reset = backed
 	for back in [0.0, 5.0, 10.0, 15.0, 20.0]:

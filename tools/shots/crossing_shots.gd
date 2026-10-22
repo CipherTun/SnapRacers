@@ -109,4 +109,14 @@ func _ready() -> void:
 	var head := crossing.rail_point(way * 0.0)
 	look(head - f * 14.0 + Vector3.UP * 2.5 + r * way * -4.0, head + Vector3.UP * 2.0 - r * way * 4.0)
 	await shot("engine" + tag)
+
+	# A kart's broken through an arm, with the bits on the road.
+	crossing.time = w.x - TrainTimetable.BARRIERS_BEFORE + TrainTimetable.BARRIER_SWING + 0.5
+	await frames(4)
+	crossing.break_arm(crossing.arms_in()[0], f * 20.0 + Vector3.UP * 2.0)
+	await frames(90)
+	look(m - f * 16.0 + Vector3.UP * 3.0 + r * 4.0, m - f * 7.0 + Vector3.UP * 0.8)
+	await shot("broken" + tag)
+	look(m - f * 3.0 + Vector3.UP * 10.0 - r * 10.0, m - f * 8.0)
+	await shot("broken_above" + tag)
 	get_tree().quit()

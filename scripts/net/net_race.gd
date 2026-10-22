@@ -72,6 +72,8 @@ func add(slot: int, racer: Race.Racer, owner: int) -> void:
 	kart.was_reset.connect(func() -> void: session.kart_event.rpc(slot, "reset", null))
 	kart.gadget_used.connect(func(kind: String) -> void: session.kart_event.rpc(slot, "gadget", kind))
 	kart.towed.connect(func(to: Kart) -> void: session.kart_event.rpc(slot, "tow", _slot_of_kart(to)))
+	kart.broke_barrier.connect(func(crossing: int, arm: int, velocity: Vector3) -> void:
+		session.kart_event.rpc(slot, "barrier", [crossing, arm, velocity.x, velocity.y, velocity.z]))
 	kart.broke_scenery.connect(func(group: int, at: Vector3, velocity: Vector3) -> void:
 		session.kart_event.rpc(slot, "broke", [group, at.x, at.y, at.z, velocity.x, velocity.y, velocity.z]))
 
@@ -210,6 +212,10 @@ func got_event(sender: int, slot: int, kind: String, data: Variant) -> void:
 			var damage := WorldDamage.in_tree(get_tree())
 			if damage != null and data is Array and data.size() == 7:
 				damage.break_at(int(data[0]), Vector3(data[1], data[2], data[3]), Vector3(data[4], data[5], data[6]))
+		"barrier":
+			var crossings: Array = race.builder.crossings
+			if data is Array and data.size() == 5 and int(data[0]) >= 0 and int(data[0]) < crossings.size():
+				crossings[int(data[0])].break_arm(int(data[1]), Vector3(data[2], data[3], data[4]))
 		"gadget":
 			var noise: String = Kart.GADGET_SOUNDS.get(str(data), "")
 			if noise != "":

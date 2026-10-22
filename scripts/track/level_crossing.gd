@@ -7,8 +7,13 @@ extends Node3D
 ##
 ## The rails run straight out from the road both ways, over the ground, into
 ## a tunnel each side. Where the train is comes only from the race clock
-## (`time`), so it's the same on every device. The barriers are only a
-## warning and karts drive through them.
+## (`time`), so it's the same on every device.
+##
+## The barrier arms on the way in are solid once they're most of the way
+## down. A slow kart stops against one, and a fast one breaks it and loses
+## some speed, the same as small scenery (see Kart.BREAK_SPEED). A broken arm
+## stays broken, with its stump still going up and down. The arms on the way
+## out are only for looks, so nobody's shut in on the rails.
 ##
 ## Everything is drawn with the scenery's brick material in a few MultiMeshes,
 ## the train included, so a crossing costs about six draw calls.
@@ -45,6 +50,11 @@ const TRAIN_HEIGHT := 4.6
 const KART_ROOM := 1.2
 ## The barriers stand this far along the road either side of the rails.
 const BARRIER_AT := 7.0
+## The arms on the way in are solid once they're this far down (see
+## TrainTimetable.barriers()), so a moving arm never presses on a kart.
+const SOLID_DOWN := 1.0
+## A broken arm keeps this much of itself by the pivot, in metres.
+const STUMP := 1.2
 ## The AI stops this far before the rails.
 const STOP_BACK := 11.0
 ## A kart that's been hit isn't hit again for this long.
@@ -96,6 +106,7 @@ var _moving: Batch
 ## [group, length] for each car front to back, [pivot, group] for each
 ## barrier arm, and which box each lamp is.
 var _cars: Array = []
+## Each arm: { pivot, group, way_in, body, shape, solid, broken, length }.
 var _arms: Array = []
 var _lamps: Array = []
 var _was_lit := false
@@ -107,6 +118,8 @@ var _arm_angle := -1.0
 var _car_hidden: Array[bool] = []
 ## Whether any camera can see the crossing, to leave the train be when not.
 var _seen: VisibleOnScreenNotifier3D
+## How far each kart reaches from its middle (see _reach_of()).
+var _reaches := {}
 var _bell_in := 0.0
 var _horned := -1
 var _bell: Node3D
@@ -333,9 +346,12 @@ func _update(force: bool) -> void:
 	var angle := lerpf(deg_to_rad(84.0), 0.0, down)
 	if angle != _arm_angle or force:
 		_arm_angle = angle
-		for arm in _arms:
-			var pivot: Transform3D = arm[0]
-			_moving.place_group(arm[1], pivot * Transform3D(Basis(Vector3.BACK, angle), Vector3.ZERO))
+		for arm: Dictionary in _arms:
+			var frame: Transform3D = arm.pivot * Transform3D(Basis(Vector3.BACK, angle), Vector3.ZERO)
+			_moving.place_group(arm.group, frame)
+			if arm.body != null:
+				arm.body.transform = frame
+	_harden_arms(down)
 	var k := timetable.train_at(time)
 	if k < 0:
 		if _train_shown or force:
@@ -478,14 +494,141 @@ func _lay_signals() -> void:
 			var arm_basis := Basis(toward, Vector3.UP, toward.cross(Vector3.UP).normalized())
 			var pivot := Transform3D(arm_basis, pivot_at)
 			var group := _moving.new_group()
-			var reach_out := track.width * 0.5 + 0.6
+			# The two arms meet in the middle of the road.
+			var reach_out := track.width * 0.5 + 1.4
 			var stripes := 7
 			for n in stripes:
 				var piece := reach_out / stripes
 				_moving.box(Transform3D(Basis.IDENTITY, Vector3((n + 0.5) * piece, 0.0, 0.0)).scaled_local(Vector3(piece, 0.26, 0.14)), Props.RED if n % 2 == 0 else Props.WHITE, SceneryKit.PLAIN, group)
 			_moving.box(Transform3D(Basis.IDENTITY, Vector3(-0.5, 0.0, 0.0)).scaled_local(Vector3(0.9, 0.5, 0.3)), Props.DARK_GREY, SceneryKit.PLAIN, group)
 			_still.box(Transform3D(arm_basis, pivot_at - Vector3.UP * 0.55).scaled_local(Vector3(0.5, 1.1, 0.5)), Props.DARK_GREY, SceneryKit.SMOOTH)
-			_arms.append([pivot, group])
+			var arm := { "pivot": pivot, "group": group, "way_in": before < 0.0, "body": null, "shape": null, "solid": false, "broken": false }
+			if arm.way_in:
+				_arm_body(arm, reach_out)
+			_arms.append(arm)
+
+
+## The solid part of an arm on the way in: a box from the arm down to near
+## the road, so it stops a kart whatever its height. It's off until the arm's
+## down far enough.
+func _arm_body(arm: Dictionary, length: float) -> void:
+	var body := StaticBody3D.new()
+	body.collision_layer = Kart.LAYER_HAZARD
+	body.collision_mask = 0
+	body.set_meta("barrier", self)
+	body.set_meta("arm", _arms.size())
+	var shape := CollisionShape3D.new()
+	var box := BoxShape3D.new()
+	# A little longer than the arm, so the two overlap and nothing slips
+	# between them.
+	box.size = Vector3(length + 0.3, 0.95, 0.35)
+	shape.shape = box
+	shape.position = Vector3((length + 0.3) * 0.5, -0.33, 0.0)
+	shape.disabled = true
+	body.add_child(shape)
+	add_child(body)
+	body.transform = arm.pivot
+	arm.body = body
+	arm.shape = shape
+	arm.length = length
+
+
+## Makes the arms on the way in solid once they're all the way down, but not
+## while a kart's under one, so an arm never shuts on a kart. A ghost going
+## through a solid arm turns it off again until it's clear.
+func _harden_arms(down: float) -> void:
+	var shut := down >= SOLID_DOWN
+	for arm: Dictionary in _arms:
+		if arm.body == null or arm.broken:
+			continue
+		var want := shut and not _kart_under(arm, arm.solid)
+		if want != arm.solid:
+			arm.solid = want
+			arm.shape.disabled = not want
+
+
+## Whether a kart's in the way of an arm, or only a ghost if `ghosts_only`.
+func _kart_under(arm: Dictionary, ghosts_only: bool) -> bool:
+	var pivot: Transform3D = arm.pivot
+	for kart in karts:
+		if not is_instance_valid(kart) or (ghosts_only and kart.ghost_left <= 0.0):
+			continue
+		var r := _reach_of(kart) + 0.4
+		var d := kart.global_position - pivot.origin
+		var out := d.dot(pivot.basis.x)
+		if out > -r and out < arm.length + r and absf(d.dot(pivot.basis.z)) < r:
+			return true
+	return false
+
+
+## How far a kart's shapes reach from its middle, worked out once per kart.
+func _reach_of(kart: Kart) -> float:
+	if _reaches.has(kart):
+		return _reaches[kart]
+	var most := 1.0
+	for child in kart.get_children():
+		var shape := child as CollisionShape3D
+		if shape == null or shape.shape == null:
+			continue
+		var half := 0.5
+		if shape.shape is BoxShape3D:
+			half = (shape.shape as BoxShape3D).size.length() * 0.5
+		elif shape.shape is SphereShape3D:
+			half = (shape.shape as SphereShape3D).radius
+		elif shape.shape is CylinderShape3D:
+			half = Vector2((shape.shape as CylinderShape3D).radius, (shape.shape as CylinderShape3D).height * 0.5).length()
+		elif shape.shape is CapsuleShape3D:
+			half = (shape.shape as CapsuleShape3D).height * 0.5
+		most = maxf(most, Vector2(shape.position.x, shape.position.z).length() + half)
+	_reaches[kart] = most
+	return most
+
+
+## From when the arms on the way in are solid for train `k` until they're
+## not, as Vector2(from, until).
+func arms_shut(k: int) -> Vector2:
+	var w := timetable.road_window(k)
+	var swing := TrainTimetable.BARRIER_SWING
+	return Vector2(w.x - TrainTimetable.BARRIERS_BEFORE + swing * SOLID_DOWN, w.y + TrainTimetable.OPEN_AFTER + swing * (1.0 - SOLID_DOWN))
+
+
+## Whether arm `arm` stops karts now.
+func arm_solid(arm: int) -> bool:
+	return arm >= 0 and arm < _arms.size() and _arms[arm].solid
+
+
+func arm_broken(arm: int) -> bool:
+	return arm >= 0 and arm < _arms.size() and _arms[arm].broken
+
+
+## The arms on the way in, by number, for break_arm().
+func arms_in() -> Array[int]:
+	var out: Array[int] = []
+	for i in _arms.size():
+		if _arms[i].way_in:
+			out.append(i)
+	return out
+
+
+## A kart going at `velocity` broke arm `arm`. Everything past the stump
+## flies off as rubble (see WorldDamage), and it never stops a kart again.
+## The kart's own device calls this and NetRace tells the others.
+func break_arm(arm: int, velocity: Vector3) -> void:
+	if arm < 0 or arm >= _arms.size() or _arms[arm].broken:
+		return
+	var a: Dictionary = _arms[arm]
+	a.broken = true
+	a.solid = false
+	if a.shape != null:
+		a.shape.set_deferred("disabled", true)
+	var frame: Transform3D = a.pivot * Transform3D(Basis(Vector3.BACK, _arm_angle), Vector3.ZERO)
+	var bits := _moving.break_off(a.group, STUMP)
+	var damage := WorldDamage.in_tree(get_tree()) if is_inside_tree() else null
+	if damage != null:
+		for bit: Array in bits:
+			bit[1] = frame * bit[1]
+		damage.throw_off(bits, velocity, hash([index, arm]))
+	Sounds.play_at("fx/bricks", a.body, -4.0)
 
 
 ## A box `size` big centred on `centre` in `frame`.
@@ -607,8 +750,26 @@ class Batch:
 		_counts[kind] = n + 1
 		shapes.append([kind, where, colour, surface, group])
 		if group >= 0:
-			groups[group][kind].append([n, where])
+			groups[group][kind].append([n, where, colour, surface])
 		return n
+
+	## Takes the shapes in a group further out along X than `keep` out of it
+	## and hides them, and says what they were: [kind, transform in the
+	## group, colour, surface].
+	func break_off(group: int, keep: float) -> Array:
+		var out := []
+		for kind in groups[group]:
+			var multi: MultiMesh = draws.get(kind)
+			var stay := []
+			for part: Array in groups[group][kind]:
+				var where: Transform3D = part[1]
+				if where.origin.x <= keep:
+					stay.append(part)
+					continue
+				out.append([kind, where, part[2], part[3]])
+				multi.set_instance_transform(part[0], Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
+			groups[group][kind] = stay
+		return out
 
 	func build(parent: Node3D, box: AABB) -> void:
 		for kind in ["box", "cylinder"]:

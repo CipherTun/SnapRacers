@@ -520,6 +520,21 @@ func _fly(kind: String, where: Transform3D, colour: Color, surface: int, velocit
 		_settle(_moving.pop_front())
 
 
+## Throws pieces of something that isn't scenery off as rubble, like a level
+## crossing's broken barrier arm. Each piece is [kind, transform in world
+## space, colour, surface]. The same `chance_seed` throws them the same way.
+func throw_off(pieces: Array, velocity: Vector3, chance_seed: int) -> void:
+	_rng.seed = chance_seed
+	velocity = global_basis.inverse() * velocity
+	for piece: Array in pieces:
+		var where: Transform3D = global_transform.affine_inverse() * piece[1]
+		if piece[0] == "box":
+			for chunk in _box_chunks(where, FLYING_CHUNK, 5):
+				_fly("box", chunk, piece[2], piece[3], velocity)
+		else:
+			_fly(piece[0], where, piece[2], piece[3], velocity)
+
+
 ## A piece of rubble stops moving and stays where it lies.
 func _settle(piece: Array) -> void:
 	var body: RigidBody3D = piece[0]

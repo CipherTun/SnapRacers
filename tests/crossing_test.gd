@@ -34,7 +34,16 @@ class Runner:
 	## [name, how long after the start the train's front reaches the road].
 	var hits := [["plain", 0], ["shield", 1], ["ghost", 2], ["remote", 3]]
 	var runs := [3.0, 5.0, 7.0, 9.0, 11.0, 13.0]
+	## [name, metres back from the arm, speed, across the road, arms down].
+	var arms := [["under", -1.2, 0.0, 2.0, true], ["late", 1.8, 5.0, 2.0, true], ["slow", 3.5, 6.0, -2.0, true], ["fast", 8.0, 20.0, -2.0, true], ["broken", 3.5, 6.0, -2.0, true], ["up", 3.5, 6.0, 2.0, false]]
+	var arm_spec := []
+	var top_speed := 0.0
+	var pass_speed := -1.0
+	var highest := -INF
+	var ground_y := 0.0
 	var waits := 0
+	var arm_touches := 0
+	var touching := false
 
 	func check(ok: bool, what: String) -> void:
 		print(("  ok    " if ok else "  FAIL  ") + what)
@@ -214,14 +223,92 @@ class Runner:
 				check(lost == 0 and moved < 1.0, "a remote kart is left to its own device")
 		_next_hit()
 
+	# Karts driving into the barrier arms on the way in.
+
+	func _next_arm() -> void:
+		_clear()
+		if arms.is_empty():
+			print("All crossing checks passed." if failures == 0 else "%d crossing checks failed." % failures)
+			get_tree().quit(1 if failures > 0 else 0)
+			return
+		arm_spec = arms.pop_front()
+		phase = "arm " + str(arm_spec[0])
+		var shut := crossing.arms_shut(0)
+		crossing.time = shut.x + 1.0 if arm_spec[4] else -100.0
+		if arm_spec[0] == "under":
+			crossing.time = shut.x - 1.5
+		elif arm_spec[0] == "late":
+			crossing.time = shut.x - TrainTimetable.BARRIER_SWING * 0.25 - 29.0 / 60.0
+		highest = -INF
+		var line := crossing.offset - LevelCrossing.BARRIER_AT
+		_spawn(line - float(arm_spec[1]) - 1.2, float(arm_spec[3]))
+		frames = 0
+		pass_speed = -1.0
+		lost_before = kart.lost.size()
+
+	func _arm_step() -> void:
+		frames += 1
+		var line := crossing.offset - LevelCrossing.BARRIER_AT
+		if arm_spec[0] == "under":
+			_under_step()
+			return
+		if arm_spec[0] == "late":
+			crossing.time += get_physics_process_delta_time()
+		if frames < 30:
+			# Settle on the wheels, then get going towards the arm.
+			if frames == 29:
+				ground_y = kart.global_position.y
+				kart.linear_velocity = track.forward_at(line) * float(arm_spec[2])
+				top_speed = kart.linear_velocity.length()
+			return
+		var at := track.offset_of(kart.global_position, line, 30.0)
+		highest = maxf(highest, kart.global_position.y - ground_y)
+		if pass_speed < 0.0 and at > line + 1.5:
+			pass_speed = kart.linear_velocity.length()
+		if frames < 30 + 150:
+			return
+		var arm: int = crossing.arms_in()[0 if float(arm_spec[3]) < 0.0 else 1]
+		match arm_spec[0]:
+			"late":
+				check(at > line - 1.0 and highest < 0.4 and crossing.timetable.barriers(crossing.time) == 1.0, "a kart that gets under an arm coming down isn't stopped or thrown (%.1f m past, %.2f m up)" % [at - line, highest])
+			"slow":
+				check(crossing.arm_solid(arm) and at < line - 0.3 and kart.linear_velocity.length() < 0.5, "a slow kart stops against a barrier arm that's down (%.1f m short)" % (line - at))
+			"fast":
+				check(crossing.arm_broken(arm) and pass_speed > 0.0 and pass_speed < top_speed * 0.8, "a fast kart breaks the arm and slows down (%.1f m/s to %.1f)" % [top_speed, pass_speed])
+				check(not crossing.arm_solid(arm) and crossing.arm_solid(crossing.arms_in()[1]), "and that arm's broken for good while the other's still solid")
+			"broken":
+				check(pass_speed > 0.0, "a broken arm doesn't stop karts (through at %.1f m/s)" % maxf(pass_speed, 0.0))
+			"up":
+				check(not crossing.arm_solid(arm) and pass_speed > 3.0, "an arm that's up doesn't stop karts (through at %.1f m/s)" % maxf(pass_speed, 0.0))
+		_next_arm()
+
+	## An arm coming down onto a kart sat under it stays out of its way.
+	func _under_step() -> void:
+		var arm: int = crossing.arms_in()[1]
+		if frames == 30:
+			moved_from = kart.global_position
+		if frames > 30:
+			crossing.time += get_physics_process_delta_time()
+		if frames == 30 + 150:
+			var moved := kart.global_position.distance_to(moved_from)
+			check(crossing.timetable.barriers(crossing.time) == 1.0 and not crossing.arm_solid(arm) and moved < 0.3, "an arm coming down onto a kart doesn't shut on it or throw it (%.2f m)" % moved)
+			kart.global_position -= track.forward_at(crossing.offset) * 5.0
+		if frames == 30 + 155:
+			check(crossing.arm_solid(arm), "and shuts once it's clear")
+			kart.start_ghost(5.0)
+			kart.global_position += track.forward_at(crossing.offset) * 5.0
+		if frames == 30 + 160:
+			check(not crossing.arm_solid(arm), "a ghost going through it turns it off till it's clear")
+			_next_arm()
+
 	# The AI coming up to the crossing with a train due.
 
 	func _next_run() -> void:
 		_clear()
 		if runs.is_empty():
 			check(waits >= 2, "the AI stopped for the train some of those times (%d)" % waits)
-			print("All crossing checks passed." if failures == 0 else "%d crossing checks failed." % failures)
-			get_tree().quit(1 if failures > 0 else 0)
+			check(arm_touches == 0, "and never ran into a barrier arm (%d times)" % arm_touches)
+			_next_arm()
 			return
 		var due: float = runs.pop_front()
 		phase = "ai %.0f" % due
@@ -254,6 +341,12 @@ class Runner:
 			hit = true
 		if ai._waiting:
 			waited = true
+		var line := crossing.offset - LevelCrossing.BARRIER_AT
+		var solid := crossing.arms_in().any(func(a): return crossing.arm_solid(a))
+		var near := solid and offset > line - 2.0 and offset < line + 1.0
+		if near and not touching:
+			arm_touches += 1
+		touching = near
 		if passed_at < 0.0 and offset > crossing.offset + 6.0 and offset < track.length - 20.0:
 			passed_at = crossing.time
 		var window := crossing.timetable.road_window(0)
@@ -267,6 +360,8 @@ class Runner:
 	func _physics_process(_delta: float) -> void:
 		if phase.begins_with("ai"):
 			_run_step()
+		elif phase.begins_with("arm"):
+			_arm_step()
 		elif phase != "":
 			_hit_step()
 
