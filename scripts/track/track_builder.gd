@@ -725,11 +725,9 @@ func _add_gantry() -> void:
 	var flat := Vector3(frame.basis.z.x, 0.0, frame.basis.z.z).normalized()
 	var turn := Basis(Vector3.UP, snappedf(atan2(flat.x, flat.z), PI * 0.5))
 	var base := Vector3(snappedf(frame.origin.x, 0.25), frame.origin.y, snappedf(frame.origin.z, 0.25))
-	# Up in the sky the posts hang on down below the road, to a point.
-	var hang := 3.0 if _theme.get("void", false) else 0.0
 	var blocks := [
-		[Vector3(-reach, (height - hang) * 0.5, 0.0), Vector3(1.0, height + hang, 1.0), Color(_theme.wall)],
-		[Vector3(reach, (height - hang) * 0.5, 0.0), Vector3(1.0, height + hang, 1.0), Color(_theme.wall)],
+		[Vector3(-reach, height * 0.5, 0.0), Vector3(1.0, height, 1.0), Color(_theme.wall)],
+		[Vector3(reach, height * 0.5, 0.0), Vector3(1.0, height, 1.0), Color(_theme.wall)],
 		[Vector3(0.0, height + 0.45, 0.0), Vector3(reach * 2.0 + 1.0, 0.9, 1.0), Color("#f2cd37")],
 	]
 	var spots: Array[Transform3D] = []
@@ -746,11 +744,16 @@ func _add_gantry() -> void:
 		spots.append(where.scaled_local(size))
 		colours.append(block[2])
 	_add_blocks(spots, colours)
-	if hang > 0.0:
-		var points := SceneryKit.new()
+	# Up in the sky each post stands on a little island, with nothing solid in
+	# it. Fixed seed, as it's only looks.
+	if _theme.get("void", false):
+		var pads := SceneryKit.new()
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 1
 		for side: float in [-1.0, 1.0]:
-			points.turned_cone(base + turn * Vector3(side * reach, -hang - 1.0, 0.0), 0.6, 2.0, Basis(Vector3.RIGHT, PI), Color(_theme.wall))
-		points.build(self)
+			Props.floating_island(pads, base + turn * Vector3(side * reach, 0.0, 0.0), 1.6, rng, 0, false)
+		pads.solids.clear()
+		pads.build(self)
 	var line := MeshInstance3D.new()
 	var quad := PlaneMesh.new()
 	quad.size = Vector2(track.width, 1.0)
