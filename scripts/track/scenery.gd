@@ -60,7 +60,7 @@ const LAMP_EVERY := 20.0
 ## (placed first, biggest first) and its fillers with how often each turns
 ## up. A theme by the sea has "sea", and the sea runs along one side of the
 ## course with a sandy beach, a pier and boats. "floor" is what you drive on
-## beside the road (grass, sand, snow, dirt, hall). An indoor theme also has
+## beside the road (grass, sand, snow, dirt, mud, hall). An indoor theme also has
 ## the colour behind everything, and the colours of the hall and its lights.
 const THEMES := {
 	"orchard": {

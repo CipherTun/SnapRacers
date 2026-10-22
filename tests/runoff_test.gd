@@ -176,6 +176,8 @@ func _run() -> void:
 	check(kart.linear_velocity.z > 0.5, "it bounces back off them (%.1f m/s)" % kart.linear_velocity.z)
 	check(kart.global_basis.y.y > 0.7, "and it's still upright (up.y %.2f)" % kart.global_basis.y.y)
 
+	await mud_checks()
+
 	print("All runoff checks passed." if failures == 0 else "%d runoff checks failed." % failures)
 	quit(1 if failures > 0 else 0)
 
@@ -198,3 +200,55 @@ func ride_kerb(at: Vector3, speed: float) -> float:
 	kart.queue_free()
 	await frames(2)
 	return float(off) / maxf(total, 1)
+
+
+## Mud as a road piece grips and drags between dirt and grass, so on the gas
+## it's slower than dirt and quicker than grass. A built mud piece carries its
+## grip and drag, and the ground beside the road can be mud too.
+func mud_checks() -> void:
+	var mud: Array = TrackPath.SURFACES["mud"]
+	var dirt: Array = TrackPath.SURFACES["dirt"]
+	var grass: Array = TrackPath.SURFACES["grass"]
+	check(mud[0] < dirt[0] and mud[0] > grass[0], "mud grips between dirt and grass (%.2f)" % mud[0])
+	check(mud[1] > dirt[1] and mud[1] < grass[1], "and drags between them (%.1f)" % mud[1])
+	var off_mud: Array = TrackPath.OFFROAD["mud"]
+	check(off_mud[0] <= TrackPath.OFFROAD["dirt"][0] and off_mud[0] >= TrackPath.OFFROAD["grass"][0] and off_mud[1] >= TrackPath.OFFROAD["dirt"][1] and off_mud[1] <= TrackPath.OFFROAD["grass"][1], "mud beside the road is between dirt and grass too")
+	check(TrackBuilder.COLOURS.has("mud"), "mud has its own colour")
+
+	var muddy := TrackPath.from_dict({"theme": "orchard", "pieces": [
+		{"type": "straight", "length": 2, "surface": "mud"},
+		{"type": "straight", "length": 2},
+	]})
+	var built := TrackBuilder.new(muddy)
+	built.scenery = "none"
+	built.sky = false
+	built.position = Vector3(400.0, 0.0, 0.0)
+	world.add_child(built)
+	await frames(2)
+	var found := false
+	for child in built.get_children():
+		if child is StaticBody3D and child.get_meta("piece", -1) == 0:
+			found = is_equal_approx(child.get_meta("grip", 0.0), mud[0]) and is_equal_approx(child.get_meta("drag", 0.0), mud[1])
+	check(found, "a mud piece's road has mud's grip and drag")
+	built.queue_free()
+
+	# Three strips side by side, far from everything else, each a surface,
+	# and the same kart on the gas down each.
+	var speeds := {}
+	var karts := {}
+	var x := 200.0
+	for surface in ["dirt", "mud", "grass"]:
+		var feel: Array = TrackPath.SURFACES[surface]
+		var strip := road_pad(Vector3(x, 0.04, -50.0), Vector3(8.0, 0.08, 400.0))
+		strip.set_meta("grip", feel[0])
+		strip.set_meta("drag", feel[1])
+		var k := kart_at(Transform3D(Basis.IDENTITY, Vector3(x, 0.35, 120.0)), 18.0)
+		k.controls.throttle = 1.0
+		karts[surface] = k
+		x += 20.0
+	await frames(180)
+	for surface in karts:
+		speeds[surface] = karts[surface].forward_speed
+		karts[surface].queue_free()
+	check(speeds.mud < speeds.dirt and speeds.mud > speeds.grass, "on the gas, mud is slower than dirt and quicker than grass (dirt %.1f, mud %.1f, grass %.1f m/s)" % [speeds.dirt, speeds.mud, speeds.grass])
+	await frames(2)

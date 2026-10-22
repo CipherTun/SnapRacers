@@ -51,6 +51,27 @@ func _initialize() -> void:
 	var picked := Conditions.resolve("desert", "snow", "night", 7)
 	check(picked.weather == "snow" and picked.time == "night", "a picked weather and time stick, even ones that don't suit the course")
 	check(Conditions.picked("rain", "fog") == "rain" and Conditions.picked(Conditions.RANDOM, "fog") == "fog" and Conditions.picked(Conditions.RANDOM, Conditions.RANDOM) == Conditions.RANDOM, "the player's pick comes first, then the course's")
+	# A course or theme can always be at one time of day, whatever the player
+	# picks, with the weather still left to chance.
+	var city := Conditions.fixed_time("city", Conditions.RANDOM, false)
+	check(city == "night" and Conditions.picked("day", Conditions.RANDOM, city) == "night", "a city course is always at night, even when you pick day")
+	check(Conditions.fixed_time("orchard", "dusk", true) == "dusk" and Conditions.fixed_time("orchard", "dusk", false) == "" and Conditions.fixed_time("orchard", Conditions.RANDOM, true) == "", "a course can keep its own time of day, and only when it's set to")
+	check(Conditions.picked("rain", Conditions.RANDOM, "") == "rain" and Conditions.picked(Conditions.RANDOM, "fog", "") == "fog", "without one the picks work as before")
+	var weathers := {}
+	for i in 200:
+		var night := Conditions.resolve("orchard", Conditions.RANDOM, Conditions.picked(Conditions.RANDOM, Conditions.RANDOM, "night"), i)
+		if night.time != "night":
+			weathers["wrong time"] = true
+		weathers[night.weather] = true
+	check(not weathers.has("wrong time") and weathers.size() >= 3, "and the weather's still random at a fixed time %s" % [weathers.keys()])
+	var kept := CourseDesign.starter()
+	kept.time = "night"
+	kept.fixed_time = true
+	check(TrackPath.from_dict(kept.to_dict()).fixed_time and CourseDesign.from_dict(kept.to_dict()).fixed_time and not TrackPath.from_dict(CourseDesign.starter().to_dict()).fixed_time, "a course keeps whether its time is fixed")
+	var dark_clear := Conditions.resolve("orchard", "clear", "night", 1)
+	dark_clear.time_fixed = true
+	check(dark_clear.records_allowed() and not Conditions.resolve("orchard", "clear", "night", 1).records_allowed(), "records count on a clear night where it's always night, not otherwise")
+	check(Conditions.from_dict(dark_clear.to_dict()).time_fixed and not Conditions.clear_day().to_dict().has("time_fixed"), "online, everyone knows the time is fixed")
 	check(Conditions.resolve("orchard", "clear", "night", 1).dark() and not Conditions.resolve("orchard", "clear", "day", 1).dark() and Conditions.resolve("orchard", "fog", "day", 1).dark(), "it's dark at night and in fog, not on a clear day")
 
 	# A course keeps its own weather and time through saving.

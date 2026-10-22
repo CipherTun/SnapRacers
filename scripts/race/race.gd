@@ -255,18 +255,22 @@ func _finish_setting_up(people: int) -> void:
 ## Ours are driven here, the host drives the AI, and the rest are remote
 ## karts that follow their updates (see NetRace).
 ## The weather and time of day for this race. Online they come from the host.
-## Otherwise it's the player's pick, then the course's, then chance. A time
+## Otherwise it's the player's pick, then the course's, then chance, except
+## a course that always has one time of day keeps it. A time
 ## trial left to chance is a clear day, so records stay fair.
 func _conditions() -> Conditions:
 	if Game.net.is_online() and Game.net.setup.has("conditions"):
 		return Conditions.from_dict(Game.net.setup.conditions)
 	var gp := mode == Game.MODE_GRAND_PRIX and Game.grand_prix != null
 	var weather := Conditions.picked(Game.grand_prix.weather if gp else Game.weather(), track.weather)
-	var time := Conditions.picked(Game.grand_prix.time if gp else Game.time_of_day(), track.time)
+	var fixed := Conditions.fixed_time(track.theme, track.time, track.fixed_time)
+	var time := Conditions.picked(Game.grand_prix.time if gp else Game.time_of_day(), track.time, fixed)
 	if mode == Game.MODE_TIME_TRIAL:
 		weather = "clear" if weather == Conditions.RANDOM else weather
 		time = "day" if time == Conditions.RANDOM else time
-	return Conditions.resolve(track.theme, weather, time, randi())
+	var conditions := Conditions.resolve(track.theme, weather, time, randi())
+	conditions.time_fixed = fixed != ""
+	return conditions
 
 
 func _ready_online() -> void:

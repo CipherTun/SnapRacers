@@ -14,8 +14,15 @@ extends Control
 const TROPHIES := { 1: "Gold trophy", 2: "Silver trophy", 3: "Bronze trophy" }
 const MEDALS := { 1: Color("#f2b632"), 2: Color("#cdd3db"), 3: Color("#c47a45") }
 ## How wide a card can get, and how few go across.
-const CARD_WIDTH := 220.0
+const CARD_WIDTH := 200.0
 const GAP := 14
+## Most cups across, so 15 cards make three rows.
+const MOST_ACROSS := 5
+## The trophy's height on a card. The game's cups shrink it down to SMALLEST so
+## every card fits on the screen, or grow it to BIGGEST to fill it.
+const TROPHY := 106.0
+const SMALLEST := 56.0
+const BIGGEST := 180.0
 
 var mode := Game.MODE_GRAND_PRIX
 var alone := false
@@ -25,6 +32,8 @@ var yours := false
 var _grid: GridContainer
 var _column: VBoxContainer
 var _trophies := {}
+## Each card's trophy picture.
+var _pictures: Array[TextureRect] = []
 
 
 func _init(for_mode := Game.MODE_GRAND_PRIX, for_one := false, your_cups := false) -> void:
@@ -69,6 +78,7 @@ func _ready() -> void:
 	# The margins grow to clear a camera hole, which changes the room.
 	var margin := MenuStyle.page_margin(column)
 	margin.resized.connect(_fit)
+	(_column.get_parent().get_parent() as Control).resized.connect(_fit)
 	margin.theme_changed.connect(_fit)
 	_fit()
 	PadFocus.focus_first(self)
@@ -93,18 +103,40 @@ func _width() -> float:
 	return maxf(room, CARD_WIDTH * 2.0 + GAP)
 
 
-## As many cards across as fit. The game's cups go no more than half across,
-## so they make two even rows that fill the screen.
+## As many cards across as fit. The game's cups make even rows of up to five,
+## with their trophies sized so the rows fill the screen's height.
 func _fit() -> void:
 	var room := _width()
 	_column.custom_minimum_size.x = room
 	var across := maxi(2, floori((room + GAP) / (CARD_WIDTH + GAP)))
+	var count := _grid.get_child_count()
 	if not yours:
-		across = mini(across, maxi(2, ceili(_grid.get_child_count() / 2.0)))
+		across = mini(across, maxi(2, ceili(count / ceilf(count / float(MOST_ACROSS)))))
 	_grid.columns = across
 	var width := (room - GAP * (across - 1)) / across
 	for card in _grid.get_children():
 		card.custom_minimum_size.x = width
+	if not yours:
+		_fit_height(ceili(count / float(across)))
+
+
+## Sizes the trophies so this many rows of cards fill the height under the
+## title. Past SMALLEST the page scrolls instead.
+func _fit_height(rows: int) -> void:
+	var scroll := _column.get_parent().get_parent() as Control
+	var high := scroll.size.y
+	if high <= 0.0 or rows < 1 or _pictures.is_empty():
+		return
+	# What's on a card besides its trophy, with the card's margins of 10.
+	var content := (_grid.get_child(0) as MenuCard).content
+	var rest := 20.0 + content.get_theme_constant("separation") * (content.get_child_count() - 1)
+	for child in content.get_children():
+		if child != _pictures[0]:
+			rest += child.get_combined_minimum_size().y
+	var each := (high - GAP * (rows - 1)) / rows
+	var picture := clampf(floorf(each - rest), SMALLEST, BIGGEST)
+	for rect in _pictures:
+		rect.custom_minimum_size.y = picture
 
 
 ## Your best place in a cup at any level, for its trophy, or 0. With `two`
@@ -142,7 +174,8 @@ func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, pa
 			won.append([level, place])
 	var finish := TrophyModel.finish_for(best_place(id, _for_two()))
 	var key := TrophyThumbnails.key_of(spec, colour, finish)
-	var trophy := card.picture(TrophyThumbnails.picture(key), 106.0)
+	var trophy := card.picture(TrophyThumbnails.picture(key), TROPHY)
+	_pictures.append(trophy)
 	_trophies[key] = _trophies.get(key, []) + [trophy]
 	Game.trophy_pictures().take(spec, colour, finish)
 	card.line(cup_name, 22)

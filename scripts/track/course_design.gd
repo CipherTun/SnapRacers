@@ -28,6 +28,8 @@ var hills := 0.0
 ## Conditions).
 var weather := Conditions.RANDOM
 var time := Conditions.RANDOM
+## Whether `time` is the only time of day it's raced at.
+var fixed_time := false
 ## Who made it, from Settings.
 var made_by := ""
 ## The pieces in order, as their specs (see TrackPiece.from_spec()).
@@ -48,6 +50,7 @@ static func from_dict(data: Dictionary) -> CourseDesign:
 	c.hills = float(data.get("hills", 0.0))
 	c.weather = str(data.get("weather", Conditions.RANDOM))
 	c.time = str(data.get("time", Conditions.RANDOM))
+	c.fixed_time = bool(data.get("fixed_time", false))
 	c.made_by = str(data.get("made_by", ""))
 	for spec in data.get("pieces", []):
 		if spec is Dictionary:
@@ -77,6 +80,8 @@ func to_dict() -> Dictionary:
 		out.weather = weather
 	if time != Conditions.RANDOM:
 		out.time = time
+	if fixed_time:
+		out.fixed_time = true
 	return out
 
 

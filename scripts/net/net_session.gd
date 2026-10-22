@@ -26,7 +26,7 @@ signal race_begun
 signal race_over(order: Array)
 
 ## Racing uses its own number, so it can't be confused with an older game.
-const VERSION := 7
+const VERSION := 8
 const PORT := 27280
 const MOST_KARTS := 8
 ## What a host can put on.
@@ -293,8 +293,10 @@ func _setup() -> Dictionary:
 	# The host works out the weather once, so everyone races in the same and
 	# has the same puddles.
 	var weather := Conditions.picked(str(settings.get("weather", Conditions.RANDOM)), str(course.get("weather", Conditions.RANDOM)))
-	var time := Conditions.picked(str(settings.get("time", Conditions.RANDOM)), str(course.get("time", Conditions.RANDOM)))
+	var fixed := Conditions.fixed_time(str(course.get("theme", "orchard")), str(course.get("time", Conditions.RANDOM)), bool(course.get("fixed_time", false)))
+	var time := Conditions.picked(str(settings.get("time", Conditions.RANDOM)), str(course.get("time", Conditions.RANDOM)), fixed)
 	var conditions := Conditions.resolve(str(course.get("theme", "orchard")), weather, time, randi())
+	conditions.time_fixed = fixed != ""
 	return {
 		"conditions": conditions.to_dict(),
 		"mode": settings.mode, "course": course, "laps": int(settings.laps) if settings.mode == SINGLE else int(course.get("laps", 3)),

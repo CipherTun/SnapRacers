@@ -36,6 +36,10 @@ const CLIMATE_OF := {
 	"hall_red": "indoor", "hall_green": "indoor", "hall_blue": "indoor", "hall_neon": "indoor",
 }
 
+## Themes always raced at one time of day, whatever the player picks. The
+## weather's still left to chance.
+const FIXED_TIMES := {"city": "night"}
+
 ## How likely each weather is in each climate, in the order of WEATHERS:
 ## clear, rain, snow, fog, storm, dust.
 const WEATHER_ODDS := {
@@ -65,6 +69,8 @@ var time := "day"
 var seed := 0
 ## Whether it's a hall, where the weather and time never change anything.
 var indoor := false
+## Whether the course always has this time of day, so records still count.
+var time_fixed := false
 
 
 ## A clear day, the way every race used to be.
@@ -89,14 +95,27 @@ static func resolve(theme: String, weather_pick: String, time_pick: String, chan
 	return c
 
 
-## The pick to use: the player's own if they made one, otherwise the
-## course's, otherwise RANDOM.
-static func picked(player_pick: String, course_pick: String) -> String:
+## The pick to use: a `fixed` one if the course has one (see fixed_time()),
+## then the player's own if they made one, then the course's, then RANDOM.
+static func picked(player_pick: String, course_pick: String, fixed := "") -> String:
+	if fixed != "":
+		return fixed
 	if player_pick != RANDOM and player_pick != "":
 		return player_pick
 	if course_pick != RANDOM and course_pick != "":
 		return course_pick
 	return RANDOM
+
+
+## The time of day a course always has, or "" if it's up to the player. Its
+## theme can set one (FIXED_TIMES), or the course itself with `fixed` and a
+## time picked.
+static func fixed_time(theme: String, course_time: String, fixed: bool) -> String:
+	if FIXED_TIMES.has(theme):
+		return FIXED_TIMES[theme]
+	if fixed and TIMES.has(course_time):
+		return course_time
+	return ""
 
 
 ## The pick after this one, going round from RANDOM through all of `all`,
@@ -117,11 +136,15 @@ static func from_dict(data: Dictionary) -> Conditions:
 	c.time = str(data.get("time", "day"))
 	c.seed = int(data.get("seed", 0))
 	c.indoor = bool(data.get("indoor", false))
+	c.time_fixed = bool(data.get("time_fixed", false))
 	return c
 
 
 func to_dict() -> Dictionary:
-	return {"weather": weather, "time": time, "seed": seed, "indoor": indoor}
+	var out := {"weather": weather, "time": time, "seed": seed, "indoor": indoor}
+	if time_fixed:
+		out.time_fixed = true
+	return out
 
 
 ## Whether it's dark enough that lamps and kart lights come on.
@@ -166,6 +189,7 @@ func describe() -> String:
 	return "%s, %s" % [WEATHER_NAMES[weather], TIME_NAMES[time].to_lower()]
 
 
-## Outdoor records use one set of conditions; halls are unaffected by weather.
+## Outdoor records use one set of conditions, a clear day or a clear spell at
+## the course's own time. Halls are unaffected by weather.
 func records_allowed() -> bool:
-	return indoor or (weather == "clear" and time == "day")
+	return indoor or (weather == "clear" and (time == "day" or time_fixed))

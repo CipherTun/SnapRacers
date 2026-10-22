@@ -26,13 +26,15 @@ const GRID_ACROSS := 3.5
 const STEEPEST := 0.07
 
 ## Grip and drag for each surface, as multiples of plain road. These are for
-## the road itself. The ground beside it uses OFFROAD.
+## the road itself. The ground beside it uses OFFROAD. Mud sits between dirt
+## and grass.
 const SURFACES := {
 	"asphalt": [1.0, 1.0],
 	"dirt": [0.8, 2.0],
 	"gravel": [0.82, 1.3],
 	"concrete": [0.9, 1.4],
 	"grass": [0.7, 5.0],
+	"mud": [0.75, 3.5],
 	"sand": [0.6, 4.0],
 	"ice": [0.35, 0.8],
 }
@@ -43,6 +45,7 @@ const OFFROAD := {
 	"grass": [0.45, 8.0],
 	"sand": [0.32, 10.0],
 	"dirt": [0.5, 6.0],
+	"mud": [0.47, 7.0],
 	"snow": [0.4, 7.0],
 	"hall": [0.55, 5.0],
 	"concrete": [0.55, 5.0],
@@ -65,6 +68,8 @@ var hills := 0.0
 ## Conditions). RANDOM leaves them to chance.
 var weather := Conditions.RANDOM
 var time := Conditions.RANDOM
+## Whether `time` is the only time of day it's raced at.
+var fixed_time := false
 ## Landmarks put down by hand in the track editor, as
 ## { "prop": ..., "at": [x, z], "facing": 0 to 3 }. With none, the theme
 ## picks its own.
@@ -113,6 +118,7 @@ static func from_dict(data: Dictionary) -> TrackPath:
 	track.hills = float(data.get("hills", 0.0))
 	track.weather = str(data.get("weather", Conditions.RANDOM))
 	track.time = str(data.get("time", Conditions.RANDOM))
+	track.fixed_time = bool(data.get("fixed_time", false))
 	track.landmarks = data.get("landmarks", []).duplicate(true)
 	track.start = start_from(data.get("start", []))
 	# A course made before the tiles were kart sized has the same pieces twice
@@ -147,6 +153,8 @@ func to_dict() -> Dictionary:
 		out.weather = weather
 	if time != Conditions.RANDOM:
 		out.time = time
+	if fixed_time:
+		out.fixed_time = true
 	return out
 
 

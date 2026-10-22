@@ -47,6 +47,7 @@ const COLOURS := {
 	"gravel": Color("#b39a74"),
 	"concrete": Color("#a0a19c"),
 	"grass": Color("#3d7a32"),
+	"mud": Color("#6a4b2e"), # darker and wetter looking than dirt
 	"sand": Color("#d9c38c"),
 	"ice": Color("#cfe8f2"),
 }

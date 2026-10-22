@@ -86,7 +86,7 @@ const LANDMARKS := [
 	["Crowd on a bank", "spectator_bank"], ["Viewing deck", "viewing_deck"], ["Kart office", "kart_office"],
 	["Parked karts", "kart_row"], ["Carousel", "carousel"], ["Drop tower", "drop_tower"], ["Red roof", "red_roof"],
 ]
-const SURFACES := [["Road", "asphalt"], ["Dirt", "dirt"], ["Gravel", "gravel"], ["Grass", "grass"], ["Sand", "sand"], ["Ice", "ice"]]
+const SURFACES := [["Road", "asphalt"], ["Dirt", "dirt"], ["Gravel", "gravel"], ["Grass", "grass"], ["Mud", "mud"], ["Sand", "sand"], ["Ice", "ice"]]
 ## "Auto" has walls only where you'd fall off, and grass runoff everywhere
 ## else (see TrackPiece.edges).
 const EDGES := [["Auto", "auto"], ["Walls", "walls"], ["Left open", "left_open"], ["Right open", "right_open"], ["Open", "open"]]
