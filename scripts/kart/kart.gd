@@ -1799,7 +1799,7 @@ func zap() -> void:
 
 
 func _show_zap() -> void:
-	if is_instance_valid(_zap):
+	if is_instance_valid(_zap) and not _zap.is_queued_for_deletion():
 		_zap.restart()
 		return
 	_zap = ZapFx.new()
