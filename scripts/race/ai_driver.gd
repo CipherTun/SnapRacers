@@ -140,6 +140,27 @@ var _steer := 0.0
 var _block_ahead := INF
 var _block_speed := INF
 
+## The level crossings on the course, and the race clock their trains run
+## on (see TrainTimetable), so it can wait for a train or beat it across.
+var crossings: Array[LevelCrossing] = []
+var clock := 0.0
+## For each crossing it's waiting at, the train it's waiting for.
+var _train_waits := {}
+var _waiting := false
+## It starts looking at a crossing this far before it has to stop, past
+## what it needs to stop.
+const TRAIN_LOOK := 30.0
+## It goes over the rails only if it'll be across this long before the train
+## gets to the road, or this long after it's gone.
+const TRAIN_BEFORE := 1.5
+const TRAIN_AFTER := 0.5
+## Waiting, it sets off this long before the back of the train is off the
+## road, since it takes a moment to get to the rails.
+const TRAIN_GO_EARLY := 1.0
+## The slowest and quickest it reckons on getting to the rails at.
+const TRAIN_SLOWEST := 8.0
+const TRAIN_QUICKEST := 30.0
+
 const THINK_EVERY := 0.3 # seconds between looking at its gadgets
 ## After holding a power-up this long it uses it at the next moment that
 ## isn't a bad one, so it has room for the next box.
@@ -233,6 +254,8 @@ func _physics_process(delta: float) -> void:
 	# has moved it aside, rather than driving into their back.
 	if _block_ahead < SIT_BEHIND and is_finite(_block_speed):
 		allowed = minf(allowed, maxf(_block_speed + maxf(_block_ahead - 2.5, 0.0) * 0.9, TURN_ROUND_SPEED))
+	if not crossings.is_empty():
+		allowed = minf(allowed, _train_limit(speed, braking))
 
 	# The bend coming up next, for sliding into.
 	var tight := maxf(here, track.bend_at(offset + speed * 0.3))
@@ -293,6 +316,10 @@ func _physics_process(delta: float) -> void:
 		if _lost_nerve and up.y < 0.7:
 			controls.throttle = 0.0
 			controls.brake = 0.5
+	# Stopped for a train, it stays stopped.
+	elif _waiting and allowed < 2.0:
+		controls.throttle = 0.0
+		controls.brake = 1.0
 	# In a tight bend it holds its speed down firmly. Out on the road it lets
 	# it run a little over before braking.
 	elif speed > allowed + (0.4 if here > 0.05 else 1.5):
@@ -311,6 +338,39 @@ func _physics_process(delta: float) -> void:
 	# A loop needs everything the kart's got, whatever the level.
 	if _on_loop and not _lost_nerve:
 		kart.push = maxf(kart.push, 1.0)
+
+
+## How fast it can go and still stop before a crossing with a train due,
+## or INF. It works out when it would be over the rails: well clear of the
+## train either way, it carries on. Otherwise it stops at the line and waits
+## until the train's gone.
+func _train_limit(speed: float, braking: float) -> float:
+	_waiting = false
+	var limit := INF
+	for crossing in crossings:
+		var to_stop := fposmod(crossing.stop_offset() - offset, track.length)
+		# Just past the line and still short of the rails counts as at it.
+		if to_stop > track.length - LevelCrossing.STOP_BACK + 3.0:
+			to_stop -= track.length
+		if to_stop > speed * speed / (2.0 * braking) + TRAIN_LOOK:
+			continue
+		var to_rails := to_stop + LevelCrossing.STOP_BACK
+		var window := crossing.timetable.next_window(clock)
+		var train := int(window.z)
+		if _train_waits.get(crossing.index, -1) != train:
+			var first_there := clock + maxf(to_rails - LevelCrossing.TRAIN_HALF - LevelCrossing.KART_ROOM, 0.0) / maxf(speed, TRAIN_QUICKEST)
+			var last_off := clock + (to_rails + LevelCrossing.TRAIN_HALF + LevelCrossing.KART_ROOM + 2.0) / maxf(speed, TRAIN_SLOWEST)
+			if last_off < window.x - TRAIN_BEFORE or first_there > window.y + TRAIN_AFTER:
+				continue
+			# Past the line, or too close to stop now, it keeps going.
+			if to_stop < 0.0 or speed * speed / (2.0 * braking) > to_stop + 4.0:
+				continue
+			_train_waits[crossing.index] = train
+		if clock > window.y - TRAIN_GO_EARLY:
+			continue
+		_waiting = true
+		limit = minf(limit, sqrt(2.0 * braking * maxf(to_stop - 1.0, 0.0)))
+	return limit
 
 
 ## Which way the road's turning here: 1 to the right, -1 to the left.
@@ -583,7 +643,9 @@ func _stuck_check(delta: float, speed: float, up: Vector3) -> void:
 	# Just after a reset it's pulling away from a standstill at half power,
 	# which on ice takes a while, so that isn't being stuck.
 	var pulling_away := kart.slowdown_left > 0.0 and not upside_down
-	if not kart.locked and not pulling_away and (speed < 1.5 or upside_down):
+	# Nor is waiting for a train.
+	var waiting := _waiting and not upside_down
+	if not kart.locked and not pulling_away and not waiting and (speed < 1.5 or upside_down):
 		if _stuck == 0.0:
 			_stuck_at = offset
 		_stuck += delta

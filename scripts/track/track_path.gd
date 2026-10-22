@@ -421,6 +421,21 @@ func _bend_between(offset: float, span := BEND_SPAN) -> float:
 
 ## The road here, lifted a little, facing along the track. Resets put karts
 ## here.
+## Where along the lap each level crossing's railway goes over the road, in
+## metres, in the order they come around the lap.
+func crossing_offsets() -> Array[float]:
+	var out: Array[float] = []
+	var from := 0
+	for i in pieces.size():
+		if not pieces[i].crossing:
+			continue
+		while from < piece_of.size() and piece_of[from] < i:
+			from += 1
+		if from < piece_of.size():
+			out.append(distances[from] + pieces[i].path_length() * 0.5)
+	return out
+
+
 func place_at(offset: float, lift := 0.6) -> Transform3D:
 	var frame := frame_at(offset)
 	frame.origin += frame.basis.y * lift

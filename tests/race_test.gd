@@ -55,6 +55,30 @@ func _ready() -> void:
 		check(course.problems().is_empty(), "a course built in the editor is ready to race %s" % [course.problems()])
 		path = course.with_start_on_longest_straight().save()
 		built_path = path
+	if which == "crossing":
+		# Peach Pit with a level crossing on the first straight with room for
+		# one, so the AI meets the train.
+		var data: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(Game.TRACKS + "/peach_pit.json"))
+		for i in range(3, data.pieces.size()):
+			var spec: Dictionary = data.pieces[i]
+			if spec.get("type", "straight") != "straight" or spec.has("surface"):
+				continue
+			var pieces: Array = data.pieces.duplicate(true)
+			pieces[i] = {"type": "crossing"}
+			if int(spec.get("length", 1)) > 1:
+				pieces.insert(i + 1, {"type": "straight", "length": int(spec.get("length", 1)) - 1})
+			var trial := data.duplicate(true)
+			trial.pieces = pieces
+			var test_path := TrackPath.from_dict(trial)
+			if not LevelCrossing.cramped(test_path, test_path.crossing_offsets()[0]):
+				data = trial
+				break
+		data.name = "Race Test Crossing"
+		path = "user://race_test_crossing.json"
+		var file := FileAccess.open(path, FileAccess.WRITE)
+		file.store_string(JSON.stringify(data))
+		file.close()
+		built_path = path
 	Game.show_race(path)
 	while race == null:
 		await get_tree().process_frame
@@ -66,6 +90,7 @@ func _ready() -> void:
 	driver.kart = race.player.kart
 	driver.track = race.track
 	driver.others.assign(race.racers.map(func(r): return r.kart))
+	driver.crossings = race.builder.crossings
 	race.add_child(driver)
 	race.player.ai = driver
 	race.player.kart.controls = driver.controls
@@ -86,6 +111,8 @@ func _ready() -> void:
 
 
 var _last_touch := {}
+## How many times the train's hit a kart.
+var train_hits := 0
 ## For RACE_DEBUG, each kart's last few seconds: where it was and what it
 ## was doing, printed when it's reset.
 var _history := {}
@@ -120,6 +147,10 @@ func _stuck_on(racer) -> String:
 func _physics_process(delta: float) -> void:
 	if race == null:
 		return
+	for crossing in race.builder.crossings:
+		for kart in crossing._hit_wait:
+			if crossing._hit_wait[kart] >= LevelCrossing.HIT_EVERY - delta * 0.5:
+				train_hits += 1
 	# For RACE_DEBUG, what each kart was up against just before any reset.
 	if OS.has_environment("RACE_DEBUG") and Engine.get_physics_frames() % 20 == 0:
 		for racer in race.racers:
@@ -168,6 +199,8 @@ func _physics_process(delta: float) -> void:
 		check(all_resets <= 20, "not many resets across the whole field (%d)" % all_resets)
 		print("  gadgets used: %s" % [used])
 		print("  power-ups picked up: %s" % [race.racers.map(func(r): return "%s %d" % [r.name, r.kart.pickups])])
+		if not race.builder.crossings.is_empty():
+			check(train_hits <= 2, "the AI keeps out of the train's way (%d hit)" % train_hits)
 		check(used.size() >= 4, "the AI uses all sorts of power-ups (%d kinds)" % used.size())
 		var fastest := INF
 		for racer in race.racers:

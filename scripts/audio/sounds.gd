@@ -35,7 +35,7 @@ static func audible() -> bool:
 const ALL := [
 	"fx/bump", "fx/crash", "fx/bricks", "fx/powerup", "fx/beep", "fx/go", "fx/lap", "fx/final_lap",
 	"fx/finish", "fx/win", "fx/reset", "fx/turbo", "fx/rope", "fx/wall", "fx/shockwave", "fx/marbles", "fx/spikes", "fx/drop", "fx/cannon", "fx/hit",
-	"fx/repair", "fx/shield", "fx/ghost", "fx/lightning", "fx/thunder", "fx/ram", "fx/click", "fx/back", "fx/snap", "fx/unsnap",
+	"fx/repair", "fx/shield", "fx/ghost", "fx/lightning", "fx/thunder", "fx/ram", "fx/crossing_bell", "fx/train_horn", "fx/click", "fx/back", "fx/snap", "fx/unsnap",
 	"fx/pick", "fx/nope",
 	"engine/engine_small", "engine/engine_micro", "engine/engine_big", "engine/engine_twin",
 	"engine/engine_diesel", "engine/engine_v8", "engine/electric_motor", "engine/jet",

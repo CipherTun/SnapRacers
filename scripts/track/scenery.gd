@@ -279,6 +279,8 @@ var only_landmarks := false
 ## Places kept clear of scenery, as [middle, radius] (like the dirt inside a
 ## cut bend).
 var keep_clear: Array = []
+## Strips to keep clear too, like a railway: [from, to, half width] each.
+var keep_off: Array = []
 
 var _rng := RandomNumberGenerator.new()
 var _kit := SceneryKit.new()
@@ -449,7 +451,20 @@ func _free(at: Vector3, radius: float) -> bool:
 	for spot in keep_clear:
 		if Vector2(spot[0].x - at.x, spot[0].z - at.z).length() < spot[1] + radius:
 			return false
-	return true
+	return not _on_strip(at, radius)
+
+
+## Whether anything within `radius` of `at` is on one of the strips in
+## `keep_off`.
+func _on_strip(at: Vector3, radius: float) -> bool:
+	for strip in keep_off:
+		var a := Vector2(strip[0].x, strip[0].z)
+		var b := Vector2(strip[1].x, strip[1].z)
+		var p := Vector2(at.x, at.z)
+		var t := clampf((p - a).dot(b - a) / maxf((b - a).length_squared(), 0.001), 0.0, 1.0)
+		if p.distance_to(a.lerp(b, t)) < strip[2] + radius:
+			return true
+	return false
 
 
 ## Which quarter turn faces from `at` toward the road.
@@ -593,6 +608,8 @@ func _tire_lines() -> void:
 			var steps := maxi(1, int(a.distance_to(b) / STACK_EVERY))
 			for i in steps:
 				var at := a.lerp(b, float(i) / steps)
+				if not keep_off.is_empty() and _on_strip(at, 1.0):
+					continue
 				_kit.begin("tires", false, true)
 				Props.barrier_stack(_kit, at, colours[(stacks / 3) % 2])
 				_kit.done()
@@ -879,7 +896,7 @@ func _start_area(edge: float) -> void:
 			at = _grounded(at)
 			# The start straight can bend soon after the line, so check all the
 			# road, not just other bits of it.
-			if not _near_other_road(at, edge + 1.0, start_k, 0.0):
+			if not _near_other_road(at, edge + 1.0, start_k, 0.0) and not _on_strip(at, 1.0):
 				_kit.begin("flag", true)
 				Props.flag(_kit, at, [Props.RED, Props.YELLOW, Props.BLUE, Props.GREEN][k])
 				_kit.done()
@@ -894,7 +911,7 @@ func _clear_of_other_road(front: Vector3, along: Vector3, back: Vector3, length:
 	var x := -length * 0.5
 	while x <= length * 0.5:
 		for d in [0.0, depth * 0.5, depth]:
-			if _near_other_road(front + along * x + back * d, edge, own, 0.0):
+			if _near_other_road(front + along * x + back * d, edge, own, 0.0) or _on_strip(front + along * x + back * d, 3.0):
 				return false
 		x += 4.0
 	return true

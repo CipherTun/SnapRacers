@@ -92,6 +92,8 @@ var track_id := ""
 var new_records := [false, false]
 ## Seconds since the start. It counts up from minus the countdown.
 var time := -COUNTDOWN
+## The trains' clock, which online follows the host's.
+var train_clock := TrainClock.new(-COUNTDOWN)
 var started := false
 
 ## The power-up boxes along the track, or null in a time trial.
@@ -213,11 +215,20 @@ func _finish_setting_up(people: int) -> void:
 	for racer in racers:
 		if racer.ai != null:
 			racer.ai.others = karts
+			racer.ai.crossings = builder.crossings
 		racer.kart.gadget_used.connect(func(kind: String) -> void:
 			if kind == "lightning":
 				strike_from(racer.kart)
 			elif kind == "shockwave":
 				shockwave_from(racer.kart))
+	# The trains run on the race clock. In a time trial they keep the same
+	# timetable every time, so records stay fair.
+	for crossing in builder.crossings:
+		crossing.own_clock = false
+		crossing.time = train_clock.now
+		crossing.karts = karts
+		if mode == Game.MODE_TIME_TRIAL:
+			crossing.use_seed(0)
 
 	# Time trials are just driving, with no power-ups to pick up.
 	if mode != Game.MODE_TIME_TRIAL:
@@ -245,6 +256,7 @@ func _finish_setting_up(people: int) -> void:
 		driver.kart = player.kart
 		driver.track = track
 		driver.others.assign(karts)
+		driver.crossings = builder.crossings
 		add_child(driver)
 		player.ai = driver
 		player.kart.controls = driver.controls
@@ -518,6 +530,13 @@ func _physics_process(delta: float) -> void:
 	if net != null and not net_go:
 		return
 	time += delta
+	if not builder.crossings.is_empty():
+		train_clock.run(delta)
+		for crossing in builder.crossings:
+			crossing.time = train_clock.now
+		for racer in racers:
+			if racer.ai != null:
+				racer.ai.clock = train_clock.now
 	# A beep for each number of the countdown, and a higher one for GO.
 	if not started and ceili(-time) < _beeped and ceili(-time) >= 1:
 		_beeped = ceili(-time)
@@ -593,6 +612,11 @@ func _clear_spot(racer: Racer) -> Transform3D:
 		backed = true
 	if backed:
 		start -= RUN_UP
+	# Never onto the rails with a train coming.
+	for crossing in builder.crossings:
+		var to_rails := fposmod(crossing.offset - start + LevelCrossing.STOP_BACK, track.length)
+		if to_rails < LevelCrossing.STOP_BACK * 2.0 and crossing.timetable.blocked(train_clock.now, 4.0):
+			start = crossing.offset - LevelCrossing.STOP_BACK
 	racer.kart.run_up_reset = backed
 	for back in [0.0, 5.0, 10.0, 15.0, 20.0]:
 		for side in across:
@@ -652,6 +676,7 @@ func _player_finished(racer: Racer) -> void:
 	driver.track = track
 	driver.skill = 0.85
 	driver.others.assign(racers.map(func(r): return r.kart))
+	driver.crossings = builder.crossings
 	add_child(driver)
 	racer.ai = driver
 	racer.kart.controls = driver.controls

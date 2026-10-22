@@ -147,6 +147,13 @@ const CANNON_PARTS := 3
 const CANNON_WHEEL_CHANCE := 0.5
 const CANNON_SHOVE := 14.0
 const CANNON_HOP := 4.0
+## A train knocks this many parts off, sometimes a wheel or the steering, and
+## shoves the kart this hard (m/s) off the rails, along with the train, and up.
+const TRAIN_PARTS := 2
+const TRAIN_WHEEL_CHANCE := 0.25
+const TRAIN_SHOVE := 14.0
+const TRAIN_ALONG := 8.0
+const TRAIN_HOP := 5.0
 ## A kart going over a spike trap faster than this loses a part, and can't
 ## lose another to it for SPIKE_EVERY seconds.
 const SPIKE_SPEED := 10.0
@@ -1959,6 +1966,30 @@ func struck_by_cannon(along: Vector3) -> void:
 		side = 1.0
 	_spin += Vector3.UP * CANNON_SHOVE * 0.3 * side
 	knock_off_a_part(CANNON_PARTS, CANNON_WHEEL_CHANCE)
+
+
+## Hit by a train going `along`: whatever speed it had into the train is lost,
+## and it's shoved `away` off the rails and along with the train, with parts
+## knocked off. A shield holds the parts on and still gets shoved, and a ghost
+## goes through.
+func struck_by_train(away: Vector3, along: Vector3) -> void:
+	if ghost_left > 0.0:
+		return
+	var push := away * TRAIN_SHOVE + along * TRAIN_ALONG + Vector3.UP * TRAIN_HOP
+	var into := linear_velocity.dot(away)
+	if into < 0.0:
+		push -= away * into
+	var against := linear_velocity.dot(along)
+	if against < 0.0:
+		push -= along * against
+	_shove += push
+	var side := signf(along.dot(global_basis.x))
+	if side == 0.0:
+		side = 1.0
+	_spin += Vector3.UP * TRAIN_SHOVE * 0.4 * side
+	Sounds.play_at("fx/crash", sound)
+	react("surprised", 2.0)
+	knock_off_a_part(TRAIN_PARTS, TRAIN_WHEEL_CHANCE)
 
 
 ## Whether this part is a wheel or the steering.

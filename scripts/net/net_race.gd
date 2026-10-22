@@ -31,6 +31,8 @@ const GUESS_FOR := 0.3
 const BEHIND_BLUETOOTH := 0.2
 ## After the first person finishes, the race ends anyway after this long.
 const WAIT_FOR_LAST := 90.0
+## The host's peer id.
+const HOST := 1
 const END_AFTER := 4.0
 
 var race: Race
@@ -109,7 +111,11 @@ func _physics_process(delta: float) -> void:
 		_send_in = SEND_EVERY_BLUETOOTH if _slow else SEND_EVERY
 		for slot in racers:
 			if owners[slot] == session.my_id() and is_instance_valid(racers[slot].kart):
-				session.kart_state.rpc(slot, racers[slot].kart.net_state())
+				var state: PackedFloat32Array = racers[slot].kart.net_state()
+				# The host's train clock rides along (see Race.train_clock).
+				if session.is_host():
+					state.append(race.train_clock.now)
+				session.kart_state.rpc(slot, state)
 	for slot in _updates:
 		_show(slot)
 	if session.is_host():
@@ -125,10 +131,23 @@ func got_state(sender: int, slot: int, state: PackedFloat32Array) -> void:
 			return
 	if Vector4(state[3], state[4], state[5], state[6]).length_squared() < 0.5:
 		return
+	if sender == HOST and state.size() > 12 and not session.is_host():
+		race.train_clock.from_host(state[12], _lag())
 	var list: Array = _updates[slot]
 	list.append([_clock, state])
 	while list.size() > 8:
 		list.pop_front()
+
+
+## Half the round trip to the host in seconds, where the connection knows it,
+## so a client's train clock can allow for how long the host's took to come.
+func _lag() -> float:
+	var peer := session.multiplayer.multiplayer_peer as ENetMultiplayerPeer
+	if peer != null:
+		var host := peer.get_peer(HOST)
+		if host != null:
+			return host.get_statistic(ENetPacketPeer.PEER_ROUND_TRIP_TIME) * 0.0005
+	return 0.0
 
 
 ## Puts a remote kart where its updates say it was a moment ago.

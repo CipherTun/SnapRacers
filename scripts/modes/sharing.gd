@@ -25,7 +25,7 @@ const CUP := "cup"
 ## what the game's own courses use.
 const MOST_PIECES := 200
 const MOST_LANDMARKS := 100
-const PIECE_TYPES := ["straight", "curve", "slant", "crest", "ramp", "jump", "loop", "corkscrew"]
+const PIECE_TYPES := ["straight", "curve", "slant", "crest", "ramp", "jump", "loop", "corkscrew", "crossing"]
 const LIMITS := {"length": 12.0, "size": 4.0, "rise": 8.0, "across": 6.0, "height": 10.0, "bank": 90.0}
 
 ## The game's own courses, as they'd be shared, by path.
@@ -114,6 +114,10 @@ static func buildable(course: CourseDesign) -> bool:
 					return false
 				if key in ["length", "size"] and value < 1:
 					return false
+	# A crossing's tunnels are solid, so they mustn't land on other road.
+	if course.pieces.any(func(spec): return str(spec.get("type", "")) == "crossing"):
+		if LevelCrossing.problem(course.track()) != "":
+			return false
 	return true
 
 

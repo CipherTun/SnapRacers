@@ -47,6 +47,7 @@ const CATEGORIES := [
 	["Straights", "straights", [
 		["1 tile", {"type": "straight", "length": 1}], ["2 tiles", {"type": "straight", "length": 2}],
 		["3 tiles", {"type": "straight", "length": 3}], ["4 tiles", {"type": "straight", "length": 4}],
+		["Level crossing", {"type": "crossing"}],
 	]],
 	["Bends", "bends", [
 		["Tight left", {"type": "curve", "turn": "left", "size": 1}], ["Tight right", {"type": "curve", "turn": "right", "size": 1}],

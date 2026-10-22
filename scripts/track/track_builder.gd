@@ -76,6 +76,8 @@ var puddles: Puddles
 var _material: ShaderMaterial
 ## The rolling ground, on a course with hills.
 var terrain: Terrain
+## The level crossings, in the order they come around the lap.
+var crossings: Array[LevelCrossing] = []
 ## The course's theme (see Scenery.THEMES), which sets the colours.
 var _theme: Dictionary
 
@@ -147,6 +149,11 @@ func _ready() -> void:
 	_add_kerbs()
 	_add_pillars()
 	_add_gantry()
+	var offsets := track.crossing_offsets()
+	for i in offsets.size():
+		var crossing := LevelCrossing.new(track, offsets[i], i, ground_at, conditions.seed)
+		crossings.append(crossing)
+		add_child(crossing)
 	# A debug switch for checking the frame rate on a device. If there's a
 	# file called noscenery in the app's data folder, the scenery is left out.
 	if OS.is_debug_build() and FileAccess.file_exists("user://noscenery"):
@@ -161,6 +168,9 @@ func _ready() -> void:
 		var piece := track.pieces[i]
 		if piece.cut:
 			dressing.keep_clear.append([track.piece_starts[i] * Vector3(piece.turn * piece.radius, 0.0, 0.0), piece.radius])
+	# And the railways.
+	for crossing in crossings:
+		dressing.keep_off.append_array(crossing.clear_lines())
 	add_child(dressing)
 	# At night the lamps light the course around them.
 	if conditions.dark():

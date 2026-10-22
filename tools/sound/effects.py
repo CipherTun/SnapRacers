@@ -17,7 +17,7 @@ import numpy as np
 from synth import (
     RATE, adsr, bandpass, circular_convolve, circular_filter, decay, drive, fade,
     highpass, lowpass, mix, noise, normalise, note_freq, phase_of, ramp, reverb,
-    resonator, rng, seconds, sine, square, sweep_lowpass, times, triangle, trim,
+    resonator, rng, saw, seconds, sine, square, sweep_lowpass, times, triangle, trim,
 )
 
 
@@ -419,6 +419,23 @@ def thunder():
     return normalise(drive(crack + roll + rumble, 1.3), 0.9)
 
 
+def crossing_bell():
+    """A level crossing's bell: one bright ding, played over and over."""
+    n = seconds(0.5)
+    ding = sum(resonator(f, d, n) * a for f, d, a in [(1180, 0.35, 1.0), (2950, 0.18, 0.45), (4400, 0.08, 0.2)])
+    tap = highpass(noise(n, 95), 3000) * decay(n, 0.004) * 0.4
+    return normalise(ding + tap, 0.6)
+
+
+def train_horn():
+    """A toy train's horn: two notes together, held for a moment."""
+    n = seconds(1.3)
+    wobble = 1.0 + 0.004 * sine(5.5, n)
+    tone = sum(saw(f * wobble, n, harmonics=10) * a for f, a in [(311, 1.0), (392, 0.8)])
+    tone = lowpass(tone, 2200) * adsr(n, 0.04, 0.1, 0.85, 0.25)
+    return normalise(reverb(tone, 0.15, 0.6), 0.7)
+
+
 def ram():
     n = seconds(0.6)
     clang = sum(resonator(f, d, n) * a for f, d, a in [(520, 0.5, 1.0), (1370, 0.35, 0.6), (2210, 0.25, 0.4), (3100, 0.15, 0.3)])
@@ -466,6 +483,7 @@ ONE_SHOTS = {
     "lap": lap, "final_lap": final_lap, "finish": finish, "win": win,
     "reset": reset, "turbo": turbo, "rope": rope, "wall": wall, "shockwave": shockwave, "marbles": marbles, "spikes": spikes, "drop": drop, "cannon": cannon,
     "hit": hit, "repair": repair, "shield": shield, "ghost": ghost, "lightning": lightning, "thunder": thunder, "ram": ram,
+    "crossing_bell": crossing_bell, "train_horn": train_horn,
     "click": click, "back": back, "snap": snap, "unsnap": unsnap, "pick": pick, "nope": nope,
 }
 

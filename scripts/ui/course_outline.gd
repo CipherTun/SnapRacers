@@ -144,6 +144,8 @@ static func describe(track: TrackPath) -> String:
 		things.append("a jump")
 	if has.call(func(p): return p.cut):
 		things.append("a shortcut")
+	if has.call(func(p): return p.crossing):
+		things.append("a level crossing")
 	var text := "%d m, %d laps" % [roundi(track.length), track.laps]
 	if not things.is_empty():
 		var last: String = things.pop_back()

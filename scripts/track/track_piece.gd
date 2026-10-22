@@ -49,6 +49,9 @@ var cut := false
 var side := 1
 ## Road you stick to at speed, like the inside of a loop or a steep wall.
 var sticky := false
+## A straight tile with a railway across its middle, where a train crosses
+## the road (see LevelCrossing). Its spec says "crossing" for the type.
+var crossing := false
 
 # The loop has a run in, the loop itself and a run out. It tightens gradually
 # on the way in and eases off on the way out, and steps one tile across as it
@@ -128,6 +131,10 @@ static func from_spec(spec: Dictionary) -> TrackPiece:
 			var shift := int(spec.get("across", 1))
 			piece.across = -absi(shift) if str(spec.get("turn", "right")) == "left" else absi(shift)
 			piece.rise = float(spec.get("rise", 0)) * LEVEL
+		"crossing":
+			piece.type = "straight"
+			piece.tiles = 1
+			piece.crossing = true
 		_:
 			piece.type = "straight"
 			piece.tiles = int(spec.get("length", 1))
@@ -175,7 +182,10 @@ func to_spec() -> Dictionary:
 			spec["length"] = tiles
 			spec["height"] = crest_height
 		"straight":
-			spec["length"] = tiles
+			if crossing:
+				spec["type"] = "crossing"
+			else:
+				spec["length"] = tiles
 		"loop", "corkscrew":
 			spec["side"] = "left" if side < 0 else "right"
 		"slant":

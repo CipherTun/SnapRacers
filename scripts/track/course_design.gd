@@ -156,6 +156,9 @@ func problems() -> Array[String]:
 		out.append("The road runs into itself.")
 	if _below_ground(path):
 		out.append("The road goes below the ground.")
+	var crossing := LevelCrossing.problem(path)
+	if crossing != "":
+		out.append(crossing)
 	if path.closes and _longest_straight() < GRID_TILES + 1:
 		out.append("There's no straight long enough for the starting grid. It needs %d tiles in a row at ground level." % (GRID_TILES + 1))
 	return out

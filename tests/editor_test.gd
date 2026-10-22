@@ -42,7 +42,7 @@ func _ready() -> void:
 
 	# Clicking pieces onto the end.
 	var tiles := editor.ui._tiles.get_children()
-	check(tiles.size() == 4, "the drawer starts on the straights (%d)" % tiles.size())
+	check(tiles.size() == 5, "the drawer starts on the straights and the level crossing (%d)" % tiles.size())
 	tiles[1].pressed.emit()
 	check(editor.course.pieces.size() == 2 and editor.course.pieces[1].length == 2, "tapping a piece clicks it onto the end")
 	editor.ui._show_category(1)

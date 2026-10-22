@@ -78,6 +78,18 @@ func _draw() -> void:
 		var edge := KERB if absf(piece.bank) > 0.0 else EDGE
 		draw_polyline(line, edge, road + (6.0 if piece.sticky else 3.0), true)
 		draw_polyline(line, _surface(), road, true)
+	if piece.crossing:
+		# The railway across the middle, with its sleepers.
+		var middle: Vector2 = line[steps / 2]
+		var run := (line[steps / 2 + 1] - line[steps / 2 - 1]).normalized()
+		var rail := Vector2(-run.y, run.x)
+		var reach := size.x * 0.5
+		var k := -reach
+		while k <= reach:
+			draw_line(middle + rail * k - run * 5.0, middle + rail * k + run * 5.0, Color("#8a6a45"), 2.0)
+			k += 6.0
+		for g in [-2.5, 2.5]:
+			draw_line(middle - rail * reach + run * g, middle + rail * reach + run * g, Color("#c8ccd2"), 1.5)
 	# Which way it runs.
 	var tip := line[line.size() - 1]
 	var way := (tip - line[line.size() - 3]).normalized()
