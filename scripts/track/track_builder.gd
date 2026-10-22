@@ -47,7 +47,7 @@ const COLOURS := {
 	"gravel": Color("#b39a74"),
 	"concrete": Color("#a0a19c"),
 	"grass": Color("#3d7a32"),
-	"mud": Color("#6a4b2e"), # darker and wetter looking than dirt
+	"mud": Color("#6e5538"), # darker and browner than dirt
 	"sand": Color("#d9c38c"),
 	"ice": Color("#cfe8f2"),
 }
@@ -59,7 +59,7 @@ const PILLAR_COLOUR := Color("#a3a2a4")
 const LEG_SIZE := 0.6
 const BRACE_EVERY := 3.0
 ## Which surface each edge of the outline is, for the shader.
-const KIND := {"road": 0.0, "kerb": 1.0, "deck": 2.0, "wall": 3.0, "walltop": 4.0, "line": 5.0}
+const KIND := {"road": 0.0, "kerb": 1.0, "deck": 2.0, "wall": 3.0, "walltop": 4.0, "line": 5.0, "mud": 6.0}
 
 var track: TrackPath
 ## How much scenery to put around it: "all", "landmarks" (only the ones put
@@ -204,7 +204,7 @@ func _add_grass() -> void:
 	plane.size = Vector2(bounds.size.x, bounds.size.z)
 	mesh.mesh = plane
 	mesh.position = Vector3(centre.x, 0.0, centre.z)
-	mesh.material_override = _baseplate(Color(_theme.get("ground", "#4b9f4a")))
+	mesh.material_override = baseplate(Color(_theme.get("ground", "#4b9f4a")), _theme.get("floor", "grass"))
 	body.add_child(mesh)
 	add_child(body)
 
@@ -213,12 +213,14 @@ func _baseplate(colour: Color) -> ShaderMaterial:
 	return baseplate(colour)
 
 
-## The studded green baseplate the courses sit on, in a colour.
-static func baseplate(colour: Color) -> ShaderMaterial:
+## The studded green baseplate the courses sit on, in a colour. A "mud" floor
+## gets wet patches over it like a mud road.
+static func baseplate(colour: Color, floor_type: String = "grass") -> ShaderMaterial:
 	road_material()
 	var material := ShaderMaterial.new()
 	material.shader = _grass_shader
 	material.set_shader_parameter("colour", colour)
+	material.set_shader_parameter("mud_floor", 1.0 if floor_type == "mud" else 0.0)
 	return material
 
 
@@ -326,6 +328,8 @@ func _piece_mesh(index: int) -> ArrayMesh:
 	var tool := SurfaceTool.new()
 	tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var surface_colour: Color = COLOURS.get(piece.surface, COLOURS["asphalt"])
+	# Mud has its own look in the shader, with no tile seams.
+	var road_kind: float = KIND["mud"] if piece.surface == "mud" else KIND["road"]
 	var had := [false, false]
 	for n in samples.size() - 1:
 		var a := samples[n]
@@ -350,7 +354,7 @@ func _piece_mesh(index: int) -> ArrayMesh:
 					colour = Color(_theme.wall)
 				_:
 					colour = DECK_COLOUR
-			_sweep(tool, a, b, edge[0], edge[1], colour, KIND[edge[2]])
+			_sweep(tool, a, b, edge[0], edge[1], colour, road_kind if edge[2] == "road" else KIND[edge[2]])
 		# Close off the road where it stops for the jump's gap.
 		var before := samples[n - 1] if n > 0 else (a - 1 + track.points.size()) % track.points.size()
 		if not track.solids[before]:

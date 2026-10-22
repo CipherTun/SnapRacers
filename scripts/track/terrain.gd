@@ -196,7 +196,8 @@ func _ready() -> void:
 	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
 	var look := MeshInstance3D.new()
 	look.mesh = mesh
-	look.material_override = TrackBuilder.baseplate(Color(Scenery.theme_named(track.theme).get("ground", "#4b9f4a")))
+	var theme := Scenery.theme_named(track.theme)
+	look.material_override = TrackBuilder.baseplate(Color(theme.get("ground", "#4b9f4a")), theme.get("floor", "grass"))
 	add_child(look)
 	var shape := CollisionShape3D.new()
 	shape.shape = mesh.create_trimesh_shape()

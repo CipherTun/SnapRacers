@@ -66,6 +66,15 @@ float blotches(vec2 p) {
 	return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x), mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
 }
 
+// Mud: soft darker wet patches over smooth brown, which shine. p is in
+// metres. Gives the colour, and how wet it is from 0 to 1 in w.
+vec3 mud(vec2 p, vec3 col, out float w) {
+	float b = blotches(p * vec2(0.22, 0.3)) * 0.65 + blotches(p * 0.8 + 7.3) * 0.35;
+	w = smoothstep(0.5, 0.66, b);
+	col *= 0.9 + 0.2 * blotches(p * 2.3 + 3.1);
+	return col * mix(vec3(1.0), vec3(0.66, 0.6, 0.55), w);
+}
+
 // Studs on a flat surface. Each has a lighter round top, a darker ring around
 // its edge, and a small shadow on the side away from the sun. p is in metres.
 vec3 studs(vec2 p, vec3 col) {
@@ -111,7 +120,26 @@ void fragment() {
 	vec2 p = UV;
 	// It has to be rough, or the sky's reflection turns everything blue.
 	float rough = 0.8;
-	if (kind < 0.5 || kind > 4.5) {
+	float spec = mix(0.25, 0.5, wet);
+	if (kind > 5.5) {
+		// Mud, with two faint wheel ruts each side that wander a little.
+		float w;
+		col = mud(p, col, w);
+		float side = abs(p.y + 0.6 * sin(p.x * 0.045));
+		float rut = 1.0 - smoothstep(0.2, 0.55, abs(side - 2.2));
+		rut = max(rut, 1.0 - smoothstep(0.2, 0.55, abs(side - 4.6)) * 0.6);
+		col *= 1.0 - 0.15 * rut;
+		w = max(w, rut * 0.4);
+		// Rain spreads the wet patches, and it's warmed so the grey light
+		// leaves it brown.
+		w = mix(w, 1.0, wet * 0.3);
+		col *= mix(vec3(1.0), vec3(1.5, 1.15, 0.8), wet);
+		// Only a little shiny when dry, or it shows the blue sky (see the
+		// road below). Rain makes it shinier.
+		rough = mix(0.9, mix(0.8, 0.65, wet), w);
+		spec = mix(0.1, mix(0.14, 0.22, wet), w);
+		col = mix(col, SNOW, snow * 0.7 * smoothstep(0.78, 0.95, blotches(p * 0.6)));
+	} else if (kind < 0.5 || kind > 4.5) {
 		// The road is smooth 2x4 tiles, staggered, each a little different.
 		// Its white edge lines are the same tiles, painted.
 		float row = floor(p.y / 0.5);
@@ -154,7 +182,7 @@ void fragment() {
 	vec3 lamp = lamp_light(world);
 	EMISSION = col * lamp + lamp * 0.3;
 	ROUGHNESS = rough;
-	SPECULAR = mix(0.25, 0.5, wet);
+	SPECULAR = spec;
 }
 """
 
@@ -165,6 +193,8 @@ shader_type spatial;
 // It's picked as sRGB and turned linear below, like the vertex colours. (The
 // phone's renderer doesn't convert a source_color hint.)
 uniform vec4 colour = vec4(0.18, 0.48, 0.2, 1.0);
+// 1 for a mud floor, which gets wet patches like a mud road.
+uniform float mud_floor = 0.0;
 varying vec3 world;
 """ + COMMON + """
 void vertex() {
@@ -177,11 +207,20 @@ void fragment() {
 	float s = max(seam(world.x, 8.0, 0.025), seam(world.z, 8.0, 0.025));
 	col *= 1.0 - 0.3 * s;
 	col *= mix(1.0, 0.85, wet);
+	float rough = 0.9;
+	float spec = 0.2;
+	if (mud_floor > 0.5) {
+		float w;
+		col = mud(world.xz, col, w);
+		w = mix(w, 1.0, wet * 0.3);
+		rough = mix(0.9, mix(0.8, 0.65, wet), w);
+		spec = mix(0.1, mix(0.14, 0.22, wet), w);
+	}
 	col = mix(col, SNOW, snow * (0.9 + 0.08 * blotches(world.xz * 0.2)));
 	ALBEDO = col;
 	EMISSION = col * lamp_light(world) * 0.9;
-	ROUGHNESS = 0.9;
-	SPECULAR = 0.2;
+	ROUGHNESS = rough;
+	SPECULAR = spec;
 }
 """
 
