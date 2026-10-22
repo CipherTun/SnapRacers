@@ -276,7 +276,9 @@ static func heading(text: String, explanation := "") -> VBoxContainer:
 
 ## A page with its title in the top left, Back in the top right and a column
 ## underneath for what's on it. Returns that column.
-static func page(root: Control, heading_text: String, back: Callable, width := 760.0) -> VBoxContainer:
+## With `centred` the margin away from a camera hole grows to match, for a
+## column as wide as the room inside the margins (see page_room()).
+static func page(root: Control, heading_text: String, back: Callable, width := 760.0, centred := false) -> VBoxContainer:
 	root.theme = theme()
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	var bg := backdrop()
@@ -293,7 +295,7 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	# The title and Back stay clear of a camera hole.
 	var safe := SafeArea.new()
 	root.add_child(safe)
-	safe.pad(margin)
+	safe.pad(margin, centred)
 	var outer := VBoxContainer.new()
 	outer.add_theme_constant_override("separation", 12)
 	margin.add_child(outer)
@@ -321,3 +323,20 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	column.add_theme_constant_override("separation", 18)
 	centre.add_child(column)
 	return column
+
+
+## The page's margin container, for a column made by page().
+static func page_margin(column: Control) -> MarginContainer:
+	var node := column.get_parent()
+	while node != null and not node is MarginContainer:
+		node = node.get_parent()
+	return node
+
+
+## How wide a column made by page() can be inside the page's margins, which
+## grow to clear a camera hole.
+static func page_room(column: Control) -> float:
+	# The margin container's own size grows with what's in it, so this goes
+	# by the screen's.
+	var margin := page_margin(column)
+	return margin.get_viewport_rect().size.x - margin.get_theme_constant("margin_left") - margin.get_theme_constant("margin_right")

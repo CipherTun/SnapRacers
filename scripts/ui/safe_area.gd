@@ -31,6 +31,9 @@ var _watched: Array[Control] = []
 ## Margin containers that widen their margin on the side a hole's on, and
 ## their margins as they were set, [left, top, right, bottom].
 var _pads := {}
+## The margin containers that widen the opposite side to match, so what's
+## in them stays centred.
+var _mirrored := {}
 ## The panels that wrap around a hole partway down instead of getting shorter.
 var _wraps := {}
 ## The boxes that leave a gap for the hole, and which child to start from.
@@ -78,7 +81,10 @@ func moved(control: Control) -> void:
 ## Makes this margin container widen its margin on the side a hole's on,
 ## so everything in it stays clear. Next to a hole in a corner the top or
 ## bottom margin grows, and next to one partway down a side that side's does.
-func pad(margin: MarginContainer) -> void:
+## With `mirror` the opposite side grows the same when the left or right does.
+func pad(margin: MarginContainer, mirror := false) -> void:
+	if mirror:
+		_mirrored[margin] = true
 	var sides := []
 	for side in ["margin_left", "margin_top", "margin_right", "margin_bottom"]:
 		sides.append(margin.get_theme_constant(side))
@@ -215,7 +221,11 @@ func _widen(margin: MarginContainer, hole: Rect2) -> void:
 		var at_left := hole.get_center().x < rect.get_center().x
 		side = "margin_left" if at_left else "margin_right"
 		need = hole.end.x - rect.position.x if at_left else rect.end.x - hole.position.x
-	margin.add_theme_constant_override(side, maxi(margin.get_theme_constant(side), ceili(need)))
+	var wide := maxi(margin.get_theme_constant(side), ceili(need))
+	margin.add_theme_constant_override(side, wide)
+	if _mirrored.has(margin) and not corner:
+		var other := "margin_right" if side == "margin_left" else "margin_left"
+		margin.add_theme_constant_override(other, maxi(margin.get_theme_constant(other), wide))
 
 
 ## Opens a gap in a box where a hole is, or closes it with none. Each child

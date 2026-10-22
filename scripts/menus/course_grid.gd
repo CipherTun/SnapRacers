@@ -16,6 +16,7 @@ var alone := false
 var cup := ""
 
 var _grid: GridContainer
+var _column: VBoxContainer
 
 
 func _init(for_mode := Game.MODE_RACE, for_one := false, cup_id := "") -> void:
@@ -42,7 +43,8 @@ func _ready() -> void:
 		title = found.get("name", "Courses")
 		colour = Color(found.get("colour", MenuStyle.ACCENT.to_html())).lightened(0.3)
 	var width := maxf(get_viewport_rect().size.x - 80.0, 600.0)
-	var column := MenuStyle.page(self, title, go_back, width)
+	_column = MenuStyle.page(self, title, go_back, width, true)
+	var column := _column
 	_grid = GridContainer.new()
 	# Yours are as wide as a cup's four, however many there are.
 	_grid.columns = 4 if cup == YOURS else clampi(paths.size(), 1, 4)
@@ -69,7 +71,21 @@ func _ready() -> void:
 				if any_added:
 					Game.show_course_grid(mode, alone, cup)))
 		_grid.add_child(add)
+	# The margins grow to clear a camera hole, which changes the room.
+	var margin := MenuStyle.page_margin(column)
+	margin.resized.connect(_fit)
+	margin.theme_changed.connect(_fit)
+	_fit()
 	PadFocus.focus_first(self)
+
+
+## Cards share the room inside the margins evenly.
+func _fit() -> void:
+	var width := maxf(MenuStyle.page_room(_column), 600.0)
+	_column.custom_minimum_size.x = width
+	var card_width := (width - GAP * (_grid.columns - 1)) / _grid.columns
+	for card in _grid.get_children():
+		card.custom_minimum_size.x = card_width
 
 
 func _course_card(path: String, colour: Color) -> MenuCard:

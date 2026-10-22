@@ -23,6 +23,7 @@ var alone := false
 var yours := false
 
 var _grid: GridContainer
+var _column: VBoxContainer
 var _trophies := {}
 
 
@@ -35,7 +36,8 @@ func _init(for_mode := Game.MODE_GRAND_PRIX, for_one := false, your_cups := fals
 func _ready() -> void:
 	Game.cup_shown = ""
 	var title := "Your cups" if yours else _title()
-	var column := MenuStyle.page(self, title, go_back, _width())
+	_column = MenuStyle.page(self, title, go_back, _width(), true)
+	var column := _column
 	_grid = GridContainer.new()
 	_grid.add_theme_constant_override("h_separation", GAP)
 	_grid.add_theme_constant_override("v_separation", GAP)
@@ -64,7 +66,10 @@ func _ready() -> void:
 		else:
 			var mine := _card_with_words("Your courses", "The ones you've built or been sent", Game.show_course_grid.bind(mode, alone, CourseGrid.YOURS))
 			mine.set_meta("yours", true)
-	resized.connect(_fit)
+	# The margins grow to clear a camera hole, which changes the room.
+	var margin := MenuStyle.page_margin(column)
+	margin.resized.connect(_fit)
+	margin.theme_changed.connect(_fit)
 	_fit()
 	PadFocus.focus_first(self)
 
@@ -80,15 +85,19 @@ func _title() -> String:
 	return "Single race" if alone else "Pick a course"
 
 
-## The page is as wide as the screen allows.
+## The page is as wide as the margins allow.
 func _width() -> float:
-	return maxf(get_viewport_rect().size.x - 80.0, CARD_WIDTH * 2.0 + GAP)
+	var room := get_viewport_rect().size.x - 80.0
+	if _column != null:
+		room = MenuStyle.page_room(_column)
+	return maxf(room, CARD_WIDTH * 2.0 + GAP)
 
 
 ## As many cards across as fit. The game's cups go no more than half across,
 ## so they make two even rows that fill the screen.
 func _fit() -> void:
 	var room := _width()
+	_column.custom_minimum_size.x = room
 	var across := maxi(2, floori((room + GAP) / (CARD_WIDTH + GAP)))
 	if not yours:
 		across = mini(across, maxi(2, ceili(_grid.get_child_count() / 2.0)))
