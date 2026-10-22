@@ -405,6 +405,11 @@ func _lobby(everyone: Dictionary, what: Dictionary) -> void:
 ## Sets the race up here, from the host's setup, and shows it.
 @rpc("authority", "call_local", "reliable")
 func _begin(race_setup: Dictionary) -> void:
+	# A modified game or a hand-edited server file could send a course big
+	# enough to freeze everyone, so it has to pass the same check as a code.
+	if not race_setup.get("course") is Dictionary or not Sharing.buildable(CourseDesign.from_dict(race_setup.course)):
+		_end("The host's course can't be built.")
+		return
 	setup = race_setup
 	DirAccess.make_dir_recursive_absolute("user://net")
 	# Named for this copy of the game, since two copies on one computer (the

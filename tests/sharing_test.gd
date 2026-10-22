@@ -54,6 +54,8 @@ func _initialize() -> void:
 	check(Sharing.read(Sharing.code_for(odd)).has("why"), "or a piece that doesn't exist")
 	var game_course = JSON.parse_string(FileAccess.get_file_as_string(Tracks.path_of("lemon_lake")))
 	check(Sharing.game_path_of(game_course) == Tracks.path_of("lemon_lake"), "one of the game's courses is known for what it is")
+	var unbuildable: Array = Tracks.all().filter(func(id): return not Sharing.buildable(CourseDesign.from_dict(JSON.parse_string(FileAccess.get_file_as_string(Tracks.path_of(id))))))
+	check(unbuildable.is_empty(), "every one of the game's courses passes the check a host's course gets online %s" % str(unbuildable))
 
 	print("-- Adding")
 	var first := Sharing.add(back)

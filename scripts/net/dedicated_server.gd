@@ -128,7 +128,12 @@ func courses() -> Dictionary:
 	if DirAccess.dir_exists_absolute(folder):
 		for file in DirAccess.get_files_at(folder):
 			if file.ends_with(".json"):
-				out["mine_" + file.get_basename()] = folder.path_join(file)
+				var path := folder.path_join(file)
+				var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+				if data is Dictionary and Sharing.buildable(CourseDesign.from_dict(data)):
+					out["mine_" + file.get_basename()] = path
+				else:
+					printerr("Skipping %s: players couldn't build it." % path)
 	return out
 
 
@@ -140,7 +145,9 @@ func cups() -> Dictionary:
 	if DirAccess.dir_exists_absolute(folder):
 		for file in DirAccess.get_files_at(folder):
 			var mine := CupDesign.load_file(folder.path_join(file)) if file.ends_with(".json") else null
-			if mine != null and mine.problem() == "":
+			if mine != null and mine.problem() == "" and not mine.races.all(func(r): return Sharing.buildable(CourseDesign.from_dict(r.course))):
+				printerr("Skipping %s: players couldn't build one of its courses." % folder.path_join(file))
+			elif mine != null and mine.problem() == "":
 				out["mine_" + file.get_basename()] = {"name": mine.name, "courses": mine.races.map(func(r): return r.course)}
 	return out
 
