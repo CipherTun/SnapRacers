@@ -17,7 +17,7 @@ func _ready() -> void:
 	var course: String = args[0] if args.size() > 0 else "peach_pit"
 	var weather: String = args[1] if args.size() > 1 else "rain"
 	var time: String = args[2] if args.size() > 2 else "night"
-	var name: String = args[3] if args.size() > 3 else "%s_%s_%s" % [course, weather, time]
+	var name: String = args[3] if args.size() > 3 else "%s_%s_%s" % [course.get_file().get_basename(), weather, time]
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	seed(1)
@@ -29,7 +29,8 @@ func _ready() -> void:
 	Game.settings.set_value("race", "weather", weather)
 	Game.settings.set_value("race", "time", time)
 	Game.racing_alone = true
-	Game.show_race(Game.TRACKS + "/" + course + ".json")
+	# A path to a course file works too.
+	Game.show_race(course if course.contains("/") else Game.TRACKS + "/" + course + ".json")
 	var race: Race = null
 	while race == null:
 		await get_tree().process_frame

@@ -70,8 +70,12 @@ static func add_to(parent: Node, shadow_distance := 60.0, backdrop := Color.TRAN
 	sky_material.sky_horizon_color = horizon
 	sky_material.ground_horizon_color = horizon
 	# Below the horizon, which you only see from up high past the edge of the
-	# ground, fade to a soft grey instead of the default dark brown.
+	# ground, fade to a soft grey instead of the default dark brown. A sky
+	# course has nothing below, so it can give a third colour for down there.
 	sky_material.ground_bottom_color = horizon.darkened(0.3)
+	if sky_colours.size() > 2:
+		var below := Color(sky_colours[2]).lerp(Color(look.top), look.mix)
+		sky_material.ground_bottom_color = below.lerp(horizon, cloudy)
 	var sky := Sky.new()
 	sky.sky_material = sky_material
 	var env := Environment.new()

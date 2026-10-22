@@ -1,0 +1,124 @@
+{
+	"grid": 32.0,
+	"hills": 0.0,
+	"landmarks": [],
+	"laps": 3,
+	"made_by": "",
+	"name": "Sky Test",
+	"pieces": [
+		{
+			"length": 2,
+			"type": "straight"
+		},
+		{
+			"size": 2,
+			"turn": "right",
+			"type": "curve"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"type": "jump"
+		},
+		{
+			"length": 1,
+			"type": "straight",
+			"edges": "walls"
+		},
+		{
+			"size": 2,
+			"turn": "right",
+			"type": "curve"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"side": "right",
+			"type": "loop"
+		},
+		{
+			"length": 2,
+			"type": "straight"
+		},
+		{
+			"size": 2,
+			"turn": "right",
+			"type": "curve"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"type": "jump"
+		},
+		{
+			"length": 1,
+			"type": "straight",
+			"edges": "walls"
+		},
+		{
+			"size": 2,
+			"turn": "left",
+			"type": "curve"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"side": "left",
+			"type": "loop"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"size": 1,
+			"turn": "right",
+			"type": "curve",
+			"edges": "walls"
+		},
+		{
+			"size": 3,
+			"turn": "right",
+			"type": "curve"
+		},
+		{
+			"length": 3,
+			"type": "straight"
+		},
+		{
+			"length": 1,
+			"type": "straight"
+		},
+		{
+			"size": 2,
+			"turn": "right",
+			"type": "curve"
+		},
+		{
+			"size": 2,
+			"turn": "left",
+			"type": "curve"
+		},
+		{
+			"length": 3,
+			"type": "straight"
+		}
+	],
+	"start": [
+		0.0,
+		0.0,
+		-96.0,
+		0
+	],
+	"theme": "sky",
+	"width": 13.0,
+	"about": "A test course up in the sky, with two jumps, two loops and open edges."
+}

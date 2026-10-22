@@ -28,7 +28,8 @@ func _ready() -> void:
 		if arg.begins_with("weather=") or arg.begins_with("time="):
 			var parts: PackedStringArray = arg.split("=")
 			Game.settings.set_value("race", parts[0], parts[1])
-	Game.show_race(Game.TRACKS + "/" + course + ".json")
+	# A path to a course file works too.
+	Game.show_race(course if course.contains("/") else Game.TRACKS + "/" + course + ".json")
 	var race: Race = null
 	while race == null:
 		await get_tree().process_frame

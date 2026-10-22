@@ -12,7 +12,9 @@ extends Node
 ## races for ten seconds as fast as it can and says how many frames a second
 ## it drew. With weather= and time= after the course, like -- peach_pit
 ## weather=rain time=dusk, it races in those (see Conditions) and only takes
-## the picture of the start, named after them.
+## the picture of the start, named after them. The course can be a path to a
+## course file instead, like -- res://tests/data/sky_test.json. A course up
+## in the sky also gets pictures from high up and from below.
 
 const OUT := "res://build/shots"
 
@@ -28,6 +30,8 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if not args.is_empty():
 		which = args[0]
+	var path := which if which.contains("/") else Game.TRACKS + "/" + which + ".json"
+	which = which.get_file().get_basename()
 	var looks := ""
 	Game.settings.set_value("race", "weather", Conditions.RANDOM)
 	Game.settings.set_value("race", "time", Conditions.RANDOM)
@@ -43,10 +47,10 @@ func _ready() -> void:
 	var spot := float(args[2]) if args.size() > 2 and args[1] == "at" else -1.0
 	if split != "":
 		Game.settings.set_value("race", "split", Game.SIDE_BY_SIDE if split == "side" else Game.FACE_TO_FACE)
-		Game.start_race(Game.TRACKS + "/" + which + ".json")
+		Game.start_race(path)
 	else:
 		Game.settings.set_value("race", "split", Game.SOLO)
-		Game.show_race(Game.TRACKS + "/" + which + ".json")
+		Game.show_race(path)
 	while race == null:
 		await get_tree().process_frame
 		for child in host.get_children():
@@ -82,6 +86,8 @@ func _ready() -> void:
 			var kart := race.player.kart
 			var eye := kart.global_transform * Vector3(1.5, 1.4, -7.0)
 			await with_camera(Transform3D(Basis.IDENTITY, eye).looking_at(kart.global_transform * Vector3(0.0, 0.3, -1.5), Vector3.UP), "front" + looks)
+		if Scenery.theme_named(race.track.theme).get("void", false):
+			await sky_views(looks)
 		get_tree().quit()
 		return
 	await shot("pack")
@@ -89,7 +95,26 @@ func _ready() -> void:
 	await on_grass()
 	await on_kerb()
 	await tire_stacks()
+	if Scenery.theme_named(race.track.theme).get("void", false):
+		await sky_views()
 	get_tree().quit()
+
+
+## A course up in the sky from high off to one side, so you see the islands
+## and clouds below it, and from under the road looking up and out.
+func sky_views(looks := "") -> void:
+	var t := race.track
+	var bounds := AABB(t.points[0], Vector3.ZERO)
+	for p in t.points:
+		bounds = bounds.expand(p)
+	var centre := bounds.get_center()
+	var reach := maxf(bounds.size.x, bounds.size.z)
+	var eye := centre + Vector3(reach * 0.4, reach * 0.22, reach * 0.4)
+	await with_camera(Transform3D(Basis.IDENTITY, eye).looking_at(centre + Vector3.DOWN * 20.0, Vector3.UP), "sky_high" + looks)
+	for offset in [t.length * 0.3, t.length * 0.7]:
+		var road := t.point_at(offset)
+		var under := road + t.right_at(offset) * 50.0 + Vector3.DOWN * 30.0
+		await with_camera(Transform3D(Basis.IDENTITY, under).looking_at(road + Vector3.DOWN * 8.0, Vector3.UP), "sky_below_%d%s" % [roundi(offset), looks])
 
 
 ## Puts the player's kart here going at `speed`, and tells the race where it

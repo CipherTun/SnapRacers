@@ -176,6 +176,14 @@ func cone(bottom: Vector3, radius: float, height: float, colour: Color, surface 
 	cones.append([where.scaled_local(Vector3(radius * 2.0, height, radius * 2.0)), colour, surface, _group, far])
 
 
+## A cone along `basis`'s Y, centred on `centre`, like one hanging point down.
+func turned_cone(centre: Vector3, radius: float, height: float, basis: Basis, colour: Color, surface := BRICK) -> void:
+	var where := Transform3D(basis, centre).scaled_local(Vector3(radius * 2.0, height, radius * 2.0))
+	if _add("cones", where, colour, surface):
+		return
+	cones.append([where, colour, surface, _group, far])
+
+
 ## Adds everything collected so far to `parent`, with the solid parts, all
 ## ready to break (see WorldDamage).
 func build(parent: Node3D) -> WorldDamage:

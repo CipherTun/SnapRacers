@@ -619,7 +619,20 @@ func _clear_spot(racer: Racer) -> Transform3D:
 		if to_rails < LevelCrossing.STOP_BACK * 2.0 and (crossing.timetable.blocked(t, 4.0) or crossing.timetable.lights_on(t)):
 			start = crossing.offset - LevelCrossing.STOP_BACK
 	racer.kart.run_up_reset = backed
-	for back in [0.0, 5.0, 10.0, 15.0, 20.0]:
+	var backs := [0.0, 5.0, 10.0, 15.0, 20.0]
+	# Up in the sky there's nothing in a jump's gap to land on, and a kart put
+	# back on the kicker with no speed only rolls in again, so it goes on past
+	# the gap to the landing instead, and looks further on for room.
+	if Scenery.theme_named(track.theme).get("void", false):
+		var ahead := 0.0
+		while ahead < 40.0 and track.solid_at(start + ahead):
+			ahead += 1.0
+		if ahead < 40.0:
+			while not track.solid_at(start + ahead) and ahead < 200.0:
+				ahead += 1.0
+			start += ahead + 6.0
+			backs = [0.0, -5.0, -10.0, -15.0, -20.0]
+	for back in backs:
 		for side in across:
 			var spot := track.place_at(start - back)
 			spot.origin += spot.basis.x * side

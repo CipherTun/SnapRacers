@@ -44,6 +44,10 @@ const BARRIER_STEP := 4.0
 const INDOOR_RUNOFF := 3.0
 const HALL_MARGIN := 40.0
 const HALL_HEIGHT := 12.0
+## Up in the sky, how many islands go around the road at most, and clouds
+## below it.
+const SKY_ISLANDS := 40
+const SKY_CLOUDS := 40
 ## How far the shore is past the furthest road on the sea's side, how wide
 ## the beach is, and how far out the sea goes.
 const SHORE := 55.0
@@ -62,6 +66,8 @@ const LAMP_EVERY := 20.0
 ## course with a sandy beach, a pier and boats. "floor" is what you drive on
 ## beside the road (grass, sand, snow, dirt, mud, hall). An indoor theme also has
 ## the colour behind everything, and the colours of the hall and its lights.
+## A theme up in the sky has "void": there's no ground, and floating islands
+## and clouds go under and around the road instead (see _sky_islands()).
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -263,6 +269,12 @@ const THEMES := {
 		"landmarks": ["red_roof", "skyscraper", "dune", "dune"],
 		"fillers": {"palm": 4, "dune": 1, "cactus": 1, "rocks": 1},
 	},
+	"sky": {
+		"ground": "#4b9f4a", "curbs": ["#0d69ab", "#f2f3f2"], "wall": "#f2f3f2",
+		"sky": ["#3c8fe0", "#d6ecfa", "#a7d2f0"], "void": true,
+		"landmarks": [],
+		"fillers": {},
+	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
 		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
@@ -301,6 +313,8 @@ var _hall := Rect2()
 ## unless the track builder says otherwise.
 var ground: Callable = func(_x: float, _z: float) -> float: return 0.0
 var _hash := {} # 16 m cell -> track sample indices
+## Whether the theme has no ground, with everything floating on islands.
+var _floating := false
 
 
 static func theme_named(id: String) -> Dictionary:
@@ -310,6 +324,7 @@ static func theme_named(id: String) -> Dictionary:
 func _init(path: TrackPath, theme_id: String) -> void:
 	track = path
 	theme = theme_named(theme_id)
+	_floating = theme.get("void", false)
 	_rng.seed = hash(track.name)
 
 
@@ -324,7 +339,8 @@ func _ready() -> void:
 		_plan_sea()
 	if not only_landmarks:
 		_trackside()
-		_under_jumps()
+		if not _floating:
+			_under_jumps()
 	# Landmarks put down by hand go exactly where they were put. Without any,
 	# the theme places its own where you'll see them.
 	for mark in track.landmarks:
@@ -338,6 +354,8 @@ func _ready() -> void:
 			_place_landmark(lm)
 	if not only_landmarks:
 		_fill()
+		if _floating:
+			_sky_islands()
 		if indoor:
 			_build_hall()
 	if _sea.size != Vector2.ZERO:
@@ -500,7 +518,9 @@ func _add(prop: String, at: Vector3, facing := -1) -> void:
 # Along the road.
 
 func _trackside() -> void:
-	_tire_lines()
+	# Up in the sky there's nothing to cut across on, so no tire stacks.
+	if not _floating:
+		_tire_lines()
 	if theme.get("indoor", false):
 		_barrier_lines()
 	else:
@@ -519,7 +539,8 @@ func _trackside() -> void:
 		# How much the road turns over 8 m, positive turning left. Over 0.2 is
 		# a proper corner (tighter than about 40 m), not a gentle slant.
 		var turn := behind.cross(ahead).y
-		var flat_ground := p.y < 0.6 and track.ups[k].y > 0.95 and track.solids[k] and not track.stickies[k]
+		# Nothing for marshals and billboards to stand on up in the sky.
+		var flat_ground := p.y < 0.6 and track.ups[k].y > 0.95 and track.solids[k] and not track.stickies[k] and not _floating
 		if absf(turn) > 0.2 and flat_ground:
 			straight_run = 0.0
 			# The outside of a left turn is on the right, and the other way
@@ -574,6 +595,7 @@ func _lamp_posts() -> void:
 			_kit.begin("lamp_post", true)
 			lamps.append(Props.lamp_post(_kit, post, _facing_for(p - post)))
 			_kit.done()
+			_pad(post, 3.5)
 			_placed.append([post, 1.0])
 			next = d + LAMP_EVERY
 			side = -side
@@ -843,6 +865,100 @@ func _between(k: int, side: float, edge: float) -> Vector3:
 	return at
 
 
+## A small island for something beside the road to stand on, up in the sky.
+func _pad(top: Vector3, radius: float) -> void:
+	if _floating:
+		_island(top, radius, 0, false)
+
+
+## A floating island, with nothing solid in it (see Props.floating_island()).
+func _island(top: Vector3, radius: float, trees: int, waterfall: bool) -> void:
+	var solid := _kit.solids.size()
+	Props.floating_island(_kit, top, radius, _rng, trees, waterfall)
+	_kit.solids.resize(solid)
+
+
+## Floating islands for a theme with no ground: big ones well below the road
+## every so often, more all around at all heights, and clouds below it all.
+## Near the road they sit well down, so a kart that goes off is put back
+## before it could land on one. Ones well away from the road drop out in the
+## distance and on lower graphics like the trees do.
+func _sky_islands() -> void:
+	var lowest := INF
+	# How high the road is at each point seen from above, the lowest where it
+	# passes over itself, to look up from the distance map.
+	var heights := {}
+	for p in track.points:
+		lowest = minf(lowest, p.y)
+		var flat := Vector2(p.x, p.z)
+		heights[flat] = minf(heights.get(flat, INF), p.y)
+	var islands: Array = [] # [top, radius]
+	var room := func(top: Vector3, radius: float) -> bool:
+		for other in islands:
+			if Vector2(other[0].x - top.x, other[0].z - top.z).length() < other[1] + radius + 6.0 and absf(other[0].y - top.y) < radius + other[1]:
+				return false
+		for spot in _placed:
+			if Vector2(spot[0].x - top.x, spot[0].z - top.z).length() < spot[1] + radius + 2.0 and top.y > spot[0].y - 25.0:
+				return false
+		return true
+	# Under the road.
+	var next := 0.0
+	for k in track.points.size():
+		if track.distances[k] < next or track.stickies[k] or track.ups[k].y < 0.9:
+			continue
+		var p := track.points[k]
+		var radius := _rng.randf_range(10.0, 16.0)
+		var top := p + track.rights[k] * _rng.randf_range(-8.0, 8.0) + Vector3.DOWN * _rng.randf_range(18.0, 30.0)
+		if room.call(top, radius):
+			islands.append([top, radius])
+			_island(top, radius, 1 + _rng.randi() % 3, _rng.randf() < 0.4)
+		next = track.distances[k] + _rng.randf_range(80.0, 120.0)
+	# All around, nearer ones lower down.
+	var cells := []
+	for i in _dist.size():
+		if _dist[i] > _road_clear and _dist[i] < REACH:
+			cells.append(i)
+	for i in range(cells.size() - 1, 0, -1):
+		var j := _rng.randi() % (i + 1)
+		var t = cells[i]
+		cells[i] = cells[j]
+		cells[j] = t
+	var around := 0
+	for i in cells:
+		if around >= SKY_ISLANDS:
+			break
+		var d := _dist[i]
+		var radius := _rng.randf_range(5.0, 9.0) + d * 0.08
+		var c := _centre(i % _cols, i / _cols)
+		var road: float = heights.get(_near[i], lowest)
+		var gap := d - radius - track.width * 0.5
+		var top := Vector3(c.x, road - _rng.randf_range(12.0, 24.0), c.y)
+		if gap > 30.0:
+			top.y = road + _rng.randf_range(-24.0, 10.0)
+		if gap < 0.0 or not room.call(top, radius):
+			continue
+		islands.append([top, radius])
+		around += 1
+		_kit.far = gap > 30.0
+		var trees := 0 if radius < 6.5 else 1 + _rng.randi() % 3
+		var waterfall := radius > 8.0 and _rng.randf() < 0.35
+		if _kit.far and not Graphics.draws_far(top):
+			var kept := _kit
+			_kit = SceneryKit.new()
+			_island(top, radius, trees, waterfall)
+			_kit = kept
+		else:
+			_island(top, radius, trees, waterfall)
+	# Clouds below, spread across the whole course. They stay in the
+	# distance, since you look down on them from all over.
+	_kit.far = false
+	var span := Vector2(_cols, _rows) * CELL
+	var count := clampi(int(span.x * span.y / 5000.0), 12, SKY_CLOUDS)
+	for n in count:
+		var at := Vector3(_origin.x + _rng.randf() * span.x, lowest - _rng.randf_range(40.0, 60.0), _origin.y + _rng.randf() * span.y)
+		Props.cloud(_kit, at, _rng.randf_range(18.0, 36.0), _rng)
+
+
 ## Something nasty in the gap of every jump: lava by the volcano, and water
 ## everywhere else.
 func _under_jumps() -> void:
@@ -888,8 +1004,11 @@ func _start_area(edge: float) -> void:
 		else:
 			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side))
 		_kit.done()
+		_pad(front + right * side * 8.0 + Vector3.DOWN * 0.1, 17.0)
 		_placed.append([front + right * side * 3.5, 17.0])
 		built += 1
+	if _floating:
+		return
 	for k in 4:
 		for side in [-1.0, 1.0]:
 			var at: Vector3 = frame.origin + fwd * (18.0 + k * 6.0) + right * side * (edge + 1.5)

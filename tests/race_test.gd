@@ -40,7 +40,8 @@ func _ready() -> void:
 		Game.settings.set_value("race", "weather", OS.get_cmdline_user_args()[1])
 	# One player, whatever was last picked, without saving over it.
 	Game.settings.set_value("race", "split", Game.SOLO)
-	var path := Game.TRACKS + "/" + which + ".json"
+	# A path to a course file works too, like -- res://tests/data/sky_test.json.
+	var path := which if which.contains("/") else Game.TRACKS + "/" + which + ".json"
 	if which == "built":
 		# A course built the way the track editor builds one: some pieces, then
 		# Close it up to finish it off.

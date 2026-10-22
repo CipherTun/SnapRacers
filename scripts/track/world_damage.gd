@@ -223,15 +223,19 @@ func _cell_draw(kind: String, indices: Array, origin: Vector3, far: bool) -> Mul
 		draw.visibility_range_end = FAR_RANGE
 		draw.visibility_range_end_margin = FAR_MARGIN
 	var multi: MultiMesh = draw.multimesh
+	var bounds := AABB(Vector3(-CELL * 0.5 - 8.0, -4.0, -CELL * 0.5 - 8.0), Vector3(CELL + 16.0, 40.0, CELL + 16.0))
 	for n in indices.size():
 		var i: int = indices[n]
 		var inst: Array = _instances[kind][i]
 		var world: Transform3D = inst[0]
-		_place(multi, n, Transform3D(world.basis, world.origin - origin), inst[1], inst[2])
+		var here := Transform3D(world.basis, world.origin - origin)
+		_place(multi, n, here, inst[1], inst[2])
 		_slot[kind][i] = { "multi": multi, "index": n, "origin": origin }
+		# Anything well above or below, like islands and clouds in the sky.
+		if here.origin.y < 0.0 or here.origin.y > 30.0:
+			bounds = bounds.merge(here * AABB(Vector3.ONE * -0.5, Vector3.ONE))
 	# After the instances, or Compatibility leaves the AABB empty and every
 	# cell is drawn, vis range or not.
-	var bounds := AABB(Vector3(-CELL * 0.5 - 8.0, -4.0, -CELL * 0.5 - 8.0), Vector3(CELL + 16.0, 40.0, CELL + 16.0))
 	draw.custom_aabb = bounds
 	multi.custom_aabb = bounds
 	return draw

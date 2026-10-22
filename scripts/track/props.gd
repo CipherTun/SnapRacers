@@ -682,6 +682,70 @@ static func stone_bridge(kit: SceneryKit, at: Vector3, facing: int) -> void:
 		_box(kit, at, Vector3(0.0, 5.6, z), Vector3(30.0, 0.9, 0.4), facing, TAN, SceneryKit.BRICK, false)
 
 
+## A floating island of rock with a grass top at `top`, about `radius`
+## across. Its rock narrows in steps to a point underneath. Bigger ones can
+## have trees, and a stream that pours off the edge. None of it is solid.
+static func floating_island(kit: SceneryKit, top: Vector3, radius: float, rng: RandomNumberGenerator, trees: int, waterfall: bool) -> void:
+	var grass: Color = [BRIGHT_GREEN, GREEN, LIME][rng.randi() % 3]
+	var turf := clampf(radius * 0.1, 0.4, 0.8)
+	var soil := clampf(radius * 0.12, 0.5, 1.2)
+	kit.cylinder(top - Vector3.UP * turf, radius, turf, grass, SceneryKit.BRICK)
+	kit.cylinder(top - Vector3.UP * (turf + soil), radius * 0.97, soil, BROWN, SceneryKit.BRICK)
+	# Rock in steps, each a bit narrower and nudged to one side so it looks
+	# lumpy, then a point.
+	var y := top.y - turf - soil
+	var middle := Vector3(top.x, 0.0, top.z)
+	var r := radius * 0.9
+	for k in 3:
+		var h := radius * (0.32 - k * 0.04) + 0.3
+		middle += Vector3(rng.randf_range(-1.0, 1.0), 0.0, rng.randf_range(-1.0, 1.0)) * radius * 0.06
+		kit.cylinder(Vector3(middle.x, y - h, middle.z), r, h, [DARK_TAN, LIGHT_GREY, DARK_GREY][k], SceneryKit.BRICK)
+		y -= h
+		r *= 0.68
+	var point := radius * 0.55 + 1.0
+	kit.turned_cone(Vector3(middle.x, y - point * 0.5, middle.z), r * 1.3, point, Basis(Vector3.RIGHT, PI), DARK_GREY)
+	# A couple of boulders sticking out of the sides.
+	for k in 2:
+		var a := rng.randf() * TAU
+		var size := radius * rng.randf_range(0.25, 0.4)
+		var out := Vector3(cos(a), 0.0, sin(a)) * radius * 0.7
+		var tilt := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, rng.randf_range(0.3, 0.7))
+		kit.turned_box(top + out - Vector3.UP * (turf + soil + size * 0.7), Vector3.ONE * size, tilt, LIGHT_GREY if k == 0 else DARK_TAN, SceneryKit.BRICK)
+	for k in trees:
+		var a := rng.randf() * TAU
+		var spot := top + Vector3(cos(a), 0.0, sin(a)) * radius * rng.randf_range(0.1, 0.6)
+		if rng.randf() < 0.5:
+			pine(kit, spot, rng, false)
+		else:
+			broadleaf(kit, spot, rng, [GREEN, BRIGHT_GREEN][rng.randi() % 2])
+	if waterfall:
+		# A stream across the top to the edge, then down the side and on down
+		# past the bottom until it thins out.
+		var a := rng.randf() * TAU
+		var out := Vector3(cos(a), 0.0, sin(a))
+		var facing := Basis(Vector3.UP, atan2(out.x, out.z))
+		kit.turned_box(top + out * radius * 0.5 + Vector3.UP * 0.03, Vector3(1.6, 0.1, radius), facing, WATER, SceneryKit.WATER)
+		var fall := radius * 1.6 + 6.0
+		var wide := clampf(radius * 0.22, 1.8, 3.5)
+		kit.turned_box(top + out * (radius + 0.4) - Vector3.UP * fall * 0.5, Vector3(wide, fall, 0.5), facing, WATER.lightened(0.25), SceneryKit.WATER)
+		kit.turned_box(top + out * (radius + 0.6) - Vector3.UP * (fall + 4.0), Vector3(wide * 0.7, 8.0, 0.3), facing, WATER.lightened(0.5), SceneryKit.WATER)
+		# Spray where it comes over the edge.
+		kit.turned_box(top + out * (radius + 0.6) - Vector3.UP * 0.3, Vector3(wide + 0.6, 0.8, 1.0), facing, WHITE, SceneryKit.PLAIN)
+
+
+## A puffy cloud of flat round white blobs, about `size` across, centred on
+## `at`.
+static func cloud(kit: SceneryKit, at: Vector3, size: float, rng: RandomNumberGenerator) -> void:
+	var blobs := 3 + rng.randi() % 3
+	for k in blobs:
+		var r := size * rng.randf_range(0.25, 0.45)
+		var off := Vector3(rng.randf_range(-0.5, 0.5) * size, 0.0, rng.randf_range(-0.3, 0.3) * size)
+		var h := r * rng.randf_range(0.35, 0.5)
+		kit.cylinder(at + off - Vector3.UP * h * 0.5, r, h, WHITE, SceneryKit.PLAIN)
+		# A smaller puff on top, so it rounds off.
+		kit.cylinder(at + off + Vector3.UP * h * 0.5, r * 0.65, h * 0.6, WHITE, SceneryKit.PLAIN)
+
+
 static func lighthouse(kit: SceneryKit, at: Vector3) -> void:
 	for k in 6:
 		kit.cylinder(at + Vector3.UP * k * 2.4, 2.0 - k * 0.12, 2.4, RED if k % 2 == 0 else WHITE, SceneryKit.BRICK, k == 0)

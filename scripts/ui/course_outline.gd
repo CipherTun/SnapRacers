@@ -132,8 +132,9 @@ static func describe(track: TrackPath) -> String:
 	var things := []
 	var has := func(what: Callable) -> bool:
 		return track.pieces.any(what)
-	if has.call(func(p): return p.type == "loop"):
-		things.append("a loop")
+	var loops := track.pieces.filter(func(p): return p.type == "loop").size()
+	if loops > 0:
+		things.append("a loop" if loops == 1 else "two loops" if loops == 2 else "%d loops" % loops)
 	if has.call(func(p): return p.type == "corkscrew"):
 		things.append("a corkscrew")
 	if has.call(func(p): return p.type == "curve" and p.sticky):

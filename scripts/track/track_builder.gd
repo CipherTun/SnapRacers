@@ -184,6 +184,9 @@ func ground_at(x: float, z: float) -> float:
 
 
 func _add_grass() -> void:
+	# A sky course floats, with nothing under it.
+	if _theme.get("void", false):
+		return
 	if track.hills > 0.0:
 		terrain = Terrain.new(track, Scenery.REACH + 45.0)
 		add_child(terrain)
@@ -625,6 +628,8 @@ func _add_kerb(run: Array, side: int) -> void:
 ## Pillars under raised road, one every so often, but never standing on
 ## another bit of road.
 func _add_pillars() -> void:
+	if _theme.get("void", false):
+		return
 	var body := StaticBody3D.new()
 	body.collision_layer = Kart.LAYER_WORLD
 	add_child(body)
