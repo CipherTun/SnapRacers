@@ -503,6 +503,13 @@ func kart_event(slot: int, kind: String, data: Variant) -> void:
 		race.got_event(multiplayer.get_remote_sender_id(), slot, kind, data)
 
 
+## How far the weather's built up, from a host that drives no kart.
+@rpc("authority", "unreliable_ordered")
+func build_up(steps: int) -> void:
+	if race != null:
+		race.got_build_up(steps)
+
+
 ## A kart's finished, by the host's clock, so everyone agrees on the order.
 @rpc("authority", "reliable")
 func finished(slot: int, time: float) -> void:

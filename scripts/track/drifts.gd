@@ -17,6 +17,9 @@ const DEEP := 0.5
 const AT_EDGE := 0.6
 const OVER_EDGE := 0.5
 const SNOW := Color("#eef3f8")
+## The colour at a drift's rim, shading up to SNOW on top.
+const RIM := Color("#8d9db3")
+const POWDER := Color("#dfe7f0")
 ## For the AI: one at least this deep is worth going round.
 const AVOID_DEPTH := 0.45
 
@@ -101,7 +104,8 @@ func _worth_avoiding(i: int) -> bool:
 
 func _mesh() -> Mesh:
 	if _dome == null:
-		# A low dome one across and one high, a little lumpy at the rim.
+		# A low dome one across and one high, blue-grey at the rim and white
+		# on top, so it shows against the road and the snow beside it.
 		var tool := SurfaceTool.new()
 		tool.begin(Mesh.PRIMITIVE_TRIANGLES)
 		var sides := 12
@@ -111,17 +115,25 @@ func _mesh() -> Mesh:
 			var r := 0.5 * sin((1.0 - t) * PI * 0.5)
 			var a := TAU * side / sides
 			return Vector3(cos(a) * r, sin(t * PI * 0.5), sin(a) * r)
+		var shade := func(ring: int) -> Color:
+			return RIM.lerp(Color.WHITE, minf(float(ring) / 2.0, 1.0))
 		for ring in rings:
 			for side in sides:
 				var a: Vector3 = point.call(ring, side)
 				var b: Vector3 = point.call(ring, side + 1)
 				var c: Vector3 = point.call(ring + 1, side + 1)
 				var d: Vector3 = point.call(ring + 1, side)
+				var low: Color = shade.call(ring)
+				var high: Color = shade.call(ring + 1)
+				tool.set_color(low)
 				tool.add_vertex(a)
 				tool.add_vertex(b)
+				tool.set_color(high)
 				tool.add_vertex(c)
 				if ring < rings - 1:
+					tool.set_color(low)
 					tool.add_vertex(a)
+					tool.set_color(high)
 					tool.add_vertex(c)
 					tool.add_vertex(d)
 		tool.generate_normals()
@@ -134,7 +146,7 @@ func _colour() -> Color:
 
 
 func _surface() -> int:
-	return SceneryKit.PLAIN
+	return SceneryKit.DRIFT
 
 
 func _shape(i: int, flat: Basis, radius: float) -> Basis:
@@ -206,8 +218,8 @@ func _process(delta: float) -> void:
 	for n in _puffs.size():
 		var puff: Array = _puffs[n]
 		var t: float = puff[2] / PUFF_LIFE
-		_powder.set_instance_custom_data(n, Color(puff[0].x, puff[0].y, puff[0].z, lerpf(0.4, 1.3, t)))
-		_powder.set_instance_color(n, Color(1.0, 1.0, 1.0, 0.8 * (1.0 - t)))
+		_powder.set_instance_custom_data(n, Color(puff[0].x, puff[0].y, puff[0].z, lerpf(0.5, 1.6, t)))
+		_powder.set_instance_color(n, Color(POWDER, 1.0 - t * t))
 	_powder.visible_instance_count = _puffs.size()
 
 

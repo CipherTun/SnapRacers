@@ -111,14 +111,19 @@ func _physics_process(delta: float) -> void:
 	_send_in -= delta
 	if _send_in <= 0.0:
 		_send_in = SEND_EVERY_BLUETOOTH if _slow else SEND_EVERY
+		# A host that drives no kart, like a dedicated server, still says how
+		# far the weather's built up.
+		if session.is_host() and not owners.values().has(HOST):
+			session.build_up.rpc(Puddles.steps_of(race.build_up))
 		for slot in racers:
 			if owners[slot] == session.my_id() and is_instance_valid(racers[slot].kart):
 				var state: PackedFloat32Array = racers[slot].kart.net_state()
 				# The host's train clock rides along (see Race.train_clock),
-				# and how far the weather's built up (see Race.build_up).
+				# and how far the weather's built up in STEPs (see
+				# Race.build_up), a whole number so it comes through exactly.
 				if session.is_host():
 					state.append(race.train_clock.now)
-					state.append(race.build_up)
+					state.append(Puddles.steps_of(race.build_up))
 				session.kart_state.rpc(slot, state)
 	for slot in _updates:
 		_show(slot)
@@ -138,17 +143,17 @@ func got_state(sender: int, slot: int, state: PackedFloat32Array) -> void:
 	if sender == HOST and state.size() > 12 and not session.is_host():
 		race.train_clock.from_host(state[12], _lag())
 		if state.size() > 13:
-			race.build_up = maxf(race.build_up, clampf(state[13], 0.0, 1.0))
+			got_build_up(int(state[13]))
 	var list: Array = _updates[slot]
 	list.append([_clock, state])
 	while list.size() > 8:
 		list.pop_front()
 
 
-## Whether the host drives any kart, so its updates bring its clock and
-## build-up. If not, each device works the build-up out for itself.
-func host_sends() -> bool:
-	return owners.values().has(HOST)
+## How far the host says the weather's built up, in Puddles.STEPs.
+func got_build_up(steps: int) -> void:
+	if not session.is_host():
+		race.build_up = maxf(race.build_up, Puddles.from_steps(clampi(steps, 0, Puddles.steps_of(1.0))))
 
 
 ## Half the round trip to the host in seconds, where the connection knows it,

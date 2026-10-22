@@ -98,9 +98,10 @@ var new_records := [false, false]
 var time := -COUNTDOWN
 ## The trains' clock, which online follows the host's.
 var train_clock := TrainClock.new(-COUNTDOWN)
-## How far the puddles or snow drifts have built up, from 0 to 1 (see
-## Puddles.grow()). It goes by how far the leader's got through the race and
-## never goes back. Online every device takes the host's.
+## How far the puddles or snow drifts have built up, from 0 to 1, in whole
+## Puddles.STEPs (see Puddles.grow()). It goes by how far the leader's got
+## through the race and never goes back. Online every device takes the
+## host's.
 var build_up := 0.0
 var started := false
 
@@ -594,8 +595,8 @@ func _physics_process(delta: float) -> void:
 				racer.hud.flash("Back on the track")
 
 	if builder.puddles != null or builder.drifts != null:
-		if net == null or net.session.is_host() or not net.host_sends():
-			build_up = maxf(build_up, race_share())
+		if net == null or net.session.is_host():
+			build_up = maxf(build_up, Puddles.stepped(race_share()))
 		if builder.puddles != null:
 			builder.puddles.grow(build_up)
 		if builder.drifts != null:

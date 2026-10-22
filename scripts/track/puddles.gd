@@ -24,7 +24,7 @@ const EDGE := 1.5
 const NOT_ON := ["ramp", "jump", "loop", "corkscrew", "wallride", "bank"]
 ## For looking them up quickly, a grid of squares this big.
 const CELL := 4.0
-const WATER := Color("#1c242c")
+const WATER := Color("#0d1116")
 ## Where in the race (0 at the start, 1 at the end) each one starts to grow,
 ## and how much of the race it takes to get to full size. A few have started
 ## before GO, so there's a little water from the start, and all are full by
@@ -65,6 +65,9 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 	var sizes := _sizes()
 	var count := roundi(track.length / 100.0 * lerpf(_per_100m()[0], _per_100m()[1], amount))
 	var placed: Array = []
+	# Where each placed one's middle is on the grid, for the spacing check.
+	var near := {}
+	var reach: float = sizes[1] * 0.5
 	var tries := 0
 	while placed.size() < count and tries < count * 20:
 		tries += 1
@@ -76,8 +79,12 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 		var across := _across(rng, radius, track)
 		var start := rng.randf_range(STARTS[0], STARTS[1])
 		var middle := track.point_at(offset) + track.right_at(offset) * across
-		if placed.any(func(s: Array) -> bool: return s[0].distance_to(middle) < (s[1] + radius) * _spacing()):
+		if _crowded(near, placed, middle, radius, reach):
 			continue
+		var key := _cell(middle)
+		if not near.has(key):
+			near[key] = []
+		near[key].append(placed.size())
 		placed.append([middle, radius, start])
 	# In the order they start, so the ones drawn are always the first few.
 	placed.sort_custom(func(a: Array, b: Array) -> bool: return a[2] < b[2])
@@ -87,11 +94,24 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 	_draw()
 
 
+## Whether one this big here would be too close to one already placed. `near`
+## has where their middles are on the grid, and none is bigger than `reach`.
+func _crowded(near: Dictionary, placed: Array, middle: Vector3, radius: float, reach: float) -> bool:
+	var low := _cell(middle - Vector3.ONE * (radius + reach))
+	var high := _cell(middle + Vector3.ONE * (radius + reach))
+	for x in range(low.x, high.x + 1):
+		for z in range(low.y, high.y + 1):
+			for j in near.get(Vector2i(x, z), []):
+				if placed[j][0].distance_to(middle) < (placed[j][1] + radius) * _spacing():
+					return true
+	return false
+
+
 ## Puts one here, this big when full, starting to grow at `start`. Tests
 ## make their own this way, already full size.
 func add(middle: Vector3, radius: float, start := -1.0) -> void:
 	spots.append([middle, radius, start])
-	radius_now.append(radius * growth(spots.size() - 1))
+	radius_now.append(_size_now(spots.size() - 1))
 	_drawn.append(0.0)
 	var low := _cell(middle - Vector3(radius, 0.0, radius))
 	var high := _cell(middle + Vector3(radius, 0.0, radius))
@@ -107,10 +127,10 @@ func add(middle: Vector3, radius: float, start := -1.0) -> void:
 ## and goes in STEPs, so any device given the same progress has exactly the
 ## same puddles.
 func grow(progress: float) -> void:
-	var stepped := floorf(clampf(progress, 0.0, 1.0) / STEP + 0.0001) * STEP
-	if stepped <= level:
+	var now := stepped(progress)
+	if now <= level:
 		return
-	level = stepped
+	level = now
 	_level_sizes()
 	if _multi == null:
 		return
@@ -125,6 +145,20 @@ func grow(progress: float) -> void:
 		for i in shown:
 			_place(i)
 		_multi.visible_instance_count = shown
+
+
+## Progress rounded down to a STEP. Online it goes as a whole number of
+## STEPs (see steps_of()), and comes back exactly the same.
+static func stepped(progress: float) -> float:
+	return from_steps(steps_of(progress))
+
+
+static func steps_of(progress: float) -> int:
+	return floori(clampf(progress, 0.0, 1.0) / STEP + 0.0001)
+
+
+static func from_steps(steps: int) -> float:
+	return steps * STEP
 
 
 ## How grown this one is now, from 0 (not started) to 1 (full size).
@@ -149,12 +183,16 @@ func factor_at(point: Vector3) -> float:
 
 ## Whether one big enough to go round is within `margin` of this point.
 func in_the_way(point: Vector3, margin: float) -> bool:
-	for i in _cells.get(_cell(point), []):
-		if not _worth_avoiding(i):
-			continue
-		var middle: Vector3 = spots[i][0]
-		if Vector2(point.x - middle.x, point.z - middle.z).length() < radius_now[i] + margin and absf(point.y - middle.y) < 2.0:
-			return true
+	var low := _cell(point - Vector3.ONE * margin)
+	var high := _cell(point + Vector3.ONE * margin)
+	for x in range(low.x, high.x + 1):
+		for z in range(low.y, high.y + 1):
+			for i in _cells.get(Vector2i(x, z), []):
+				if not _worth_avoiding(i):
+					continue
+				var middle: Vector3 = spots[i][0]
+				if Vector2(point.x - middle.x, point.z - middle.z).length() < radius_now[i] + margin and absf(point.y - middle.y) < 2.0:
+					return true
 	return false
 
 
@@ -191,8 +229,14 @@ func _across(rng: RandomNumberGenerator, radius: float, track: TrackPath) -> flo
 
 func _level_sizes() -> void:
 	for i in spots.size():
-		var g := growth(i)
-		radius_now[i] = spots[i][1] * lerpf(SMALLEST, 1.0, g) if g > 0.0 else 0.0
+		radius_now[i] = _size_now(i)
+
+
+## This one's radius now: SMALLEST of its full size as it starts,
+## and 0 before.
+func _size_now(i: int) -> float:
+	var g := growth(i)
+	return spots[i][1] * lerpf(SMALLEST, 1.0, g) if g > 0.0 else 0.0
 
 
 static func _cell(point: Vector3) -> Vector2i:
@@ -239,7 +283,7 @@ func _colour() -> Color:
 
 
 func _surface() -> int:
-	return SceneryKit.WATER
+	return SceneryKit.PUDDLE
 
 
 ## Puts one where it is at the size it is now.

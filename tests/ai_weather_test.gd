@@ -7,7 +7,7 @@ extends SceneTree
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/ai_weather_test.gd
 
 ## Each one as [along the track, across, radius].
-const PUDDLE := [120.0, 0.0, 3.5]
+const PUDDLE := [120.0, 0.0, 3.0]
 const DEEP := [230.0, 1.0, 3.0]
 const SHALLOW := [330.0, 0.0, 3.0]
 

@@ -169,10 +169,16 @@ const ARM_BEFORE := 0.3
 const THINK_EVERY := 0.3 # seconds between looking at its gadgets
 ## How far ahead it looks for big puddles and deep snow drifts to go round,
 ## how often it looks, and the lines across the road it tries, in metres
-## from its own.
+## from its own, besides hugging either edge.
 const SEE_PATCH := 30.0
 const PATCH_EVERY := 0.2
 const PATCH_LINES := [0.0, -1.5, 1.5, -3.0, 3.0, -4.5, 4.5, -6.0, 6.0]
+## A kart this far either side of it along the road counts as alongside, and
+## three times this ahead as just ahead, in metres.
+const PATCH_BESIDE := 4.0
+## Going round one it keeps this far in from the road's edge, in metres, so
+## it doesn't clip the kerbs and tire stacks.
+const PATCH_EDGE := 1.0
 var _patch_dodge := 0.0
 var _patch_wait := 0.0
 ## After holding a power-up this long it uses it at the next moment that
@@ -469,8 +475,10 @@ func _dodge() -> float:
 	var here := (kart.global_position - track.point_at(offset)).dot(track.right_at(offset))
 	var wall := _dodge_wall(facing)
 	if not is_nan(wall):
+		_patch_dodge = 0.0
 		return wall
 	if kart.ghost_left > 0.0 or TrackPiece.turns_over(track.piece_type_at(offset)):
+		_patch_dodge = 0.0
 		return 0.0
 	var along := track.forward_at(offset)
 	var best_ahead := SEE_AHEAD + 1.0
@@ -497,6 +505,8 @@ func _dodge() -> float:
 			best_speed = other.linear_velocity.dot(along)
 	if best == null:
 		return _dodge_patches()
+	# Going round a kart comes first.
+	_patch_dodge = 0.0
 	# Still overlapping where it is now, and close: sit behind until the
 	# pass has moved it clear.
 	if best_ahead > 0.0 and absf(best_across - here) < best_need * 0.85:
@@ -519,7 +529,9 @@ func _dodge() -> float:
 ## How far to move over to keep out of big puddles and deep drifts ahead.
 ## It goes back to its own line once that's clear from where it is, keeps
 ## the way it's going round one while that's still clear, and otherwise
-## takes the nearest clear line to its own.
+## takes the nearest clear line to its own. It never moves onto a line with
+## a kart alongside or just ahead, and holds where it's going if every line
+## is blocked.
 func _dodge_patches() -> float:
 	if kart.puddles == null and kart.drifts == null:
 		return 0.0
@@ -527,17 +539,35 @@ func _dodge_patches() -> float:
 	if _patch_wait > 0.0:
 		return _patch_dodge
 	_patch_wait = PATCH_EVERY
-	var edge := track.width * 0.5 - kart.width() * 0.5 - 0.3
+	var edge := track.width * 0.5 - kart.width() * 0.5 - PATCH_EDGE
 	var tries := [0.0, _patch_dodge]
 	tries.append_array(PATCH_LINES)
+	# And as far over as it can go either way.
+	tries.append_array([-edge - line, edge - line])
 	for shift in tries:
-		if absf(line + shift) > edge:
+		if absf(line + shift) > edge + 0.01:
 			continue
-		if _patch_clear(line + shift):
+		if _patch_clear(line + shift) and _karts_clear(line + shift):
 			_patch_dodge = shift
 			return shift
-	_patch_dodge = 0.0
-	return 0.0
+	return _patch_dodge
+
+
+## Whether there's no kart alongside or just ahead on this line across the
+## road, so moving onto it doesn't swerve into one.
+func _karts_clear(across: float) -> bool:
+	var along := track.forward_at(offset)
+	for other in others:
+		if other == kart or not is_instance_valid(other) or other.ghost_left > 0.0:
+			continue
+		var ahead := (other.global_position - kart.global_position).dot(along)
+		if ahead < -PATCH_BESIDE or ahead > PATCH_BESIDE * 3.0:
+			continue
+		var at := offset + ahead
+		var other_across := (other.global_position - track.point_at(at)).dot(track.right_at(at))
+		if absf(other_across - across) < (kart.width() + other.width()) * 0.5 + KART_GAP:
+			return false
+	return true
 
 
 func _patch_clear(across: float) -> bool:
