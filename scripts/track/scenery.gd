@@ -866,6 +866,8 @@ func _between(k: int, side: float, edge: float) -> Vector3:
 
 
 ## A small island for something beside the road to stand on, up in the sky.
+## It isn't solid, so they're kept back far enough that a kart running wide
+## is put back before it gets there.
 func _pad(top: Vector3, radius: float) -> void:
 	if _floating:
 		_island(top, radius, 0, false)
@@ -1004,7 +1006,9 @@ func _start_area(edge: float) -> void:
 		else:
 			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side))
 		_kit.done()
-		_pad(front + right * side * 8.0 + Vector3.DOWN * 0.1, 17.0)
+		# Two islands side by side under it, kept well back from the road.
+		for along: float in [-8.0, 8.0]:
+			_pad(front + right * side * 7.0 + fwd * along + Vector3.DOWN * 0.1, 11.0)
 		_placed.append([front + right * side * 3.5, 17.0])
 		built += 1
 	if _floating:

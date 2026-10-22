@@ -109,6 +109,38 @@ func _ready() -> void:
 				_history[racer] = []
 				print("RESET %s (%s) at %.0f m (piece %d %s) speed %.1f, %s" % [racer.name, racer.kart.design.name, racer.offset, race.track.piece_of[race.track._index_before(racer.offset)], race.track.pieces[race.track.piece_of[race.track._index_before(racer.offset)]].type, racer.kart.linear_velocity.length(), _last_touch.get(racer, "")]))
 	print("%s, %.0f m a lap, %d karts" % [race.track.name, race.track.length, race.racers.size()])
+	if Scenery.theme_named(race.track.theme).get("void", false):
+		_sky_resets()
+
+
+## Up in the sky, a kart that falls into a jump's gap is put back past it, and
+## one reset on the road before a jump stays where it was.
+func _sky_resets() -> void:
+	var track := race.track
+	var gap := 0.0
+	while track.solid_at(gap) and gap < track.length:
+		gap += 1.0
+	var gap_end := gap
+	while not track.solid_at(gap_end):
+		gap_end += 1.0
+	var racer: Race.Racer = race.player
+	var kart := racer.kart
+	var was := kart.global_transform
+	var was_offset := racer.offset
+	var put_back := func(offset: float, below: float) -> float:
+		racer.offset = offset
+		kart.global_position = track.point_at(offset) - track.up_at(offset) * below
+		race._clear_spot(racer)
+		return racer.offset
+	var on_road: float = put_back.call(gap - 25.0, -0.4)
+	check(on_road <= gap - 25.0 + 0.5, "a reset on the road before a jump stays put (%.0f m, the gap's at %.0f)" % [on_road, gap])
+	var fallen: float = put_back.call(gap + 3.0, 6.0)
+	check(fallen > gap_end, "one that falls into the gap goes past it (%.0f m, the gap ends at %.0f)" % [fallen, gap_end])
+	var short: float = put_back.call(gap - 5.0, 6.0)
+	check(short > gap_end, "and so does one that falls off just short of it (%.0f m)" % short)
+	kart.global_transform = was
+	racer.offset = was_offset
+	kart.run_up_reset = false
 
 
 var _last_touch := {}

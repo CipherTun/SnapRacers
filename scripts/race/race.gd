@@ -33,6 +33,10 @@ const LOST := 45.0
 ## How far before a loop or wall ride a reset puts you, so you can build up
 ## speed.
 const RUN_UP := 110.0
+## On a sky course, how far below the road a kart has to be, and how close to
+## a jump's gap, to be put back past the gap (see _fell_in_gap()).
+const GAP_BELOW := 2.0
+const GAP_REACH := 12.0
 ## How far ahead on a loop's run in it looks for the climb (see _loop_coming()).
 const LOOP_FOOT := 30.0
 ## Karts in a race, you included.
@@ -612,26 +616,27 @@ func _clear_spot(racer: Racer) -> Transform3D:
 		backed = true
 	if backed:
 		start -= RUN_UP
+	var backs := [0.0, 5.0, 10.0, 15.0, 20.0]
+	# Up in the sky there's nothing in a jump's gap to land on, and a kart put
+	# back on the kicker with no speed only rolls in again. So one that's
+	# fallen into the gap, or off just before it, goes on past the gap to the
+	# landing instead, and looks further on for room.
+	if not backed and _fell_in_gap(racer, start):
+		var ahead := 0.0
+		while track.solid_at(start + ahead) and ahead < GAP_REACH:
+			ahead += 1.0
+		while not track.solid_at(start + ahead) and ahead < 200.0:
+			ahead += 1.0
+		start += ahead + 6.0
+		backs = [0.0, -5.0, -10.0, -15.0, -20.0]
 	# Never onto the rails or between the barriers with a train coming.
 	for crossing in builder.crossings:
 		var to_rails := fposmod(crossing.offset - start + LevelCrossing.STOP_BACK, track.length)
 		var t := train_clock.now
 		if to_rails < LevelCrossing.STOP_BACK * 2.0 and (crossing.timetable.blocked(t, 4.0) or crossing.timetable.lights_on(t)):
 			start = crossing.offset - LevelCrossing.STOP_BACK
+			backs = [0.0, 5.0, 10.0, 15.0, 20.0]
 	racer.kart.run_up_reset = backed
-	var backs := [0.0, 5.0, 10.0, 15.0, 20.0]
-	# Up in the sky there's nothing in a jump's gap to land on, and a kart put
-	# back on the kicker with no speed only rolls in again, so it goes on past
-	# the gap to the landing instead, and looks further on for room.
-	if Scenery.theme_named(track.theme).get("void", false):
-		var ahead := 0.0
-		while ahead < 40.0 and track.solid_at(start + ahead):
-			ahead += 1.0
-		if ahead < 40.0:
-			while not track.solid_at(start + ahead) and ahead < 200.0:
-				ahead += 1.0
-			start += ahead + 6.0
-			backs = [0.0, -5.0, -10.0, -15.0, -20.0]
 	for back in backs:
 		for side in across:
 			var spot := track.place_at(start - back)
@@ -648,6 +653,22 @@ func _clear_spot(racer: Racer) -> Transform3D:
 				return spot
 	racer.offset = fposmod(start, track.length)
 	return track.place_at(start)
+
+
+## Whether this kart is on a course up in the sky, below the road at `at`,
+## and over a jump's gap or just short of one.
+func _fell_in_gap(racer: Racer, at: float) -> bool:
+	if not Scenery.theme_named(track.theme).get("void", false):
+		return false
+	var below := (racer.kart.global_position - track.point_at(at)).dot(track.up_at(at))
+	if below > -GAP_BELOW:
+		return false
+	var ahead := 0.0
+	while ahead <= GAP_REACH:
+		if not track.solid_at(at + ahead):
+			return true
+		ahead += 1.0
+	return false
 
 
 ## Whether a brick wall still standing is here or just in front, so a kart

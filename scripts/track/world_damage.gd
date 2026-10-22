@@ -231,9 +231,10 @@ func _cell_draw(kind: String, indices: Array, origin: Vector3, far: bool) -> Mul
 		var here := Transform3D(world.basis, world.origin - origin)
 		_place(multi, n, here, inst[1], inst[2])
 		_slot[kind][i] = { "multi": multi, "index": n, "origin": origin }
-		# Anything well above or below, like islands and clouds in the sky.
-		if here.origin.y < 0.0 or here.origin.y > 30.0:
-			bounds = bounds.merge(here * AABB(Vector3.ONE * -0.5, Vector3.ONE))
+		# Anything that reaches outside, like big islands and clouds in the sky.
+		var box := here * AABB(Vector3.ONE * -0.5, Vector3.ONE)
+		if not bounds.encloses(box):
+			bounds = bounds.merge(box)
 	# After the instances, or Compatibility leaves the AABB empty and every
 	# cell is drawn, vis range or not.
 	draw.custom_aabb = bounds
