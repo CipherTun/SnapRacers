@@ -154,6 +154,7 @@ func _initialize() -> void:
 	var at := func(x: float, z: float) -> Color: return image.get_pixel(int((x - area.x) * area.z * image.get_width()), int((z - area.y) * area.w * image.get_height()))
 	check(at.call(0.0, 0.0).r * CourseLamps.MOST > 0.9 and at.call(100.0, 0.0).r == 0.0 and at.call(0.0, 0.0).a > 0.1, "a lamp lights the ground under it, not far away, and knows how high it is")
 	check(Conditions.resolve("orchard", "clear", "dusk", 1).dark() and not Conditions.resolve("orchard", "clear", "morning", 1).dark() and not Conditions.resolve("hall_red", "clear", "night", 1).dark(), "the lamps come on at dusk, not in the morning, and never in a hall")
+	check(Conditions.resolve("orchard", "clear", "night", 1).beams() and Conditions.resolve("orchard", "dust", "dusk", 1).beams() and not Conditions.resolve("orchard", "dust", "day", 1).beams() and not Conditions.resolve("orchard", "fog", "morning", 1).beams(), "headlight beams light the road at dusk and night, not in daytime dust or fog")
 	root.add_child(Runner.new(self))
 
 
@@ -230,6 +231,9 @@ class Runner:
 		var lose: Array[int] = [plain]
 		lit.lose_parts(lose)
 		test.check(lit._lamps.get_shader_parameter("on") == 1.0 and lit._pool.visible, "and still on after it loses a part")
+		lit.beams = false
+		test.check(lit._lamps.get_shader_parameter("on") == 1.0 and not lit._pool.visible, "and by day in the dust the lenses glow with no beam")
+		lit.beams = true
 		broken = lit
 
 	func _physics_process(_delta: float) -> void:

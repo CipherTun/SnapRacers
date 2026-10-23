@@ -513,6 +513,7 @@ func _add_racer(racer_name: String, design: KartDesign, slot: int, who: Characte
 	racer.kart.puddles = builder.puddles
 	racer.kart.drifts = builder.drifts
 	racer.kart.lights_on = conditions.dark()
+	racer.kart.beams = conditions.beams()
 	var place := track.grid_slot(slot)
 	racer.kart.transform = place
 	racer.kart.locked = true

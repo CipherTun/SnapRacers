@@ -157,6 +157,12 @@ func dark() -> bool:
 	return not indoor and (time in ["dusk", "night"] or weather in ["storm", "fog", "dust"])
 
 
+## Whether kart headlights light the road: only at dusk and at night. By day
+## in a storm, fog or dust the lights are on but the beam isn't drawn.
+func beams() -> bool:
+	return dark() and time in ["dusk", "night"]
+
+
 ## How strong the course's lamps shine: fully at dusk and at night, and
 ## only a little in a storm, fog or dust by day, when there's daylight too.
 func lamp_strength() -> float:

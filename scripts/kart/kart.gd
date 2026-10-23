@@ -363,6 +363,12 @@ var lights_on := false:
 	set(value):
 		lights_on = value
 		_show_lights()
+## Whether its headlights light the road when they're on. The race turns
+## this off by day, when the beam hardly shows (see Conditions.beams()).
+var beams := true:
+	set(value):
+		beams = value
+		_show_lights()
 ## Its lamp lenses' material, if it has any lights, and whether they're
 ## showing the brake.
 var _lamps: ShaderMaterial
@@ -2139,7 +2145,7 @@ func _reset(state: PhysicsDirectBodyState3D) -> void:
 ## The glowing lenses stay on whenever the lights are. With no race camera
 ## (the garage, tests, the splash) every beam is drawn.
 func _headlight_beam_wanted() -> bool:
-	if not lights_on:
+	if not lights_on or not beams:
 		return false
 	if not is_inside_tree():
 		return true
