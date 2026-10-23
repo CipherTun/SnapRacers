@@ -1030,7 +1030,13 @@ func _far_peaks() -> void:
 		# Out to the edge of a box round the course, then further out.
 		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
 		var spot := middle + dir * (reach + _rng.randf_range(0.0, 140.0))
-		Props.snowy_peak(_kit, Vector3(spot.x, -6.0, spot.y), _rng, _rng.randf_range(1.6, 2.8), false)
+		var at := Vector3(spot.x, -6.0, spot.y)
+		# A lower graphics setting leaves some out, like far fillers. Marking
+		# them far would hide them all, as they're always past FAR_RANGE.
+		if Graphics.draws_far(at):
+			Props.snowy_peak(_kit, at, _rng, _rng.randf_range(1.6, 2.8), false)
+		else:
+			Props.snowy_peak(SceneryKit.new(), at, _rng, _rng.randf_range(1.6, 2.8), false)
 
 
 ## The grandstand and the pit building face each other across the start
@@ -1059,7 +1065,7 @@ func _start_area(edge: float) -> void:
 		if built == 0:
 			Props.grandstand(_kit, front, 30.0, _facing_for(-right * side), _rng)
 		else:
-			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side))
+			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side), theme.get("peaks", false))
 		_kit.done()
 		# Two islands side by side under it, kept well back from the road.
 		for along: float in [-8.0, 8.0]:
