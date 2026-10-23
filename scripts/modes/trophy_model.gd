@@ -4,7 +4,7 @@ extends RefCounted
 ## A cup's trophy, built from bricks. Every one stands on the same plinth, a
 ## black brick with a plate in the cup's colour and a round stem, and has its
 ## own top: a two handled cup, a wheel, a gear, an arch, a chequered flag,
-## mountains, a lightning bolt, a corkscrew or a palm tree.
+## mountains, a lightning bolt, a corkscrew, a palm tree or a cable car.
 ##
 ## It comes in plain light grey, for a cup you haven't won yet, or in gold,
 ## silver or bronze for your best finish. The plinth keeps its colours either
@@ -13,7 +13,10 @@ extends RefCounted
 ## A trophy is a little over 1 m across and up to 2 m tall, standing on its own
 ## origin.
 
-const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
+const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car"]
+## The tops your own cups get picked from. Kept as it is so a cup you made
+## keeps its trophy when new cups add tops.
+const OWN_TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
 const FINISHES := ["grey", "gold", "silver", "bronze"]
 const GOLD := Color("#f2b632")
 const SILVER := Color("#cdd3db")
@@ -76,6 +79,8 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 			_spiral(add, metal)
 		"palm":
 			_palm(add, metal)
+		"cable_car":
+			_cable_car(add, metal)
 		_:
 			_cup(add, metal)
 	return out
@@ -84,7 +89,7 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 ## The top for one of your own cups, picked from its name so it stays the
 ## same, and a colour to go with it.
 static func spec_for(cup_name: String) -> Dictionary:
-	return { "top": TOPS[absi(hash(cup_name)) % TOPS.size()] }
+	return { "top": OWN_TOPS[absi(hash(cup_name)) % OWN_TOPS.size()] }
 
 
 static func colour_for(cup_name: String) -> Color:
@@ -259,3 +264,20 @@ static func _palm(add: Callable, metal: Material) -> void:
 	for k in 3:
 		var a := TAU * k / 3.0 + 0.5
 		add.call(MeshKit.rounded_cylinder(0.06, 0.1, 0.03, 12), _up(top.y - 0.08, top.x + cos(a) * 0.08, sin(a) * 0.08), metal)
+
+
+## A cable car hanging from a cable that runs up over a pylon.
+static func _cable_car(add: Callable, metal: Material) -> void:
+	add.call(MeshKit.rounded_cylinder(0.05, 1.12, 0.01, 12), _up(TOP_AT + 0.56, -0.32), metal)
+	add.call(_brick(Vector3(0.1, 0.06, 0.26)), _up(TOP_AT + 1.12, -0.32), metal)
+	var tilt := Basis(Vector3.BACK, 0.22)
+	add.call(_brick(Vector3(1.2, 0.03, 0.03)), Transform3D(tilt, Vector3(0.0, TOP_AT + 1.16, 0.0)), metal)
+	var hang := Vector3(0.22, TOP_AT + 1.16 + 0.22 * tan(0.22), 0.0)
+	add.call(_brick(Vector3(0.08, 0.06, 0.08)), _up(hang.y, hang.x), metal)
+	add.call(MeshKit.rounded_cylinder(0.02, 0.3, 0.005, 8), _up(hang.y - 0.17, hang.x), metal)
+	add.call(_brick(Vector3(0.44, 0.05, 0.34)), _up(hang.y - 0.33, hang.x), metal)
+	add.call(_brick(Vector3(0.4, 0.3, 0.3)), _up(hang.y - 0.5, hang.x), metal)
+	# Window frames standing out a little on the front and back.
+	for z in [-0.155, 0.155]:
+		add.call(_brick(Vector3(0.34, 0.03, 0.02)), _up(hang.y - 0.42, hang.x, z), metal)
+	add.call(_brick(Vector3(0.42, 0.04, 0.32)), _up(hang.y - 0.67, hang.x), metal)

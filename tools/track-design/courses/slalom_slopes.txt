@@ -1,0 +1,3 @@
+Slalom Slopes
+width=13 laps=3 theme=alps_snow hills=10
+S1 SR3.1 SR2.1 R1 L1 R1 SL3.1 R2!i S1!i SR3.1 SL4.1 SR2.1 SR3.1 S2 SL3.1 R2 S1 SL2.1 R1 L1 R1 SL4.1 J S2 S3

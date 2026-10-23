@@ -31,7 +31,7 @@ const SMALL := 3.2
 ## Props too big to break, like hills and lakes.
 ## Where each lamp along the road is (see _lamp_posts()).
 var lamps: Array[Vector3] = []
-const UNBREAKABLE := ["mountain", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
+const UNBREAKABLE := ["mountain", "snowy_peak", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
 ## Two stretches of road closer than this (middle to middle) get a line of
 ## tire stacks between them.
 const BARRIER_REACH := 2.0 * TrackPiece.TILE
@@ -68,6 +68,8 @@ const LAMP_EVERY := 20.0
 ## the colour behind everything, and the colours of the hall and its lights.
 ## A theme up in the sky has "void": there's no ground, and floating islands
 ## and clouds go under and around the road instead (see _sky_islands()).
+## A theme in the mountains has "peaks": a ring of big snowy peaks stands far
+## out round the course (see _far_peaks()).
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -275,6 +277,30 @@ const THEMES := {
 		"landmarks": [],
 		"fillers": {},
 	},
+	"alps_meadow": {
+		"ground": "#5b9e46", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
+		"sky": ["#3a86d8", "#e6eef6"], "peaks": true,
+		"landmarks": ["alpine_church", "chalet", "chalet", "snowy_peak"],
+		"fillers": {"pine": 5, "cows": 3, "chalet": 1, "fence": 1, "rocks": 1, "hay": 1},
+	},
+	"alps_snow": {
+		"ground": "#e6edf2", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#0d69ab",
+		"sky": ["#5f96d8", "#e8f0f8"], "peaks": true, "floor": "snow",
+		"landmarks": ["ski_jump", "snowy_chalet", "snowy_chalet", "alpine_church"],
+		"fillers": {"snowy_pine": 7, "snowy_chalet": 1, "snowman": 1, "rocks": 1},
+	},
+	"alps_lake": {
+		"ground": "#54964a", "curbs": ["#0d69ab", "#f2f2f2"], "wall": "#0d69ab",
+		"sky": ["#3f8ad8", "#e2ecf4"], "peaks": true,
+		"landmarks": ["cable_car", "lake", "chalet", "alpine_church"],
+		"fillers": {"pine": 4, "birch": 2, "chalet": 1, "cows": 2, "rocks": 1},
+	},
+	"alps_pass": {
+		"ground": "#8a9670", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#635f61",
+		"sky": ["#4a86cc", "#eaf0f6"], "peaks": true,
+		"landmarks": ["snowy_peak", "cable_car", "snowy_chalet", "snowy_peak"],
+		"fillers": {"rocks": 5, "snowy_pine": 3, "pine": 1, "cows": 1, "snowman": 1},
+	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
 		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
@@ -358,6 +384,8 @@ func _ready() -> void:
 			_sky_islands()
 		if indoor:
 			_build_hall()
+		if theme.get("peaks", false):
+			_far_peaks()
 	if _sea.size != Vector2.ZERO:
 		_build_sea()
 	# Only things near the road need to be solid. And nothing that ended up on
@@ -965,6 +993,8 @@ func _sky_islands() -> void:
 ## everywhere else.
 func _under_jumps() -> void:
 	var lava := track.theme == "volcano"
+	# In the snowy mountains it's a ski jump, over snow and ice.
+	var ice: bool = theme.get("peaks", false) and theme.get("floor", "") == "snow"
 	for k in range(0, track.points.size(), 1):
 		if track.solids[k]:
 			continue
@@ -973,9 +1003,34 @@ func _under_jumps() -> void:
 		var basis := Basis.looking_at(flat_forward, Vector3.UP)
 		var size := Vector3(track.width + 6.0, 0.08, 1.2)
 		var at := _grounded(p) + Vector3.UP * 0.04
-		_kit.turned_box(at, size + Vector3(1.0, 0.0, 0.0), basis, Props.BLACK if lava else Props.TAN, SceneryKit.SMOOTH)
-		_kit.turned_box(at + Vector3.UP * 0.02, size, basis, Props.LAVA if lava else Props.WATER, SceneryKit.GLOW if lava else SceneryKit.WATER)
+		if ice:
+			_kit.turned_box(at, size + Vector3(1.0, 0.0, 0.0), basis, Props.WHITE, SceneryKit.SMOOTH)
+			_kit.turned_box(at + Vector3.UP * 0.02, size - Vector3(4.0, 0.0, 0.0), basis, Color("#bfe3f2"), SceneryKit.WATER)
+		else:
+			_kit.turned_box(at, size + Vector3(1.0, 0.0, 0.0), basis, Props.BLACK if lava else Props.TAN, SceneryKit.SMOOTH)
+			_kit.turned_box(at + Vector3.UP * 0.02, size, basis, Props.LAVA if lava else Props.WATER, SceneryKit.GLOW if lava else SceneryKit.WATER)
 		_placed.append([at, 3.0])
+
+
+## Big snowy peaks in a ring far out round the course, their feet past the
+## edge of the ground so the view goes all the way to the mountains. None of
+## them is solid and none of them breaks.
+func _far_peaks() -> void:
+	var low := Vector2(INF, INF)
+	var high := -Vector2(INF, INF)
+	for p in track.points:
+		low = low.min(Vector2(p.x, p.z))
+		high = high.max(Vector2(p.x, p.z))
+	var middle := (low + high) * 0.5
+	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + 70.0)
+	var count := 18
+	for k in count:
+		var a := TAU * (k + _rng.randf_range(-0.25, 0.25)) / count
+		var dir := Vector2(cos(a), sin(a))
+		# Out to the edge of a box round the course, then further out.
+		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
+		var spot := middle + dir * (reach + _rng.randf_range(0.0, 140.0))
+		Props.snowy_peak(_kit, Vector3(spot.x, -6.0, spot.y), _rng, _rng.randf_range(1.6, 2.8), false)
 
 
 ## The grandstand and the pit building face each other across the start

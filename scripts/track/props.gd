@@ -58,6 +58,8 @@ const ROOM := {
 	"parasols": 2.8, "beach_hut": 2.2, "lifeguard_tower": 2.4, "windsurf": 1.6, "beach_hotel": 10.0,
 	"sandcastle": 7.0, "harbour_fort": 12.0, "penguins": 1.6, "stone_pine": 3.0, "gum_tree": 2.6,
 	"watchtower": 3.0, "lamp_post": 1.0,
+	"chalet": 6.0, "snowy_chalet": 6.0, "alpine_church": 8.0, "cows": 2.8, "snowy_peak": 40.0,
+	"cable_car": 32.0, "ski_jump": 33.0,
 }
 
 
@@ -146,6 +148,13 @@ static func add(kit: SceneryKit, prop: String, at: Vector3, rng: RandomNumberGen
 		"stone_pine": stone_pine(kit, at_grid, rng)
 		"gum_tree": broadleaf(kit, at_grid, rng, [SAND_GREEN, OLIVE][rng.randi() % 2])
 		"watchtower": tower(kit, at_grid, TAN)
+		"chalet": chalet(kit, at_grid, facing, rng, false)
+		"snowy_chalet": chalet(kit, at_grid, facing, rng, true)
+		"alpine_church": alpine_church(kit, at_grid, facing)
+		"cows": cows(kit, at_grid, rng)
+		"snowy_peak": snowy_peak(kit, at_grid, rng, 1.0, true)
+		"cable_car": cable_car(kit, at_grid, facing)
+		"ski_jump": ski_jump(kit, at_grid, facing)
 
 
 ## Turns an offset from a prop's middle by its facing.
@@ -171,15 +180,18 @@ static func _box(kit: SceneryKit, at: Vector3, offset: Vector3, size: Vector3, f
 
 ## A pitched roof over a box `width` across and `depth` deep, its ridge
 ## running across, sitting on `top`.
-static func _roof(kit: SceneryKit, top: Vector3, width: float, depth: float, pitch: float, facing: int, colour: Color) -> void:
+static func _roof(kit: SceneryKit, top: Vector3, width: float, depth: float, pitch: float, facing: int, colour: Color, gables := true) -> void:
 	var half := depth * 0.5 + 0.3
 	var slope := half / cos(pitch)
 	var rise := half * tan(pitch)
 	for side in [-1.0, 1.0]:
 		var tilt := Basis(Vector3.RIGHT, side * pitch)
 		var centre := Vector3(0.0, rise * 0.5, side * half * 0.5)
-		var basis := Basis(Vector3.UP, -posmod(facing, 4) * PI * 0.5) * tilt
+		# The same quarter turns as _turn(), so the slopes meet at the ridge.
+		var basis := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5) * tilt
 		kit.turned_box(top + _turn(centre, facing), Vector3(width + 0.6, 0.25, slope), basis, colour, SceneryKit.SMOOTH)
+	if not gables:
+		return
 	# Fill the gable ends with stepped bricks.
 	var steps := 4
 	for k in steps:
@@ -1157,6 +1169,182 @@ static func stone_pine(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator)
 	var size := 4.2 + rng.randf() * 1.4
 	kit.box(at + Vector3.UP * trunk, Vector3(size, 0.8, size), GREEN.darkened(0.1), SceneryKit.BRICK, false)
 	kit.box(at + Vector3.UP * (trunk + 0.8), Vector3(size * 0.7, 0.6, size * 0.7), GREEN, SceneryKit.BRICK, false)
+
+
+# The Alps.
+
+## A wooden chalet on a white stone ground floor, with a balcony of red
+## flowers along the front and a wide roof with its gable to the front. A
+## snowy one has snow on the roof.
+static func chalet(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator, snowy: bool) -> void:
+	var w := 7.0
+	var d := 6.0
+	var wood: Color = [Color("#8a5a3a"), Color("#9a6440"), Color("#7a4a2c")][rng.randi() % 3]
+	var shutters: Color = [GREEN, RED, DARK_RED][rng.randi() % 3]
+	_box(kit, at, Vector3.ZERO, Vector3(w, 2.4, d), facing, WHITE)
+	_box(kit, at, Vector3(0.0, 2.4, 0.0), Vector3(w, 2.4, d), facing, wood)
+	_box(kit, at, Vector3(0.0, 0.0, d * 0.5), Vector3(1.0, 1.9, 0.1), facing, wood.darkened(0.2), SceneryKit.SMOOTH, false)
+	for x in [-2.2, 2.2]:
+		_box(kit, at, Vector3(x, 0.8, d * 0.5), Vector3(0.9, 0.9, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+		for s in [-0.6, 0.6]:
+			_box(kit, at, Vector3(x + s, 0.8, d * 0.5), Vector3(0.3, 0.9, 0.16), facing, shutters, SceneryKit.SMOOTH, false)
+	for x in [-2.0, 0.0, 2.0]:
+		_box(kit, at, Vector3(x, 3.2, d * 0.5), Vector3(1.0, 1.0, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+	# The balcony, with flower boxes along its rail.
+	_box(kit, at, Vector3(0.0, 2.3, d * 0.5 + 0.6), Vector3(w, 0.2, 1.2), facing, wood.darkened(0.15), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 2.5, d * 0.5 + 1.14), Vector3(w, 0.8, 0.12), facing, wood.lightened(0.15), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 3.3, d * 0.5 + 1.05), Vector3(w - 0.4, 0.35, 0.35), facing, RED, SceneryKit.BRICK, false)
+	# The roof's ridge runs front to back, and it reaches out over the balcony.
+	var roof_colour := DARK_GREY if snowy else wood.darkened(0.3)
+	_roof(kit, at + Vector3.UP * 4.8, d + 2.0, w + 0.6, deg_to_rad(26.0), facing + 1, roof_colour)
+	if snowy:
+		_roof(kit, at + Vector3.UP * 5.05, d + 1.8, w + 0.4, deg_to_rad(26.0), facing + 1, WHITE, false)
+	_box(kit, at, Vector3(-2.0, 4.8, -1.0), Vector3(0.6, 2.4, 0.6), facing, WHITE)
+
+
+## A white village church with a red roof, a tall tower with a clock on each
+## side, and a long green spire.
+static func alpine_church(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	_box(kit, at, Vector3.ZERO, Vector3(6.0, 5.0, 10.0), facing, WHITE)
+	_roof(kit, at + Vector3.UP * 5.0, 10.0, 6.0, deg_to_rad(40.0), facing + 1, RED)
+	for z in [-3.0, 0.0, 3.0]:
+		for x in [-3.0, 3.0]:
+			_box(kit, at, Vector3(x, 1.6, z), Vector3(0.1, 2.2, 0.8), facing, DARK_BLUE, SceneryKit.SMOOTH, false)
+	var tower := Vector3(0.0, 0.0, 6.4)
+	_box(kit, at, tower, Vector3(3.2, 14.0, 3.2), facing, WHITE)
+	_box(kit, at, tower + Vector3(0.0, 0.0, 1.6), Vector3(1.2, 2.2, 0.1), facing, BROWN, SceneryKit.SMOOTH, false)
+	# The belfry, a band of dark openings, and the clocks under it.
+	for side in 4:
+		var out := _turn(Vector3(0.0, 0.0, 1.62), side)
+		var flat := Basis(Quaternion(Vector3.UP, out.normalized()))
+		_box(kit, at, tower + out + Vector3(0.0, 12.2, 0.0), _turn_size(Vector3(1.6, 1.4, 0.1), side), facing, BLACK, SceneryKit.SMOOTH, false)
+		var clock := at + _turn(tower + out + Vector3(0.0, 10.4, 0.0), facing)
+		var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5) * flat
+		kit.turned_cylinder(clock, 0.75, 0.12, face, WHITE)
+		# The hands, at ten past twelve.
+		var front := clock + _turn(out.normalized(), facing) * 0.08
+		var across := _turn(_turn(Vector3.RIGHT, side), facing)
+		kit.box(front, _turn_size(Vector3(0.1, 0.55, 0.06), side + facing), BLACK, SceneryKit.SMOOTH, false)
+		kit.box(front + across * 0.18 - Vector3.UP * 0.05, _turn_size(Vector3(0.36, 0.1, 0.06), side + facing), BLACK, SceneryKit.SMOOTH, false)
+	_box(kit, at, tower + Vector3(0.0, 14.0, 0.0), Vector3(3.6, 0.4, 3.6), facing, WHITE)
+	kit.cone(at + _turn(tower, facing) + Vector3.UP * 14.4, 2.0, 10.0, Color("#4f8f78"))
+	kit.cylinder(at + _turn(tower, facing) + Vector3.UP * 24.2, 0.08, 1.2, YELLOW, SceneryKit.SMOOTH)
+	kit.box(at + _turn(tower, facing) + Vector3.UP * 24.8, Vector3(0.6, 0.1, 0.1), YELLOW, SceneryKit.SMOOTH, false)
+
+
+## Two or three cows grazing, brown or patched, each with a bell.
+static func cows(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	for k in 2 + rng.randi() % 2:
+		var spot := at + Vector3(rng.randf_range(-1.6, 1.6), 0.0, rng.randf_range(-1.6, 1.6))
+		var face := Basis(Vector3.UP, rng.randf() * TAU)
+		var patched := rng.randf() < 0.4
+		var coat: Color = WHITE if patched else [Color("#8a5a3a"), BROWN, NOUGAT][rng.randi() % 3]
+		var grazing := rng.randf() < 0.5
+		kit.turned_box(spot + face * Vector3(0.0, 1.15, 0.0), Vector3(0.95, 0.75, 1.9), face, coat)
+		if patched:
+			kit.turned_box(spot + face * Vector3(0.0, 1.2, -0.3), Vector3(1.0, 0.5, 0.7), face, [BROWN, BLACK][rng.randi() % 2])
+		for x in [-0.32, 0.32]:
+			for z in [-0.7, 0.7]:
+				kit.turned_box(spot + face * Vector3(x, 0.4, z), Vector3(0.22, 0.8, 0.22), face, coat.darkened(0.15))
+		var head := Vector3(0.0, 0.95 if grazing else 1.45, 1.2)
+		kit.turned_box(spot + face * head, Vector3(0.55, 0.55, 0.65), face, coat)
+		kit.turned_box(spot + face * (head + Vector3(0.0, -0.12, 0.36)), Vector3(0.5, 0.3, 0.12), face, PINK)
+		for x in [-0.33, 0.33]:
+			kit.turned_box(spot + face * (head + Vector3(x, 0.3, -0.05)), Vector3(0.18, 0.08, 0.08), face, WHITE)
+		kit.turned_box(spot + face * Vector3(0.0, 0.9, 0.95), Vector3(0.2, 0.22, 0.12), face, YELLOW)
+		kit.turned_box(spot + face * Vector3(0.0, 1.0, -1.0), Vector3(0.08, 0.6, 0.08), face, coat.darkened(0.2))
+
+
+## A tall rocky mountain with snow on its upper half, in steps. `size` scales
+## it up for the far peaks round an alpine course, which aren't solid.
+static func snowy_peak(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, size: float, solid: bool) -> void:
+	var layers := 12 + rng.randi() % 4
+	var snow_from := int(layers * rng.randf_range(0.45, 0.6))
+	var drift := Vector2(rng.randf_range(-1.0, 1.0), rng.randf_range(-1.0, 1.0)) * size
+	# Far off ones (the ones that aren't solid) go a hazy blue grey.
+	var rock: Array = [Color("#7f8a8c"), Color("#959c9a")] if solid else [Color("#8692a4"), Color("#97a3b4")]
+	for k in layers:
+		var f := 1.0 - float(k) / layers
+		var r := (34.0 * f + 2.5) * size
+		var colour: Color = WHITE if k >= snow_from else rock[k % 2]
+		var off := Vector3(drift.x * k * 0.4, k * 3.6 * size, drift.y * k * 0.4)
+		kit.box(at + off, Vector3(r * 2.0, 3.6 * size, r * 1.8), colour, SceneryKit.BRICK, solid and k == 0)
+
+
+## A cable car line up to a peak: a station at the bottom, two pylons, a
+## station up on a crag, and two cars going up and down the cables.
+static func cable_car(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	var half := 28.0
+	var low := Vector3(-half + 2.0, 4.2, 0.0)
+	var high := Vector3(half - 2.0, 26.6, 0.0)
+	# The bottom station, sunk a little so it sits on a slope.
+	_box(kit, at, Vector3(-half, -2.0, 0.0), Vector3(7.0, 6.0, 6.0), facing, TAN)
+	_box(kit, at, Vector3(-half, 4.0, 0.0), Vector3(7.6, 0.4, 6.6), facing, RED, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(-half, 0.0, 3.0), Vector3(2.4, 2.4, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+	# The crag and the top station on it.
+	for k in 7:
+		var colour: Color = WHITE if k >= 5 else [DARK_GREY, LIGHT_GREY.darkened(0.2)][k % 2]
+		_box(kit, at, Vector3(half + 3.0, -2.0 + k * 3.6, 0.0), Vector3(16.0 - k * 1.6, 3.6, 14.0 - k * 1.4), facing, colour)
+	_box(kit, at, Vector3(half, 23.2, 0.0), Vector3(7.0, 3.4, 6.0), facing, TAN)
+	_box(kit, at, Vector3(half, 26.6, 0.0), Vector3(7.6, 0.4, 6.6), facing, RED, SceneryKit.SMOOTH, false)
+	# Two cables, held up by the pylons.
+	var along := high - low
+	for z in [-1.2, 1.2]:
+		var a := at + _turn(low + Vector3(0.0, 0.0, z), facing)
+		var b := at + _turn(high + Vector3(0.0, 0.0, z), facing)
+		kit.turned_box((a + b) * 0.5, Vector3(0.12, (b - a).length(), 0.12), Basis(Quaternion(Vector3.UP, (b - a).normalized())), BLACK)
+	for t in [0.33, 0.66]:
+		var top: Vector3 = low + along * t
+		_box(kit, at, Vector3(top.x, -3.0, 0.0), Vector3(1.0, top.y + 2.7, 1.0), facing, LIGHT_GREY)
+		_box(kit, at, Vector3(top.x, top.y - 0.3, 0.0), Vector3(0.6, 0.5, 3.4), facing, LIGHT_GREY)
+	# The cars ride up and down the cables, one each way.
+	var up := _turn(along.normalized(), facing)
+	for k in 2:
+		var z := -1.2 if k == 0 else 1.2
+		var hang := at + _turn(low + along * 0.5 + Vector3(0.0, 0.0, z), facing)
+		var way := up if k == 0 else -up
+		kit.begin_mover(Transform3D(Basis(Quaternion(Vector3.UP, way)), hang), { "bob": along.length() * 0.36, "rate": 0.12 })
+		kit.box(hang + Vector3.DOWN * 1.4, Vector3(0.15, 1.4, 0.15), DARK_GREY, SceneryKit.SMOOTH, false)
+		kit.box(hang + Vector3.DOWN * 3.6, _turn_size(Vector3(2.8, 2.2, 2.0), facing), [RED, YELLOW][k], SceneryKit.WINDOWS, false)
+		kit.box(hang + Vector3.DOWN * 1.5, _turn_size(Vector3(3.0, 0.2, 2.2), facing), DARK_GREY, SceneryKit.SMOOTH, false)
+		kit.end_mover()
+
+
+## A ski jump: a run in from a tower down to the lip, on a steel frame, and a
+## long white landing hill out the other side.
+static func ski_jump(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	var top := Vector3(-30.0, 26.0, 0.0)
+	var lip := Vector3(-8.0, 8.0, 0.0)
+	var down := lip - top
+	var spin := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
+	var slope := spin * Basis(Vector3.BACK, atan2(down.y, down.x))
+	kit.turned_box(at + _turn((top + lip) * 0.5, facing), Vector3(down.length(), 0.5, 3.0), slope, WHITE)
+	for z in [-1.6, 1.6]:
+		kit.turned_box(at + _turn((top + lip) * 0.5 + Vector3(0.0, 0.45, z), facing), Vector3(down.length(), 0.6, 0.2), slope, RED)
+	for x in [-26.0, -20.0, -14.0, -9.0]:
+		var y: float = lip.y + (lip.x - x) / (lip.x - top.x) * (top.y - lip.y)
+		for z in [-1.2, 1.2]:
+			_box(kit, at, Vector3(x, 0.0, z), Vector3(0.5, y - 0.2, 0.5), facing, LIGHT_GREY)
+	# The start tower and its hut.
+	_box(kit, at, Vector3(top.x - 2.0, 0.0, 0.0), Vector3(3.0, top.y, 3.0), facing, LIGHT_GREY)
+	_box(kit, at, Vector3(top.x - 2.0, top.y, 0.0), Vector3(4.0, 3.0, 4.4), facing, RED, SceneryKit.WINDOWS)
+	_box(kit, at, Vector3(top.x - 2.0, top.y + 3.0, 0.0), Vector3(4.6, 0.4, 5.0), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+	# The landing hill, in steps under a smooth white slope.
+	var land_top := Vector3(-6.0, 7.0, 0.0)
+	var land_end := Vector3(30.0, 0.3, 0.0)
+	for k in 8:
+		var x := land_top.x + 1.5 + k * 4.5
+		var h := land_top.y * (1.0 - (k + 0.5) / 8.0)
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(4.5, h, 7.0), facing, WHITE)
+	var run := land_end - land_top
+	kit.turned_box(at + _turn((land_top + land_end) * 0.5, facing), Vector3(run.length(), 0.4, 7.0), spin * Basis(Vector3.BACK, atan2(run.y, run.x)), WHITE)
+	# A red line across the landing hill where a good jump lands.
+	var mark := land_top + run * 0.45 + Vector3(0.0, 0.22, 0.0)
+	kit.turned_box(at + _turn(mark, facing), Vector3(0.4, 0.06, 7.2), spin * Basis(Vector3.BACK, atan2(run.y, run.x)), RED)
+	# The judges' tower beside the landing hill.
+	_box(kit, at, Vector3(4.0, 0.0, -6.0), Vector3(2.6, 9.0, 2.6), facing, TAN)
+	_box(kit, at, Vector3(4.0, 9.0, -6.0), Vector3(3.2, 1.6, 3.2), facing, GLASS, SceneryKit.SMOOTH)
+	_box(kit, at, Vector3(4.0, 10.6, -6.0), Vector3(3.6, 0.3, 3.6), facing, RED, SceneryKit.SMOOTH, false)
 
 
 # Fans.

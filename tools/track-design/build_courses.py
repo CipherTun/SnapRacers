@@ -28,6 +28,10 @@ INFO = {
  "royal_run": "Flat out through the royal park and past the old banking, braking hard for the chicanes.",
  "dry_lagoon": "Over the golden California hills and down the steep corkscrew drop.",
  "oast_hill": "Down the hill past the oast houses, then off the tarmac and over the crest on the gravel.",
+ "cowbell_meadow": ("Karting de Crolles, Isère, France", "Over the green hills under the cliffs, past the chalets and the cows with their bells."),
+ "gondola_gorge": ("Kartodromo di Ala, Trentino, Italy", "Down in the valley by the lake, under the cable car going up to the peaks."),
+ "slalom_slopes": ("Karting Track Saalbach, Salzburg, Austria", "Through the snow at the ski resort, across the ice and off the ski jump."),
+ "summit_switchback": ("Karting du Grand Arc, Albertville, Savoie, France", "Up the switchbacks with nothing at the edge, and the snowy peaks all around."),
  "windsurf_way": "Twisting around between the palms and the parasols, a stone's throw from the beach.",
  "coral_cove": "Fast and open on the coast, past the old watchtower and the white villas.",
  "blue_lagoon": "Tight and twisty under the walls of the old harbour fort.",
@@ -97,8 +101,12 @@ for name in sys.argv[2:]:
     if min(p[2] for p in line) < -0.1:
         raise SystemExit(name + " goes underground")
     about = INFO[name]
-    ordered = {"name": data["name"], "about": about, "theme": data.get("theme", "orchard"),
-               "laps": data.get("laps", 3), "width": data.get("width", 13.0), "grid": 32}
+    ordered = {"name": data["name"]}
+    # A pair is the real circuit it's based on and then the line about it.
+    if isinstance(about, tuple):
+        ordered["inspired_by"], about = about
+    ordered.update({"about": about, "theme": data.get("theme", "orchard"),
+                    "laps": data.get("laps", 3), "width": data.get("width", 13.0), "grid": 32})
     # How much the ground rises and falls around it (see TrackPath.hills).
     if data.get("hills", 0):
         ordered["hills"] = data["hills"]

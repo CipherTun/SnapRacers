@@ -12,7 +12,8 @@ server again. A joined lap keeps where each way starts along it, its
 surface and its level, so the tracer can tell which bits are gravel and which
 run over the top of others. With --flat it leaves the levels out, for roller
 coasters, where the map's levels say how high the track stands and not what
-it runs over.
+it runs over. When the Overpass servers are too busy it asks the main
+OpenStreetMap API for each way instead.
 """
 import json, math, os, sys, time, urllib.parse, urllib.request
 
@@ -31,17 +32,31 @@ GAP = 5.0
 JOIN = 15.0
 
 
+def from_api(ids):
+    """The same ways from the main OpenStreetMap API, one at a time, for when
+    the Overpass servers are too busy."""
+    out = []
+    for i in ids:
+        url = "https://api.openstreetmap.org/api/0.6/way/%d/full.json" % i
+        data = json.load(urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "SnapRacers-research/1.0"}), timeout=60))
+        nodes = {e["id"]: e for e in data["elements"] if e["type"] == "node"}
+        way = next(e for e in data["elements"] if e["type"] == "way")
+        out.append({"id": i, "tags": way.get("tags", {}), "geometry": [{"lat": nodes[n]["lat"], "lon": nodes[n]["lon"]} for n in way["nodes"]]})
+        time.sleep(1)
+    return {"elements": out}
+
+
 def download(ids):
     q = "[out:json][timeout:40];way(id:%s);out geom tags;" % ",".join(str(i) for i in ids)
-    for attempt in range(3):
+    for attempt in range(2):
         for server in ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter"]:
             try:
                 req = urllib.request.Request(server, data=urllib.parse.urlencode({"data": q}).encode(), headers={"User-Agent": "SnapRacers-research/1.0"})
                 return json.load(urllib.request.urlopen(req, timeout=60))
             except Exception as e:
                 print("server failed", server, e)
-        time.sleep(30)
-    sys.exit(1)
+        time.sleep(10)
+    return from_api(ids)
 
 
 def from_nearest(way, point):

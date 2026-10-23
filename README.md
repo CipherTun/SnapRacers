@@ -2,7 +2,7 @@
 
 SnapRacers is a physics based kart racing game I put together for my son. Build a kart from blocks and race it, then change the parts until it drives how you want. Every part adds weight, drag or power. Crashes knock parts off, and the reset button puts them back with a short slowdown.
 
-You can race the AI, play with a friend on a split screen or race online. There are nine Grand Prix cups and 36 courses, and you can make your own courses and cups too. It needs Android 8.1 or newer, or you can play it in a browser.
+You can race the AI, play with a friend on a split screen or race online. There are ten Grand Prix cups and 40 courses, and you can make your own courses and cups too. It needs Android 8.1 or newer, or you can play it in a browser.
 
 It's playable now, but there are still rough edges. Let me know if you find one.
 
@@ -46,7 +46,7 @@ You can also get an APK from [Releases](https://github.com/roge-rm/SnapRacers/re
 
 ## Racing
 
-Grand Prix has nine cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
+Grand Prix has ten cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
 
 Single race is one race against the AI, time trial keeps your best times and practice lets you drive on your own for as long as you like. There are four AI levels, from Easy drivers who wait for you and make mistakes to Expert drivers who drive on the limit and slide through bends.
 
@@ -143,7 +143,7 @@ The figures blink, watch nearby karts, grin when they pass someone and look cros
 
 ## Courses
 
-The 36 courses are based on real circuits, with laps of 1.6 to 1.9 km. They're built from track pieces on a grid, with hills, jumps, bridges, a loop and corkscrews. The road is wide enough for three karts through a bend.
+The 40 courses are based on real circuits, with laps of 1.6 to 1.9 km. They're built from track pieces on a grid, with hills, jumps, bridges, a loop and corkscrews. The road is wide enough for three karts through a bend.
 
 | Cup | Courses |
 |---|---|
@@ -156,8 +156,9 @@ The 36 courses are based on real circuits, with laps of 1.6 to 1.9 km. They're b
 | Hangar | Neon Nights, Hairpin Hall, Bohemian Bends, Spark Deck |
 | Corkscrew | Serpent Summit, Lakeshore Plunge, Red Rocket, Twister Pines |
 | Island | Windsurf Way, Coral Cove, Blue Lagoon, Penguin Point |
+| Alpine | Cowbell Meadow, Gondola Gorge, Slalom Slopes, Summit Switchback |
 
-The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel on rallycross circuits. Hangar has indoor tracks, one with an upper deck. Corkscrew follows roller coasters with drops and upside-down bends, and Island races beside the sea.
+The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel on rallycross circuits. Hangar has indoor tracks, one with an upper deck. Corkscrew follows roller coasters with drops and upside-down bends, Island races beside the sea, and Alpine goes up into the snowy mountains, with switchbacks open at the edge, ice and a ski jump.
 
 Walls keep you from falling off, and tire stacks stop you cutting between nearby bits of road. Curbs can bounce your wheels into the air. Trees, fences and billboards break apart when you hit them, and crashes knock holes in buildings and grandstands. The loose bricks stay until the race ends. Tire stacks lose their top tires but keep the bottom ones.
 
@@ -257,7 +258,7 @@ tools/run-tests.sh
 
 They check driving, building, damage, power-ups, weather, cameras, menus, controllers, sharing, courses and race modes. They also drive every stock vehicle around a lap and race two copies of the game over the network. Network and dedicated-server races run in real time, so the suite takes a while.
 
-To check AI steering and overtaking, or race eight AI karts around all 36 courses:
+To check AI steering and overtaking, or race eight AI karts around all 40 courses:
 
 ```sh
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/ai_drive_test.gd

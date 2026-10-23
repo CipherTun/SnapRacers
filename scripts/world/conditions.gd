@@ -3,8 +3,8 @@ extends RefCounted
 
 ## The weather and the time of day for a race. They're picked before it
 ## starts and stay the same all race. Left to chance, they suit the course:
-## snowy courses mostly snow, deserts get dust storms and never rain, and
-## beaches are mostly sunny. Halls are always the same, since they're indoors.
+## snowy courses mostly snow, the Alps often, deserts get dust storms and
+## never rain, and beaches are mostly sunny. Halls are always the same, since they're indoors.
 ##
 ## A race's conditions travel online as a dictionary, worked out once by the
 ## host, so everyone races in the same weather with the same puddles.
@@ -26,6 +26,7 @@ const TIME_NAMES := {
 ## Each course theme's climate. Any theme not here is temperate.
 const CLIMATE_OF := {
 	"frost": "snowy",
+	"alps_meadow": "alpine", "alps_snow": "alpine", "alps_lake": "alpine", "alps_pass": "alpine",
 	"varmland": "nordic", "trondelag": "nordic",
 	"desert": "desert", "park_desert": "desert",
 	"golden_hills": "dry", "mine": "dry",
@@ -47,6 +48,7 @@ const WEATHER_ODDS := {
 	"coastal": [40, 30, 3, 15, 12, 0],
 	"nordic": [40, 10, 35, 15, 0, 0],
 	"snowy": [30, 0, 60, 10, 0, 0],
+	"alpine": [35, 8, 40, 12, 5, 0],
 	"beach": [82, 8, 0, 3, 7, 0],
 	"desert": [65, 0, 0, 0, 0, 35],
 	"dry": [70, 0, 0, 5, 10, 15],
