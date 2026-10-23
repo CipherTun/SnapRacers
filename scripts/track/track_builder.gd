@@ -691,7 +691,7 @@ func _add_pillars() -> void:
 	colours.fill(Color(_theme.get("supports_colour", PILLAR_COLOUR)))
 	if rock:
 		colours = rock_colours
-	_add_blocks(spots, colours)
+	_add_blocks(spots, colours, SceneryKit.PLAIN if rock else SceneryKit.BRICK)
 
 
 func _solid_box(body: StaticBody3D, where: Transform3D, size: Vector3) -> void:
@@ -747,10 +747,10 @@ func _lattice(body: StaticBody3D, spots: Array[Transform3D], p: Vector3, right: 
 
 ## Draws boxes that look built from bricks, all in one go. Each transform
 ## scales a 1 m cube to size.
-func _add_blocks(spots: Array[Transform3D], colours: Array[Color]) -> void:
+func _add_blocks(spots: Array[Transform3D], colours: Array[Color], surface := SceneryKit.BRICK) -> void:
 	var kit := SceneryKit.new()
 	for i in spots.size():
-		kit.boxes.append([spots[i], colours[i], SceneryKit.BRICK])
+		kit.boxes.append([spots[i], colours[i], surface])
 	kit.build(self)
 
 
