@@ -62,8 +62,8 @@ const ROOM := {
 	"cable_car": 35.0, "ski_jump": 33.0,
 	"mesa": 38.0, "butte": 16.0, "saloon": 8.0, "water_tower": 3.5, "saguaro": 1.6, "mine_carts": 8.0,
 	"windpump": 3.0, "red_rocks": 2.4,
-	"jungle_tree": 3.0, "fern": 1.2, "parrots": 1.6, "stepped_pyramid": 15.0, "stone_head": 2.6,
-	"waterfall": 13.0, "rope_bridge": 10.0, "canopy_walk": 15.0, "karst": 13.0, "jungle_hut": 5.0,
+	"jungle_tree": 3.0, "jungle_sapling": 1.6, "jungle_bush": 1.6, "fern": 1.2, "parrots": 1.6, "stepped_pyramid": 17.5, "stone_head": 2.6,
+	"waterfall": 14.0, "rope_bridge": 11.0, "canopy_walk": 15.0, "karst": 13.0, "jungle_hut": 5.0,
 }
 
 
@@ -168,6 +168,8 @@ static func add(kit: SceneryKit, prop: String, at: Vector3, rng: RandomNumberGen
 		"windpump": windpump(kit, at_grid, facing)
 		"red_rocks": red_rocks(kit, at_grid, rng)
 		"jungle_tree": jungle_tree(kit, at_grid, rng)
+		"jungle_sapling": jungle_sapling(kit, at_grid, rng)
+		"jungle_bush": jungle_bush(kit, at_grid, rng)
 		"fern": fern(kit, at_grid, rng)
 		"parrots": parrots(kit, at_grid, facing, rng)
 		"stepped_pyramid": stepped_pyramid(kit, at_grid, facing, rng)
@@ -1767,21 +1769,18 @@ const THATCH := Color("#b99a58")
 
 
 ## A tall rainforest tree: a pale trunk on wide roots, a big flat crown in
-## layers with a lower one off to the side, and vines hanging from both.
+## two layers with a lower one off to the side, and vines hanging down.
 static func jungle_tree(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
 	var h := 7.0 + rng.randf() * 3.5
 	kit.cylinder(at + Vector3.DOWN * 0.5, 0.55, h + 0.5, BARK, SceneryKit.BRICK, true)
-	var turn := rng.randf() * TAU
-	for k in 4:
-		var a := turn + k * TAU / 4.0
-		var out := Vector3(cos(a), 0.0, sin(a))
-		kit.turned_box(at + out * 0.9 + Vector3.UP * 0.6, Vector3(0.25, 1.8, 1.3), Basis(Vector3.UP, -a + PI * 0.5), BARK.darkened(0.15))
+	# Two crossed fins through the trunk make the four buttress roots.
+	var turn := rng.randf() * PI
+	for k in 2:
+		kit.turned_box(at + Vector3.UP * 0.6, Vector3(0.25, 1.8, 3.1), Basis(Vector3.UP, turn + k * PI * 0.5), BARK.darkened(0.15))
 	var green: Color = LEAVES[rng.randi() % LEAVES.size()]
 	var size := 6.0 + rng.randf() * 2.0
-	kit.box(at + Vector3.UP * h, Vector3(size * 0.7, 1.0, size * 0.7), green.darkened(0.12), SceneryKit.BRICK, false)
-	kit.box(at + Vector3.UP * (h + 1.0), Vector3(size, 1.5, size), green, SceneryKit.BRICK, false)
-	kit.box(at + Vector3(0.4, h + 2.5, -0.3), Vector3(size * 0.75, 1.2, size * 0.75), green.lightened(0.08), SceneryKit.BRICK, false)
-	kit.box(at + Vector3(-0.3, h + 3.7, 0.2), Vector3(size * 0.4, 0.9, size * 0.4), green.lightened(0.16), SceneryKit.BRICK, false)
+	kit.box(at + Vector3.UP * h, Vector3(size, 1.8, size), green, SceneryKit.BRICK, false)
+	kit.box(at + Vector3(0.3, h + 1.8, -0.2), Vector3(size * 0.65, 1.2, size * 0.65), green.lightened(0.1), SceneryKit.BRICK, false)
 	# A lower branch with its own crown.
 	var a := rng.randf() * TAU
 	var out := Vector3(cos(a), 0.0, sin(a))
@@ -1789,37 +1788,53 @@ static func jungle_tree(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator
 	var tip := at + out * 2.6 + Vector3.UP * (y + 1.2)
 	var foot := at + Vector3.UP * y
 	kit.turned_box((foot + tip) * 0.5, Vector3(0.3, foot.distance_to(tip), 0.3), Basis(Quaternion(Vector3.UP, (tip - foot).normalized())), BARK)
-	kit.box(tip, Vector3(3.2, 1.0, 3.2), green.darkened(0.05), SceneryKit.BRICK, false)
-	kit.box(tip + Vector3.UP, Vector3(2.0, 0.7, 2.0), green.lightened(0.1), SceneryKit.BRICK, false)
-	# Vines hanging down from the crowns.
-	for k in 4 + rng.randi() % 3:
-		var b := rng.randf() * TAU
-		var r := rng.randf_range(1.2, size * 0.45)
-		var top := at + Vector3(cos(b) * r, h, sin(b) * r)
-		var drop := rng.randf_range(2.0, h - 2.0)
-		kit.box(top + Vector3.DOWN * drop, Vector3(0.12, drop, 0.12), VINE, SceneryKit.SMOOTH, false)
-		kit.box(top + Vector3.DOWN * (drop * 0.5), Vector3(0.35, 0.12, 0.35), VINE.lightened(0.1), SceneryKit.SMOOTH, false)
-	if rng.randf() < 0.15:
-		parrot(kit, tip + Vector3.UP * 1.0, rng.randi() % 4, rng)
+	kit.box(tip, Vector3(3.2, 1.2, 3.2), green.darkened(0.05), SceneryKit.BRICK, false)
+	# Vines hanging down from the big crown.
+	for k in 2:
+		var b := turn + k * PI + rng.randf_range(-0.6, 0.6)
+		var r := rng.randf_range(1.5, size * 0.42)
+		var drop := rng.randf_range(2.5, h - 2.0)
+		kit.box(at + Vector3(cos(b) * r, h - drop, sin(b) * r), Vector3(0.14, drop, 0.14), VINE, SceneryKit.SMOOTH, false)
+	if rng.randf() < 0.08:
+		parrot(kit, tip + Vector3.UP * 0.6, rng.randi() % 4, rng)
 
 
-## A fern: a fan of long green fronds round a little stump.
+## A young rainforest tree for the undergrowth: a thin trunk with a small
+## crown, and a vine.
+static func jungle_sapling(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var h := 3.5 + rng.randf() * 2.0
+	kit.box(at, Vector3(0.3, h, 0.3), BARK, SceneryKit.BRICK, true)
+	var green: Color = LEAVES[rng.randi() % LEAVES.size()]
+	var size := 2.4 + rng.randf() * 1.0
+	kit.box(at + Vector3.UP * h, Vector3(size, 1.0, size), green, SceneryKit.BRICK, false)
+	kit.box(at + Vector3.UP * (h + 1.0), Vector3(size * 0.6, 0.7, size * 0.6), green.lightened(0.1), SceneryKit.BRICK, false)
+
+
+## A big leafy bush: a wide clump with a smaller one on top.
+static func jungle_bush(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var green: Color = LEAVES[rng.randi() % LEAVES.size()]
+	var size := Vector3(rng.randf_range(2.2, 3.2), rng.randf_range(1.3, 1.9), rng.randf_range(2.2, 3.2))
+	kit.box(at, size, green.darkened(0.08), SceneryKit.BRICK, false)
+	kit.box(at + Vector3(rng.randf_range(-0.4, 0.4), size.y, rng.randf_range(-0.4, 0.4)), size * Vector3(0.6, 0.6, 0.6), green.lightened(0.08), SceneryKit.BRICK, false)
+
+
+## A fern: a fan of long green fronds.
 static func fern(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
 	var green: Color = LEAVES[rng.randi() % LEAVES.size()].lightened(0.1)
-	kit.box(at, Vector3(0.4, 0.4, 0.4), green.darkened(0.3), SceneryKit.SMOOTH, false)
-	var count := 6 + rng.randi() % 3
+	var count := 5
 	var turn := rng.randf() * TAU
 	for k in count:
 		var a := turn + k * TAU / count
-		var length := rng.randf_range(1.3, 1.9)
+		var length := rng.randf_range(1.8, 2.5)
 		var lift := rng.randf_range(0.45, 0.8)
 		var basis := Basis(Vector3.UP, a) * Basis(Vector3.RIGHT, -lift)
-		kit.turned_box(at + Vector3(sin(a), 0.0, cos(a)) * length * 0.45 + Vector3.UP * (0.35 + sin(lift) * length * 0.5), Vector3(0.45, 0.06, length), basis, green if k % 2 == 0 else green.darkened(0.12))
+		kit.turned_box(at + Vector3(sin(a), 0.0, cos(a)) * length * 0.45 + Vector3.UP * (0.35 + sin(lift) * length * 0.5), Vector3(0.55, 0.06, length), basis, green if k % 2 == 0 else green.darkened(0.12))
 
 
 ## A parrot sitting on something, about a metre tall, facing `facing`: a
-## round body, a big hooked beak, bright wings and a long tail hanging down.
-## It bobs its head.
+## round body, bright wings, a long tail hanging down and a big beak. It
+## bobs its head, unless it's a far filler, which stays still so it can drop
+## out in the distance like the others.
 static func parrot(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
 	var looks := [[RED, BLUE, YELLOW], [BLUE, YELLOW, BLUE.darkened(0.3)], [BRIGHT_GREEN, RED, BLUE]]
 	var look: Array = looks[rng.randi() % looks.size()]
@@ -1827,25 +1842,22 @@ static func parrot(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberG
 	var wing: Color = look[1]
 	var tail: Color = look[2]
 	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
-	# Feet on the perch, the body, the wings down its sides and the tail.
-	for x in [-0.12, 0.12]:
-		kit.box(at + face * Vector3(x, 0.0, 0.05), Vector3(0.1, 0.12, 0.2), DARK_GREY, SceneryKit.SMOOTH, false)
+	# The body, the wings as one piece showing down both sides, and the tail.
 	kit.turned_box(at + face * Vector3(0.0, 0.45, 0.0), Vector3(0.45, 0.65, 0.42), face * Basis(Vector3.RIGHT, 0.15), body)
-	if body == BLUE:
-		kit.turned_box(at + face * Vector3(0.0, 0.42, 0.12), Vector3(0.38, 0.5, 0.25), face * Basis(Vector3.RIGHT, 0.15), YELLOW)
-	for x in [-0.25, 0.25]:
-		kit.turned_box(at + face * Vector3(x, 0.45, -0.04), Vector3(0.1, 0.6, 0.38), face * Basis(Vector3.RIGHT, 0.2), wing)
+	kit.turned_box(at + face * Vector3(0.0, 0.45, -0.04), Vector3(0.6, 0.6, 0.38), face * Basis(Vector3.RIGHT, 0.2), wing)
 	kit.turned_box(at + face * Vector3(0.0, 0.05, -0.32), Vector3(0.18, 0.75, 0.08), face * Basis(Vector3.RIGHT, -0.35), tail)
 	# The head, which bobs.
-	kit.begin_mover(Transform3D(face, at + face * Vector3(0.0, 0.8, 0.05)), { "bob": 0.04, "rate": 3.0 + rng.randf() })
+	var bob := 3.0 + rng.randf()
+	if not kit.far:
+		kit.begin_mover(Transform3D(face, at + face * Vector3(0.0, 0.8, 0.05)), { "bob": 0.04, "rate": bob })
 	var head := at + face * Vector3(0.0, 0.8, 0.05)
 	kit.turned_box(head + Vector3.UP * 0.18, Vector3(0.4, 0.36, 0.38), face, body)
-	# A pale cheek, a black eye on each side, and the hooked beak.
-	for x in [-0.205, 0.205]:
-		kit.turned_box(head + face * Vector3(x, 0.2, 0.06), Vector3(0.02, 0.2, 0.2), face, WHITE)
-		kit.turned_box(head + face * Vector3(x * 1.06, 0.24, 0.07), Vector3(0.02, 0.08, 0.08), face, BLACK)
-	kit.turned_box(head + face * Vector3(0.0, 0.22, 0.26), Vector3(0.2, 0.2, 0.16), face, DARK_GREY)
-	kit.turned_box(head + face * Vector3(0.0, 0.14, 0.34), Vector3(0.12, 0.14, 0.08), face, DARK_GREY)
+	# A pale cheek patch across the face with a black eye each side, and the
+	# hooked beak.
+	kit.turned_box(head + face * Vector3(0.0, 0.2, 0.06), Vector3(0.43, 0.2, 0.2), face, WHITE)
+	for x in [-0.215, 0.215]:
+		kit.turned_box(head + face * Vector3(x, 0.24, 0.07), Vector3(0.02, 0.08, 0.08), face, BLACK)
+	kit.turned_box(head + face * Vector3(0.0, 0.2, 0.27), Vector3(0.2, 0.24, 0.18), face, DARK_GREY)
 	kit.end_mover()
 
 
@@ -1997,31 +2009,29 @@ static func waterfall(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumb
 		kit.box(top + Vector3.UP * 2.5, Vector3(4.0, 1.2, 4.0), LEAVES[1], SceneryKit.BRICK, false)
 
 
-## A swaying rope bridge from `from` to `to`: planks hung between two ropes,
-## sagging in the middle, with hand ropes along each side.
+## A rope bridge from `from` to `to`: planks hung between two ropes,
+## sagging in the middle, with hand ropes along each side. It stays still.
 static func _rope_span(kit: SceneryKit, from: Vector3, to: Vector3, wide: float, sag: float) -> void:
 	var along := to - from
 	var flat := Vector3(along.x, 0.0, along.z).normalized()
 	var side := flat.cross(Vector3.UP).normalized()
-	var planks := maxi(6, int(along.length() / 0.6))
+	var planks := maxi(6, int(along.length() / 0.9))
 	var deck: Array[Vector3] = []
 	for k in planks + 1:
 		var t := float(k) / planks
 		deck.append(from + along * t + Vector3.DOWN * sag * 4.0 * t * (1.0 - t))
-	# It sways a little from side to side about the line between its ends.
-	kit.begin_mover(Transform3D(Basis.looking_at(flat), (from + to) * 0.5), { "swing": Vector3.FORWARD, "angle": 0.03, "rate": 1.1 })
 	for k in planks:
 		var a: Vector3 = deck[k]
 		var b: Vector3 = deck[k + 1]
-		kit.turned_box((a + b) * 0.5, Vector3(wide, 0.08, 0.45), Basis.looking_at(b - a), WOOD.darkened(0.1 * (k % 2)))
+		kit.turned_box((a + b) * 0.5, Vector3(wide, 0.08, a.distance_to(b) * 0.75), Basis.looking_at(b - a), WOOD.darkened(0.1 * (k % 2)), SceneryKit.SMOOTH)
+	# The hand ropes, a straight piece over every two planks, on posts.
 	for s in [-1.0, 1.0]:
-		for k in planks:
+		for k in range(0, planks, 2):
 			var a: Vector3 = deck[k] + side * s * wide * 0.5 + Vector3.UP * 1.0
-			var b: Vector3 = deck[k + 1] + side * s * wide * 0.5 + Vector3.UP * 1.0
-			kit.turned_box((a + b) * 0.5, Vector3(0.08, 0.08, a.distance_to(b) + 0.05), Basis.looking_at(b - a), ROPE)
-			if k % 2 == 0:
+			var b: Vector3 = deck[mini(k + 2, planks)] + side * s * wide * 0.5 + Vector3.UP * 1.0
+			kit.turned_box((a + b) * 0.5, Vector3(0.08, 0.08, a.distance_to(b) + 0.05), Basis.looking_at(b - a), ROPE, SceneryKit.SMOOTH)
+			if k > 0:
 				kit.box(deck[k] + side * s * wide * 0.5, Vector3(0.05, 1.0, 0.05), ROPE.darkened(0.15), SceneryKit.SMOOTH, false)
-	kit.end_mover()
 
 
 ## A rope bridge over a little creek, between two banks of rock with

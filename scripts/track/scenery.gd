@@ -20,6 +20,9 @@ extends Node3D
 const CELL := 4.0 # metres, for the map of how far the ground is from the road
 const REACH := 80.0 # how far out from the road scenery goes
 const MAX_FILLERS := 280
+## How many undergrowth plants at most, and how far past the runoff they go.
+const MAX_UNDERGROWTH := 400
+const UNDERGROWTH_REACH := 10.0 # metres
 ## Only scenery closer to the road than this is solid. Nothing further out
 ## can be hit, so lower graphics settings can leave some out.
 const SOLID_REACH := 60.0
@@ -73,7 +76,10 @@ const LAMP_EVERY := 20.0
 ## ring of red mesas and buttes stands far out instead (see _far_mesas()),
 ## and "mesas_out" says how far past the scenery, 70 m if it's left out.
 ## A jungle theme has "karsts": a ring of tall green topped rock towers
-## stands far out (see _far_karsts()).
+## stands far out (see _far_karsts()). "undergrowth" is small cheap fillers
+## packed in thick along the road (see _undergrowth()), and "filler_reach"
+## keeps the fillers within that many metres past the runoff, 64 if it's
+## left out.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -331,28 +337,36 @@ const THEMES := {
 		"fillers": {"red_rocks": 3, "cactus": 2, "mine_carts": 1, "windpump": 1, "saguaro": 1},
 	},
 	"jungle_canopy": {
-		"ground": "#3f7f36", "curbs": ["#a5ca18", "#1b2a34"], "wall": "#237841",
+		"ground": "#356e30", "curbs": ["#a5ca18", "#1b2a34"], "wall": "#237841",
 		"sky": ["#4a92d0", "#e4efe0"], "karsts": true,
 		"landmarks": ["canopy_walk", "canopy_walk", "parrots", "jungle_hut", "parrots"],
-		"fillers": {"jungle_tree": 7, "fern": 4, "palm": 1, "parrots": 1},
+		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "bush": 1},
+		"filler_reach": 34.0,
+		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_falls": {
-		"ground": "#457f38", "curbs": ["#a5ca18", "#f2f3f2"], "wall": "#0d69ab",
+		"ground": "#3b6e31", "curbs": ["#a5ca18", "#f2f3f2"], "wall": "#0d69ab",
 		"sky": ["#5590c8", "#e2ece2"], "karsts": true,
 		"landmarks": ["waterfall", "rope_bridge", "waterfall", "jungle_hut", "pond"],
-		"fillers": {"jungle_tree": 5, "fern": 4, "palm": 2, "reeds": 1, "parrots": 1},
+		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "bush": 1},
+		"filler_reach": 34.0,
+		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_temple": {
-		"ground": "#4f8a3a", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#958a73",
+		"ground": "#46783a", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#958a73",
 		"sky": ["#3f8ad8", "#eaf0dc"], "karsts": true,
 		"landmarks": ["stepped_pyramid", "stone_head", "stone_head", "ruins", "stone_head"],
-		"fillers": {"jungle_tree": 5, "palm": 3, "fern": 3, "stone_head": 1, "ruins": 1},
+		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "ruins": 1},
+		"filler_reach": 34.0,
+		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_swamp": {
 		"ground": "#5a6a34", "curbs": ["#a5ca18", "#694030"], "wall": "#694030",
 		"sky": ["#6a8aa8", "#d8e0d8"], "karsts": true, "floor": "mud",
 		"landmarks": ["karst", "rope_bridge", "jungle_hut", "jungle_hut", "karst"],
-		"fillers": {"jungle_tree": 6, "fern": 3, "reeds": 2, "pond": 1, "palm": 1},
+		"fillers": {"jungle_tree": 4, "jungle_sapling": 3, "pond": 1, "palm": 1, "bush": 1},
+		"filler_reach": 34.0,
+		"undergrowth": {"fern": 2, "reeds": 1, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
@@ -433,6 +447,7 @@ func _ready() -> void:
 			_place_landmark(lm)
 	if not only_landmarks:
 		_fill()
+		_undergrowth()
 		if _floating:
 			_sky_islands()
 		if indoor:
@@ -1278,6 +1293,44 @@ func _place_landmark(prop: String) -> void:
 		_add(prop, best)
 
 
+## Ferns, saplings and the like packed along the road on both sides, after
+## the fillers, in whatever room they left.
+func _undergrowth() -> void:
+	var plants: Dictionary = theme.get("undergrowth", {})
+	var total := 0
+	for w in plants.values():
+		total += w
+	if total == 0:
+		return
+	var cells := []
+	for i in _dist.size():
+		if _dist[i] > _road_clear + 1.0 and _dist[i] < _road_clear + UNDERGROWTH_REACH:
+			cells.append(i)
+	for i in range(cells.size() - 1, 0, -1):
+		var j := _rng.randi() % (i + 1)
+		var t = cells[i]
+		cells[i] = cells[j]
+		cells[j] = t
+	_kit.far = true
+	var count := 0
+	for i in cells:
+		if count >= MAX_UNDERGROWTH:
+			break
+		var pick := _rng.randi() % total
+		var prop := ""
+		for name in plants:
+			pick -= plants[name]
+			if pick < 0:
+				prop = name
+				break
+		var c := _centre(i % _cols, i / _cols)
+		var at := Vector3(c.x + _rng.randf_range(-1.5, 1.5), 0.0, c.y + _rng.randf_range(-1.5, 1.5))
+		if _free(at, Props.ROOM.get(prop, 3.0)) and _inside_hall(at, Props.ROOM.get(prop, 3.0)):
+			_add(prop, at)
+			count += 1
+	_kit.far = false
+
+
 func _fill() -> void:
 	var fillers: Dictionary = theme.get("fillers", {})
 	var total := 0
@@ -1286,8 +1339,9 @@ func _fill() -> void:
 	if total == 0:
 		return
 	var cells := []
+	var reach: float = theme.get("filler_reach", REACH * 0.8)
 	for i in _dist.size():
-		if _dist[i] > _road_clear + 1.5 and _dist[i] < _road_clear + REACH * 0.8:
+		if _dist[i] > _road_clear + 1.5 and _dist[i] < _road_clear + reach:
 			cells.append(i)
 	# Shuffle with our own seed, so it's the same every time.
 	for i in range(cells.size() - 1, 0, -1):

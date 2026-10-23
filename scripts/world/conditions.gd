@@ -5,7 +5,7 @@ extends RefCounted
 ## starts and stay the same all race. Left to chance, they suit the course:
 ## snowy courses mostly snow, the Alps often, deserts get dust storms and
 ## never rain, canyons are mostly clear with dust and hardly any rain, jungles
-## often rain or fog and never snow, and beaches are mostly sunny. Halls are always the same, since they're indoors.
+## often rain or fog and never snow or dust, and beaches are mostly sunny. Halls are always the same, since they're indoors.
 ##
 ## A race's conditions travel online as a dictionary, worked out once by the
 ## host, so everyone races in the same weather with the same puddles.
@@ -55,7 +55,7 @@ const WEATHER_ODDS := {
 	"beach": [82, 8, 0, 3, 7, 0],
 	"desert": [65, 0, 0, 0, 0, 35],
 	"canyon": [62, 3, 0, 3, 7, 25],
-	"jungle": [35, 30, 0, 20, 14, 1],
+	"jungle": [36, 30, 0, 20, 14, 0],
 	"dry": [70, 0, 0, 5, 10, 15],
 	"volcanic": [55, 0, 0, 25, 20, 0],
 	"space": [85, 0, 0, 15, 0, 0],
