@@ -4,7 +4,8 @@ extends RefCounted
 ## The weather and the time of day for a race. They're picked before it
 ## starts and stay the same all race. Left to chance, they suit the course:
 ## snowy courses mostly snow, the Alps often, deserts get dust storms and
-## never rain, and beaches are mostly sunny. Halls are always the same, since they're indoors.
+## never rain, canyons are mostly clear with dust and hardly any rain, and
+## beaches are mostly sunny. Halls are always the same, since they're indoors.
 ##
 ## A race's conditions travel online as a dictionary, worked out once by the
 ## host, so everyone races in the same weather with the same puddles.
@@ -29,6 +30,7 @@ const CLIMATE_OF := {
 	"alps_meadow": "alpine", "alps_snow": "alpine", "alps_lake": "alpine", "alps_pass": "alpine",
 	"varmland": "nordic", "trondelag": "nordic",
 	"desert": "desert", "park_desert": "desert",
+	"canyon_cactus": "canyon", "canyon_ranch": "canyon", "canyon_mesa": "canyon", "canyon_mine": "canyon",
 	"golden_hills": "dry", "mine": "dry",
 	"gran_canaria": "beach", "sardinia": "beach", "malta": "beach", "trulli": "beach",
 	"brittany": "coastal", "phillip_island": "coastal", "delta": "coastal", "kent_downs": "coastal",
@@ -51,6 +53,7 @@ const WEATHER_ODDS := {
 	"alpine": [35, 8, 40, 12, 5, 0],
 	"beach": [82, 8, 0, 3, 7, 0],
 	"desert": [65, 0, 0, 0, 0, 35],
+	"canyon": [62, 3, 0, 3, 7, 25],
 	"dry": [70, 0, 0, 5, 10, 15],
 	"volcanic": [55, 0, 0, 25, 20, 0],
 	"space": [85, 0, 0, 15, 0, 0],

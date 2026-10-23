@@ -60,6 +60,8 @@ const ROOM := {
 	"watchtower": 3.0, "lamp_post": 1.0,
 	"chalet": 6.0, "snowy_chalet": 6.0, "alpine_church": 8.0, "cows": 2.8, "snowy_peak": 40.0,
 	"cable_car": 35.0, "ski_jump": 33.0,
+	"mesa": 38.0, "butte": 16.0, "saloon": 8.0, "water_tower": 3.5, "saguaro": 1.6, "mine_carts": 8.0,
+	"windpump": 3.0, "red_rocks": 2.4,
 }
 
 
@@ -155,6 +157,14 @@ static func add(kit: SceneryKit, prop: String, at: Vector3, rng: RandomNumberGen
 		"snowy_peak": snowy_peak(kit, at_grid, rng, 1.0, true)
 		"cable_car": cable_car(kit, at_grid, facing)
 		"ski_jump": ski_jump(kit, at_grid, facing)
+		"mesa": mesa(kit, at_grid, rng, 1.0, true)
+		"butte": butte(kit, at_grid, rng, 1.0, true)
+		"saloon": saloon(kit, at_grid, facing, rng)
+		"water_tower": water_tower(kit, at_grid)
+		"saguaro": saguaro(kit, at_grid, rng)
+		"mine_carts": mine_carts(kit, at_grid, facing, rng)
+		"windpump": windpump(kit, at_grid, facing)
+		"red_rocks": red_rocks(kit, at_grid, rng)
 
 
 ## Turns an offset from a prop's middle by its facing.
@@ -1465,6 +1475,230 @@ static func ski_jump(kit: SceneryKit, at: Vector3, facing: int) -> void:
 	_box(kit, at, Vector3(4.0, 0.0, -6.0), Vector3(2.6, 9.0, 2.6), facing, TAN)
 	_box(kit, at, Vector3(4.0, 9.0, -6.0), Vector3(3.2, 1.6, 3.2), facing, GLASS, SceneryKit.SMOOTH)
 	_box(kit, at, Vector3(4.0, 10.6, -6.0), Vector3(3.6, 0.3, 3.6), facing, RED, SceneryKit.SMOOTH, false)
+
+
+# The canyon.
+
+## Red rock in bands, darkest at the bottom, with a pale band now and then.
+const RED_ROCK := [Color("#8e3b27"), Color("#a0452e"), Color("#b5582c"), Color("#c46a3c")]
+const PALE_ROCK := Color("#e2b98a")
+const CACTUS_GREEN := Color("#4f7f3a")
+const WOOD := Color("#8a5a3a")
+const RUST := Color("#9a4a22")
+
+
+## A flat topped mountain of red rock in bands, standing on a skirt of fallen
+## rock. `size` scales it; a far one isn't solid.
+static func mesa(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, size: float, solid: bool) -> void:
+	var own := RandomNumberGenerator.new()
+	own.seed = rng.randi()
+	var w := own.randf_range(46.0, 58.0) * size
+	var d := own.randf_range(30.0, 40.0) * size
+	var h := own.randf_range(28.0, 38.0) * size
+	_rock_skirt(kit, at, w, d, h * 0.2, own)
+	_rock_bands(kit, at, w * 0.8, d * 0.8, h, own, solid)
+	# A lower shoulder off one end, and a few towers standing out from the
+	# sides, so it isn't one plain block.
+	var end := Vector3(w * own.randf_range(0.38, 0.45) * (-1.0 if own.randf() < 0.5 else 1.0), 0.0, d * own.randf_range(-0.15, 0.15))
+	_rock_bands(kit, at + end, w * 0.4, d * 0.6, h * own.randf_range(0.5, 0.7), own, false)
+	for k in 3:
+		var side := -1.0 if own.randf() < 0.5 else 1.0
+		var out := Vector3(own.randf_range(-0.3, 0.3) * w, 0.0, side * d * 0.42)
+		_rock_bands(kit, at + out, w * own.randf_range(0.12, 0.2), d * own.randf_range(0.15, 0.25), h * own.randf_range(0.6, 0.95), own, false)
+
+
+## A tall narrow tower of red rock, sometimes with a thin spire beside it.
+static func butte(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, size: float, solid: bool) -> void:
+	var own := RandomNumberGenerator.new()
+	own.seed = rng.randi()
+	var w := own.randf_range(13.0, 17.0) * size
+	var h := own.randf_range(30.0, 42.0) * size
+	_rock_skirt(kit, at, w * 1.6, w * 1.4, h * 0.22, own)
+	_rock_bands(kit, at, w, w * own.randf_range(0.7, 0.9), h, own, solid)
+	if own.randf() < 0.6:
+		var a := own.randf() * TAU
+		var spire := at + Vector3(cos(a), 0.0, sin(a)) * w * 0.85
+		_rock_bands(kit, spire, w * 0.3, w * 0.3, h * own.randf_range(0.6, 0.85), own, false)
+
+
+## A block of rock `w` by `d` and `h` tall in bands of red, each a little
+## off from the one under it and narrowing a touch towards the top.
+static func _rock_bands(kit: SceneryKit, at: Vector3, w: float, d: float, h: float, rng: RandomNumberGenerator, solid: bool) -> void:
+	var bands := maxi(3, roundi(h / 4.0))
+	var band := h / bands
+	for k in bands:
+		var f := 1.0 - 0.12 * float(k) / bands
+		var colour: Color = RED_ROCK[mini(k * RED_ROCK.size() / bands, RED_ROCK.size() - 1)]
+		if k > 0 and k < bands - 1 and rng.randf() < 0.25:
+			colour = PALE_ROCK
+		var shift := Vector3(rng.randf_range(-0.6, 0.6), 0.0, rng.randf_range(-0.6, 0.6))
+		kit.box(at + shift + Vector3.UP * band * k, Vector3(w * f, band, d * f), colour, SceneryKit.BRICK, solid and k == 0)
+	# A darker cap on top.
+	kit.box(at + Vector3.UP * h, Vector3(w * 0.86, 0.6, d * 0.86), RED_ROCK[0], SceneryKit.SMOOTH, false)
+
+
+## Fallen rock in steps round the foot of a mesa or butte.
+static func _rock_skirt(kit: SceneryKit, at: Vector3, w: float, d: float, h: float, rng: RandomNumberGenerator) -> void:
+	var steps := 3
+	for k in steps:
+		var f := 1.0 - 0.18 * k
+		kit.box(at + Vector3(rng.randf_range(-1.0, 1.0), h / steps * k, rng.randf_range(-1.0, 1.0)), Vector3(w * f, h / steps, d * f), RED_ROCK[1 + k % 2].lightened(0.06), SceneryKit.BRICK, false)
+
+
+## A few red boulders, a big one with smaller ones leaning on it.
+static func red_rocks(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var big := Vector3(1.8 + rng.randf() * 0.8, 1.1 + rng.randf() * 0.5, 1.6 + rng.randf() * 0.8)
+	kit.box(at, big, RED_ROCK[1], SceneryKit.BRICK, true)
+	kit.box(at + Vector3(rng.randf_range(-0.3, 0.3), big.y, rng.randf_range(-0.3, 0.3)), big * Vector3(0.7, 0.45, 0.7), RED_ROCK[2])
+	for k in 2:
+		var a := rng.randf() * TAU
+		var size := Vector3(0.8 + rng.randf() * 0.5, 0.5 + rng.randf() * 0.4, 0.8 + rng.randf() * 0.5)
+		kit.box(at + Vector3(cos(a), 0.0, sin(a)) * (big.x * 0.5 + size.x * 0.4), size, RED_ROCK[[0, 3][k]], SceneryKit.BRICK, false)
+
+
+## A tall saguaro cactus, round and chunky, with one to three arms that turn
+## up, and sometimes a flower on top.
+static func saguaro(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var h := 5.5 + rng.randf() * 2.5
+	kit.cylinder(at, 0.5, h, CACTUS_GREEN, SceneryKit.BRICK, true)
+	kit.cylinder(at + Vector3.UP * h, 0.38, 0.35, CACTUS_GREEN.lightened(0.08), SceneryKit.SMOOTH)
+	var arms := 1 + rng.randi() % 3
+	var turn := rng.randf() * TAU
+	for k in arms:
+		var a := turn + k * TAU / arms + rng.randf_range(-0.3, 0.3)
+		var out := Vector3(cos(a), 0.0, sin(a))
+		var y := h * rng.randf_range(0.35, 0.6)
+		var reach := 1.4 + rng.randf() * 0.3
+		kit.turned_cylinder(at + out * reach * 0.5 + Vector3.UP * y, 0.32, reach, Basis(Quaternion(Vector3.UP, out)), CACTUS_GREEN)
+		var up := 1.2 + rng.randf() * 1.4
+		kit.cylinder(at + out * reach + Vector3.UP * (y - 0.3), 0.32, up + 0.3, CACTUS_GREEN)
+		kit.cylinder(at + out * reach + Vector3.UP * (y + up), 0.24, 0.2, CACTUS_GREEN.lightened(0.08), SceneryKit.SMOOTH)
+	if rng.randf() < 0.4:
+		kit.cylinder(at + Vector3.UP * (h + 0.35), 0.2, 0.2, [WHITE, PINK, YELLOW][rng.randi() % 3], SceneryKit.SMOOTH)
+
+
+## A wooden water tank on four legs with a pointed roof and a spout.
+static func water_tower(kit: SceneryKit, at: Vector3) -> void:
+	var legs := 7.0
+	for x in [-1.8, 1.8]:
+		for z in [-1.8, 1.8]:
+			kit.box(at + Vector3(x, 0.0, z), Vector3(0.45, legs, 0.45), WOOD.darkened(0.2), SceneryKit.BRICK, true)
+	for y in [2.2, 4.8]:
+		for s in [-1.8, 1.8]:
+			kit.box(at + Vector3(s, y, 0.0), Vector3(0.2, 0.25, 3.6), WOOD.darkened(0.3), SceneryKit.SMOOTH, false)
+			kit.box(at + Vector3(0.0, y, s), Vector3(3.6, 0.25, 0.2), WOOD.darkened(0.3), SceneryKit.SMOOTH, false)
+	kit.box(at + Vector3.UP * legs, Vector3(5.2, 0.3, 5.2), WOOD.darkened(0.25), SceneryKit.SMOOTH, false)
+	kit.cylinder(at + Vector3.UP * (legs + 0.3), 2.5, 3.8, WOOD, SceneryKit.BRICK)
+	for y in [0.6, 1.9, 3.2]:
+		kit.cylinder(at + Vector3.UP * (legs + 0.3 + y), 2.58, 0.18, BLACK, SceneryKit.SMOOTH)
+	kit.cone(at + Vector3.UP * (legs + 4.1), 2.8, 1.8, DARK_GREY)
+	# The spout swung up against the side.
+	kit.box(at + Vector3(2.6, legs - 0.6, 0.0), Vector3(0.3, 1.4, 0.3), BLACK, SceneryKit.SMOOTH, false)
+
+
+## An old west saloon: a false front taller than the roof with a sign on it,
+## a porch with posts, swinging doors and a hitching rail.
+static func saloon(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var w := 9.0
+	var d := 8.0
+	var wood: Color = [WOOD, Color("#9a6440"), Color("#b07a4a")][rng.randi() % 3]
+	var trim: Color = [RED, GREEN, DARK_BLUE][rng.randi() % 3]
+	_box(kit, at, Vector3.ZERO, Vector3(w, 5.0, d), facing, wood)
+	_roof(kit, at + Vector3.UP * 5.0, w, d, deg_to_rad(16.0), facing + 1, wood.darkened(0.35))
+	# The false front, stepped at the top.
+	_box(kit, at, Vector3(0.0, 0.0, d * 0.5), Vector3(w + 0.4, 7.2, 0.4), facing, wood.lightened(0.08))
+	_box(kit, at, Vector3(0.0, 7.2, d * 0.5), Vector3(w * 0.5, 0.9, 0.4), facing, wood.lightened(0.08))
+	_box(kit, at, Vector3(0.0, 8.1, d * 0.5), Vector3(w * 0.5 + 0.4, 0.2, 0.5), facing, trim, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 7.2, d * 0.5), Vector3(w + 0.6, 0.2, 0.5), facing, trim, SceneryKit.SMOOTH, false)
+	# The sign: a pale board in a coloured frame, with a few dark letters.
+	_box(kit, at, Vector3(0.0, 5.3, d * 0.5 + 0.25), Vector3(6.4, 1.5, 0.1), facing, trim, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 5.45, d * 0.5 + 0.3), Vector3(6.0, 1.2, 0.1), facing, PALE_ROCK.lightened(0.3), SceneryKit.SMOOTH, false)
+	for k in 6:
+		_box(kit, at, Vector3(-2.25 + k * 0.9, 5.7, d * 0.5 + 0.36), Vector3(0.5, 0.7, 0.05), facing, BLACK, SceneryKit.SMOOTH, false)
+	# Windows and the swinging doors.
+	for x in [-3.0, 3.0]:
+		_box(kit, at, Vector3(x, 1.2, d * 0.5 + 0.2), Vector3(1.6, 1.6, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x, 3.6, d * 0.5 + 0.2), Vector3(1.2, 1.2, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.0, d * 0.5 + 0.2), Vector3(1.8, 2.6, 0.1), facing, BLACK, SceneryKit.SMOOTH, false)
+	for x in [-0.45, 0.45]:
+		_box(kit, at, Vector3(x, 0.8, d * 0.5 + 0.3), Vector3(0.8, 1.2, 0.1), facing, wood.darkened(0.3), SceneryKit.SMOOTH, false)
+	# The porch, its posts and its roof.
+	_box(kit, at, Vector3(0.0, 0.0, d * 0.5 + 1.4), Vector3(w + 0.4, 0.4, 2.6), facing, wood.darkened(0.2))
+	for x in [-4.4, -1.5, 1.5, 4.4]:
+		_box(kit, at, Vector3(x, 0.4, d * 0.5 + 2.5), Vector3(0.3, 3.0, 0.3), facing, wood.darkened(0.2), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 3.4, d * 0.5 + 1.4), Vector3(w + 0.6, 0.25, 2.8), facing, trim.darkened(0.2), SceneryKit.SMOOTH, false)
+	# A hitching rail and a barrel.
+	for x in [-3.0, 3.0]:
+		_box(kit, at, Vector3(x, 0.0, d * 0.5 + 4.4), Vector3(0.25, 1.1, 0.25), facing, wood.darkened(0.3), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.9, d * 0.5 + 4.4), Vector3(6.4, 0.2, 0.2), facing, wood.darkened(0.3), SceneryKit.SMOOTH, false)
+	kit.cylinder(at + _turn(Vector3(w * 0.5 + 1.0, 0.0, d * 0.5 + 1.0), facing), 0.5, 1.1, WOOD.darkened(0.1), SceneryKit.BRICK)
+	kit.cylinder(at + _turn(Vector3(w * 0.5 + 1.0, 0.35, d * 0.5 + 1.0), facing), 0.53, 0.1, BLACK, SceneryKit.SMOOTH)
+
+
+## The mouth of an old mine in a heap of red rock, with a timber frame, and
+## rails coming out of it with two ore carts, one full of gold.
+static func mine_carts(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	# The rock heap and the mine mouth at the back.
+	_box(kit, at, Vector3(0.0, 0.0, -4.5), Vector3(11.0, 3.0, 6.0), facing, RED_ROCK[1])
+	_box(kit, at, Vector3(0.3, 3.0, -5.0), Vector3(8.0, 2.4, 5.0), facing, RED_ROCK[2])
+	_box(kit, at, Vector3(-0.4, 5.4, -5.4), Vector3(4.6, 1.6, 3.6), facing, RED_ROCK[3])
+	_box(kit, at, Vector3(0.0, 0.0, -1.45), Vector3(2.8, 3.0, 0.1), facing, BLACK, SceneryKit.SMOOTH, false)
+	for x in [-1.6, 1.6]:
+		_box(kit, at, Vector3(x, 0.0, -1.35), Vector3(0.45, 3.4, 0.45), facing, WOOD.darkened(0.2), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 3.4, -1.35), Vector3(4.0, 0.5, 0.5), facing, WOOD.darkened(0.2), SceneryKit.SMOOTH, false)
+	# The rails, on sleepers, running out to the front.
+	for k in 7:
+		_box(kit, at, Vector3(0.0, 0.0, -1.0 + k * 1.0), Vector3(1.8, 0.12, 0.35), facing, WOOD.darkened(0.35), SceneryKit.SMOOTH, false)
+	for x in [-0.55, 0.55]:
+		_box(kit, at, Vector3(x, 0.12, 2.0), Vector3(0.12, 0.12, 6.8), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+	for k in 2:
+		var z := 0.6 + k * 2.6
+		var load: Color = YELLOW if k == 0 else [DARK_GREY, RED_ROCK[0]][rng.randi() % 2]
+		for x in [-0.55, 0.55]:
+			for zz in [-0.55, 0.55]:
+				var wheel := at + _turn(Vector3(x, 0.4, z + zz), facing)
+				kit.turned_cylinder(wheel, 0.3, 0.15, Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5) * Basis(Vector3.BACK, PI * 0.5), BLACK)
+		_box(kit, at, Vector3(0.0, 0.5, z), Vector3(1.6, 1.0, 2.0), facing, RUST)
+		_box(kit, at, Vector3(0.0, 1.45, z), Vector3(1.8, 0.15, 2.2), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+		for n in 5:
+			_box(kit, at, Vector3(rng.randf_range(-0.5, 0.5), 1.5, z + rng.randf_range(-0.6, 0.6)), Vector3(0.45, 0.4, 0.45), facing, load, SceneryKit.SMOOTH, false)
+
+
+## A farm windpump: a steel lattice tower with a wheel of blades that turns
+## in the wind, a tail fin, and a round tank at its foot.
+static func windpump(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	var h := 10.0
+	var spread := 1.6
+	var top_spread := 0.4
+	# Four legs leaning in, and rungs across.
+	for x in [-1.0, 1.0]:
+		for z in [-1.0, 1.0]:
+			var foot := at + Vector3(x * spread, 0.0, z * spread)
+			var head := at + Vector3(x * top_spread, h, z * top_spread)
+			kit.turned_box((foot + head) * 0.5, Vector3(0.18, foot.distance_to(head), 0.18), Basis(Quaternion(Vector3.UP, (head - foot).normalized())), LIGHT_GREY)
+	for k in 4:
+		var y := 1.5 + k * 2.2
+		var s := lerpf(spread, top_spread, y / h) * 2.0
+		for side in [-1.0, 1.0]:
+			kit.box(at + Vector3(side * s * 0.5, y, 0.0), Vector3(0.12, 0.12, s), LIGHT_GREY, SceneryKit.SMOOTH, false)
+			kit.box(at + Vector3(0.0, y, side * s * 0.5), Vector3(s, 0.12, 0.12), LIGHT_GREY, SceneryKit.SMOOTH, false)
+	kit.box(at, Vector3(0.6, 0.6, 0.6), DARK_GREY, SceneryKit.SMOOTH, true)
+	kit.box(at + Vector3.UP * h, Vector3(1.2, 0.5, 1.2), DARK_GREY, SceneryKit.SMOOTH, false)
+	var face := Basis(Vector3.UP, -posmod(facing, 4) * PI * 0.5)
+	# The tail fin out the back.
+	kit.turned_box(at + Vector3.UP * (h + 0.7) + face * Vector3(0.0, 0.0, -1.6), Vector3(0.1, 0.2, 3.0), face, DARK_GREY)
+	kit.turned_box(at + Vector3.UP * (h + 0.7) + face * Vector3(0.0, 0.0, -3.4), Vector3(0.1, 1.4, 1.8), face, RED)
+	var hub := at + Vector3.UP * (h + 0.7) + face * Vector3(0.0, 0.0, 0.9)
+	kit.begin_mover(Transform3D(face, hub), { "spin": Vector3.BACK, "speed": 1.4 })
+	for k in 12:
+		var blade := face * Basis(Vector3.BACK, k * TAU / 12.0) * Basis(Vector3.UP, 0.4)
+		kit.turned_box(hub + face * Basis(Vector3.BACK, k * TAU / 12.0) * Vector3(0.0, 1.35, 0.0), Vector3(0.5, 1.7, 0.06), blade, WHITE)
+	kit.turned_cylinder(hub, 0.5, 0.3, face * Basis(Vector3.RIGHT, PI * 0.5), RED)
+	kit.end_mover()
+	# The water tank, a little way off.
+	var tank := at + face * Vector3(2.8, 0.0, 1.0)
+	kit.cylinder(tank, 1.5, 1.0, LIGHT_GREY, SceneryKit.BRICK, true)
+	kit.cylinder(tank + Vector3.UP * 0.9, 1.35, 0.12, WATER, SceneryKit.WATER)
 
 
 # Fans.

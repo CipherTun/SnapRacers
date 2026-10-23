@@ -119,6 +119,34 @@ def accordion(f, d, v):
     return tone * (0.9 + 0.1 * np.sin(2 * np.pi * 6.0 * t)) * adsr(n, 0.02, 0.1, 0.8, 0.05) * 0.55 * v
 
 
+def twang(f, d, v):
+    """A twangy electric guitar played low: it slides up into the note, rings
+    bright and dark again, with a slow tremolo as it holds."""
+    n = seconds(d + 0.25)
+    t = times(n)
+    bend = 1.0 - 0.03 * decay(n, 0.05)
+    trem = 1.0 + 0.01 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.12) * 4.0, 0.0, 1.0)
+    tone = saw(f * bend * trem, n, harmonics=30) * 0.6 + square(f * bend * trem, n, 0.3, harmonics=20) * 0.35
+    tone = sweep_lowpass(tone, 900 + 3500 * decay(n, 0.1))
+    return drive(tone * adsr(n, 0.002, 0.25, 0.55, 0.12), 1.4) * 0.6 * v
+
+
+def strum(f, d, v):
+    """A strummed acoustic string, bright at the start and dying away."""
+    n = seconds(max(d, 0.25) + 0.1)
+    tone = saw(f, n, harmonics=24) * 0.5 + triangle(f * 2.0, n) * 0.3
+    return sweep_lowpass(tone, 600 + 4000 * decay(n, 0.05)) * decay(n, 0.35) * 0.5 * v
+
+
+def whistle(f, d, v):
+    """Somebody whistling: a pure note with a wavering vibrato."""
+    n = seconds(d + 0.05)
+    t = times(n)
+    wobble = 1.0 + 0.008 * np.sin(2 * np.pi * 6.0 * t) * np.clip(t * 5.0, 0.0, 1.0)
+    breath = bandpass(noise(n, 5), f * 0.9, f * 1.1) * 0.06
+    return (sine(f * wobble, n) + breath) * adsr(n, 0.04, 0.05, 0.85, 0.06) * 0.6 * v
+
+
 def keys(f, d, v):
     """An electric piano: a soft sine with a bit of bark and tremolo."""
     n = seconds(d + 0.2)
@@ -703,6 +731,50 @@ def race_alpine():
     return render(bpm, bars, parts, wet=0.18)
 
 
+def race_canyon():
+    """The Canyon cup: a galloping cowboy tune on a twangy guitar, with a
+    train beat and somebody whistling along, in E minor."""
+    bpm = 150
+    verse = ["Em", "Em", "Am", "Em", "C", "B7", "Em", "Em"]
+    chorus = ["Am", "Am", "Em", "Em", "C", "D", "Em", "B7"]
+    breakdown = ["Em", "Em", "B7", "B7"]
+    chords = verse + chorus + verse + breakdown
+    a = [
+        [("E3", 4), ("G3", 2), ("A3", 2), ("B3", 6), (".", 2)],
+        [("B3", 2), ("D4", 2), ("B3", 2), ("A3", 2), ("G3", 4), ("E3", 4)],
+        [("A3", 4), ("C4", 2), ("E4", 2), ("D4", 4), ("C4", 4)],
+        [("B3", 6), ("G3", 2), ("E3", 8)],
+        [("C4", 4), ("E4", 2), ("G4", 2), ("E4", 4), ("C4", 4)],
+        [("B3", 4), ("D#4", 2), ("F#4", 2), ("A4", 4), ("F#4", 4)],
+        [("E4", 4), ("D4", 2), ("B3", 2), ("G3", 2), ("A3", 2), ("B3", 4)],
+        [("E3", 12), (".", 4)],
+    ]
+    b = [
+        [("A3", 2), ("C4", 2), ("E4", 4), ("E4", 2), ("D4", 2), ("C4", 4)],
+        [("A3", 4), ("E4", 4), ("A4", 8)],
+        [("G4", 4), ("F#4", 2), ("E4", 2), ("B3", 4), ("G3", 4)],
+        [("E4", 2), ("D4", 2), ("B3", 4), ("G3", 8)],
+        [("C4", 2), ("E4", 2), ("G4", 4), ("E4", 2), ("G4", 2), ("C5", 4)],
+        [("D5", 4), ("A4", 2), ("F#4", 2), ("D4", 8)],
+        [("B3", 2), ("E4", 2), ("G4", 2), ("B4", 2), ("A4", 4), ("G4", 4)],
+        [("F#4", 4), ("D#4", 4), ("B3", 8)],
+    ]
+    rest = [[(".", 16)]]
+    tune = melody(16, *(a + b + a + rest * 4))
+    whistled = melody(16, *(rest * 8 + b + rest * 12))
+    bars = len(chords)
+    parts = [
+        (kick, drums("x.......x.......", bars), 0.5, 0.0, 0.0),
+        (snare, drums("....o.......o..o", bars), 0.28, 0.05, 0.1),
+        (hat, drums("x.xxx.xxx.xxx.xx", bars), 0.14, 0.35, 0.03),
+        (bass, bassline(chords, "r.......5.......", 2), 0.5, 0.0, 0.0),
+        (strum, comp(chords, "....x.x.....x.x.", 3), 0.2, -0.4, 0.15),
+        (twang, tune, 0.45, 0.15, 0.3),
+        (whistle, [(at, f * 2.0, n) for at, f, n in whistled], 0.16, -0.2, 0.3),
+    ]
+    return render(bpm, bars, parts, wet=0.22)
+
+
 TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
          "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
-         "race_beach": race_beach, "race_alpine": race_alpine}
+         "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon}

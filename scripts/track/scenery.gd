@@ -31,7 +31,7 @@ const SMALL := 3.2
 ## Props too big to break, like hills and lakes.
 ## Where each lamp along the road is (see _lamp_posts()).
 var lamps: Array[Vector3] = []
-const UNBREAKABLE := ["mountain", "snowy_peak", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
+const UNBREAKABLE := ["mountain", "snowy_peak", "mesa", "butte", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
 ## Two stretches of road closer than this (middle to middle) get a line of
 ## tire stacks between them.
 const BARRIER_REACH := 2.0 * TrackPiece.TILE
@@ -69,7 +69,8 @@ const LAMP_EVERY := 20.0
 ## A theme up in the sky has "void": there's no ground, and floating islands
 ## and clouds go under and around the road instead (see _sky_islands()).
 ## A theme in the mountains has "peaks": a ring of big snowy peaks stands far
-## out round the course (see _far_peaks()).
+## out round the course (see _far_peaks()). A canyon theme has "mesas": a
+## ring of red mesas and buttes stands far out instead (see _far_mesas()).
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -301,6 +302,31 @@ const THEMES := {
 		"landmarks": ["snowy_peak", "cable_car", "snowy_chalet", "snowy_peak"],
 		"fillers": {"rocks": 5, "snowy_pine": 3, "pine": 1, "cows": 1, "snowman": 1},
 	},
+	"canyon_cactus": {
+		"ground": "#c69c74", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#a0452e",
+		"sky": ["#3f86d6", "#f4dcc0"], "mesas": true, "floor": "dirt",
+		"landmarks": ["mesa", "saloon", "water_tower", "windpump"],
+		"fillers": {"saguaro": 7, "cactus": 2, "red_rocks": 2},
+	},
+	"canyon_ranch": {
+		"ground": "#c8a27a", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#694030",
+		"sky": ["#4a8ed8", "#f2e0c6"], "mesas": true, "floor": "dirt",
+		"landmarks": ["butte", "water_tower", "saloon", "windpump"],
+		"fillers": {"red_rocks": 3, "cactus": 3, "saguaro": 2, "windpump": 1, "fence": 1},
+	},
+	"canyon_mesa": {
+		"ground": "#bb8a68", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#8e3b27",
+		"sky": ["#3a80d0", "#f6d8b8"], "mesas": true, "floor": "dirt",
+		"supports": "rock", "supports_colour": "#a0452e",
+		"landmarks": ["mesa", "butte", "mesa", "butte"],
+		"fillers": {"red_rocks": 5, "saguaro": 2, "cactus": 2},
+	},
+	"canyon_mine": {
+		"ground": "#c09670", "curbs": ["#f2cd37", "#694030"], "wall": "#694030",
+		"sky": ["#4588d4", "#f0dcc4"], "mesas": true, "floor": "dirt",
+		"landmarks": ["mine_carts", "butte", "water_tower", "saloon"],
+		"fillers": {"red_rocks": 3, "cactus": 2, "mine_carts": 1, "windpump": 1, "saguaro": 1},
+	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
 		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
@@ -386,6 +412,8 @@ func _ready() -> void:
 			_build_hall()
 		if theme.get("peaks", false):
 			_far_peaks()
+		if theme.get("mesas", false):
+			_far_mesas()
 	if _sea.size != Vector2.ZERO:
 		_build_sea()
 	# Only things near the road need to be solid. And nothing that ended up on
@@ -1037,6 +1065,30 @@ func _far_peaks() -> void:
 			Props.snowy_peak(_kit, at, _rng, _rng.randf_range(1.6, 2.8), false)
 		else:
 			Props.snowy_peak(SceneryKit.new(), at, _rng, _rng.randf_range(1.6, 2.8), false)
+
+
+## Red mesas and buttes in a ring far out round the course, like
+## _far_peaks(). None of them is solid and none of them breaks.
+func _far_mesas() -> void:
+	var low := Vector2(INF, INF)
+	var high := -Vector2(INF, INF)
+	for p in track.points:
+		low = low.min(Vector2(p.x, p.z))
+		high = high.max(Vector2(p.x, p.z))
+	var middle := (low + high) * 0.5
+	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + 70.0)
+	var count := 16
+	for k in count:
+		var a := TAU * (k + _rng.randf_range(-0.25, 0.25)) / count
+		var dir := Vector2(cos(a), sin(a))
+		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
+		var spot := middle + dir * (reach + _rng.randf_range(0.0, 160.0))
+		var at := Vector3(spot.x, -2.0, spot.y)
+		var kit := _kit if Graphics.draws_far(at) else SceneryKit.new()
+		if k % 3 == 1:
+			Props.butte(kit, at, _rng, _rng.randf_range(1.4, 2.0), false)
+		else:
+			Props.mesa(kit, at, _rng, _rng.randf_range(1.6, 2.6), false)
 
 
 ## The grandstand and the pit building face each other across the start

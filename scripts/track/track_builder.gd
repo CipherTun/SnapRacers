@@ -58,6 +58,8 @@ const PILLAR_COLOUR := Color("#a3a2a4")
 ## braces between them are.
 const LEG_SIZE := 0.6
 const BRACE_EVERY := 3.0
+## How far apart the blocks of a rock ridge under raised road are.
+const ROCK_EVERY := 4.0
 ## Which surface each edge of the outline is, for the shader.
 const KIND := {"road": 0.0, "kerb": 1.0, "deck": 2.0, "wall": 3.0, "walltop": 4.0, "line": 5.0, "mud": 6.0}
 
@@ -640,8 +642,11 @@ func _add_pillars() -> void:
 	add_child(body)
 	var spots: Array[Transform3D] = []
 	var clear := track.width * 0.5 + TrackPath.KERB + 2.0
-	# A theme can have roller coaster supports instead of solid pillars.
+	# A theme can have roller coaster supports instead of solid pillars, or
+	# a ridge of rock under the road all the way along, like a canyon rim.
 	var lattice: bool = _theme.get("supports", "") == "lattice"
+	var rock: bool = _theme.get("supports", "") == "rock"
+	var rock_colours: Array[Color] = []
 	var next := 0.0
 	for k in track.points.size():
 		# Nothing goes under loops, corkscrews and wall rides, because the road
@@ -661,6 +666,11 @@ func _add_pillars() -> void:
 				break
 		if blocked:
 			continue
+		if rock:
+			next = track.distances[k] + ROCK_EVERY
+			_rock(body, spots, k, ground, bottom)
+			rock_colours.append(Color(_theme.get("supports_colour", PILLAR_COLOUR)).darkened(0.08 * (k % 3)))
+			continue
 		next = track.distances[k] + PILLAR_EVERY
 		if lattice:
 			_lattice(body, spots, p, track.rights[k], ground, bottom)
@@ -675,6 +685,8 @@ func _add_pillars() -> void:
 	var colours: Array[Color] = []
 	colours.resize(spots.size())
 	colours.fill(Color(_theme.get("supports_colour", PILLAR_COLOUR)))
+	if rock:
+		colours = rock_colours
 	_add_blocks(spots, colours)
 
 
@@ -685,6 +697,19 @@ func _solid_box(body: StaticBody3D, where: Transform3D, size: Vector3) -> void:
 	shape.shape = box
 	shape.transform = where
 	body.add_child(shape)
+
+
+## A block of rock under raised road at point `k`, a little narrower than
+## the road and long enough to meet the next one, so the road runs along the
+## top of a ridge with a drop each side.
+func _rock(body: StaticBody3D, spots: Array[Transform3D], k: int, ground: float, bottom: float) -> void:
+	var p := track.points[k]
+	var forward := track.forwards[k]
+	forward = Vector3(forward.x, 0.0, forward.z).normalized()
+	var size := Vector3(track.width - 1.0, bottom, ROCK_EVERY + 1.5)
+	var where := Transform3D(Basis.looking_at(forward, Vector3.UP), Vector3(p.x, ground + bottom * 0.5, p.z))
+	_solid_box(body, where, size)
+	spots.append(where.scaled_local(size))
 
 
 ## A roller coaster's support under raised road: a leg under each side with

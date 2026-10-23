@@ -67,7 +67,7 @@ def piece_points(p):
             t = k / n
             pts.append((side * TILE * smoothstep(0.3, 0.7, t), 3 * TILE * t, 10.0 * math.sin(math.pi * t)))
         return pts, (side * TILE, 3 * TILE, 0), 0.0
-    tiles = 3 if kind == "jump" else int(p.get("length", 1 if kind == "straight" else 2))
+    tiles = 3 if kind == "jump" else int(p.get("length", 1 if kind in ("straight", "crossing") else 2))
     rise = float(p.get("rise", 0)) * 3.0 if kind == "ramp" else 0.0
     for k in range(n + 1):
         t = k / n
@@ -117,7 +117,8 @@ def parse(text):
     """Short hand for piece lists, one token per piece:
     S3 straight, R2/L2 curve right/left (size), R2b22 banked, R2c cut,
     SR4.3/SL4.3 slant right/left 4 long 3 across, U2+1/U2-1 ramp up/down a
-    level, C2 crest (C2h3 for one 3 m high), J jump, OR/OL loop, XR/XL corkscrew. Add ^1 or ^-1 to any piece to climb
+    level, C2 crest (C2h3 for one 3 m high), J jump, OR/OL loop, XR/XL corkscrew,
+    K a level crossing. Add ^1 or ^-1 to any piece to climb
     or drop a level along it, !o for open edges, !d dirt, !v gravel, !i ice,
     !s sand, !g grass."""
     import re
@@ -156,6 +157,8 @@ def parse(text):
             run = int(m[1]) * TILE
             height = float(m[2][1:]) if m[2] else round(CREST_BEND * run * run / (2 * math.pi ** 2), 1)
             spec = {"type": "crest", "length": int(m[1]), "height": height}
+        elif tok == "K":
+            spec = {"type": "crossing"}
         elif tok == "J":
             spec = {"type": "jump"}
         elif tok in ("OR", "OL"):

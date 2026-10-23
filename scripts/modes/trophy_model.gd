@@ -4,7 +4,8 @@ extends RefCounted
 ## A cup's trophy, built from bricks. Every one stands on the same plinth, a
 ## black brick with a plate in the cup's colour and a round stem, and has its
 ## own top: a two handled cup, a wheel, a gear, an arch, a chequered flag,
-## mountains, a lightning bolt, a corkscrew, a palm tree or a cable car.
+## mountains, a lightning bolt, a corkscrew, a palm tree, a cable car or a
+## cactus.
 ##
 ## It comes in plain light grey, for a cup you haven't won yet, or in gold,
 ## silver or bronze for your best finish. The plinth keeps its colours either
@@ -13,7 +14,7 @@ extends RefCounted
 ## A trophy is a little over 1 m across and up to 2 m tall, standing on its own
 ## origin.
 
-const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car"]
+const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus"]
 ## The tops your own cups get picked from. Kept as it is so a cup you made
 ## keeps its trophy when new cups add tops.
 const OWN_TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
@@ -81,6 +82,8 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 			_palm(add, metal)
 		"cable_car":
 			_cable_car(add, metal)
+		"cactus":
+			_cactus(add, metal)
 		_:
 			_cup(add, metal)
 	return out
@@ -281,3 +284,15 @@ static func _cable_car(add: Callable, metal: Material) -> void:
 	for z in [-0.155, 0.155]:
 		add.call(_brick(Vector3(0.34, 0.03, 0.02)), _up(hang.y - 0.42, hang.x, z), metal)
 	add.call(_brick(Vector3(0.42, 0.04, 0.32)), _up(hang.y - 0.67, hang.x), metal)
+
+
+## A saguaro cactus with two arms turned up, and a flower on top.
+static func _cactus(add: Callable, metal: Material) -> void:
+	add.call(MeshKit.rounded_cylinder(0.14, 0.92, 0.07, 20), _up(TOP_AT + 0.46), metal)
+	for arm in [[-1.0, 0.34, 0.4], [1.0, 0.5, 0.3]]:
+		var side: float = arm[0]
+		var y: float = TOP_AT + arm[1]
+		var up: float = arm[2]
+		add.call(_brick(Vector3(0.26, 0.15, 0.15)), _up(y, side * 0.2), metal)
+		add.call(MeshKit.rounded_cylinder(0.085, up, 0.04, 16), _up(y - 0.06 + up * 0.5, side * 0.31), metal)
+	add.call(MeshKit.rounded_cylinder(0.08, 0.06, 0.02, 16), _up(TOP_AT + 0.94), metal)
