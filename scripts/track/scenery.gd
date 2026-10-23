@@ -1052,6 +1052,8 @@ func _far_peaks() -> void:
 		high = high.max(Vector2(p.x, p.z))
 	var middle := (low + high) * 0.5
 	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + 70.0)
+	var half_out := half
+	var level := _far_level(middle, (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0))
 	var count := 18
 	for k in count:
 		var a := TAU * (k + _rng.randf_range(-0.25, 0.25)) / count
@@ -1059,13 +1061,15 @@ func _far_peaks() -> void:
 		# Out to the edge of a box round the course, then further out.
 		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
 		var spot := middle + dir * (reach + _rng.randf_range(0.0, 140.0))
-		var at := Vector3(spot.x, -6.0, spot.y)
+		var at := Vector3(spot.x, level - 5.0, spot.y)
+		half_out = half_out.max((spot - middle).abs())
 		# A lower graphics setting leaves some out, like far fillers. Marking
 		# them far would hide them all, as they're always past FAR_RANGE.
 		if Graphics.draws_far(at):
 			Props.snowy_peak(_kit, at, _rng, _rng.randf_range(1.6, 2.8), false)
 		else:
 			Props.snowy_peak(SceneryKit.new(), at, _rng, _rng.randf_range(1.6, 2.8), false)
+	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
 
 
 ## Red mesas and buttes in a ring far out round the course, like
@@ -1081,18 +1085,46 @@ func _far_mesas() -> void:
 	# everything else.
 	var out: float = theme.get("mesas_out", 70.0)
 	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + out)
+	var half_out := half
+	var level := _far_level(middle, (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0))
 	var count := 16
 	for k in count:
 		var a := TAU * (k + _rng.randf_range(-0.25, 0.25)) / count
 		var dir := Vector2(cos(a), sin(a))
 		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
 		var spot := middle + dir * (reach + _rng.randf_range(0.0, 160.0))
-		var at := Vector3(spot.x, -2.0, spot.y)
+		var at := Vector3(spot.x, level - 1.0, spot.y)
+		half_out = half_out.max((spot - middle).abs())
 		var kit := _kit if Graphics.draws_far(at) else SceneryKit.new()
 		if k % 3 == 1:
 			Props.butte(kit, at, _rng, _rng.randf_range(1.4, 2.0), false)
 		else:
 			Props.mesa(kit, at, _rng, _rng.randf_range(1.6, 2.6), false)
+	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
+
+
+## How high the far ring and the ground under it go: a metre below the lowest
+## ground on the baseplate, which is the whole box of `half` round `middle`,
+## or the road.
+func _far_level(middle: Vector2, half: Vector2) -> float:
+	var lowest := 0.0
+	for p in track.points:
+		lowest = minf(lowest, p.y - 1.0)
+	var x := middle.x - half.x
+	while x <= middle.x + half.x:
+		var z := middle.y - half.y
+		while z <= middle.y + half.y:
+			lowest = minf(lowest, ground.call(x, z))
+			z += 8.0
+		x += 8.0
+	return lowest - 1.0
+
+
+## Plain ground in the theme's colour from the edge of the baseplate out past
+## the far ring, with its top at `level`, so the far peaks or mesas stand on
+## something.
+func _far_floor(middle: Vector2, half: Vector2, level: float) -> void:
+	_kit.box(Vector3(middle.x, level - 1.0, middle.y), Vector3(half.x * 2.0, 1.0, half.y * 2.0), Color(theme.get("ground", "#4b9f4a")), SceneryKit.PLAIN, false)
 
 
 ## The grandstand and the pit building face each other across the start
