@@ -8,9 +8,11 @@ extends Control
 ## do it ahead of time. So hidden under the splash this sets up a race, then
 ## the garage, then the driver builder, and lets each one draw for a few
 ## frames. That covers the road, grass, walls, pillars, karts with drivers, a
-## part knocked loose, a ghost, a cannonball, and the garage's see-through and
-## picked out parts, all with the sun and shadows. The race is a storm at night and then snow by
-## day, so fog, rain, snow, puddles, lamps and kart lights are all drawn too.
+## part knocked loose, a ghost, a cannonball, a shockwave, lightning, a shield,
+## and the garage's see-through and picked out parts, all with the sun and
+## shadows. The race is a storm at night and then snow by day, losing its fog
+## halfway, so fog, clear skies, rain, snow, puddles, lamps and kart lights are
+## all drawn too.
 ## Godot keeps what it compiled, so after the first launch this is quick.
 ##
 ## It has to draw on the real screen, which uses different versions of the same
@@ -25,6 +27,8 @@ extends Control
 const WARM_FRAMES := 6
 ## Never flash the splash up for less than this, even when it's all cached.
 const AT_LEAST := 0.8
+## The frame the snowy race loses its fog on (see _clear_up()).
+const CLEAR_AT := 3
 
 var _stages: Array[Callable] = []
 var _stage_count := 1
@@ -37,6 +41,8 @@ var _done := false
 ## The courses whose layouts are still to get ready.
 var _outlines: Array = []
 var _outlines_took := 0
+## The race that loses its fog halfway (see _clear_up()).
+var _clear_later: Race
 var _bar: ProgressBar
 var _status: Label
 
@@ -118,7 +124,33 @@ func _warm_race(weather: String, time: String) -> Node:
 	# A ghost's see-through copies, and a cannonball with its flash and smoke.
 	kart.start_ghost()
 	race.add_child(BrickShot.fire(kart))
+	_gadget_glows(race)
+	if weather == "snow":
+		_clear_later = race
 	return race
+
+
+## A shockwave's burst, a lightning strike and a shield bubble on the
+## player's kart, each with its own see-through glow and the first two with
+## a light. A light in range needs its own version of every shader it falls
+## on, so these go off again once the fog is gone (see _process()).
+func _gadget_glows(race: Race) -> void:
+	var kart := race.player.kart
+	var ring := ShockRing.new()
+	race.add_child(ring)
+	ring.global_position = kart.global_position + Vector3.UP * 0.3
+	kart._show_zap()
+	kart.shield_left = Kart.SHIELD_TIME
+	kart._show_bubble()
+
+
+## Halfway through the snow, the fog goes, so clear weather is covered too,
+## and the lights go off again in it.
+func _clear_up(race: Race) -> void:
+	for found in race.find_children("*", "WorldEnvironment", true, false):
+		(found as WorldEnvironment).environment.fog_enabled = false
+	race.add_child(BrickShot.fire(race.player.kart))
+	_gadget_glows(race)
 
 
 func _warm_garage() -> Node:
@@ -165,6 +197,9 @@ func _process(delta: float) -> void:
 	var stages_total := float(_stage_count)
 	var finished := stages_total - _stages.size() - (1 if _scene != null else 0)
 	_bar.value = clampf((finished + float(_frames) / WARM_FRAMES) / stages_total, 0.0, 1.0) * 100.0
+	if _clear_later != null and _scene == _clear_later and _frames == CLEAR_AT:
+		_clear_up(_clear_later)
+		_clear_later = null
 	if _scene != null and _frames >= WARM_FRAMES:
 		_next_stage()
 	elif _scene == null and _shown >= AT_LEAST and _outlines.is_empty():
