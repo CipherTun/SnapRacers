@@ -4,8 +4,8 @@ extends RefCounted
 ## A cup's trophy, built from bricks. Every one stands on the same plinth, a
 ## black brick with a plate in the cup's colour and a round stem, and has its
 ## own top: a two handled cup, a wheel, a gear, an arch, a chequered flag,
-## mountains, a lightning bolt, a corkscrew, a palm tree, a cable car or a
-## cactus.
+## mountains, a lightning bolt, a corkscrew, a palm tree, a cable car, a
+## cactus or a stone head from a jungle temple.
 ##
 ## It comes in plain light grey, for a cup you haven't won yet, or in gold,
 ## silver or bronze for your best finish. The plinth keeps its colours either
@@ -14,7 +14,7 @@ extends RefCounted
 ## A trophy is a little over 1 m across and up to 2 m tall, standing on its own
 ## origin.
 
-const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus"]
+const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus", "temple_head"]
 ## The tops your own cups get picked from. Kept as it is so a cup you made
 ## keeps its trophy when new cups add tops.
 const OWN_TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
@@ -84,6 +84,8 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 			_cable_car(add, metal)
 		"cactus":
 			_cactus(add, metal)
+		"temple_head":
+			_temple_head(add, metal)
 		_:
 			_cup(add, metal)
 	return out
@@ -296,3 +298,23 @@ static func _cactus(add: Callable, metal: Material) -> void:
 		add.call(_brick(Vector3(0.26, 0.15, 0.15)), _up(y, side * 0.2), metal)
 		add.call(MeshKit.rounded_cylinder(0.085, up, 0.04, 16), _up(y - 0.06 + up * 0.5, side * 0.31), metal)
 	add.call(MeshKit.rounded_cylinder(0.08, 0.06, 0.02, 16), _up(TOP_AT + 0.94), metal)
+
+
+## A big stone head with a helmet, looking out of the front from under a
+## heavy brow, with round plugs in its ears.
+static func _temple_head(add: Callable, metal: Material) -> void:
+	add.call(_brick(Vector3(0.7, 0.08, 0.6)), _up(TOP_AT + 0.04), metal)
+	add.call(_brick(Vector3(0.5, 0.2, 0.48)), _up(TOP_AT + 0.18), metal)
+	add.call(_brick(Vector3(0.58, 0.36, 0.52)), _up(TOP_AT + 0.46), metal)
+	add.call(_brick(Vector3(0.64, 0.16, 0.58)), _up(TOP_AT + 0.72), metal)
+	add.call(_brick(Vector3(0.52, 0.08, 0.46)), _up(TOP_AT + 0.84), metal)
+	add.call(_brick(Vector3(0.6, 0.06, 0.04)), _up(TOP_AT + 0.67, 0.0, -0.3), metal)
+	for x in [-0.31, 0.31]:
+		add.call(MeshKit.rounded_cylinder(0.08, 0.05, 0.01, 16), Transform3D(Basis(Vector3.BACK, PI * 0.5), Vector3(x, TOP_AT + 0.48, 0.0)), metal)
+	# The face is on the front (-Z): brow, eyes, a broad nose and lips.
+	add.call(_brick(Vector3(0.46, 0.05, 0.04)), _up(TOP_AT + 0.57, 0.0, -0.27), metal)
+	for x in [-0.12, 0.12]:
+		add.call(_brick(Vector3(0.12, 0.06, 0.03)), _up(TOP_AT + 0.51, x, -0.27), metal)
+	add.call(_brick(Vector3(0.14, 0.14, 0.06)), _up(TOP_AT + 0.42, 0.0, -0.28), metal)
+	add.call(_brick(Vector3(0.2, 0.06, 0.07)), _up(TOP_AT + 0.37, 0.0, -0.285), metal)
+	add.call(_brick(Vector3(0.24, 0.06, 0.04)), _up(TOP_AT + 0.31, 0.0, -0.27), metal)

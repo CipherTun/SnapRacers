@@ -147,6 +147,36 @@ def whistle(f, d, v):
     return (sine(f * wobble, n) + breath) * adsr(n, 0.04, 0.05, 0.85, 0.06) * 0.6 * v
 
 
+def marimba(f, d, v):
+    """A marimba: a soft wooden bar hit with a mallet, its fourth harmonic
+    ringing for a moment over a round note that dies away."""
+    n = seconds(max(d, 0.5))
+    tone = sine(f, n) * decay(n, 0.35) + sine(f * 4.0, n) * 0.3 * decay(n, 0.06) + sine(f * 9.8, n) * 0.08 * decay(n, 0.015)
+    mallet = bandpass(noise(n, 6), 400, 3000) * decay(n, 0.004) * 0.2
+    return (tone + mallet) * adsr(n, 0.002, 0.0, 1.0, 0.03) * 0.8 * v
+
+
+def hand_drum(f, d, v):
+    """A hand drum: a thump that drops a little in pitch, and the slap of the
+    hand on the skin."""
+    n = seconds(0.35)
+    body = sine(np.geomspace(f * 1.4, f, n), n) * decay(n, 0.16)
+    slap = bandpass(noise(n, 7), 800, 4000) * decay(n, 0.01) * 0.4
+    return drive(body + slap, 1.2) * v
+
+
+def flute(f, d, v):
+    """A wooden flute: a breathy note with a chiff at the start and a gentle
+    vibrato as it holds."""
+    n = seconds(d + 0.08)
+    t = times(n)
+    vib = 1.0 + 0.006 * np.sin(2 * np.pi * 5.0 * t) * np.clip((t - 0.1) * 4.0, 0.0, 1.0)
+    tone = sine(f * vib, n) + sine(f * 2.0 * vib, n) * 0.18 + sine(f * 3.0 * vib, n) * 0.05
+    breath = bandpass(noise(n, 8), f * 0.8, f * 2.5) * 0.12
+    chiff = bandpass(noise(n, 9), 2000, 6000) * decay(n, 0.02) * 0.15
+    return (tone + breath + chiff) * adsr(n, 0.03, 0.05, 0.8, 0.08) * 0.55 * v
+
+
 def keys(f, d, v):
     """An electric piano: a soft sine with a bit of bark and tremolo."""
     n = seconds(d + 0.2)
@@ -775,6 +805,54 @@ def race_canyon():
     return render(bpm, bars, parts, wet=0.22)
 
 
+def race_jungle():
+    """The Jungle cup: marimba over hand drums and a shaker, with a wooden
+    flute on the chorus, in A minor."""
+    bpm = 128
+    verse = ["Am", "Am", "G", "Am", "F", "G", "E7", "Am"]
+    chorus = ["F", "G", "Am", "Am", "F", "G", "E7", "E7"]
+    breakdown = ["Am", "G", "F", "E7"]
+    chords = verse + chorus + verse + breakdown
+    a = [
+        [("A5", 2), ("C6", 2), ("E6", 2), ("C6", 2), ("A5", 2), ("E5", 2), ("A5", 4)],
+        [("G5", 2), ("A5", 2), ("C6", 4), ("D6", 2), ("C6", 2), ("A5", 4)],
+        [("B5", 2), ("D6", 2), ("G6", 2), ("D6", 2), ("B5", 4), ("G5", 4)],
+        [("A5", 2), ("C6", 2), ("E6", 4), ("D6", 2), ("C6", 2), ("A5", 4)],
+        [("F5", 2), ("A5", 2), ("C6", 2), ("F6", 2), ("E6", 2), ("C6", 2), ("A5", 4)],
+        [("G5", 2), ("B5", 2), ("D6", 2), ("G6", 2), ("F6", 2), ("D6", 2), ("B5", 4)],
+        [("E6", 3), ("D6", 1), ("B5", 2), ("G#5", 2), ("B5", 4), ("D6", 4)],
+        [("A5", 8), (".", 4), ("E5", 2), ("G5", 2)],
+    ]
+    b = [
+        [("C6", 4), ("A5", 2), ("C6", 2), ("F6", 4), ("E6", 4)],
+        [("D6", 4), ("B5", 2), ("D6", 2), ("G6", 6), (".", 2)],
+        [("E6", 3), ("D6", 1), ("C6", 2), ("A5", 2), ("C6", 4), ("E6", 4)],
+        [("A6", 8), ("G6", 4), ("E6", 4)],
+        [("F6", 3), ("E6", 1), ("C6", 2), ("A5", 2), ("F6", 4), ("A6", 4)],
+        [("G6", 3), ("F6", 1), ("D6", 2), ("B5", 2), ("G6", 4), ("B6", 4)],
+        [("G#6", 4), ("E6", 2), ("D6", 2), ("B5", 4), ("G#5", 4)],
+        [("B5", 2), ("D6", 2), ("E6", 4), (".", 8)],
+    ]
+    rest = [[(".", 16)]]
+    tune = melody(16, *(a + b + a + rest * 4))
+    blown = melody(16, *(rest * 8 + b + rest * 12))
+    bars = len(chords)
+    low = [(at, 110.0, n, v) for at, _f, n, v in drums("..o.....x..o.o..", bars)]
+    high = [(at, 196.0, n, v) for at, _f, n, v in drums("x..x..x...x.x...", bars)]
+    parts = [
+        (kick, drums("x.....x...x.....", bars), 0.5, 0.0, 0.0),
+        (hand_drum, low, 0.4, -0.3, 0.1),
+        (hand_drum, high, 0.3, 0.3, 0.1),
+        (hat, drums("xoxoxoxoxoxoxoxo", bars), 0.12, 0.4, 0.03),
+        (bass, bassline(chords, "r..r..5.r..r..o.", 2), 0.45, 0.0, 0.0),
+        (marimba, arps(chords, 4, every=2), 0.16, -0.35, 0.15),
+        (marimba, tune, 0.45, 0.15, 0.2),
+        (flute, [(at, f / 2.0, n) for at, f, n in blown], 0.3, -0.15, 0.3),
+    ]
+    return render(bpm, bars, parts, wet=0.2)
+
+
 TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
          "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
-         "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon}
+         "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
+         "race_jungle": race_jungle}

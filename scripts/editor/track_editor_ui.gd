@@ -89,6 +89,9 @@ const LANDMARKS := [
 	["Chalet", "chalet"], ["Alpine church", "alpine_church"], ["Cable car", "cable_car"], ["Ski jump", "ski_jump"],
 	["Snowy peak", "snowy_peak"], ["Mesa", "mesa"], ["Butte", "butte"], ["Saloon", "saloon"], ["Water tower", "water_tower"],
 	["Saguaro", "saguaro"], ["Mine carts", "mine_carts"], ["Windpump", "windpump"],
+	["Stepped pyramid", "stepped_pyramid"], ["Stone head", "stone_head"], ["Waterfall", "waterfall"],
+	["Rope bridge", "rope_bridge"], ["Treetop walkway", "canopy_walk"], ["Rock tower", "karst"],
+	["Jungle hut", "jungle_hut"], ["Parrots", "parrots"],
 ]
 const SURFACES := [["Road", "asphalt"], ["Dirt", "dirt"], ["Gravel", "gravel"], ["Grass", "grass"], ["Mud", "mud"], ["Sand", "sand"], ["Ice", "ice"]]
 ## "Auto" has walls only where you'd fall off, and grass runoff everywhere
@@ -109,6 +112,7 @@ const THEME_NAMES := {
 	"park_wonder": "Theme park", "park_lake": "Lakeside park", "park_carolina": "Pine park", "park_desert": "Desert park",
 	"alps_meadow": "Alpine meadow", "alps_snow": "Ski resort", "alps_lake": "Alpine lake", "alps_pass": "Mountain pass",
 	"canyon_cactus": "Cactus desert", "canyon_ranch": "Desert ranch", "canyon_mesa": "Canyon rim", "canyon_mine": "Gold mine",
+	"jungle_canopy": "Rainforest", "jungle_falls": "Jungle waterfall", "jungle_temple": "Jungle temple", "jungle_swamp": "Jungle swamp",
 }
 const DANGER := BuilderStyle.DANGER
 const DATA := BuilderStyle.DATA

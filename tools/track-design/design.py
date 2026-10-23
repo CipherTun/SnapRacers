@@ -120,7 +120,7 @@ def parse(text):
     level, C2 crest (C2h3 for one 3 m high), J jump, OR/OL loop, XR/XL corkscrew,
     K a level crossing. Add ^1 or ^-1 to any piece to climb
     or drop a level along it, !o for open edges, !d dirt, !v gravel, !i ice,
-    !s sand, !g grass."""
+    !s sand, !g grass, !m mud."""
     import re
     lines = [l.split('#')[0].strip() for l in text.splitlines()]
     lines = [l for l in lines if l]
@@ -179,6 +179,7 @@ def parse(text):
             elif f == "i": spec["surface"] = "ice"
             elif f == "s": spec["surface"] = "sand"
             elif f == "g": spec["surface"] = "grass"
+            elif f == "m": spec["surface"] = "mud"
         data["pieces"].append(spec)
     return data
 

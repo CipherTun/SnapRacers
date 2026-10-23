@@ -12,7 +12,7 @@ extends Node
 ## races for ten seconds as fast as it can and says how many frames a second
 ## it drew. With weather= and time= after the course, like -- peach_pit
 ## weather=rain time=dusk, it races in those (see Conditions) and only takes
-## the picture of the start, named after them. The course can be a path to a
+## the picture of the start, named after them, or all of them with "full". The course can be a path to a
 ## course file instead, like -- res://tests/data/sky_test.json. A course up
 ## in the sky also gets pictures from high up and from below.
 
@@ -78,7 +78,7 @@ func _ready() -> void:
 		await shot(split)
 		get_tree().quit()
 		return
-	if looks != "":
+	if looks != "" and not args.has("full"):
 		await shot("pack" + looks)
 		# With "front", one more from in front of your kart looking back at
 		# it, to see its headlights.

@@ -12,7 +12,7 @@ dest_files=["res://.godot/imported/race_canyon.ogg-6c4dadde00f26e0c0c01aa6a07684
 
 [params]
 
-loop=false
+loop=true
 loop_offset=0
 bpm=0
 beat_count=0

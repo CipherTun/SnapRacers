@@ -31,7 +31,7 @@ const SMALL := 3.2
 ## Props too big to break, like hills and lakes.
 ## Where each lamp along the road is (see _lamp_posts()).
 var lamps: Array[Vector3] = []
-const UNBREAKABLE := ["mountain", "snowy_peak", "mesa", "butte", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
+const UNBREAKABLE := ["mountain", "snowy_peak", "mesa", "butte", "karst", "waterfall", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
 ## Two stretches of road closer than this (middle to middle) get a line of
 ## tire stacks between them.
 const BARRIER_REACH := 2.0 * TrackPiece.TILE
@@ -72,6 +72,8 @@ const LAMP_EVERY := 20.0
 ## out round the course (see _far_peaks()). A canyon theme has "mesas": a
 ## ring of red mesas and buttes stands far out instead (see _far_mesas()),
 ## and "mesas_out" says how far past the scenery, 70 m if it's left out.
+## A jungle theme has "karsts": a ring of tall green topped rock towers
+## stands far out (see _far_karsts()).
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -328,6 +330,30 @@ const THEMES := {
 		"landmarks": ["mine_carts", "butte", "water_tower", "saloon"],
 		"fillers": {"red_rocks": 3, "cactus": 2, "mine_carts": 1, "windpump": 1, "saguaro": 1},
 	},
+	"jungle_canopy": {
+		"ground": "#3f7f36", "curbs": ["#a5ca18", "#1b2a34"], "wall": "#237841",
+		"sky": ["#4a92d0", "#e4efe0"], "karsts": true,
+		"landmarks": ["canopy_walk", "canopy_walk", "parrots", "jungle_hut", "parrots"],
+		"fillers": {"jungle_tree": 7, "fern": 4, "palm": 1, "parrots": 1},
+	},
+	"jungle_falls": {
+		"ground": "#457f38", "curbs": ["#a5ca18", "#f2f3f2"], "wall": "#0d69ab",
+		"sky": ["#5590c8", "#e2ece2"], "karsts": true,
+		"landmarks": ["waterfall", "rope_bridge", "waterfall", "jungle_hut", "pond"],
+		"fillers": {"jungle_tree": 5, "fern": 4, "palm": 2, "reeds": 1, "parrots": 1},
+	},
+	"jungle_temple": {
+		"ground": "#4f8a3a", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#958a73",
+		"sky": ["#3f8ad8", "#eaf0dc"], "karsts": true,
+		"landmarks": ["stepped_pyramid", "stone_head", "stone_head", "ruins", "stone_head"],
+		"fillers": {"jungle_tree": 5, "palm": 3, "fern": 3, "stone_head": 1, "ruins": 1},
+	},
+	"jungle_swamp": {
+		"ground": "#5a6a34", "curbs": ["#a5ca18", "#694030"], "wall": "#694030",
+		"sky": ["#6a8aa8", "#d8e0d8"], "karsts": true, "floor": "mud",
+		"landmarks": ["karst", "rope_bridge", "jungle_hut", "jungle_hut", "karst"],
+		"fillers": {"jungle_tree": 6, "fern": 3, "reeds": 2, "pond": 1, "palm": 1},
+	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
 		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
@@ -415,6 +441,8 @@ func _ready() -> void:
 			_far_peaks()
 		if theme.get("mesas", false):
 			_far_mesas()
+		if theme.get("karsts", false):
+			_far_karsts()
 	if _sea.size != Vector2.ZERO:
 		_build_sea()
 	# Only things near the road need to be solid. And nothing that ended up on
@@ -1103,6 +1131,31 @@ func _far_mesas() -> void:
 	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
 
 
+## Tall rock towers with jungle on top in a ring far out round the course,
+## like _far_peaks(). None of them is solid and none of them breaks.
+func _far_karsts() -> void:
+	var low := Vector2(INF, INF)
+	var high := -Vector2(INF, INF)
+	for p in track.points:
+		low = low.min(Vector2(p.x, p.z))
+		high = high.max(Vector2(p.x, p.z))
+	var middle := (low + high) * 0.5
+	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + 90.0)
+	var half_out := half
+	var level := _far_level(middle, (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0))
+	var count := 16
+	for k in count:
+		var a := TAU * (k + _rng.randf_range(-0.3, 0.3)) / count
+		var dir := Vector2(cos(a), sin(a))
+		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
+		var spot := middle + dir * (reach + _rng.randf_range(0.0, 180.0))
+		var at := Vector3(spot.x, level - 1.0, spot.y)
+		half_out = half_out.max((spot - middle).abs())
+		var kit := _kit if Graphics.draws_far(at) else SceneryKit.new()
+		Props.karst(kit, at, _rng, _rng.randf_range(1.3, 2.4), false)
+	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
+
+
 ## How high the far ring and the ground under it go: a metre below the lowest
 ## ground on the baseplate, which is the whole box of `half` round `middle`,
 ## or the road.
@@ -1125,6 +1178,17 @@ func _far_level(middle: Vector2, half: Vector2) -> float:
 ## something.
 func _far_floor(middle: Vector2, half: Vector2, level: float) -> void:
 	_kit.box(Vector3(middle.x, level - 1.0, middle.y), Vector3(half.x * 2.0, 1.0, half.y * 2.0), Color(theme.get("ground", "#4b9f4a")), SceneryKit.PLAIN, false)
+
+
+## What the pit building looks like on this theme (see Props.pit_building()).
+func _pit_style() -> String:
+	if theme.get("peaks", false):
+		return "alpine"
+	if theme.get("mesas", false):
+		return "western"
+	if theme.get("karsts", false):
+		return "jungle"
+	return ""
 
 
 ## The grandstand and the pit building face each other across the start
@@ -1153,7 +1217,7 @@ func _start_area(edge: float) -> void:
 		if built == 0:
 			Props.grandstand(_kit, front, 30.0, _facing_for(-right * side), _rng)
 		else:
-			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side), "alpine" if theme.get("peaks", false) else ("western" if theme.get("mesas", false) else ""))
+			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side), _pit_style())
 		_kit.done()
 		# Two islands side by side under it, kept well back from the road.
 		for along: float in [-8.0, 8.0]:
