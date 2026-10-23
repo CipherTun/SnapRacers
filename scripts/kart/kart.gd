@@ -1786,6 +1786,7 @@ func use_gadget(slot: int) -> bool:
 		"shield":
 			shield_left = SHIELD_TIME
 			_show_bubble()
+			_end_zap()
 		"ghost":
 			start_ghost()
 	var noise: String = GADGET_SOUNDS.get(kind, "")
@@ -1838,6 +1839,14 @@ func zap() -> void:
 	Sounds.play_at("fx/lightning", sound, -4.0)
 	react("surprised", 2.0)
 	_show_zap()
+
+
+## A shield put up while struck ends the slowdown and the bolt.
+func _end_zap() -> void:
+	zapped_left = 0.0
+	if is_instance_valid(_zap):
+		_zap.queue_free()
+	_zap = null
 
 
 func _show_zap() -> void:
@@ -2184,6 +2193,7 @@ func show_net_state(where: Transform3D, velocity: Vector3, steer: float, shield:
 	steer_angle = steer
 	if shield > 0.0 and shield_left <= 0.0:
 		_show_bubble()
+		_end_zap()
 	shield_left = shield
 
 

@@ -109,6 +109,11 @@ class Runner:
 		karts.zap_blocked.zap()
 		check(karts.zap_blocked.zapped_left <= 0.0, "a shield stops the lightning")
 		check(karts.zap_blocked.get_children().filter(func(n): return n is ZapFx).is_empty(), "and no bolt shows")
+		karts.zap_blocked.shield_left = 0.0
+		karts.zap_blocked.zap()
+		check(karts.zap_blocked.use_gadget(0), "a struck kart can put its shield up")
+		check(karts.zap_blocked.zapped_left <= 0.0, "a shield put up after a strike ends the slowdown")
+		check(karts.zap_blocked.get_children().filter(func(n): return n is ZapFx and not n.is_queued_for_deletion()).is_empty(), "and the bolt")
 		return 90
 
 	func _turbo_check() -> int:
