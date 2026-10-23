@@ -228,18 +228,23 @@ func _physics_process(delta: float) -> void:
 	if everyone or race.time > race.laps * race.track.length / SLOWEST:
 		for racer in race.standings():
 			print("  %s in the %s: %s, laps %s, %d resets" % [racer.name, racer.kart.design.name, RaceHud.clock(racer.progress.finish_time) if racer.progress.finished else "didn't finish", racer.progress.lap_times.map(func(t): return snappedf(t, 0.1)), resets[racer.name]])
+		# Up in the sky a kart falls off the edge now and then, so more resets
+		# are part of racing there.
+		var sky: bool = Scenery.theme_named(race.track.theme).get("void", false)
+		var kart_limit := 10 if sky else 6
+		var field_limit := 40 if sky else 20
 		for racer in race.racers:
 			check(racer.progress.finished, "%s finishes" % racer.name)
 			# With cannon bricks, dropped piles and a pack going around a loop, a
 			# reset now and then is part of racing. A kart that keeps needing them
 			# isn't.
-			check(resets[racer.name] <= 6, "%s doesn't keep needing resets (%d)" % [racer.name, resets[racer.name]])
+			check(resets[racer.name] <= kart_limit, "%s doesn't keep needing resets (%d)" % [racer.name, resets[racer.name]])
 		var fewest: int = race.racers.map(func(r): return r.kart.pickups).min()
 		check(fewest >= 4, "every kart picks up a fair share of power-ups (fewest %d)" % fewest)
 		var all_resets: int = resets.values().reduce(func(a, b): return a + b, 0)
 		# The courses are narrow kart tracks with tight hairpins, so eight karts
 		# bump into each other now and then, most of all on the first lap.
-		check(all_resets <= 20, "not many resets across the whole field (%d)" % all_resets)
+		check(all_resets <= field_limit, "not many resets across the whole field (%d)" % all_resets)
 		print("  gadgets used: %s" % [used])
 		print("  power-ups picked up: %s" % [race.racers.map(func(r): return "%s %d" % [r.name, r.kart.pickups])])
 		if race.builder.puddles != null or race.builder.drifts != null:
