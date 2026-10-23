@@ -70,7 +70,8 @@ const LAMP_EVERY := 20.0
 ## and clouds go under and around the road instead (see _sky_islands()).
 ## A theme in the mountains has "peaks": a ring of big snowy peaks stands far
 ## out round the course (see _far_peaks()). A canyon theme has "mesas": a
-## ring of red mesas and buttes stands far out instead (see _far_mesas()).
+## ring of red mesas and buttes stands far out instead (see _far_mesas()),
+## and "mesas_out" says how far past the scenery, 70 m if it's left out.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -310,9 +311,9 @@ const THEMES := {
 	},
 	"canyon_ranch": {
 		"ground": "#c8a27a", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#694030",
-		"sky": ["#4a8ed8", "#f2e0c6"], "mesas": true, "floor": "dirt",
-		"landmarks": ["butte", "water_tower", "saloon", "windpump"],
-		"fillers": {"red_rocks": 3, "cactus": 3, "saguaro": 2, "windpump": 1, "fence": 1},
+		"sky": ["#4a8ed8", "#f2e0c6"], "mesas": true, "mesas_out": 10.0, "floor": "dirt",
+		"landmarks": ["butte", "mesa", "water_tower", "saloon", "windpump", "butte"],
+		"fillers": {"saguaro": 5, "red_rocks": 4, "cactus": 3, "windpump": 1, "water_tower": 1, "fence": 1},
 	},
 	"canyon_mesa": {
 		"ground": "#bb8a68", "curbs": ["#a0452e", "#f2f3f2"], "wall": "#8e3b27",
@@ -1076,7 +1077,10 @@ func _far_mesas() -> void:
 		low = low.min(Vector2(p.x, p.z))
 		high = high.max(Vector2(p.x, p.z))
 	var middle := (low + high) * 0.5
-	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + 70.0)
+	# A theme can bring them in closer, past the scenery but still clear of
+	# everything else.
+	var out: float = theme.get("mesas_out", 70.0)
+	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 45.0 + out)
 	var count := 16
 	for k in count:
 		var a := TAU * (k + _rng.randf_range(-0.25, 0.25)) / count
@@ -1117,7 +1121,7 @@ func _start_area(edge: float) -> void:
 		if built == 0:
 			Props.grandstand(_kit, front, 30.0, _facing_for(-right * side), _rng)
 		else:
-			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side), theme.get("peaks", false))
+			Props.pit_building(_kit, front, 30.0, _facing_for(-right * side), "alpine" if theme.get("peaks", false) else ("western" if theme.get("mesas", false) else ""))
 		_kit.done()
 		# Two islands side by side under it, kept well back from the road.
 		for along: float in [-8.0, 8.0]:

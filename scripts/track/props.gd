@@ -1023,9 +1023,11 @@ static func grandstand(kit: SceneryKit, at: Vector3, length: float, facing: int,
 	_box(kit, at, Vector3(0.0, 8.0, -rows * 0.55), Vector3(length + 1.0, 0.4, rows * 1.1 + 1.6), facing, RED, SceneryKit.SMOOTH, false)
 
 
-static func pit_building(kit: SceneryKit, at: Vector3, length: float, facing: int, alpine := false) -> void:
+static func pit_building(kit: SceneryKit, at: Vector3, length: float, facing: int, style := "") -> void:
 	var depth := 7.0
-	_box(kit, at, Vector3(0.0, 0.0, -depth * 0.5), Vector3(length, 4.2, depth), facing, WHITE)
+	var western := style == "western"
+	var wall := Color("#b07a4a") if western else WHITE
+	_box(kit, at, Vector3(0.0, 0.0, -depth * 0.5), Vector3(length, 4.2, depth), facing, wall)
 	var colours := [RED, BLUE, YELLOW, GREEN, ORANGE, DARK_BLUE]
 	var doors := int(length / 5.0)
 	for k in doors:
@@ -1033,7 +1035,32 @@ static func pit_building(kit: SceneryKit, at: Vector3, length: float, facing: in
 		_box(kit, at, Vector3(x, 0.0, 0.02), Vector3(4.0, 3.2, 0.1), facing, DARK_GREY, SceneryKit.SMOOTH, false)
 		_box(kit, at, Vector3(x, 3.4, 0.02), Vector3(4.0, 0.6, 0.1), facing, colours[k % colours.size()], SceneryKit.SMOOTH, false)
 	var tower := Vector3(length * 0.5 - 3.0, 4.2, -depth * 0.5)
-	if alpine:
+	if western:
+		# Out west race control is a wooden building on the roof with a tall
+		# false front and a sign, and a porch along the front of the roof.
+		var wood := WOOD
+		var back := 2.6
+		var room := Vector3(tower.x, 4.2, -back - (depth - back) * 0.5)
+		_box(kit, at, room, Vector3(6.0, 3.4, depth - back), facing, wood)
+		_roof(kit, at + _turn(room + Vector3(0.0, 3.4, 0.0), facing), depth - back, 6.0, deg_to_rad(16.0), facing + 1, wood.darkened(0.35))
+		# The false front, stepped at the top, with the sign on it.
+		var front := Vector3(tower.x, 4.2, -back + 0.2)
+		_box(kit, at, front, Vector3(6.6, 5.0, 0.4), facing, wood.lightened(0.08))
+		_box(kit, at, front + Vector3(0.0, 5.0, 0.0), Vector3(3.4, 0.8, 0.4), facing, wood.lightened(0.08))
+		_box(kit, at, front + Vector3(0.0, 5.8, 0.0), Vector3(3.8, 0.2, 0.5), facing, RED, SceneryKit.SMOOTH, false)
+		_box(kit, at, front + Vector3(0.0, 3.4, 0.25), Vector3(5.0, 1.2, 0.1), facing, RED, SceneryKit.SMOOTH, false)
+		_box(kit, at, front + Vector3(0.0, 3.5, 0.3), Vector3(4.6, 1.0, 0.1), facing, PALE_ROCK.lightened(0.3), SceneryKit.SMOOTH, false)
+		for k in 5:
+			_box(kit, at, front + Vector3(-1.6 + k * 0.8, 3.65, 0.36), Vector3(0.45, 0.6, 0.05), facing, BLACK, SceneryKit.SMOOTH, false)
+		for x in [-1.8, 1.8]:
+			_box(kit, at, front + Vector3(x, 0.9, 0.25), Vector3(1.4, 1.4, 0.1), facing, GLASS, SceneryKit.SMOOTH, false)
+		_box(kit, at, front + Vector3(0.0, 0.0, 0.25), Vector3(1.2, 2.2, 0.1), facing, wood.darkened(0.3), SceneryKit.SMOOTH, false)
+		# The porch: boards on the roof, posts along its edge and a roof.
+		_box(kit, at, Vector3(tower.x, 4.2, -back * 0.5), Vector3(6.6, 0.15, back), facing, wood.darkened(0.2), SceneryKit.BRICK, false)
+		for x in [-3.0, -1.0, 1.0, 3.0]:
+			_box(kit, at, Vector3(tower.x + x, 4.35, -0.25), Vector3(0.25, 2.6, 0.25), facing, wood.darkened(0.2), SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(tower.x, 6.95, -back * 0.5 + 0.1), Vector3(6.8, 0.2, back + 0.4), facing, RED.darkened(0.2), SceneryKit.SMOOTH, false)
+	elif style == "alpine":
 		# In the Alps race control is a wooden chalet on the roof, with a
 		# balcony of red flowers and its gable to the road.
 		var wood := Color("#8a5a3a")
@@ -1046,7 +1073,7 @@ static func pit_building(kit: SceneryKit, at: Vector3, length: float, facing: in
 		# The race control tower on one end, all windows.
 		_box(kit, at, tower, Vector3(6.0, 5.0, depth), facing, LIGHT_GREY, SceneryKit.WINDOWS)
 		_box(kit, at, tower + Vector3(0.0, 5.0, 0.0), Vector3(6.6, 0.4, depth + 0.6), facing, DARK_GREY, SceneryKit.SMOOTH, false)
-	_box(kit, at, Vector3(0.0, 4.2, 0.2), Vector3(length, 0.9, 0.3), facing, BLUE, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 4.2, 0.2), Vector3(length, 0.9, 0.3), facing, WOOD.darkened(0.3) if western else BLUE, SceneryKit.SMOOTH, false)
 
 
 static func billboard(kit: SceneryKit, at: Vector3, facing: int, colour: Color) -> void:
@@ -1521,8 +1548,8 @@ static func butte(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, size
 		_rock_bands(kit, spire, w * 0.3, w * 0.3, h * own.randf_range(0.6, 0.85), own, false)
 
 
-## A block of rock `w` by `d` and `h` tall in bands of red, each a little
-## off from the one under it and narrowing a touch towards the top.
+## A block of rock `w` by `d` and `h` tall in smooth bands of red, each a
+## little off from the one under it and narrowing a touch towards the top.
 static func _rock_bands(kit: SceneryKit, at: Vector3, w: float, d: float, h: float, rng: RandomNumberGenerator, solid: bool) -> void:
 	var bands := maxi(3, roundi(h / 4.0))
 	var band := h / bands
@@ -1532,9 +1559,9 @@ static func _rock_bands(kit: SceneryKit, at: Vector3, w: float, d: float, h: flo
 		if k > 0 and k < bands - 1 and rng.randf() < 0.25:
 			colour = PALE_ROCK
 		var shift := Vector3(rng.randf_range(-0.6, 0.6), 0.0, rng.randf_range(-0.6, 0.6))
-		kit.box(at + shift + Vector3.UP * band * k, Vector3(w * f, band, d * f), colour, SceneryKit.BRICK, solid and k == 0)
+		kit.box(at + shift + Vector3.UP * band * k, Vector3(w * f, band, d * f), colour.darkened(0.15), SceneryKit.PLAIN, solid and k == 0)
 	# A darker cap on top.
-	kit.box(at + Vector3.UP * h, Vector3(w * 0.86, 0.6, d * 0.86), RED_ROCK[0], SceneryKit.SMOOTH, false)
+	kit.box(at + Vector3.UP * h, Vector3(w * 0.86, 0.6, d * 0.86), RED_ROCK[0].darkened(0.15), SceneryKit.PLAIN, false)
 
 
 ## Fallen rock in steps round the foot of a mesa or butte.
@@ -1542,7 +1569,7 @@ static func _rock_skirt(kit: SceneryKit, at: Vector3, w: float, d: float, h: flo
 	var steps := 3
 	for k in steps:
 		var f := 1.0 - 0.18 * k
-		kit.box(at + Vector3(rng.randf_range(-1.0, 1.0), h / steps * k, rng.randf_range(-1.0, 1.0)), Vector3(w * f, h / steps, d * f), RED_ROCK[1 + k % 2].lightened(0.06), SceneryKit.BRICK, false)
+		kit.box(at + Vector3(rng.randf_range(-1.0, 1.0), h / steps * k, rng.randf_range(-1.0, 1.0)), Vector3(w * f, h / steps, d * f), RED_ROCK[1 + k % 2].darkened(0.1), SceneryKit.PLAIN, false)
 
 
 ## A few red boulders, a big one with smaller ones leaning on it.
@@ -1622,8 +1649,9 @@ static func saloon(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberG
 	_box(kit, at, Vector3(0.0, 0.0, d * 0.5 + 0.2), Vector3(1.8, 2.6, 0.1), facing, BLACK, SceneryKit.SMOOTH, false)
 	for x in [-0.45, 0.45]:
 		_box(kit, at, Vector3(x, 0.8, d * 0.5 + 0.3), Vector3(0.8, 1.2, 0.1), facing, wood.darkened(0.3), SceneryKit.SMOOTH, false)
-	# The porch, its posts and its roof.
-	_box(kit, at, Vector3(0.0, 0.0, d * 0.5 + 1.4), Vector3(w + 0.4, 0.4, 2.6), facing, wood.darkened(0.2))
+	# The porch, its posts and its roof. None of it is solid, so karts
+	# don't ride up onto it.
+	_box(kit, at, Vector3(0.0, 0.0, d * 0.5 + 1.4), Vector3(w + 0.4, 0.25, 2.6), facing, wood.darkened(0.2), SceneryKit.BRICK, false)
 	for x in [-4.4, -1.5, 1.5, 4.4]:
 		_box(kit, at, Vector3(x, 0.4, d * 0.5 + 2.5), Vector3(0.3, 3.0, 0.3), facing, wood.darkened(0.2), SceneryKit.SMOOTH, false)
 	_box(kit, at, Vector3(0.0, 3.4, d * 0.5 + 1.4), Vector3(w + 0.6, 0.25, 2.8), facing, trim.darkened(0.2), SceneryKit.SMOOTH, false)

@@ -705,13 +705,20 @@ func _solid_box(body: StaticBody3D, where: Transform3D, size: Vector3) -> void:
 
 ## A block of rock under raised road at point `k`, a little narrower than
 ## the road and long enough to meet the next one, so the road runs along the
-## top of a ridge with a drop each side.
+## top of a ridge with a drop each side. It's tilted to the road's slope so
+## neither end pokes up through the road, and reaches down far enough that
+## the uphill end still meets the ground.
 func _rock(body: StaticBody3D, spots: Array[Transform3D], k: int, ground: float, bottom: float) -> void:
 	var p := track.points[k]
 	var forward := track.forwards[k]
-	forward = Vector3(forward.x, 0.0, forward.z).normalized()
-	var size := Vector3(track.width - 1.0, bottom, ROCK_EVERY + 1.5)
-	var where := Transform3D(Basis.looking_at(forward, Vector3.UP), Vector3(p.x, ground + bottom * 0.5, p.z))
+	var flat := Vector2(forward.x, forward.z).length()
+	var slope := absf(forward.y) / maxf(flat, 0.01)
+	var length := ROCK_EVERY + 1.5
+	var basis := Basis.looking_at(forward.normalized(), Vector3.UP)
+	var height := bottom + length * slope
+	var top := Vector3(p.x, ground + bottom, p.z)
+	var size := Vector3(track.width - 1.0, height, length)
+	var where := Transform3D(basis, top - basis.y * height * 0.5)
 	_solid_box(body, where, size)
 	spots.append(where.scaled_local(size))
 
