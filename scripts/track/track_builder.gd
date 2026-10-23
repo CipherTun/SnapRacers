@@ -647,6 +647,10 @@ func _add_pillars() -> void:
 	var lattice: bool = _theme.get("supports", "") == "lattice"
 	var rock: bool = _theme.get("supports", "") == "rock"
 	var rock_colours: Array[Color] = []
+	# A rock block is much bigger than a pillar, so it keeps its corners
+	# clear of lower road too.
+	if rock:
+		clear += Vector2(track.width - 1.0, ROCK_EVERY + 1.5).length() * 0.5
 	var next := 0.0
 	for k in track.points.size():
 		# Nothing goes under loops, corkscrews and wall rides, because the road
