@@ -82,7 +82,7 @@ func _checks(holder: Node) -> void:
 	var low := scenery_at("low", holder)
 	var solids := func(kit: SceneryKit) -> String: return str(kit.solids.map(func(s): return [s[0].origin.snapped(Vector3.ONE * 0.01), s[1]]))
 	check(not high.solids.is_empty() and solids.call(high) == solids.call(low), "at Low everything a kart could hit is just where it is at High (%d solid)" % high.solids.size())
-	var shapes := func(kit: SceneryKit) -> int: return kit.boxes.size() + kit.cylinders.size() + kit.cones.size()
+	var shapes := func(kit: SceneryKit) -> int: return kit.boxes.size() + kit.cylinders.size() + kit.cones.size() + kit.balls.size()
 	check(shapes.call(low) < shapes.call(high), "but it draws less far off scenery (%d shapes against %d)" % [shapes.call(low), shapes.call(high)])
 	Graphics.level = "low"
 	check(not Graphics.value("crowd") and Graphics.shadows() == 0.0 and Graphics.value("scale") < 1.0 and Graphics.beams() == 0.0, "and no crowd, no shadows, a lower resolution and only your own headlight beams")

@@ -1,0 +1,3 @@
+Cumulus Curl
+width=13 laps=3 theme=sky_falls
+S2 L2 S2 L3 S2 J L2 L1!w R1!w L1!w S1 L1!w L1!w R1!w R1!w S2 S2 R2 SR2.1 R1!w R1!w S2 L1!w L2 S1 R1!w S1 SR3.1 L1!w S1 L1!w S3 S3

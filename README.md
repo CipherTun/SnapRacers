@@ -2,7 +2,7 @@
 
 SnapRacers is a physics based kart racing game I put together for my son. Build a kart from blocks and race it, then change the parts until it drives how you want. Every part adds weight, drag or power. Crashes knock parts off, and the reset button puts them back with a short slowdown.
 
-You can race the AI, play with a friend on a split screen or race online. There are thirteen Grand Prix cups and 52 courses, and you can make your own courses and cups too. It needs Android 8.1 or newer, or you can play it in a browser.
+You can race the AI, play with a friend on a split screen or race online. There are fourteen Grand Prix cups and 56 courses, and you can make your own courses and cups too. It needs Android 8.1 or newer, or you can play it in a browser.
 
 It's playable now, but there are still rough edges. Let me know if you find one.
 
@@ -46,7 +46,7 @@ You can also get an APK from [Releases](https://github.com/roge-rm/SnapRacers/re
 
 ## Racing
 
-Grand Prix has thirteen cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
+Grand Prix has fourteen cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
 
 Single race is one race against the AI, time trial keeps your best times and practice lets you drive on your own for as long as you like. There are four AI levels, from Easy drivers who wait for you and make mistakes to Expert drivers who drive on the limit and slide through bends.
 
@@ -143,7 +143,7 @@ The figures blink, watch nearby karts, grin when they pass someone and look cros
 
 ## Courses
 
-The 52 courses are based on real circuits, with laps of 1.6 to 2.1 km. They're built from track pieces on a grid, with hills, jumps, bridges, a loop and corkscrews. The road is wide enough for three karts through a bend.
+The 56 courses are based on real circuits, with laps of 1.6 to 2.1 km. They're built from track pieces on a grid, with hills, jumps, bridges, loops and corkscrews. The road is wide enough for three karts through a bend.
 
 | Cup | Courses |
 |---|---|
@@ -160,8 +160,9 @@ The 52 courses are based on real circuits, with laps of 1.6 to 2.1 km. They're b
 | Canyon | Cactus Canyon, Rattlesnake Ridge, Mirage Mesa, Gold Rush Gulch |
 | Jungle | Parrot Perch, Cascade Creek, Pyramid Plunge, Monsoon Mire |
 | City | Lantern Lane, Skyline Sprint, Double Decker Dash, Tuk Tuk Turns |
+| Sky | Cumulus Curl, Weathervane Way, Zeppelin Zigzag, Skylark Swoop |
 
-The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel on rallycross circuits. Hangar has indoor tracks, one with an upper deck. Corkscrew follows roller coasters with drops and upside-down bends, Island races beside the sea, and Alpine goes up into the snowy mountains, with switchbacks open at the edge, ice and a ski jump. Canyon runs through the red rock of the desert, along a canyon rim with a drop each side, and over level crossings where a train goes by. Jungle winds through the rainforest past waterfalls, rope bridges and an old stepped pyramid, with mud on the road. City races at night between walls like a street circuit, under lit up towers, neon signs and a clock tower.
+The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel on rallycross circuits. Hangar has indoor tracks, one with an upper deck. Corkscrew follows roller coasters with drops and upside-down bends, Island races beside the sea, and Alpine goes up into the snowy mountains, with switchbacks open at the edge, ice and a ski jump. Canyon runs through the red rock of the desert, along a canyon rim with a drop each side, and over level crossings where a train goes by. Jungle winds through the rainforest past waterfalls, rope bridges and an old stepped pyramid, with mud on the road. City races at night between walls like a street circuit, under lit up towers, neon signs and a clock tower. Sky floats above the clouds on roads with nothing under the edges, past floating islands, airships and hot air balloons, with big jumps and two loops on one course.
 
 Walls keep you from falling off, and tire stacks stop you cutting between nearby bits of road. Curbs can bounce your wheels into the air. Trees, fences and billboards break apart when you hit them, and crashes knock holes in buildings and grandstands. The loose bricks stay until the race ends. Tire stacks lose their top tires but keep the bottom ones.
 
@@ -191,7 +192,7 @@ Pick the weather and time beside the difficulty, or leave them to chance. A cour
 - Fog hides the distance, storms bring heavy rain and lightning, and dust storms cover sandy courses.
 - Course lamps and kart lights come on when it's dark. Headlights light the road and tail lights brighten when you brake.
 
-Left to chance, the weather suits the course. Snowy courses mostly get snow, deserts get dust storms and no rain, jungles often get rain or fog, and beaches are mostly sunny. Cities are always raced at night. Indoor courses stay the same. Time trials default to a clear day.
+Left to chance, the weather suits the course. Snowy courses mostly get snow, deserts get dust storms and no rain, jungles often get rain or fog, and beaches are mostly sunny. Cities are always raced at night, and up in the sky it's mostly clear with some fog. Indoor courses stay the same. Time trials default to a clear day.
 
 Outdoor records count only in clear daytime, and indoor runs always count. Other conditions still show your times. The AI adjusts its driving, and everyone online gets the same weather and puddles.
 
@@ -261,7 +262,7 @@ tools/run-tests.sh
 
 They check driving, building, damage, power-ups, weather, cameras, menus, controllers, sharing, courses and race modes. They also drive every stock vehicle around a lap and race two copies of the game over the network. Network and dedicated-server races run in real time, so the suite takes a while.
 
-To check AI steering and overtaking, or race eight AI karts around all 52 courses:
+To check AI steering and overtaking, or race eight AI karts around all 56 courses:
 
 ```sh
 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/ai_drive_test.gd

@@ -67,7 +67,15 @@ const ROOM := {
 	"city_block": 7.5, "townhouses": 7.0, "traffic_light": 1.2, "neon_sign": 2.6, "street_tree": 1.4, "armco": 3.4,
 	"phone_box": 1.0, "double_decker": 5.6, "tuk_tuk": 2.0, "neon_tower": 9.0, "lantern_gate": 5.0,
 	"tunnel_mouth": 13.0, "spire_tower": 10.5, "clock_tower": 5.0, "overpass": 17.0, "chedi": 7.5,
+	"hot_air_balloon": 5.0, "airship": 14.0, "falls_isle": 13.0, "rainbow": 17.0, "weather_vane": 7.0,
+	"windmill_isle": 9.0, "sky_lighthouse": 8.0, "sky_dock": 14.0, "sky_isle": 6.0, "cloud_puff": 6.0,
 }
+## Props that sit all or mostly under the road, so they only suit courses up
+## in the sky.
+const BELOW_ROAD := ["falls_isle", "rainbow", "weather_vane", "windmill_isle", "sky_lighthouse", "sky_dock", "sky_isle", "cloud_puff"]
+## Props built well above or below where they stand. The editor picks these
+## by the middle of what's built, instead of just above the ground.
+const OFF_THE_GROUND := BELOW_ROAD + ["hot_air_balloon", "airship"]
 
 
 ## Builds the named prop. Unknown names build nothing.
@@ -198,6 +206,16 @@ static func add(kit: SceneryKit, prop: String, at: Vector3, rng: RandomNumberGen
 		"clock_tower": clock_tower(kit, at_grid, facing)
 		"overpass": overpass(kit, at_grid, facing)
 		"chedi": chedi(kit, at_grid)
+		"hot_air_balloon": hot_air_balloon(kit, at_grid, rng, rng.randf_range(6.0, 22.0))
+		"airship": airship(kit, at_grid, facing, rng, rng.randf_range(14.0, 24.0))
+		"falls_isle": falls_isle(kit, at_grid, rng)
+		"rainbow": rainbow(kit, at_grid, facing, rng)
+		"weather_vane": weather_vane(kit, at_grid, facing, rng)
+		"windmill_isle": windmill_isle(kit, at_grid, facing, rng)
+		"sky_lighthouse": sky_lighthouse(kit, at_grid, rng)
+		"sky_dock": sky_dock(kit, at_grid, facing, rng)
+		"sky_isle": sky_isle(kit, at_grid, rng)
+		"cloud_puff": cloud_puff(kit, at_grid, rng)
 
 
 ## Turns an offset from a prop's middle by its facing.
@@ -744,8 +762,8 @@ static func floating_island(kit: SceneryKit, top: Vector3, radius: float, rng: R
 	var grass: Color = [BRIGHT_GREEN, GREEN, LIME][rng.randi() % 3]
 	var turf := clampf(radius * 0.1, 0.4, 0.8)
 	var soil := clampf(radius * 0.12, 0.5, 1.2)
-	kit.cylinder(top - Vector3.UP * turf, radius, turf, grass, SceneryKit.BRICK)
-	kit.cylinder(top - Vector3.UP * (turf + soil), radius * 0.97, soil, BROWN, SceneryKit.BRICK)
+	kit.cylinder(top - Vector3.UP * turf, radius, turf, grass, SceneryKit.PLAIN)
+	kit.cylinder(top - Vector3.UP * (turf + soil), radius * 0.97, soil, BROWN, SceneryKit.PLAIN)
 	# Rock in steps, each a bit narrower and nudged to one side so it looks
 	# lumpy, then a point.
 	var y := top.y - turf - soil
@@ -754,7 +772,7 @@ static func floating_island(kit: SceneryKit, top: Vector3, radius: float, rng: R
 	for k in 3:
 		var h := radius * (0.32 - k * 0.04) + 0.3
 		middle += Vector3(rng.randf_range(-1.0, 1.0), 0.0, rng.randf_range(-1.0, 1.0)) * radius * 0.06
-		kit.cylinder(Vector3(middle.x, y - h, middle.z), r, h, [DARK_TAN, LIGHT_GREY, DARK_GREY][k], SceneryKit.BRICK)
+		kit.cylinder(Vector3(middle.x, y - h, middle.z), r, h, [DARK_TAN, LIGHT_GREY, DARK_GREY][k], SceneryKit.PLAIN)
 		y -= h
 		r *= 0.68
 	var point := radius * 0.55 + 1.0
@@ -765,7 +783,7 @@ static func floating_island(kit: SceneryKit, top: Vector3, radius: float, rng: R
 		var size := radius * rng.randf_range(0.25, 0.4)
 		var out := Vector3(cos(a), 0.0, sin(a)) * radius * 0.7
 		var tilt := Basis(Vector3.UP, rng.randf() * TAU) * Basis(Vector3.RIGHT, rng.randf_range(0.3, 0.7))
-		kit.turned_box(top + out - Vector3.UP * (turf + soil + size * 0.7), Vector3.ONE * size, tilt, LIGHT_GREY if k == 0 else DARK_TAN, SceneryKit.BRICK)
+		kit.turned_box(top + out - Vector3.UP * (turf + soil + size * 0.7), Vector3.ONE * size, tilt, LIGHT_GREY if k == 0 else DARK_TAN, SceneryKit.PLAIN)
 	for k in trees:
 		var a := rng.randf() * TAU
 		var spot := top + Vector3(cos(a), 0.0, sin(a)) * radius * rng.randf_range(0.1, 0.6)
@@ -774,18 +792,22 @@ static func floating_island(kit: SceneryKit, top: Vector3, radius: float, rng: R
 		else:
 			broadleaf(kit, spot, rng, [GREEN, BRIGHT_GREEN][rng.randi() % 2])
 	if waterfall:
-		# A stream across the top to the edge, then down the side and on down
-		# past the bottom until it thins out.
+		# A wide stream across the top to the edge, then a sheet of water
+		# down past the bottom, thinning out as it goes, with spray where it
+		# comes over the edge.
 		var a := rng.randf() * TAU
 		var out := Vector3(cos(a), 0.0, sin(a))
 		var facing := Basis(Vector3.UP, atan2(out.x, out.z))
-		kit.turned_box(top + out * radius * 0.5 + Vector3.UP * 0.03, Vector3(1.6, 0.1, radius), facing, WATER, SceneryKit.WATER)
+		var wide := clampf(radius * 0.45, 2.5, 4.5)
+		kit.turned_box(top + out * radius * 0.5 + Vector3.UP * 0.03, Vector3(wide * 0.8, 0.1, radius), facing, WATER, SceneryKit.WATER)
 		var fall := radius * 1.6 + 6.0
-		var wide := clampf(radius * 0.22, 1.8, 3.5)
-		kit.turned_box(top + out * (radius + 0.4) - Vector3.UP * fall * 0.5, Vector3(wide, fall, 0.5), facing, WATER.lightened(0.25), SceneryKit.WATER)
-		kit.turned_box(top + out * (radius + 0.6) - Vector3.UP * (fall + 4.0), Vector3(wide * 0.7, 8.0, 0.3), facing, WATER.lightened(0.5), SceneryKit.WATER)
-		# Spray where it comes over the edge.
-		kit.turned_box(top + out * (radius + 0.6) - Vector3.UP * 0.3, Vector3(wide + 0.6, 0.8, 1.0), facing, WHITE, SceneryKit.PLAIN)
+		# Flattened round columns, so the water looks as wide from the side.
+		kit.stretched("cylinders", top + out * (radius + wide * 0.2) - Vector3.UP * fall * 0.5, Vector3(wide, fall, wide * 0.45), facing, WATER.lightened(0.25), SceneryKit.WATER)
+		kit.stretched("cylinders", top + out * (radius + wide * 0.25) - Vector3.UP * (fall + 4.0), Vector3(wide * 0.75, 8.0, wide * 0.3), facing, WATER.lightened(0.5), SceneryKit.WATER)
+		var across := facing * Vector3.RIGHT
+		for k in 3:
+			var x := (k - 1) * wide * 0.35
+			kit.ball(top + out * (radius + wide * 0.2) + across * x - Vector3.UP * 0.4, Vector3(wide * 0.6, 2.0, wide * 0.6), facing, WHITE)
 
 
 ## A puffy cloud of flat round white blobs, about `size` across, centred on
@@ -2386,3 +2408,184 @@ static func fan_line(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumbe
 		fan(kit, at, Vector3(x, 0.0, rng.randf_range(-0.6, 0.1)), facing, rng)
 		x += rng.randf_range(0.55, 0.9)
 	kit.new_crowd()
+
+
+# Up in the sky. Everything here floats, on an island of its own or in the
+# air, and none of it is solid, since nothing stands under it.
+
+## The balloon colours, in pairs for the stripes.
+const BALLOON_STRIPES := [[RED, YELLOW], [BLUE, WHITE], [ORANGE, YELLOW], [Color("#7a3fa0"), PINK], [GREEN, YELLOW], [RED, WHITE], [AZURE, YELLOW]]
+
+
+## A floating island that leaves nothing solid behind, for a sky prop to
+## stand on.
+static func _sky_isle(kit: SceneryKit, top: Vector3, radius: float, rng: RandomNumberGenerator, trees: int, falls: bool) -> void:
+	var keep := kit.solids.size()
+	floating_island(kit, top, radius, rng, trees, falls)
+	kit.solids.resize(keep)
+
+
+## A hot air balloon floating `lift` metres up: a wicker basket on ropes
+## under a smooth round balloon in two colours of panels, narrowing to its
+## mouth over the burner.
+static func hot_air_balloon(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, lift: float) -> void:
+	var base := at + Vector3.UP * lift
+	var stripes: Array = BALLOON_STRIPES[rng.randi() % BALLOON_STRIPES.size()]
+	kit.box(base, Vector3(1.6, 1.1, 1.6), BROWN, SceneryKit.PLAIN, false)
+	kit.box(base + Vector3.UP * 1.1, Vector3(1.8, 0.25, 1.8), TAN, SceneryKit.PLAIN, false)
+	for x in [-0.75, 0.75]:
+		for z in [-0.75, 0.75]:
+			kit.box(base + Vector3(x, 1.35, z), Vector3(0.12, 2.0, 0.12), DARK_GREY, SceneryKit.SMOOTH, false)
+	kit.cylinder(base + Vector3.UP * 2.6, 0.45, 0.5, DARK_GREY, SceneryKit.PLAIN)
+	# The round top, and a cone below it down to the mouth. The panels are
+	# thin slices of the same shapes a little bigger, which show through as
+	# stripes from top to bottom.
+	var centre := base + Vector3.UP * 9.2
+	var size := Vector3(9.6, 10.4, 9.6)
+	var neck := 3.8
+	var below := centre + Vector3.DOWN * (2.6 + neck * 0.5)
+	kit.ball(centre, size, Basis.IDENTITY, stripes[0])
+	kit.stretched("cones", below, Vector3(8.3, neck, 8.3), Basis(Vector3.RIGHT, PI), stripes[0])
+	for k in 4:
+		var turn := Basis(Vector3.UP, k * PI * 0.25)
+		kit.ball(centre, Vector3(size.x * 0.6, size.y * 1.04, size.z * 1.04), turn, stripes[1])
+		kit.stretched("cones", below, Vector3(8.3 * 0.6, neck, 8.3 * 1.04), turn * Basis(Vector3.RIGHT, PI), stripes[1])
+	kit.cylinder(base + Vector3.UP * 3.0, 1.15, 0.6, stripes[1], SceneryKit.PLAIN)
+
+
+## An airship `length` metres long cruising past `lift` metres up, side on to
+## the way it faces and centred on `at`: a smooth round hull with a red band,
+## fins at the tail and a cabin with windows underneath, and two propellers.
+static func airship(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator, lift: float, length := 26.0) -> void:
+	var centre := at + Vector3.UP * lift
+	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
+	var along := face * Basis(Vector3.BACK, PI * 0.5)
+	var axis := face * Vector3.LEFT
+	var hull: Color = [WHITE, LIGHT_GREY, Color("#e8d8b0")][rng.randi() % 3]
+	var thick := 9.2
+	kit.ball(centre, Vector3(thick, length, thick), along, hull)
+	kit.ball(centre, Vector3(thick * 1.03, length * 0.12, thick * 1.03), along, RED)
+	# Fins round the tail, sitting on the hull where it narrows.
+	var tail := length * 0.38
+	var hull_there := thick * 0.5 * sqrt(1.0 - pow(tail / (length * 0.5), 2.0))
+	for k in 4:
+		var fin := along * Basis(Vector3.UP, k * PI * 0.5)
+		kit.turned_box(centre + axis * tail + fin * Vector3(0.0, 0.0, hull_there + 1.2), Vector3(0.3, 3.6, 3.0), fin, RED, SceneryKit.PLAIN)
+	kit.turned_box(centre + Vector3.DOWN * 5.0 - axis * 1.0, Vector3(7.0, 1.6, 2.2), face, TAN, SceneryKit.PLAIN)
+	kit.turned_box(centre + Vector3.DOWN * 4.9 - axis * 1.0, Vector3(6.0, 0.6, 2.3), face, GLASS)
+	kit.turned_box(centre + Vector3.DOWN * 4.2 - axis * 1.0, Vector3(3.0, 0.8, 0.6), face, DARK_GREY, SceneryKit.PLAIN)
+	for side in [-1.0, 1.0]:
+		var hub: Vector3 = centre + Vector3.DOWN * 4.6 + axis * 3.5 + face * Vector3(0.0, 0.0, side * 2.0)
+		kit.turned_box(hub, Vector3(0.4, 0.4, 0.4), face, DARK_GREY, SceneryKit.PLAIN)
+		kit.turned_box(hub + axis * 0.3, Vector3(0.15, 2.4, 0.3), face * Basis(Vector3.RIGHT, 0.3), BROWN, SceneryKit.PLAIN)
+
+
+## A big island with trees and a waterfall pouring off it, and a smaller
+## one below that the water lands on and spills off again.
+static func falls_isle(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	_sky_isle(kit, at + Vector3.DOWN * 3.0, 11.0, rng, 3, true)
+	var a := rng.randf() * TAU
+	_sky_isle(kit, at + Vector3(cos(a) * 9.0, -24.0, sin(a) * 9.0), 6.5, rng, 1, true)
+
+
+## A rainbow standing on two clouds, side on to the way it faces. Its feet
+## are well below the road.
+static func rainbow(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
+	var foot := at + Vector3.DOWN * 10.0
+	var bands := [RED, ORANGE, YELLOW, GREEN, BLUE, Color("#7a3fa0")]
+	var steps := 9
+	for b in bands.size():
+		var r := 16.0 - b * 1.2
+		for k in steps:
+			var t := (k + 0.5) / steps * PI
+			var spot := foot + face * Vector3(cos(t) * r, sin(t) * r, 0.0)
+			var tilt := face * Basis(Vector3.BACK, t)
+			kit.turned_box(spot, Vector3(1.25, r * PI / steps + 0.4, 1.0), tilt, bands[b])
+	for side in [-1.0, 1.0]:
+		cloud(kit, foot + face * Vector3(side * 13.0, 0.0, 0.0), 10.0, rng)
+
+
+## A tall weather vane on its own island: a pole with the four arms of the
+## compass, and a golden rooster on an arrow at the top. A little shed
+## stands by its foot.
+static func weather_vane(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var top := at + Vector3.DOWN * 4.0
+	_sky_isle(kit, top, 7.0, rng, 1, false)
+	var gold := Color("#e0b030")
+	kit.box(top, Vector3(1.4, 0.6, 1.4), DARK_GREY, SceneryKit.BRICK, false)
+	kit.cylinder(top + Vector3.UP * 0.6, 0.25, 11.0, DARK_GREY, SceneryKit.SMOOTH)
+	var y := top.y + 9.0
+	var c := Vector3(top.x, y, top.z)
+	for k in 4:
+		var arm := Basis(Vector3.UP, k * PI * 0.5)
+		kit.turned_box(c + arm * Vector3(0.0, 0.0, 1.4), Vector3(0.2, 0.2, 2.8), arm, DARK_GREY)
+		kit.turned_box(c + arm * Vector3(0.0, 0.0, 2.9), Vector3(0.7, 0.7, 0.2), arm, gold)
+	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5 + 0.6)
+	var v := Vector3(top.x, y + 2.4, top.z)
+	kit.turned_box(v, Vector3(5.0, 0.2, 0.2), face, gold)
+	kit.turned_box(v + face * Vector3(2.7, 0.0, 0.0), Vector3(0.8, 0.8, 0.2), face * Basis(Vector3.BACK, PI * 0.25), gold)
+	kit.turned_box(v + face * Vector3(-2.6, 0.0, 0.0), Vector3(0.6, 1.2, 0.15), face, gold)
+	# The rooster: body, tail feathers fanned up, head with a red comb.
+	var r := v + Vector3.UP * 1.0
+	kit.turned_box(r, Vector3(1.8, 1.0, 0.3), face, gold)
+	for k in 3:
+		kit.turned_box(r + face * Vector3(-1.0, 0.6, 0.0), Vector3(0.35, 1.6, 0.25), face * Basis(Vector3.BACK, 0.3 + k * 0.35), gold)
+	kit.turned_box(r + face * Vector3(0.9, 0.8, 0.0), Vector3(0.6, 0.7, 0.3), face, gold)
+	kit.turned_box(r + face * Vector3(0.9, 1.25, 0.0), Vector3(0.45, 0.3, 0.25), face, RED)
+	kit.turned_box(r + face * Vector3(1.3, 0.75, 0.0), Vector3(0.35, 0.15, 0.2), face, ORANGE)
+	kit.box(top + _turn(Vector3(3.0, 0.0, -1.5), facing), Vector3(2.4, 2.0, 2.0), RED, SceneryKit.BRICK, false)
+	_roof(kit, top + _turn(Vector3(3.0, 2.0, -1.5), facing), 2.6, 2.2, 0.5, facing, WHITE)
+
+
+## A windmill on its own island, its sails turning, with a fence round it.
+static func windmill_isle(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var top := at + Vector3.DOWN * 5.0
+	_sky_isle(kit, top, 9.0, rng, 2, rng.randf() < 0.5)
+	var keep := kit.solids.size()
+	windmill(kit, top, facing, 1.2)
+	kit.solids.resize(keep)
+	for k in 6:
+		var a := k * TAU / 6.0
+		kit.box(top + Vector3(cos(a), 0.0, sin(a)) * 5.0, Vector3(0.2, 1.0, 0.2), WHITE, SceneryKit.SMOOTH, false)
+
+
+## A lighthouse on its own island, so airships find their way in the
+## clouds, with the keeper's hut beside it.
+static func sky_lighthouse(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var top := at + Vector3.DOWN * 7.0
+	_sky_isle(kit, top, 8.0, rng, 0, false)
+	var keep := kit.solids.size()
+	lighthouse(kit, top)
+	kit.solids.resize(keep)
+	kit.box(top + Vector3(3.8, 0.0, 1.0), Vector3(3.0, 2.2, 2.4), WHITE, SceneryKit.BRICK, false)
+	_roof(kit, top + Vector3(3.8, 2.2, 1.0), 3.2, 2.6, 0.5, 0, RED)
+
+
+## An airship docked nose first at a tall mooring mast on a big island, with
+## a little station hut at the mast's foot.
+static func sky_dock(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var top := at + Vector3.DOWN * 4.0
+	_sky_isle(kit, top, 12.0, rng, 1, false)
+	var mast := top + _turn(Vector3(-11.0, 0.0, 0.0), facing)
+	for k in 6:
+		kit.cylinder(mast + Vector3.UP * k * 3.0, 0.9 - k * 0.06, 3.0, RED if k % 2 == 0 else WHITE, SceneryKit.BRICK)
+	kit.cylinder(mast + Vector3.UP * 18.0, 1.6, 0.4, DARK_GREY, SceneryKit.SMOOTH)
+	kit.cone(mast + Vector3.UP * 18.4, 0.6, 1.4, YELLOW, SceneryKit.GLOW)
+	# The ship's nose meets the top of the mast, and its tail stays inside
+	# the dock's room.
+	airship(kit, mast + _turn(Vector3(12.0, 0.0, 0.0), facing), facing + 2, rng, 18.0, 24.0)
+	kit.box(top + _turn(Vector3(-7.0, 0.0, 4.5), facing), Vector3(4.0, 2.6, 3.0), BLUE, SceneryKit.BRICK, false)
+	_roof(kit, top + _turn(Vector3(-7.0, 2.6, 4.5), facing), 4.4, 3.4, 0.5, facing, WHITE)
+
+
+## A small island well below the road, now and then with a tree or a trickle
+## of water off its edge.
+static func sky_isle(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var radius := rng.randf_range(3.0, 6.0)
+	_sky_isle(kit, at + Vector3.DOWN * rng.randf_range(10.0, 22.0), radius, rng, rng.randi() % 3 if radius > 4.0 else 0, radius > 5.0 and rng.randf() < 0.3)
+
+
+## A small cloud drifting a little below the road.
+static func cloud_puff(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	cloud(kit, at + Vector3.DOWN * rng.randf_range(5.0, 14.0), rng.randf_range(7.0, 12.0), rng)

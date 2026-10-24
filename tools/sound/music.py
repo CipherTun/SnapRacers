@@ -196,6 +196,14 @@ def night_lead(f, d, v):
     return tone * adsr(n, 0.03, 0.2, 0.7, 0.1) * 0.6 * v
 
 
+def chime(f, d, v):
+    """A glockenspiel: a bright bar that rings on, with a high glassy
+    overtone that dies away first."""
+    n = seconds(max(d, 0.9))
+    tone = sine(f, n) + sine(f * 2.76, n) * 0.35 * decay(n, 0.12) + sine(f * 5.4, n) * 0.12 * decay(n, 0.03)
+    return tone * decay(n, 0.9) * adsr(n, 0.001, 0.0, 1.0, 0.03) * 0.5 * v
+
+
 # Making patterns.
 
 def melody(steps_per_bar, *bars):
@@ -910,7 +918,53 @@ def race_city():
     return render(bpm, bars, parts, wet=0.24)
 
 
+def race_sky():
+    """The Sky cup: floating along above the clouds, with a breezy flute
+    over chiming arpeggios, warm pads and a light skipping beat, in D with a
+    raised fourth."""
+    bpm = 124
+    verse = ["D", "E", "Bm", "G", "D", "E", "G", "A"]
+    chorus = ["G", "A", "F#m", "Bm", "G", "A", "D", "D"]
+    breakdown = ["G", "E", "G", "A"]
+    chords = verse + chorus + verse + breakdown
+    a = [
+        [("F#5", 2), ("A5", 2), ("D6", 4), ("E6", 2), ("D6", 2), ("A5", 4)],
+        [("G#5", 2), ("B5", 2), ("E6", 6), (".", 2), ("D6", 2), ("B5", 2)],
+        [("D6", 4), ("C#6", 2), ("B5", 2), ("F#5", 4), ("B5", 4)],
+        [("D6", 2), ("B5", 2), ("G5", 4), ("A5", 2), ("B5", 2), ("D6", 4)],
+        [("A5", 2), ("D6", 2), ("F#6", 4), ("E6", 2), ("D6", 2), ("A5", 4)],
+        [("B5", 2), ("G#5", 2), ("E5", 4), ("G#5", 2), ("B5", 2), ("E6", 4)],
+        [("D6", 3), ("B5", 1), ("G5", 2), ("B5", 2), ("D6", 4), ("G6", 4)],
+        [("E6", 8), (".", 4), ("C#6", 2), ("E6", 2)],
+    ]
+    b = [
+        [("D6", 4), ("B5", 2), ("D6", 2), ("G6", 4), ("F#6", 4)],
+        [("E6", 4), ("C#6", 2), ("E6", 2), ("A6", 6), (".", 2)],
+        [("F#6", 3), ("E6", 1), ("C#6", 2), ("A5", 2), ("C#6", 4), ("F#6", 4)],
+        [("D6", 4), ("F#6", 4), ("B6", 8)],
+        [("B6", 3), ("A6", 1), ("G6", 2), ("D6", 2), ("B5", 4), ("D6", 4)],
+        [("C#6", 3), ("D6", 1), ("E6", 2), ("A5", 2), ("C#6", 4), ("E6", 4)],
+        [("F#6", 4), ("E6", 2), ("D6", 2), ("A5", 4), ("F#5", 4)],
+        [("D6", 8), (".", 8)],
+    ]
+    rest = [[(".", 16)]]
+    tune = melody(16, *(a + b + a + rest * 4))
+    bars = len(chords)
+    full = bars - len(breakdown)
+    parts = [
+        (kick, drums("x.....x...x.....", full), 0.45, 0.0, 0.0),
+        (snare, drums("....o.......o...", full), 0.24, 0.05, 0.15),
+        (hat, drums("x.xx.xx.x.xx.xx.", bars), 0.11, 0.35, 0.03),
+        (bass, bassline(chords, "r.....5...r...o.", 2), 0.42, 0.0, 0.0),
+        (chime, arps(chords, 5, order=(0, 1, 2, 3, 2, 1), every=2), 0.14, -0.4, 0.35),
+        (pad, held(chords, 3), 0.42, 0.0, 0.45),
+        (flute, [(at, f / 2.0, n) for at, f, n in tune], 0.42, 0.15, 0.35),
+        (chime, [(at, f, n) for at, f, n in tune], 0.1, -0.15, 0.4),
+    ]
+    return render(bpm, bars, parts, wet=0.28)
+
+
 TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
          "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
          "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
-         "race_jungle": race_jungle, "race_city": race_city}
+         "race_jungle": race_jungle, "race_city": race_city, "race_sky": race_sky}

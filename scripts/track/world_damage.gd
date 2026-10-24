@@ -51,7 +51,7 @@ const HARD_HIT := 18.0
 ## Below this, the pieces of rubble go.
 const LOWEST := -60.0
 
-const KINDS := ["box", "cylinder", "cone"]
+const KINDS := ["box", "cylinder", "cone", "ball"]
 
 ## Each group: { name, small, tires, pieces: [[kind, index]], shapes: [CollisionShape3D] }.
 var groups: Array = []
@@ -96,7 +96,7 @@ func _init(kit: SceneryKit) -> void:
 	for group in groups:
 		group["pieces"] = []
 		group["shapes"] = []
-	_instances = { "box": kit.boxes, "cylinder": kit.cylinders, "cone": kit.cones }
+	_instances = { "box": kit.boxes, "cylinder": kit.cylinders, "cone": kit.cones, "ball": kit.balls }
 	_chunks = _batch("box", ROOM_FOR_CHUNKS)
 	_chunks.multimesh.visible_instance_count = 0
 	_chunks.set_meta("chunks", true)

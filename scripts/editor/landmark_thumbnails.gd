@@ -81,7 +81,9 @@ func _process(_delta: float) -> void:
 	_stand.add_child(holder)
 	kit.build(holder)
 	var room: float = Props.ROOM.get(_current, 3.0)
+	# Props up in the air or under the road are framed by what's built.
+	var middle := kit.bounds().get_center() if _current in Props.OFF_THE_GROUND else Vector3(0.0, room * 0.4, 0.0)
 	_camera.size = room * 2.8
-	_camera.position = Vector3(1.0, 0.8, 1.2).normalized() * (room * 6.0 + 20.0) + Vector3(0.0, room * 0.4, 0.0)
-	_camera.look_at(Vector3(0.0, room * 0.4, 0.0), Vector3.UP)
+	_camera.position = Vector3(1.0, 0.8, 1.2).normalized() * (room * 6.0 + 20.0) + middle
+	_camera.look_at(middle, Vector3.UP)
 	_view.render_target_update_mode = SubViewport.UPDATE_ONCE

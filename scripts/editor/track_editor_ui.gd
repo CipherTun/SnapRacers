@@ -96,6 +96,9 @@ const LANDMARKS := [
 	["Spire tower", "spire_tower"], ["Clock tower", "clock_tower"], ["Overpass", "overpass"], ["Temple spire", "chedi"],
 	["Office block", "city_block"], ["Terraced houses", "townhouses"], ["Double decker bus", "double_decker"],
 	["Tuk tuk", "tuk_tuk"], ["Traffic light", "traffic_light"], ["Neon sign", "neon_sign"], ["Phone box", "phone_box"],
+	["Hot air balloon", "hot_air_balloon"], ["Airship", "airship"], ["Airship dock", "sky_dock"], ["Waterfall island", "falls_isle"],
+	["Rainbow", "rainbow"], ["Weather vane", "weather_vane"], ["Windmill island", "windmill_isle"], ["Sky lighthouse", "sky_lighthouse"],
+	["Floating island", "sky_isle"], ["Cloud", "cloud_puff"],
 ]
 const SURFACES := [["Road", "asphalt"], ["Dirt", "dirt"], ["Gravel", "gravel"], ["Grass", "grass"], ["Mud", "mud"], ["Sand", "sand"], ["Ice", "ice"]]
 ## "Auto" has walls only where you'd fall off, and grass runoff everywhere
@@ -118,6 +121,7 @@ const THEME_NAMES := {
 	"canyon_cactus": "Cactus desert", "canyon_ranch": "Desert ranch", "canyon_mesa": "Canyon rim", "canyon_mine": "Gold mine",
 	"jungle_canopy": "Rainforest", "jungle_falls": "Jungle waterfall", "jungle_temple": "Jungle temple", "jungle_swamp": "Jungle swamp",
 	"city_tokyo": "Neon city", "city_dubai": "City of towers", "city_london": "Old city", "city_bangkok": "Busy city",
+	"sky": "Sky", "sky_falls": "Sky waterfalls", "sky_isles": "Sky islands", "sky_port": "Airship port", "sky_balloons": "Balloon festival",
 }
 const DANGER := BuilderStyle.DANGER
 const DATA := BuilderStyle.DATA
@@ -168,6 +172,9 @@ var _new_dialog: ConfirmationDialog
 var _name_dialog: ConfirmationDialog
 var _name_edit: LineEdit
 var _course_name := ""
+## Whether the course is up in the sky, so the landmarks under the road are
+## offered too.
+var _in_sky := false
 
 
 func _ready() -> void:
@@ -209,6 +216,11 @@ func is_over_ui(pos: Vector2) -> bool:
 ## The course's name, length and laps on the chip, and its card.
 func show_course(course: CourseDesign, length: float, problems: Array[String], can_close: bool) -> void:
 	_course_name = course.name
+	var in_sky: bool = Scenery.theme_named(course.theme).get("void", false)
+	if in_sky != _in_sky:
+		_in_sky = in_sky
+		if _category >= CATEGORIES.size():
+			_show_category(_category)
 	_chip.text = "%s · %d m · %d lap%s" % [course.name, roundi(length), course.laps, "" if course.laps == 1 else "s"]
 	_name_label.text = course.name
 	_about_label.text = "%d pieces, %d m a lap" % [course.pieces.size(), roundi(length)]
@@ -400,8 +412,9 @@ func _show_category(index: int) -> void:
 			_tiles.add_child(tile)
 	else:
 		_heading.text = "LANDMARKS"
-		_pictures.take(LANDMARKS.map(func(l): return l[1]))
-		for entry in LANDMARKS:
+		var offered := LANDMARKS.filter(func(l): return _in_sky or not l[1] in Props.BELOW_ROAD)
+		_pictures.take(offered.map(func(l): return l[1]))
+		for entry in offered:
 			var prop: String = entry[1]
 			var tile := _tile(entry[0])
 			tile.set_meta("prop", prop)

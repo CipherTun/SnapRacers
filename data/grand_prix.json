@@ -13,6 +13,7 @@
 		{ "id": "alpine", "name": "Alpine Cup", "tracks": ["cowbell_meadow", "gondola_gorge", "slalom_slopes", "summit_switchback"], "music": "race_alpine", "colour": "#f2f3f2", "trophy": { "top": "cable_car" } },
 		{ "id": "canyon", "name": "Canyon Cup", "tracks": ["cactus_canyon", "rattlesnake_ridge", "mirage_mesa", "gold_rush_gulch"], "music": "race_canyon", "colour": "#a0452e", "trophy": { "top": "cactus" } },
 		{ "id": "jungle", "name": "Jungle Cup", "tracks": ["parrot_perch", "cascade_creek", "pyramid_plunge", "monsoon_mire"], "music": "race_jungle", "colour": "#a5ca18", "trophy": { "top": "temple_head" } },
-		{ "id": "city", "name": "City Cup", "tracks": ["lantern_lane", "skyline_sprint", "double_decker_dash", "tuk_tuk_turns"], "music": "race_city", "colour": "#f5cd2f", "trophy": { "top": "traffic_light" } }
+		{ "id": "city", "name": "City Cup", "tracks": ["lantern_lane", "skyline_sprint", "double_decker_dash", "tuk_tuk_turns"], "music": "race_city", "colour": "#f5cd2f", "trophy": { "top": "traffic_light" } },
+		{ "id": "sky", "name": "Sky Cup", "tracks": ["cumulus_curl", "weathervane_way", "zeppelin_zigzag", "skylark_swoop"], "music": "race_sky", "colour": "#5ab4e5", "trophy": { "top": "balloon" } }
 	]
 }

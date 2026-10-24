@@ -120,6 +120,10 @@ func _sky_resets() -> void:
 	var gap := 0.0
 	while track.solid_at(gap) and gap < track.length:
 		gap += 1.0
+	# A course with no jump has no gap to check.
+	if gap >= track.length:
+		print("  no gap on this course, so no reset checks")
+		return
 	var gap_end := gap
 	while not track.solid_at(gap_end):
 		gap_end += 1.0

@@ -34,7 +34,8 @@ const SMALL := 3.2
 ## Props too big to break, like hills and lakes.
 ## Where each lamp along the road is (see _lamp_posts()).
 var lamps: Array[Vector3] = []
-const UNBREAKABLE := ["mountain", "snowy_peak", "mesa", "butte", "karst", "waterfall", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge"]
+const UNBREAKABLE := ["mountain", "snowy_peak", "mesa", "butte", "karst", "waterfall", "volcano", "slag_heap", "dune", "lake", "pond", "lava_pool", "old_banking", "red_roof", "bridge",
+	"hot_air_balloon", "airship", "falls_isle", "rainbow", "weather_vane", "windmill_isle", "sky_lighthouse", "sky_dock", "sky_isle", "cloud_puff"]
 ## Two stretches of road closer than this (middle to middle) get a line of
 ## tire stacks between them.
 const BARRIER_REACH := 2.0 * TrackPiece.TILE
@@ -82,6 +83,7 @@ const LAMP_EVERY := 20.0
 ## left out. A city theme has "skyline": a ring of tall lit towers stands
 ## far out (see _far_skyline()), and "undergrowth_max" caps how many
 ## undergrowth props it gets, MAX_UNDERGROWTH if it's left out.
+## "filler_max" caps the fillers the same way, MAX_FILLERS if it's left out.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -288,6 +290,34 @@ const THEMES := {
 		"sky": ["#3c8fe0", "#d6ecfa", "#a7d2f0"], "void": true,
 		"landmarks": [],
 		"fillers": {},
+	},
+	"sky_falls": {
+		"ground": "#4b9f4a", "curbs": ["#5ab4e5", "#f2f3f2"], "wall": "#f2f3f2",
+		"sky": ["#3c8fe0", "#d6ecfa", "#a7d2f0"], "void": true,
+		"landmarks": ["falls_isle", "rainbow", "falls_isle", "hot_air_balloon"],
+		"fillers": {"sky_isle": 5, "cloud_puff": 3, "hot_air_balloon": 1},
+		"filler_max": 40,
+	},
+	"sky_isles": {
+		"ground": "#4b9f4a", "curbs": ["#f2cd37", "#0d69ab"], "wall": "#0d69ab",
+		"sky": ["#4a96e0", "#e2f0fa", "#b4d8f0"], "void": true,
+		"landmarks": ["windmill_isle", "weather_vane", "windmill_isle", "weather_vane", "hot_air_balloon"],
+		"fillers": {"sky_isle": 5, "cloud_puff": 3, "hot_air_balloon": 1},
+		"filler_max": 40,
+	},
+	"sky_port": {
+		"ground": "#4b9f4a", "curbs": ["#c4281c", "#f2f3f2"], "wall": "#c4281c",
+		"sky": ["#3a84d4", "#f0e6d6", "#b0cfe8"], "void": true,
+		"landmarks": ["sky_dock", "airship", "airship", "sky_lighthouse"],
+		"fillers": {"sky_isle": 4, "cloud_puff": 4, "airship": 1},
+		"filler_max": 34,
+	},
+	"sky_balloons": {
+		"ground": "#4b9f4a", "curbs": ["#da8540", "#f2f3f2"], "wall": "#f2f3f2",
+		"sky": ["#4290dc", "#f6e8d8", "#bcd8ee"], "void": true,
+		"landmarks": ["hot_air_balloon", "rainbow", "hot_air_balloon", "sky_lighthouse", "hot_air_balloon"],
+		"fillers": {"hot_air_balloon": 4, "sky_isle": 3, "cloud_puff": 3},
+		"filler_max": 44,
 	},
 	"alps_meadow": {
 		"ground": "#5b9e46", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -1430,8 +1460,9 @@ func _fill() -> void:
 		cells[j] = t
 	_kit.far = true
 	var count := 0
+	var most: int = theme.get("filler_max", MAX_FILLERS)
 	for i in cells:
-		if count >= MAX_FILLERS:
+		if count >= most:
 			break
 		# Denser near the road, where you can see it.
 		var d := _dist[i] - _road_clear

@@ -6,8 +6,9 @@ extends RefCounted
 ## snowy courses mostly snow, the Alps often, deserts get dust storms and
 ## never rain, canyons are mostly clear with dust and hardly any rain, jungles
 ## often rain or fog and never snow or dust, cities are always at night with
-## rain and fog now and then, and beaches are mostly sunny. Halls are always
-## the same, since they're indoors.
+## rain and fog now and then, up in the sky it's mostly clear with some fog
+## and hardly ever snow, and beaches are mostly sunny. Halls are always the
+## same, since they're indoors.
 ##
 ## A race's conditions travel online as a dictionary, worked out once by the
 ## host, so everyone races in the same weather with the same puddles.
@@ -35,6 +36,7 @@ const CLIMATE_OF := {
 	"canyon_cactus": "canyon", "canyon_ranch": "canyon", "canyon_mesa": "canyon", "canyon_mine": "canyon",
 	"jungle_canopy": "jungle", "jungle_falls": "jungle", "jungle_temple": "jungle", "jungle_swamp": "jungle",
 	"city_tokyo": "city", "city_dubai": "city", "city_london": "city", "city_bangkok": "city",
+	"sky": "sky", "sky_isles": "sky", "sky_falls": "sky", "sky_port": "sky", "sky_balloons": "sky",
 	"golden_hills": "dry", "mine": "dry",
 	"gran_canaria": "beach", "sardinia": "beach", "malta": "beach", "trulli": "beach",
 	"brittany": "coastal", "phillip_island": "coastal", "delta": "coastal", "kent_downs": "coastal",
@@ -60,6 +62,7 @@ const WEATHER_ODDS := {
 	"canyon": [62, 3, 0, 3, 7, 25],
 	"jungle": [36, 30, 0, 20, 14, 0],
 	"city": [55, 22, 3, 12, 6, 2],
+	"sky": [68, 8, 2, 16, 6, 0],
 	"dry": [70, 0, 0, 5, 10, 15],
 	"volcanic": [55, 0, 0, 25, 20, 0],
 	"space": [85, 0, 0, 15, 0, 0],

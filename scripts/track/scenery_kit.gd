@@ -28,6 +28,8 @@ static var _meshes := {}
 var boxes: Array = []
 var cylinders: Array = []
 var cones: Array = []
+## Round balls, stretched to size, for smooth shapes like balloons.
+var balls: Array = []
 ## Fillers added while this is on are marked far, so they can be skipped
 ## when the camera is a long way off.
 var far := false
@@ -75,7 +77,7 @@ func done() -> void:
 ## Starts a moving part, turning or bobbing about `pivot`. Everything added
 ## until end_mover() moves with it, and none of it is solid.
 func begin_mover(pivot: Transform3D, motion: Dictionary) -> void:
-	_mover = { "pivot": pivot, "motion": motion, "group": _group, "boxes": [], "cylinders": [], "cones": [] }
+	_mover = { "pivot": pivot, "motion": motion, "group": _group, "boxes": [], "cylinders": [], "cones": [], "balls": [] }
 
 
 func end_mover() -> void:
@@ -126,6 +128,13 @@ static func mesh_for(kind: String) -> Mesh:
 				c.radial_segments = 16
 				c.rings = 1
 				_meshes[kind] = c
+			"ball":
+				var b := SphereMesh.new()
+				b.radius = 0.5
+				b.height = 1.0
+				b.radial_segments = 24
+				b.rings = 12
+				_meshes[kind] = b
 	return _meshes[kind]
 
 
@@ -182,6 +191,33 @@ func turned_cone(centre: Vector3, radius: float, height: float, basis: Basis, co
 	if _add("cones", where, colour, surface):
 		return
 	cones.append([where, colour, surface, _group, far])
+
+
+## A cone, cylinder or ball (`kind` "cones", "cylinders" or "balls") along
+## `basis`'s Y, centred on `centre`, stretched to `size` across, tall and
+## deep, so it can be flatter one way than the other. It's never solid.
+func stretched(kind: String, centre: Vector3, size: Vector3, basis: Basis, colour: Color, surface := PLAIN) -> void:
+	var where := Transform3D(basis, centre).scaled_local(size)
+	if _add(kind, where, colour, surface):
+		return
+	(get(kind) as Array).append([where, colour, surface, _group, far])
+
+
+## A ball stretched to `size`, like an egg or a balloon (see stretched()).
+func ball(centre: Vector3, size: Vector3, basis: Basis, colour: Color, surface := PLAIN) -> void:
+	stretched("balls", centre, size, basis, colour, surface)
+
+
+## Where everything collected so far reaches, as a box.
+func bounds() -> AABB:
+	var out := AABB()
+	var first := true
+	for list in [boxes, cylinders, cones, balls]:
+		for shape in list:
+			var box: AABB = shape[0] * AABB(Vector3.ONE * -0.5, Vector3.ONE)
+			out = box if first else out.merge(box)
+			first = false
+	return out
 
 
 ## Adds everything collected so far to `parent`, with the solid parts, all

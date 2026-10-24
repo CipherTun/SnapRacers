@@ -5,7 +5,8 @@ extends RefCounted
 ## black brick with a plate in the cup's colour and a round stem, and has its
 ## own top: a two handled cup, a wheel, a gear, an arch, a chequered flag,
 ## mountains, a lightning bolt, a corkscrew, a palm tree, a cable car, a
-## cactus, a stone head from a jungle temple or a traffic light.
+## cactus, a stone head from a jungle temple, a traffic light or a hot air
+## balloon.
 ##
 ## It comes in plain light grey, for a cup you haven't won yet, or in gold,
 ## silver or bronze for your best finish. The plinth keeps its colours either
@@ -14,7 +15,7 @@ extends RefCounted
 ## A trophy is a little over 1 m across and up to 2 m tall, standing on its own
 ## origin.
 
-const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus", "temple_head", "traffic_light"]
+const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus", "temple_head", "traffic_light", "balloon"]
 ## The tops your own cups get picked from. Kept as it is so a cup you made
 ## keeps its trophy when new cups add tops.
 const OWN_TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
@@ -88,6 +89,8 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 			_temple_head(add, metal)
 		"traffic_light":
 			_traffic_light(add, metal)
+		"balloon":
+			_balloon(add, metal)
 		_:
 			_cup(add, metal)
 	return out
@@ -334,3 +337,23 @@ static func _traffic_light(add: Callable, metal: Material) -> void:
 		var y := TOP_AT + 0.49 + k * 0.24
 		add.call(MeshKit.rounded_cylinder(0.08, 0.05, 0.015, 16), Transform3D(face, Vector3(0.0, y, -0.13)), metal)
 		add.call(_brick(Vector3(0.22, 0.03, 0.1)), _up(y + 0.1, 0.0, -0.17), metal)
+
+
+## A hot air balloon: a basket with ropes at its corners up to a round
+## balloon in panels, narrowing to its mouth over the basket, with a cap on
+## top.
+static func _balloon(add: Callable, metal: Material) -> void:
+	add.call(_brick(Vector3(0.28, 0.2, 0.28)), _up(TOP_AT + 0.1), metal)
+	add.call(_brick(Vector3(0.32, 0.05, 0.32)), _up(TOP_AT + 0.22), metal)
+	for x in [-0.12, 0.12]:
+		for z in [-0.12, 0.12]:
+			add.call(MeshKit.rounded_cylinder(0.016, 0.22, 0.008, 8), _up(TOP_AT + 0.34, x, z), metal)
+	var envelope := PackedVector2Array([
+		Vector2(0.0, 0.0), Vector2(0.12, 0.0), Vector2(0.14, 0.04), Vector2(0.21, 0.16), Vector2(0.3, 0.29),
+		Vector2(0.39, 0.43), Vector2(0.45, 0.57), Vector2(0.47, 0.68), Vector2(0.44, 0.79), Vector2(0.35, 0.88),
+		Vector2(0.2, 0.94), Vector2(0.0, 0.96),
+	])
+	# Few sides, so the panels show.
+	add.call(MeshKit.lathe(envelope, 10), _up(TOP_AT + 0.42), metal)
+	add.call(MeshKit.rounded_cylinder(0.16, 0.05, 0.015, 10), _up(TOP_AT + 0.43), metal)
+	add.call(MeshKit.rounded_cylinder(0.12, 0.04, 0.015, 10), _up(TOP_AT + 1.36), metal)

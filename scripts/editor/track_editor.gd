@@ -502,6 +502,8 @@ func _landmark_node(mark: Dictionary, index: int) -> Node3D:
 	ball.radius = Props.ROOM.get(mark.prop, 3.0)
 	shape.shape = ball
 	shape.position.y = ball.radius * 0.5
+	if mark.prop in Props.OFF_THE_GROUND:
+		shape.position = kit.bounds().get_center()
 	node.add_child(shape)
 	return node
 
@@ -545,7 +547,8 @@ func _refresh() -> void:
 		_full.queue_free()
 		_full = null
 	_quick.visible = true
-	_ground.visible = true
+	# Up in the sky there's no ground.
+	_ground.visible = not Scenery.theme_named(course.theme).get("void", false)
 	_build_in = IDLE_BUILD
 
 
