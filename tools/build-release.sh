@@ -41,11 +41,42 @@ run() {
 	[ "$DRY" = 1 ] || heavy build "$@"
 }
 
-# The Android presets and the Windows file version all have to say V.
-for name in $(sed -n 's/^version\/name="\(.*\)"/\1/p; s/^application\/file_version="\(.*\)"/\1/p' export_presets.cfg); do
+# The Android presets and the Windows versions all have to say V.
+for name in $(sed -n 's/^version\/name="\(.*\)"/\1/p; s/^application\/file_version="\(.*\)"/\1/p; s/^application\/product_version="\(.*\)"/\1/p' export_presets.cfg); do
 	[ "$name" = "$V" ] || { echo "export_presets.cfg has version $name, project.godot has $V" >&2; exit 1; }
 done
-[ "$DRY" = 1 ] || mkdir -p "$OUT"
+
+# Each Android version/code has to be higher than the last one published. Skipped when offline.
+if [ "$ANDROID" = 1 ]; then
+	PKG=$(sed -n 's/^package\/unique_name="\(.*\)"/\1/p' export_presets.cfg | head -1)
+	LAST=$(curl -sf -m 15 https://hunke.ws/fdroid/repo/index-v2.json | python3 -I -c "
+import json, sys
+p = json.load(sys.stdin)['packages'].get(sys.argv[1], {})
+print(max([int(v['manifest']['versionCode']) for v in p.get('versions', {}).values()] or [0]))" "$PKG" 2>/dev/null) || LAST=
+	if [ -z "$LAST" ]; then
+		echo "Warning: can't reach the F-Droid index, so the version codes aren't checked." >&2
+	else
+		for code in $(sed -n 's/^version\/code=\(.*\)/\1/p' export_presets.cfg); do
+			[ "$code" -gt "$LAST" ] || { echo "export_presets.cfg has version/code $code, the F-Droid repo already has $LAST" >&2; exit 1; }
+		done
+		echo "Version codes are above $LAST, the last one published."
+	fi
+fi
+
+# OUT is cleared of what this script makes. Any other file in it stops the build.
+if [ "$DRY" = 0 ]; then
+	mkdir -p "$OUT"
+	shopt -s nullglob
+	OLD=("$OUT"/SnapRacers-*.apk "$OUT"/snapracers_*.deb "$OUT"/snapracers-*.AppImage "$OUT"/snapracers-*-setup.exe \
+		"$OUT"/snapracers-*-windows-x64.zip "$OUT"/SHA256SUMS)
+	for f in "$OUT"/* "$OUT"/.[!.]*; do
+		[ -e "$f" ] || continue
+		[ "$f" = "$OUT/web" ] && continue
+		case " ${OLD[*]} " in *" $f "*) ;; *) echo "$OUT has $f, which this script doesn't make. Use an empty folder." >&2; exit 1 ;; esac
+	done
+	rm -rf "${OLD[@]}" "$OUT/web"
+	shopt -u nullglob
+fi
 
 if [ "$RELEASE" = 1 ]; then
 	[ "$ANDROID" = 0 ] || { run tools/build-engine.sh --release arm64; run tools/build-engine.sh --release arm32; }
@@ -87,12 +118,18 @@ fi
 [ "$DRY" = 0 ] || exit 0
 cd "$OUT"
 shopt -s nullglob
-FILES=(SnapRacers-"$V"*.apk snapracers_"$V"_*.deb snapracers-"$V"-*.AppImage snapracers-"$V"-setup.exe snapracers-"$V"-windows-x64.zip)
+FILES=()
+for f in SnapRacers-"$V"*.apk snapracers_"$V"_*.deb snapracers-"$V"-*.AppImage snapracers-"$V"-setup.exe snapracers-"$V"-windows-x64.zip; do
+	[ ! -f "$f" ] || FILES+=("$f")
+done
+[ ${#FILES[@]} -gt 0 ] || { echo "No release files in $OUT to sum" >&2; exit 1; }
 sha256sum "${FILES[@]}" > SHA256SUMS
 cat SHA256SUMS
 
 if [ "$PUBLISH" = 1 ]; then
-	cp SnapRacers-"$V"*.apk snapracers_"$V"_*.deb "$INBOX/"
+	PUB=(SnapRacers-"$V"*.apk snapracers_"$V"_*.deb)
+	[ ${#PUB[@]} -gt 0 ] || { echo "No APKs or .debs to copy to the inbox" >&2; exit 1; }
+	cp "${PUB[@]}" "$INBOX/"
 	echo "Copied the APKs and .debs to $INBOX. systemctl --user start fdroid-publish.service publishes them."
 fi
 echo DONE

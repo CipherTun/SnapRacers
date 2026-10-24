@@ -25,6 +25,8 @@ for engine in linux_x86_64_release linux_arm64_release windows_x86_64_release.ex
 	[ -f "tools/godot/custom/desktop/$engine" ] || { echo "No $engine. Run: heavy build tools/build-engine.sh --release desktop" >&2; exit 1; }
 done
 
+docker image inspect apogee-windows > /dev/null 2>&1 || { echo "The Docker image apogee-windows (from the Apogee project, it has makensis) isn't here. Build it there first." >&2; exit 1; }
+
 # Version checks: the Windows preset's file version has to match.
 grep -q "^application/file_version=\"$V\"" export_presets.cfg || { echo "export_presets.cfg: Windows version isn't $V" >&2; exit 1; }
 

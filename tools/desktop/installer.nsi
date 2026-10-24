@@ -28,6 +28,7 @@ VIAddVersionKey "FileVersion" "${VERSION}"
 VIAddVersionKey "LegalCopyright" "Copyright (C) 2026 Dan Hunke. GPLv3 or later."
 
 !include "MUI2.nsh"
+!include "x64.nsh"
 !define MUI_ICON "snapracers.ico"
 !define MUI_UNICON "snapracers.ico"
 !define MUI_FINISHPAGE_RUN "$INSTDIR\SnapRacers.exe"
@@ -38,6 +39,13 @@ VIAddVersionKey "LegalCopyright" "Copyright (C) 2026 Dan Hunke. GPLv3 or later."
 !insertmacro MUI_UNPAGE_CONFIRM
 !insertmacro MUI_UNPAGE_INSTFILES
 !insertmacro MUI_LANGUAGE "English"
+
+Function .onInit
+  ${IfNot} ${RunningX64}
+    MessageBox MB_OK|MB_ICONSTOP "SnapRacers needs 64-bit Windows."
+    Abort
+  ${EndIf}
+FunctionEnd
 
 Section
   SetOutPath "$INSTDIR"
@@ -53,6 +61,8 @@ Section
   WriteRegStr HKCU "${KEY}" "InstallLocation" "$INSTDIR"
   WriteRegStr HKCU "${KEY}" "UninstallString" '"$INSTDIR\Uninstall.exe"'
   WriteRegStr HKCU "${KEY}" "URLInfoAbout" "https://github.com/roge-rm/SnapRacers"
+  SectionGetSize 0 $0
+  WriteRegDWORD HKCU "${KEY}" "EstimatedSize" $0
   WriteRegDWORD HKCU "${KEY}" "NoModify" 1
   WriteRegDWORD HKCU "${KEY}" "NoRepair" 1
 SectionEnd
