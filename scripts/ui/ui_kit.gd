@@ -224,27 +224,32 @@ static func card(state: String, colour := Color.TRANSPARENT) -> StyleBox:
 	return pad(box, 14, 10, CARD_LEAN, 200.0)
 
 
-## A dark panel for the HUD and other floating bits, with a red line along
-## the bottom when `underline` is set.
-static func panel(lean := PANEL_LEAN, underline := false) -> SlantBox:
-	var box := slant(Color(0.02, 0.02, 0.05, 0.8), lean, EDGE, 1)
+## A half see-through dark panel for the HUD, with a red line along the
+## bottom when `underline` is set. `small` pads it less, for a split screen
+## half.
+static func panel(lean := PANEL_LEAN, underline := false, small := false) -> SlantBox:
+	var box := slant(Color(0.02, 0.02, 0.05, 0.5), lean, EDGE, 1, false)
 	if underline:
 		box.underline = RED
-		box.underline_height = UNDERLINE
-	pad(box, 14, 8, lean, 80.0)
+		box.underline_height = UNDERLINE if not small else 4.0
+	if small:
+		pad(box, 9, 4, lean, 60.0)
+	else:
+		pad(box, 14, 8, lean, 80.0)
 	return box
 
 
-## A small button on the race screen, like the menu and camera ones.
+## A small button on the race screen, like the camera one: an outline you can
+## see the race through, like the touch buttons.
 static func hud_button(state: String) -> SlantBox:
 	var box: SlantBox
 	match state:
 		"pressed":
-			box = slant(PANEL_HOVER, PANEL_LEAN, YELLOW, 2)
+			box = slant(Color(WHITE, 0.35), PANEL_LEAN, YELLOW, 3, false)
 		"hover":
-			box = slant(PANEL_HOVER, PANEL_LEAN, Color(1, 1, 1, 0.3), 1)
+			box = slant(Color(BUTTON_GREY, 0.4), PANEL_LEAN, Color(WHITE, 0.9), 3, false)
 		_:
-			box = slant(Color(0.02, 0.02, 0.05, 0.8), PANEL_LEAN, Color(1, 1, 1, 0.2), 1)
+			box = slant(Color(BUTTON_GREY, 0.28), PANEL_LEAN, Color(WHITE, 0.75), 3, false)
 	return box
 
 
@@ -341,6 +346,10 @@ static func theme() -> Theme:
 		["HudPlaceLabel", "title", HUD_PLACE, YELLOW, 6], ["HudLabel", "heading", LEAD, WHITE, 4],
 		["HudBestLabel", "heading", LEAD, GREEN, 4], ["HudClockLabel", "digits", DIGITS, WHITE, 4],
 		["HudNoteLabel", "heading", NOTE, YELLOW, 4], ["CountdownLabel", "title", COUNTDOWN, YELLOW, 14],
+		# Smaller ones for a split screen half, and the status line.
+		["HudPlaceSmallLabel", "title", 30, YELLOW, 5], ["HudSmallLabel", "heading", NOTE, WHITE, 4],
+		["HudBestSmallLabel", "heading", NOTE, GREEN, 4], ["HudClockSmallLabel", "digits", 24, WHITE, 4],
+		["HudNoteSmallLabel", "heading", SMALL, YELLOW, 4],
 		["TimeLabel", "digits", BODY, WHITE, 0], ["TimeAccentLabel", "digits", BODY, YELLOW, 0],
 	]:
 		t.set_type_variation(kind[0], "Label")

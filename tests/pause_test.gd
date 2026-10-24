@@ -88,9 +88,11 @@ func _ready() -> void:
 	var race := await start(Game.SOLO)
 	var me := race.humans[0]
 	var hud: RaceHud = me.hud
-	var menu_button: IconButton = hud._menu
-	check(menu_button.visible and menu_button.picture == "pause", "there's a menu button at the top")
-	menu_button.pressed.emit()
+	var menu_button: Button = hud._menu
+	await frames(2)
+	var place_box := hud._place.get_parent().get_parent() as Control
+	check(menu_button.visible and menu_button.get_global_rect().encloses(place_box.get_global_rect()) and menu_button.size.x >= RaceHud.BUTTON.x and menu_button.size.y >= RaceHud.BUTTON.y, "your place and lap take taps for the menu")
+	await tap(menu_button)
 	await frames(2)
 	check(race.menu_open(me) and get_tree().paused, "it opens the menu and pauses the race")
 	var time := race.time
@@ -138,7 +140,7 @@ func _ready() -> void:
 		Game.controllers.give(23, 1)
 		await frames(2)
 		await tap(second.hud._menu)
-		check(race.menu_open(second) and get_tree().paused and not race._shared_map.visible, "player 2's menu button pauses it, and the map between the halves goes")
+		check(race.menu_open(second) and get_tree().paused and not race._shared_map.visible, "tapping player 2's place pauses it, and the map between the halves goes")
 		race.go_back()
 		await frames(5)
 		race.open_menu(second)
@@ -169,7 +171,7 @@ func _ready() -> void:
 
 		first.hud._menu.pressed.emit()
 		await frames(2)
-		check(race.menu_open(first) and race.menu_open(second) and get_tree().paused, "player 1's menu button pauses it too")
+		check(race.menu_open(first) and race.menu_open(second) and get_tree().paused, "player 1's place pauses it too")
 		await pad(23, JOY_BUTTON_START)
 		check(not race.menu_open(first) and not race.menu_open(second) and not get_tree().paused, "and Start on player 2's controller carries on")
 		await frames(10)
