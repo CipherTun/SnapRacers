@@ -4,11 +4,23 @@ extends Node
 ## 1280 x 720.
 ## Run with a separate XDG_DATA_HOME so editor autosaves stay in that profile:
 ##   xvfb-run -a -s '-screen 0 1280x720x24' tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . --fixed-fps 60 --disable-render-loop res://tools/shots/menu_shots.tscn
+## With `-- screens FOLDER WIDTH HEIGHT` it shoots every menu and popup
+## instead, into FOLDER as <screen>-<width>x<height>.png. Set
+## SNAPRACERS_CUTOUT for a pretend camera hole. It needs a real screen:
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --windowed --path . res://tools/shots/menu_shots.tscn -- screens /srv/downloads/temp/debug/snapracers/ui-looks/m3 1280 720
 const OUT := "res://build/shots/readme"
 var host: Node
+var _folder := ""
+var _size := Vector2i(1280, 720)
 
 
 func _ready() -> void:
+	var args := OS.get_cmdline_user_args()
+	if args.size() >= 4 and args[0] == "screens":
+		_folder = args[1]
+		_size = Vector2i(int(args[2]), int(args[3]))
+		await _screens(args.slice(4))
+		return
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 	DisplayServer.window_set_size(Vector2i(1280, 720))
 	DirAccess.make_dir_recursive_absolute(OUT)
@@ -104,3 +116,140 @@ func shot(which: String) -> void:
 		return
 	picture.save_png("%s/%s.png" % [OUT, which])
 	print("saved ", which)
+
+
+# ----------------------------------------------------------- every screen
+
+func _screens(only: Array) -> void:
+	get_window().mode = Window.MODE_WINDOWED
+	await frames(5)
+	get_window().size = _size
+	await frames(10)
+	DirAccess.make_dir_recursive_absolute(_folder)
+	host = Node.new()
+	add_child(host)
+	var want := func(which: String) -> bool: return only.is_empty() or only.has(which)
+	# Made-up medals for the cups, kept apart from the real records.
+	Records.use_file("user://shots_records.cfg")
+	var places := [1, 2, 3, 1, 0, 2, 0, 3, 0, 1, 0, 0, 2, 0]
+	var n := 0
+	for cup in GrandPrix.cups():
+		for level in Difficulty.LEVELS.slice(0, 1 + n % 4):
+			if places[n % places.size()] > 0:
+				Records.add_cup_place(cup.id, places[n % places.size()], level, false)
+		n += 1
+	Game.start(host)
+	await frames(4)
+	if want.call("splash"):
+		await save("splash")
+	while not host.get_children().any(func(c): return c is MainMenu):
+		await frames(5)
+	await ready_pictures()
+	if want.call("menu"):
+		await save("menu")
+		var first: Control = host.get_child(-1).find_children("*", "BigButton", true, false)[0]
+		first.grab_focus()
+		await save("menu_focus")
+	var screens := [
+		["single_player", Game.show_single_player],
+		["multiplayer", Game.show_multiplayer],
+		["online", Game.show_online],
+		["settings", Game.show_settings],
+		["about", Game.show_about],
+		["editors", Game.show_editors],
+		["cups", Game.show_cups],
+		["cups_two", Game.show_cups.bind(true)],
+		["single_race", Game.show_tracks.bind(Game.MODE_RACE, true)],
+		["your_cups", Game.show_your_cups],
+		["courses", Game.show_course_grid.bind(Game.MODE_TIME_TRIAL, true, "gearbox")],
+		["your_courses", Game.show_course_grid.bind(Game.MODE_RACE, true, CourseGrid.YOURS)],
+		["cup_builder", Game.show_cup_builder.bind("")],
+		["kart_picker", Game.show_kart_picker.bind(Game.show_menu, Game.show_menu, true)],
+	]
+	for pair in screens:
+		if not want.call(pair[0]):
+			continue
+		pair[1].call()
+		await ready_pictures()
+		await frames(40)
+		await save(pair[0])
+	if want.call("settings"):
+		Game.show_settings()
+		await frames(10)
+		var page: SettingsScreen = host.get_child(-1)
+		for i in page._tab_buttons.size():
+			page._tab_buttons[i].pressed.emit()
+			await frames(10)
+			await save("settings_%d" % i)
+	if want.call("standings"):
+		var gp := GrandPrix.new("baseplate")
+		gp.people = [Game.player_name()]
+		var names := [Game.player_name(), "Brickley", "Rusty", "Pip", "Sparks", "Nova", "Bolt", "Dot"]
+		gp.add_results(names)
+		gp.add_results(names.slice(1) + names.slice(0, 1))
+		Game.grand_prix = gp
+		Game._swap(GrandPrixStandings.new(gp))
+		await frames(20)
+		await save("standings")
+		Game.grand_prix = null
+	if want.call("lobby"):
+		var why := []
+		var peer := Connections.host_enet(47991, why)
+		if peer != null:
+			Game.net.host(peer)
+			Game.show_lobby()
+			await frames(30)
+			await save("lobby")
+			Game.net.leave()
+	if want.call("popups"):
+		Game.show_your_cups()
+		await frames(20)
+		var add := AddWindow.open(host.get_child(-1), "Add a cup")
+		await frames(10)
+		await save("add_window")
+		add.hide()
+		ShareWindow.open(GrandPrix.cup_by_id("gearbox"), host.get_child(-1))
+		await frames(10)
+		await save("share_window")
+		Game.show_settings()
+		await frames(10)
+		var field: LineEdit = host.get_child(-1).find_children("*", "LineEdit", true, false)[0]
+		PadKeyboard.open(field)
+		await frames(10)
+		await save("pad_keyboard")
+		Game.show_cup_builder("")
+		await frames(10)
+		var builder: CupBuilder = host.get_child(-1)
+		builder._delete_dialog.popup_centered()
+		await frames(10)
+		await save("dialog")
+		builder._delete_dialog.hide()
+		Game.show_loading(true)
+		await frames(10)
+		await save("loading")
+		Game.show_loading(false)
+	host.queue_free()
+	await frames(3)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://shots_records.cfg"))
+	Records.use_file(Records.FILE)
+	get_tree().quit()
+
+
+func save(which: String) -> void:
+	for i in 3:
+		await get_tree().process_frame
+		await RenderingServer.frame_post_draw
+	var picture := get_viewport().get_texture().get_image()
+	var name := "%s-%dx%d" % [which, picture.get_width(), picture.get_height()]
+	if OS.get_environment("SNAPRACERS_CUTOUT") != "":
+		name += "-cutout"
+		# The pretend hole, drawn in so it shows.
+		for hole in SafeArea.pretend:
+			picture.fill_rect(Rect2i(hole), Color.BLACK)
+	picture.save_png("%s/%s.png" % [_folder, name])
+	print("saved ", name)
+
+
+func frames(n: int) -> void:
+	for i in n:
+		await get_tree().process_frame

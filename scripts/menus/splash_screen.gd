@@ -64,21 +64,12 @@ func _ready() -> void:
 	_bar = ProgressBar.new()
 	_bar.show_percentage = false
 	_bar.custom_minimum_size = Vector2(0.0, 8.0)
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = MenuStyle.ACCENT
-	fill.set_corner_radius_all(4)
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color(1.0, 1.0, 1.0, 0.12)
-	track.set_corner_radius_all(4)
-	_bar.add_theme_stylebox_override("fill", fill)
-	_bar.add_theme_stylebox_override("background", track)
 	column.add_child(_bar)
 
 	_status = Label.new()
 	_status.text = "Getting the bricks ready"
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_status.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.75))
-	_status.add_theme_font_size_override("font_size", 18)
+	_status.theme_type_variation = "NoteLabel"
 	column.add_child(_status)
 
 	_stages = [_warm_race.bind("storm", "night"), _warm_race.bind("snow", "day"), _warm_garage, _warm_driver]

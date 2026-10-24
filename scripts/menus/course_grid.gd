@@ -59,12 +59,10 @@ func _ready() -> void:
 	if cup == YOURS:
 		var add := MenuCard.new()
 		add.set_meta("add", true)
-		var gap := Control.new()
-		gap.custom_minimum_size.y = 180.0
-		gap.mouse_filter = MOUSE_FILTER_IGNORE
-		add.content.add_child(gap)
-		add.line("Add a course", 26)
-		add.line("From a code or a file", 17, Color(1.0, 1.0, 1.0, 0.7))
+		add.content.alignment = BoxContainer.ALIGNMENT_CENTER
+		add.plus()
+		add.line("Add a course")
+		add.line("From a code or a file", false)
 		add.custom_minimum_size.x = card_width
 		add.tapped.connect(func() -> void:
 			AddWindow.open(self, "Add a course").done.connect(func(any_added: bool) -> void:
@@ -91,22 +89,22 @@ func _fit() -> void:
 func _course_card(path: String, colour: Color) -> MenuCard:
 	var id := Tracks.id_of(path)
 	var outline := CourseOutline.of(path)
-	var card := MenuCard.new()
+	var card := MenuCard.new(colour)
 	card.set_meta("track", path)
 	var view := CourseOutlineView.new(path, colour)
 	view.thickness = 4.0
 	view.custom_minimum_size = Vector2(0.0, 400.0)
 	card.content.add_child(view)
-	card.line(outline.name, 26)
-	card.line(outline.summary, 17, Color(1.0, 1.0, 1.0, 0.7))
+	card.line(outline.name)
+	card.line(outline.summary, false)
 	if mode == Game.MODE_TIME_TRIAL and Records.best_time(id) > 0.0:
-		card.line("Record %s, best lap %s" % [RaceHud.clock(Records.best_time(id)), RaceHud.clock(Records.best_lap(id))], 17, MenuStyle.ACCENT)
+		var record := card.line("Record %s, best lap %s" % [RaceHud.clock(Records.best_time(id)), RaceHud.clock(Records.best_lap(id))], false)
+		record.theme_type_variation = "AccentLabel"
 	if cup == YOURS:
-		var share := MenuStyle.link("Share", func() -> void:
+		var share := MenuStyle.chip("Share", func() -> void:
 			var course := CourseDesign.load_file(path)
 			if course != null:
 				ShareWindow.open(course.to_dict(), self))
-		share.add_theme_font_size_override("font_size", 20)
 		share.size_flags_horizontal = SIZE_SHRINK_CENTER
 		# The card's words ignore the mouse, but this has to be tapped.
 		share.mouse_filter = MOUSE_FILTER_STOP

@@ -23,13 +23,12 @@ func _ready() -> void:
 		tabs.add_child(slot)
 		var tab := Button.new()
 		tab.text = TABS[i]
-		tab.flat = true
+		tab.theme_type_variation = "TabButton"
 		tab.focus_mode = Control.FOCUS_ALL
-		tab.add_theme_font_size_override("font_size", 24)
 		tab.pressed.connect(_show_tab.bind(i))
 		slot.add_child(tab)
 		var line := ColorRect.new()
-		line.custom_minimum_size = Vector2(0.0, 3.0)
+		line.custom_minimum_size = Vector2(0.0, 4.0)
 		slot.add_child(line)
 		_tab_buttons.append(tab)
 		_underlines.append(line)
@@ -55,10 +54,8 @@ func _show_tab(index: int) -> void:
 	for i in TABS.size():
 		var on := i == index
 		_pages[i].visible = on
-		_underlines[i].color = MenuStyle.ACCENT if on else Color(1.0, 1.0, 1.0, 0.12)
-		var colour := MenuStyle.ACCENT if on else Color(1.0, 1.0, 1.0, 0.8)
-		_tab_buttons[i].add_theme_color_override("font_color", colour)
-		_tab_buttons[i].add_theme_color_override("font_hover_color", colour)
+		_underlines[i].color = UiKit.ACCENT if on else UiKit.EDGE
+		MenuStyle.mark_tab(_tab_buttons[i], on)
 
 
 func _player_page() -> Control:
@@ -86,7 +83,6 @@ func _controls_page() -> Control:
 		var who := Label.new()
 		who.text = "Player %d" % (person + 1)
 		who.custom_minimum_size = Vector2(120.0, 0.0)
-		who.add_theme_font_size_override("font_size", 22)
 		row.add_child(who)
 		var choices := {}
 		for how in TouchControls.STEERING:

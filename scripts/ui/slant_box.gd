@@ -52,6 +52,13 @@ extends StyleBox
 	set(value):
 		underline_height = value
 		_dirty()
+## Past this height the box leans less, so its edge moves across no more than
+## it would at this height and stays clear of the padding (see UiKit.pad()).
+## Zero leans by `lean` at any height.
+@export var lean_height := 0.0:
+	set(value):
+		lean_height = value
+		_dirty()
 ## Pixels drawn outside the rect all round.
 @export var grow := 0.0:
 	set(value):
@@ -83,7 +90,6 @@ func _build() -> void:
 func _flat(colour: Color) -> StyleBoxFlat:
 	var box := StyleBoxFlat.new()
 	box.bg_color = colour
-	box.skew = Vector2(lean, 0.0)
 	box.anti_aliasing = true
 	return box
 
@@ -92,22 +98,28 @@ func _draw(to_canvas_item: RID, rect: Rect2) -> void:
 	if _face == null:
 		_build()
 	rect = rect.grow(grow)
+	var tilt := lean
+	if lean_height > 0.0 and rect.size.y > lean_height + grow * 2.0:
+		tilt = lean * (lean_height + grow * 2.0) / rect.size.y
+	for box in [_face, _shade, _stripe, _under]:
+		if box != null:
+			box.skew = Vector2(tilt, 0.0)
 	# A skewed StyleBoxFlat hangs half its lean over each side, so it's drawn
 	# that much narrower.
-	var shift := rect.size.y * lean * 0.5
+	var shift := rect.size.y * tilt * 0.5
 	var inner := rect.grow_individual(-shift, 0.0, -shift, 0.0)
 	if _shade != null:
 		_shade.draw(to_canvas_item, Rect2(inner.position + shadow, inner.size))
 	_face.draw(to_canvas_item, inner)
 	var inset := float(edge_width)
 	if _stripe != null:
-		_stripe.draw(to_canvas_item, _part(inner, inset + 2.0, inset + 2.0 + stripe_width, inset + 2.0, inner.size.y - inset - 2.0))
+		_stripe.draw(to_canvas_item, _part(inner, tilt, inset + 2.0, inset + 2.0 + stripe_width, inset + 2.0, inner.size.y - inset - 2.0))
 	if _under != null:
-		_under.draw(to_canvas_item, _part(inner, 0.0, inner.size.x, inner.size.y - underline_height, inner.size.y))
+		_under.draw(to_canvas_item, _part(inner, tilt, 0.0, inner.size.x, inner.size.y - underline_height, inner.size.y))
 
 
 ## The rect for a skewed piece of the face, from `x0` to `x1` across it and
 ## `y0` to `y1` down, both measured as if it didn't lean.
-func _part(inner: Rect2, x0: float, x1: float, y0: float, y1: float) -> Rect2:
+func _part(inner: Rect2, tilt: float, x0: float, x1: float, y0: float, y1: float) -> Rect2:
 	var middle := inner.size.y * 0.5 - (y0 + y1) * 0.5
-	return Rect2(inner.position.x + x0 + middle * lean, inner.position.y + y0, x1 - x0, y1 - y0)
+	return Rect2(inner.position.x + x0 + middle * tilt, inner.position.y + y0, x1 - x0, y1 - y0)

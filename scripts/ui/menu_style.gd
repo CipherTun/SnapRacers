@@ -45,27 +45,114 @@ static func screen(root: Control) -> VBoxContainer:
 	scroll.add_child(centre)
 	var column := VBoxContainer.new()
 	column.custom_minimum_size = Vector2(COLUMN_WIDTH, 0.0)
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", UiKit.GAP_M)
 	column.alignment = BoxContainer.ALIGNMENT_CENTER
 	centre.add_child(column)
 	return column
 
 
+## A menu like the main menu: the logo top left, under it a column of big
+## buttons that steps right with the lean, and the race picture beside them.
+## Put the buttons in the column this returns (see big_button()).
+static func menu_screen(root: Control, tagline := "") -> Container:
+	root.theme = theme()
+	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var back := backdrop()
+	root.add_child(back)
+	back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var picture := RaceWindow.new()
+	root.add_child(picture)
+	var margin := MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 70)
+	margin.add_theme_constant_override("margin_right", 40)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_bottom", 16)
+	margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	root.add_child(margin)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var safe := SafeArea.new()
+	root.add_child(safe)
+	safe.pad(margin)
+	var column := VBoxContainer.new()
+	column.add_theme_constant_override("separation", UiKit.GAP_L)
+	column.alignment = BoxContainer.ALIGNMENT_CENTER
+	column.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	margin.add_child(column)
+	column.add_child(title("SnapRacers", tagline))
+	var steps := Steps.new()
+	column.add_child(steps)
+	picture.beside = steps
+	return steps
+
+
+## A column whose children step right with the lean, one under the other.
+class Steps extends Container:
+	const STEP := 22.0
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_SORT_CHILDREN:
+			var y := 0.0
+			var i := 0
+			for child in _shown():
+				var want := child.get_combined_minimum_size()
+				fit_child_in_rect(child, Rect2(i * STEP, y, want.x, want.y))
+				y += want.y + UiKit.GAP_M
+				i += 1
+
+	func _get_minimum_size() -> Vector2:
+		var room := Vector2.ZERO
+		var i := 0
+		for child in _shown():
+			var want := child.get_combined_minimum_size()
+			room.x = maxf(room.x, i * STEP + want.x)
+			room.y += want.y + (UiKit.GAP_M if i > 0 else 0.0)
+			i += 1
+		return room
+
+	func _shown() -> Array[Control]:
+		var out: Array[Control] = []
+		for child in get_children():
+			if child is Control and child.visible and not child.top_level:
+				out.append(child)
+		return out
+
+
+## The game's name in big yellow letters with speed lines trailing off it,
+## and a line under it in yellow when there's a `subtitle`.
 static func title(text := "SnapRacers", subtitle := "") -> VBoxContainer:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 4)
-	var label := Label.new()
+	box.add_theme_constant_override("separation", 0)
+	var label := Logo.new()
 	label.text = text
-	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.theme_type_variation = "TitleLabel"
+	label.uppercase = true
+	label.theme_type_variation = "LogoLabel"
 	box.add_child(label)
 	if subtitle != "":
 		var sub := Label.new()
 		sub.text = subtitle
-		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		sub.add_theme_color_override("font_color", ACCENT)
+		sub.uppercase = true
+		sub.theme_type_variation = "TaglineLabel"
 		box.add_child(sub)
 	return box
+
+
+## The logo's label, with the speed lines drawn off to its left.
+class Logo extends Label:
+	func _draw() -> void:
+		var middle := size.y * 0.42
+		for i in 6:
+			var y := middle - 50.0 + i * 18.0
+			var long := 90.0 - i * 10.0
+			var colour := UiKit.RED if i % 3 == 0 else UiKit.YELLOW
+			draw_rect(Rect2(-long - 30.0, y, long, 6.0 if i % 2 == 0 else 3.0), Color(colour, 0.9))
+
+
+## A big menu button with a picture at its left end (see BigButton).
+static func big_button(text: String, picture: String, action: Callable, subtitle := "") -> BigButton:
+	var b := BigButton.new(text, picture, subtitle)
+	if action.is_valid():
+		b.tapped.connect(action)
+	return b
 
 
 ## A pill button. It works in a scrolling list too (see ScrollButton).
@@ -79,19 +166,35 @@ static func button(text: String, action: Callable, subtitle := "") -> Button:
 	return b
 
 
+static var _marked := {}
+
+
 ## Lights up a button as the chosen one of a set, with accent text and an
 ## outline, or puts it back to plain.
 static func mark(b: Button, on: bool) -> void:
-	var colour := ACCENT if on else Color.WHITE
-	for state in ["font_color", "font_hover_color", "font_focus_color"]:
+	var colour := ACCENT if on else UiKit.WHITE
+	for state in ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color"]:
 		b.add_theme_color_override(state, colour)
 	for state in ["normal", "hover"]:
 		b.remove_theme_stylebox_override(state)
 		if on:
-			var box := UiKit.pill(state) as SlantBox
-			box.edge = ACCENT
-			box.edge_width = 3
-			b.add_theme_stylebox_override(state, box)
+			var card := b.theme_type_variation == "CardButton"
+			var key: String = state + ("_card" if card else "")
+			if not _marked.has(key):
+				var box := (UiKit.card(state) if card else UiKit.pill(state)) as SlantBox
+				box.edge = ACCENT
+				box.edge_width = 3
+				_marked[key] = box
+			b.add_theme_stylebox_override(state, _marked[key])
+
+
+## Lights up the tab that's open, in a row of tabs.
+static func mark_tab(b: Button, on: bool) -> void:
+	for state in ["font_color", "font_hover_color", "font_focus_color"]:
+		if on:
+			b.add_theme_color_override(state, ACCENT)
+		else:
+			b.remove_theme_color_override(state)
 
 
 ## Back (or Quit) under a menu's buttons.
@@ -99,25 +202,43 @@ static func back_at_bottom(column: Container, action: Callable, text := "Back") 
 	var gap := Control.new()
 	gap.custom_minimum_size = Vector2(0.0, 6.0)
 	column.add_child(gap)
-	var b := link(text, action)
+	var b := link(text, action, "close" if text == "Quit" else "back")
 	b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(b)
 	return b
 
 
-## Plain accent coloured text that works like a button, for Back.
-static func link(text: String, action: Callable) -> Button:
+## A small dark button for Back, Close and the like, with a picture of
+## `icon` ("back", "close" or "plus") when there's one.
+static func link(text: String, action: Callable, icon := "") -> Button:
 	var b := Button.new()
 	b.text = text
-	b.flat = true
+	b.theme_type_variation = "SmallButton"
 	b.focus_mode = Control.FOCUS_ALL
-	b.add_theme_color_override("font_color", ACCENT)
-	b.add_theme_color_override("font_hover_color", ACCENT.lightened(0.2))
-	b.add_theme_color_override("font_pressed_color", ACCENT.darkened(0.2))
-	b.add_theme_font_size_override("font_size", 26)
-	b.add_theme_stylebox_override("focus", UiKit.focus_ring(UiKit.LEAN, 2.0))
+	if icon != "":
+		b.icon = _icon(icon)
 	b.pressed.connect(action)
 	return b
+
+
+## A small yellow chip button, for Change, Share and the like on a card or
+## in a row.
+static func chip(text: String, action: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.theme_type_variation = "ChipButton"
+	b.focus_mode = Control.FOCUS_ALL
+	b.pressed.connect(action)
+	return b
+
+
+static var _icons := {}
+
+
+static func _icon(what: String) -> Texture2D:
+	if not _icons.has(what):
+		_icons[what] = UiKit.icon_picture(what, UiKit.WHITE)
+	return _icons[what]
 
 
 ## A slider for a setting, big enough for a thumb, with a thick track filled in
@@ -141,15 +262,14 @@ static func heading(text: String, explanation := "") -> VBoxContainer:
 	box.add_theme_constant_override("separation", 2)
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 26)
-	label.add_theme_font_override("font", UiKit.font("heading"))
+	label.uppercase = true
+	label.theme_type_variation = "LeadLabel"
 	box.add_child(label)
 	if explanation != "":
 		var more := Label.new()
 		more.text = explanation
 		more.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		more.add_theme_font_size_override("font_size", 18)
-		more.add_theme_color_override("font_color", UiKit.MUTED)
+		more.theme_type_variation = "NoteLabel"
 		box.add_child(more)
 	return box
 
@@ -181,14 +301,37 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	margin.add_child(outer)
 
 	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", UiKit.GAP_M)
 	outer.add_child(top)
+	# The title on a red slanted ribbon, with bars trailing off it.
+	var ribbon := PanelContainer.new()
+	ribbon.add_theme_stylebox_override("panel", _ribbon())
+	ribbon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(ribbon)
 	var label := Label.new()
 	label.text = heading_text
-	label.add_theme_font_size_override("font_size", 44)
-	label.add_theme_font_override("font", UiKit.font("title"))
-	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top.add_child(label)
-	top.add_child(link("Back", back))
+	label.uppercase = true
+	label.theme_type_variation = "PageTitleLabel"
+	ribbon.add_child(label)
+	var bars := Bars.new()
+	bars.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(bars)
+	var back_button := link("Back", back, "back")
+	back_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(back_button)
+	# A long title is cut short with dots rather than squeezing Back.
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	var fit := func() -> void:
+		var font := label.get_theme_font("font")
+		var font_size := label.get_theme_font_size("font_size")
+		var whole := font.get_string_size(heading_text.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + label.get_theme_constant("outline_size")
+		var ribbon_pad := _ribbon().get_minimum_size().x
+		var across := margin.get_viewport_rect().size.x - margin.get_theme_constant("margin_left") - margin.get_theme_constant("margin_right")
+		var room := across - back_button.get_combined_minimum_size().x - bars.custom_minimum_size.x - ribbon_pad - top.get_theme_constant("separation") * 2
+		label.custom_minimum_size.x = clampf(whole, 0.0, maxf(room, 60.0))
+	margin.resized.connect(fit)
+	margin.theme_changed.connect(fit)
+	fit.call_deferred()
 
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
@@ -204,6 +347,32 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	column.add_theme_constant_override("separation", 18)
 	centre.add_child(column)
 	return column
+
+
+static var _ribbon_box: StyleBox
+
+
+static func _ribbon() -> StyleBox:
+	if _ribbon_box == null:
+		_ribbon_box = UiKit.pad(UiKit.slant(UiKit.RED, UiKit.LEAN), 26, 0, UiKit.LEAN, 60.0)
+	return _ribbon_box
+
+
+## The red bars after a page's title, each shorter and fainter.
+class Bars extends Control:
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		custom_minimum_size = Vector2(100, 0)
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_RESIZED:
+			queue_redraw()
+
+	func _draw() -> void:
+		var middle := size.y * 0.5
+		for i in 4:
+			var high := 44.0 - i * 8.0
+			UiKit.draw_slant(self, Rect2(4.0 + i * 22.0, middle - high * 0.5, 14.0, high), Color(UiKit.RED, 0.8 - i * 0.18), 0.12)
 
 
 ## The page's margin container, for a column made by page().

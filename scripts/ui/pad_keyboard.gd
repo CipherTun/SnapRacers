@@ -45,13 +45,6 @@ static func open(to: LineEdit) -> PadKeyboard:
 
 func _init() -> void:
 	theme = MenuStyle.theme()
-	var backing := StyleBoxFlat.new()
-	backing.bg_color = MenuStyle.TOP
-	backing.border_color = MenuStyle.ACCENT
-	backing.set_border_width_all(2)
-	backing.set_corner_radius_all(16)
-	backing.set_content_margin_all(14)
-	add_theme_stylebox_override("panel", backing)
 	transient = true
 	exclusive = true
 	# It stays up if another window takes the focus (see ShareWindow).
@@ -67,7 +60,7 @@ func _ready() -> void:
 	column.add_theme_constant_override("separation", 6)
 	add_child(column)
 	_shown = Label.new()
-	_shown.add_theme_font_size_override("font_size", 26)
+	_shown.theme_type_variation = "LeadLabel"
 	_shown.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(_shown)
 	for row in ROWS:
@@ -90,7 +83,9 @@ func _ready() -> void:
 		_show())
 	_key("Space", bottom, 3.0).pressed.connect(_type.bind(" "))
 	_key("Delete", bottom, 2.0).pressed.connect(_delete)
-	_key("Done", bottom, 2.0).pressed.connect(_done)
+	var done := _key("Done", bottom, 2.0)
+	done.theme_type_variation = "MainButton"
+	done.pressed.connect(_done)
 	_show()
 	_letters[0].grab_focus.call_deferred()
 
@@ -100,7 +95,7 @@ func _key(label: String, row: HBoxContainer, wide := 1.0) -> Button:
 	key.text = label
 	key.focus_mode = Control.FOCUS_ALL
 	key.custom_minimum_size = Vector2(KEY.x * wide + 6.0 * (wide - 1.0), KEY.y)
-	key.add_theme_font_size_override("font_size", 22)
+	key.theme_type_variation = "KeyButton"
 	row.add_child(key)
 	return key
 

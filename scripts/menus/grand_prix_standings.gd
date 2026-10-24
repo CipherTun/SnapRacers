@@ -19,8 +19,12 @@ func _ready() -> void:
 	var done := grand_prix.finished()
 	var races := grand_prix.track_ids().size()
 	var level := Difficulty.name_of(grand_prix.difficulty)
-	var title: String = "%s, %s" % [grand_prix.cup.name, level] if done else "%s, %s, after race %d of %d" % [grand_prix.cup.name, level, grand_prix.round, races]
-	var column := MenuStyle.page(self, title, go_back, 620.0)
+	var column := MenuStyle.page(self, grand_prix.cup.name, go_back, 620.0)
+	var where := Label.new()
+	where.text = level if done else "%s, after race %d of %d" % [level, grand_prix.round, races]
+	where.uppercase = true
+	where.theme_type_variation = "LeadLabel"
+	column.add_child(where)
 	var standings := grand_prix.standings()
 	var people: Array = grand_prix.people if not grand_prix.people.is_empty() else [Game.player_name()]
 	var names := standings.map(func(s): return s[0])
@@ -36,8 +40,7 @@ func _ready() -> void:
 		var banner := Label.new()
 		banner.text = news
 		banner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		banner.add_theme_font_size_override("font_size", 30)
-		banner.add_theme_color_override("font_color", MenuStyle.ACCENT)
+		banner.theme_type_variation = "BannerLabel"
 		column.add_child(banner)
 		if not Game.net.is_online():
 			Records.add_cup_place(grand_prix.cup.id, place, grand_prix.difficulty, grand_prix.two)
@@ -50,11 +53,12 @@ func _ready() -> void:
 		for text in [RaceHud.ordinal(i + 1), standings[i][0], "%d points" % standings[i][1]]:
 			var cell := Label.new()
 			cell.text = text
-			cell.add_theme_font_size_override("font_size", 24)
+			cell.theme_type_variation = "LeadLabel"
 			var person := people.find(standings[i][0])
-			if person >= 0:
-				var colour: Color = KartPicker.PLAYER_COLOURS[mini(person, KartPicker.PLAYER_COLOURS.size() - 1)] if grand_prix.two else Color("#f2cd37")
-				cell.add_theme_color_override("font_color", colour)
+			if person >= 0 and grand_prix.two:
+				cell.add_theme_color_override("font_color", KartPicker.PLAYER_COLOURS[mini(person, KartPicker.PLAYER_COLOURS.size() - 1)])
+			elif person >= 0:
+				cell.theme_type_variation = "LeadAccentLabel"
 			table.add_child(cell)
 	if Game.net.is_online():
 		if Game.net.is_host():
@@ -71,6 +75,7 @@ func _ready() -> void:
 	else:
 		var next := TrackPath.load_file(grand_prix.track_path())
 		var button := MenuStyle.button("Next race", Game.next_grand_prix_race, next.name)
+		button.theme_type_variation = "MainButton"
 		button.custom_minimum_size.y = 84.0
 		column.add_child(button)
 

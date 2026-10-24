@@ -26,6 +26,8 @@ const ACCENT := YELLOW
 ## Text on an accent or yellow fill.
 const ON_ACCENT := INK
 const DANGER := Color("#ff6b6b")
+## Player 1 and player 2 on a shared screen.
+const PLAYERS := [Color("#4fa8ff"), Color("#ffa63d")]
 const MEDALS := { 1: Color("#f2b632"), 2: Color("#cdd3db"), 3: Color("#c47a45") }
 
 # Type sizes, in UI pixels. SMALL is the smallest anything gets, so it stays
@@ -35,6 +37,16 @@ const HEADING := 30
 const BODY := 22
 const SMALL := 16
 const DIGITS := 34
+## The game's name on the menus.
+const LOGO := 104
+## A page's title, top left.
+const PAGE_TITLE := 44
+## A heading inside a page, and a card's name.
+const LEAD := 24
+## Back, Close and the other small word buttons.
+const WORD_SIZE := 24
+## A line of explanation under a heading.
+const NOTE := 18
 
 # Spacing steps.
 const GAP_XS := 4
@@ -57,6 +69,8 @@ const STRIPE_WIDTH := 10.0
 const UNDERLINE := 6.0
 
 const BUTTON_HEIGHT := 60.0
+## The height of a dialog's title bar.
+const TITLE_BAR := 44
 const STATES := ["normal", "hover", "pressed", "focus", "disabled"]
 
 const _FONTS := "res://art/fonts/chakra_petch/"
@@ -112,6 +126,8 @@ static func pad(box: StyleBox, across: float, down: float, lean := 0.0, height :
 	box.content_margin_right = across + extra
 	box.content_margin_top = down
 	box.content_margin_bottom = down
+	if box is SlantBox:
+		(box as SlantBox).lean_height = height
 	return box
 
 
@@ -218,6 +234,21 @@ static func popup() -> SlantBox:
 	return box
 
 
+## The frame of a dialog window drawn inside the game's own window (always
+## so on a phone or the web): it reaches up over the title bar and a little
+## past the other sides, the way the engine's own one does.
+static func window_frame() -> StyleBoxFlat:
+	var box := StyleBoxFlat.new()
+	box.bg_color = Color(INK, 0.97)
+	box.border_color = Color(1, 1, 1, 0.18)
+	box.set_border_width_all(1)
+	box.expand_margin_left = 8
+	box.expand_margin_right = 8
+	box.expand_margin_bottom = 8
+	box.expand_margin_top = TITLE_BAR + 8
+	return box
+
+
 ## A text field.
 static func field(focused := false) -> StyleBox:
 	var box := slant(Color(1, 1, 1, 0.05), 0.15, YELLOW if focused else Color(1, 1, 1, 0.45), 2, false)
@@ -255,11 +286,32 @@ static func theme() -> Theme:
 	t.set_color("font_color", "Label", WHITE)
 	t.set_color("font_shadow_color", "Label", Color(0, 0, 0, 0))
 	# Kinds of label for the type scale, picked with theme_type_variation.
-	for kind in [["TitleLabel", "title", TITLE], ["HeadingLabel", "heading", HEADING], ["SmallLabel", "body", SMALL], ["DigitsLabel", "digits", DIGITS]]:
+	for kind in [
+		["TitleLabel", "title", TITLE, WHITE], ["HeadingLabel", "heading", HEADING, WHITE],
+		["SmallLabel", "body", SMALL, MUTED], ["DigitsLabel", "digits", DIGITS, WHITE],
+		["LogoLabel", "title", LOGO, YELLOW], ["PageTitleLabel", "title", PAGE_TITLE, WHITE],
+		["TaglineLabel", "heading", HEADING, YELLOW], ["LeadLabel", "heading", LEAD, WHITE],
+		["LeadAccentLabel", "heading", LEAD, YELLOW],
+		["CardTitleLabel", "heading", 20, WHITE], ["CardTitleLitLabel", "heading", 20, YELLOW], ["NoteLabel", "body", NOTE, MUTED],
+		["AccentLabel", "body", BODY, YELLOW], ["DataLabel", "body", NOTE + 2, BLUE],
+		["DangerLabel", "body", NOTE + 2, DANGER], ["BannerLabel", "title", HEADING, YELLOW],
+		["TagLabel", "heading", HEADING, INK],
+	]:
 		t.set_type_variation(kind[0], "Label")
 		t.set_font("font", kind[0], font(kind[1]))
 		t.set_font_size("font_size", kind[0], kind[2])
-	t.set_color("font_color", "SmallLabel", MUTED)
+		t.set_color("font_color", kind[0], kind[3])
+	# The logo: yellow with a black edge and a red copy behind it.
+	t.set_color("font_outline_color", "LogoLabel", Color.BLACK)
+	t.set_constant("outline_size", "LogoLabel", 10)
+	t.set_color("font_shadow_color", "LogoLabel", RED)
+	t.set_constant("shadow_offset_x", "LogoLabel", 7)
+	t.set_constant("shadow_offset_y", "LogoLabel", 7)
+	t.set_constant("shadow_outline_size", "LogoLabel", 10)
+	for kind in ["PageTitleLabel", "BannerLabel"]:
+		t.set_color("font_outline_color", kind, Color.BLACK)
+		t.set_constant("outline_size", kind, 6)
+	_add_button_kinds(t)
 
 	for type in ["LineEdit", "SpinBox"]:
 		t.set_stylebox("normal", type, field())
@@ -274,11 +326,16 @@ static func theme() -> Theme:
 	t.set_stylebox("panel", "Panel", slant(PANEL, 0.0, EDGE, 1, false))
 	for type in ["PopupPanel", "PopupMenu", "AcceptDialog", "ConfirmationDialog", "FileDialog"]:
 		t.set_stylebox("panel", type, popup())
-	t.set_stylebox("embedded_border", "Window", popup())
-	t.set_stylebox("embedded_unfocused_border", "Window", popup())
+	t.set_stylebox("embedded_border", "Window", window_frame())
+	t.set_stylebox("embedded_unfocused_border", "Window", window_frame())
 	t.set_font("title_font", "Window", font("heading"))
 	t.set_color("title_color", "Window", WHITE)
 	t.set_font_size("title_font_size", "Window", BODY)
+	t.set_constant("title_height", "Window", TITLE_BAR)
+	t.set_constant("close_h_offset", "Window", 34)
+	t.set_constant("close_v_offset", "Window", 32)
+	t.set_icon("close", "Window", icon_picture("close", WHITE, 22))
+	t.set_icon("close_pressed", "Window", icon_picture("close", YELLOW, 22))
 
 	var hover := slant(Color(YELLOW, 0.22), 0.0, Color.TRANSPARENT, 0, false)
 	t.set_stylebox("hover", "PopupMenu", hover)
@@ -303,6 +360,71 @@ static func theme() -> Theme:
 	_add_scroll_bars(t)
 	add_pictures(t)
 	return t
+
+
+## Kinds of button, picked with theme_type_variation.
+static func _add_button_kinds(t: Theme) -> void:
+	var text_states := ["font_color", "font_hover_color", "font_focus_color", "font_pressed_color", "font_hover_pressed_color"]
+	# Back, Close and the like: a small dark slanted box.
+	t.set_type_variation("SmallButton", "Button")
+	for state in STATES:
+		t.set_stylebox(state, "SmallButton", pad(pill(state, LEAN, 48.0), 18, 6, LEAN, 48.0))
+	t.set_font_size("font_size", "SmallButton", WORD_SIZE)
+	t.set_color("font_hover_color", "SmallButton", YELLOW)
+	t.set_color("icon_normal_color", "SmallButton", YELLOW)
+	t.set_color("icon_hover_color", "SmallButton", YELLOW)
+	t.set_color("icon_focus_color", "SmallButton", YELLOW)
+	t.set_color("icon_pressed_color", "SmallButton", YELLOW)
+	# Change, Share and the like, on a card or in a row: a yellow chip.
+	t.set_type_variation("ChipButton", "Button")
+	for state in STATES:
+		t.set_stylebox(state, "ChipButton", chip(state, LEAN, 40.0))
+	t.set_font_size("font_size", "ChipButton", NOTE)
+	for name in text_states:
+		t.set_color(name, "ChipButton", YELLOW)
+	# The one to press next, like Race or Save: solid yellow.
+	t.set_type_variation("MainButton", "Button")
+	for state in STATES:
+		t.set_stylebox(state, "MainButton", solid(state, YELLOW, LEAN, BUTTON_HEIGHT))
+	for name in text_states:
+		t.set_color(name, "MainButton", ON_ACCENT)
+	# A big card with things on it, like a kart to pick.
+	t.set_type_variation("CardButton", "Button")
+	for state in STATES:
+		t.set_stylebox(state, "CardButton", card(state))
+	# A key on the on-screen keyboard.
+	t.set_type_variation("KeyButton", "Button")
+	for state in STATES:
+		t.set_stylebox(state, "KeyButton", pad(pill(state, 0.2, 48.0), 8, 4, 0.2, 48.0))
+	t.set_font_size("font_size", "KeyButton", BODY)
+	# A small cell in a table, like a binding in Settings > Controls.
+	t.set_type_variation("CellButton", "KeyButton")
+	t.set_font_size("font_size", "CellButton", NOTE)
+	# A tab along the top of a page: words only, yellow when it's the one
+	# open (see MenuStyle.mark_tab()).
+	t.set_type_variation("TabButton", "Button")
+	var none := StyleBoxEmpty.new()
+	pad(none, 16, 8)
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		t.set_stylebox(state, "TabButton", none)
+	t.set_font_size("font_size", "TabButton", LEAD)
+	t.set_color("font_color", "TabButton", Color(WHITE, 0.8))
+	t.set_color("font_hover_color", "TabButton", WHITE)
+	# A big menu button that draws its own words and picture (see BigButton):
+	# yellow when it's picked out.
+	t.set_type_variation("BigButton", "Button")
+	for state in STATES:
+		var box: StyleBox
+		match state:
+			"hover", "focus":
+				box = slant(YELLOW, LEAN)
+			"pressed":
+				box = slant(YELLOW.lightened(0.3), LEAN)
+			_:
+				box = pill(state)
+		t.set_stylebox(state, "BigButton", box)
+	for name in text_states + ["font_disabled_color"]:
+		t.set_color(name, "BigButton", Color.TRANSPARENT)
 
 
 static func _line(colour: Color) -> StyleBoxLine:
@@ -458,6 +580,113 @@ static func updown_picture() -> ImageTexture:
 	_line_on(image, [Vector2(4, 13), Vector2(10, 7), Vector2(16, 13)], 3.0, WHITE)
 	_line_on(image, [Vector2(4, 19), Vector2(10, 25), Vector2(16, 19)], 3.0, WHITE)
 	return ImageTexture.create_from_image(image)
+
+
+## A small picture for a button's icon: "back" (an arrow), "close" (a cross)
+## or "plus".
+static func icon_picture(what: String, ink: Color, size := 20) -> ImageTexture:
+	var image := _blank(size, size)
+	var k := size / 24.0
+	var p := func(x: float, y: float) -> Vector2: return Vector2(12 + x, 12 + y) * k
+	var w := 3.5 * k
+	match what:
+		"back":
+			_line_on(image, [p.call(10, 0), p.call(-9, 0)], w, ink)
+			_line_on(image, [p.call(-2, -7), p.call(-9, 0), p.call(-2, 7)], w, ink)
+		"plus":
+			_line_on(image, [p.call(0, -10), p.call(0, 10)], w * 1.2, ink)
+			_line_on(image, [p.call(-10, 0), p.call(10, 0)], w * 1.2, ink)
+		_:
+			_line_on(image, [p.call(-8, -8), p.call(8, 8)], w, ink)
+			_line_on(image, [p.call(8, -8), p.call(-8, 8)], w, ink)
+	return ImageTexture.create_from_image(image)
+
+
+## Draws a small line picture centred on `c`, `s` pixels across, onto any
+## control from its _draw(). The pictures: race (a chequered flag), two
+## (people), wrench, gear, info, close, back, plus, trophy, clock, loop,
+## person, track.
+static func draw_icon(on: CanvasItem, what: String, c: Vector2, s: float, ink: Color, w := 3.0) -> void:
+	var k := s / 24.0
+	var p := func(x: float, y: float) -> Vector2: return c + Vector2(x, y) * k
+	w *= k
+	match what:
+		"race":
+			on.draw_line(p.call(-8, 12), p.call(-8, -11), ink, w, true)
+			for row in 3:
+				for col in 4:
+					var cell := Rect2(p.call(-7 + col * 4.5, -11 + row * 4), Vector2(4.5, 4) * k)
+					on.draw_rect(cell, ink if (row + col) % 2 == 0 else Color(ink, 0.25))
+		"two":
+			on.draw_circle(p.call(-5, -5), 4.2 * k, ink)
+			on.draw_circle(p.call(6, -4), 3.6 * k, ink)
+			_half_disc(on, p.call(-5, 10), 8.0 * k, ink)
+			_half_disc(on, p.call(6, 10), 6.5 * k, Color(ink, 0.75))
+		"person":
+			on.draw_circle(p.call(0, -5), 5.0 * k, ink)
+			_half_disc(on, p.call(0, 11), 9.0 * k, ink)
+		"wrench":
+			on.draw_line(p.call(-9, 9), p.call(2, -2), ink, w * 1.5, true)
+			on.draw_arc(p.call(5, -5), 6.0 * k, deg_to_rad(-10), deg_to_rad(260), 16, ink, w * 1.1, true)
+		"gear":
+			on.draw_arc(c, 6.5 * k, 0, TAU, 24, ink, w * 1.2, true)
+			for i in 8:
+				var a := Vector2.from_angle(i * TAU / 8.0)
+				on.draw_line(c + a * 8.0 * k, c + a * 11.5 * k, ink, w * 1.3)
+		"info":
+			on.draw_arc(c, 10.5 * k, 0, TAU, 32, ink, w * 0.8, true)
+			on.draw_circle(p.call(0, -5.5), 1.9 * k, ink)
+			on.draw_line(p.call(0, -1.5), p.call(0, 6.5), ink, w, true)
+		"close":
+			on.draw_line(p.call(-8, -8), p.call(8, 8), ink, w, true)
+			on.draw_line(p.call(8, -8), p.call(-8, 8), ink, w, true)
+		"back":
+			on.draw_line(p.call(9, 0), p.call(-8, 0), ink, w, true)
+			on.draw_line(p.call(-9, 0), p.call(-2, -7), ink, w, true)
+			on.draw_line(p.call(-9, 0), p.call(-2, 7), ink, w, true)
+		"plus":
+			on.draw_line(p.call(0, -10), p.call(0, 10), ink, w * 1.3, true)
+			on.draw_line(p.call(-10, 0), p.call(10, 0), ink, w * 1.3, true)
+		"trophy":
+			on.draw_colored_polygon(PackedVector2Array([p.call(-8, -10), p.call(8, -10), p.call(6, -1), p.call(0, 3), p.call(-6, -1)]), ink)
+			on.draw_arc(p.call(-8, -5), 4.0 * k, PI * 0.5, PI * 1.5, 10, ink, w * 0.7, true)
+			on.draw_arc(p.call(8, -5), 4.0 * k, -PI * 0.5, PI * 0.5, 10, ink, w * 0.7, true)
+			on.draw_line(p.call(0, 2), p.call(0, 8), ink, w * 1.2)
+			on.draw_rect(Rect2(p.call(-6, 8), Vector2(12, 3.5) * k), ink)
+		"clock":
+			on.draw_arc(p.call(0, 2), 9.5 * k, 0, TAU, 32, ink, w * 0.9, true)
+			on.draw_line(p.call(0, 2), p.call(0, -4), ink, w * 0.9, true)
+			on.draw_line(p.call(0, 2), p.call(4.5, 4.5), ink, w * 0.9, true)
+			on.draw_line(p.call(-3, -10.5), p.call(3, -10.5), ink, w)
+		"loop":
+			on.draw_arc(c, 9.0 * k, deg_to_rad(30), deg_to_rad(330), 28, ink, w, true)
+			var tip := c + Vector2.from_angle(deg_to_rad(330)) * 9.0 * k
+			on.draw_colored_polygon(PackedVector2Array([tip + Vector2(-1, -6) * k, tip + Vector2(5, 2) * k, tip + Vector2(-5, 3) * k]), ink)
+		"track":
+			var road := PackedVector2Array([p.call(-10, 10), p.call(-4, -2), p.call(4, 2), p.call(10, -10)])
+			on.draw_polyline(road, ink, w * 1.6, true)
+			on.draw_line(p.call(6, -10), p.call(10, -10), ink, w)
+
+
+static func _half_disc(on: CanvasItem, base: Vector2, r: float, ink: Color) -> void:
+	var pts := PackedVector2Array()
+	for i in 17:
+		pts.append(base + Vector2.from_angle(PI + i / 16.0 * PI) * r)
+	on.draw_colored_polygon(pts, ink)
+
+
+## A slanted block of colour drawn from a control's _draw(), like the medal
+## markers and the picture blocks on the menu buttons. It stays inside `rect`.
+static func draw_slant(on: CanvasItem, rect: Rect2, colour: Color, lean := LEAN) -> void:
+	on.draw_colored_polygon(slant_points(rect, lean), colour)
+
+
+## The corners of a slanted shape inside `rect`, top left first.
+static func slant_points(rect: Rect2, lean := LEAN) -> PackedVector2Array:
+	var shift := minf(rect.size.y * lean, rect.size.x * 0.5)
+	return PackedVector2Array([
+		rect.position + Vector2(shift, 0), Vector2(rect.end.x, rect.position.y),
+		rect.end - Vector2(shift, 0), Vector2(rect.position.x, rect.end.y)])
 
 
 ## A slider's handle: a slanted white block.

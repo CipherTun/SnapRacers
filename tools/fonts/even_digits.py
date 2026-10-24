@@ -27,13 +27,14 @@ for name in digits:
         glyph.coordinates.translate((shift, 0))
         glyph.recalcBounds(glyf)
     hmtx[name] = (wide, lsb + shift)
-# Kerning would undo the even widths.
+# Kerning would undo the even widths. That drops the kerning between letters
+# too, which is fine as only the clock uses this copy.
 if "GPOS" in font:
     del font["GPOS"]
 for record in font["name"].names:
     if record.nameID in (1, 4, 16):
         record.string = record.toUnicode().replace("Chakra Petch", "Chakra Petch Even Digits")
-    elif record.nameID == 6:
+    elif record.nameID in (3, 6):
         record.string = record.toUnicode().replace("ChakraPetch", "ChakraPetchEvenDigits")
 font.save(OUT)
 print("saved", OUT, "digits", wide, "wide")

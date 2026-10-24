@@ -40,13 +40,13 @@ func _ready() -> void:
 	_list.add_theme_constant_override("separation", 6)
 	column.add_child(_list)
 	_problem = Label.new()
-	_problem.add_theme_color_override("font_color", BuilderStyle.DANGER)
-	_problem.add_theme_font_size_override("font_size", 18)
+	_problem.theme_type_variation = "DangerLabel"
 	column.add_child(_problem)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	column.add_child(row)
 	_save = MenuStyle.button("Save the cup", save)
+	_save.theme_type_variation = "MainButton"
 	_save.size_flags_horizontal = SIZE_EXPAND_FILL
 	row.add_child(_save)
 	if path != "":
@@ -97,15 +97,14 @@ func _show() -> void:
 		row.add_theme_constant_override("separation", 16)
 		var label := Label.new()
 		label.text = "%d.  %s" % [i + 1, cup.course_names()[i]]
-		label.add_theme_font_size_override("font_size", 22)
 		label.size_flags_horizontal = SIZE_EXPAND_FILL
 		row.add_child(label)
 		if i > 0:
-			row.add_child(MenuStyle.link("Earlier", func() -> void:
+			row.add_child(MenuStyle.chip("Earlier", func() -> void:
 				var race = cup.races.pop_at(i)
 				cup.races.insert(i - 1, race)
 				_show()))
-		row.add_child(MenuStyle.link("Take out", func() -> void:
+		row.add_child(MenuStyle.chip("Take out", func() -> void:
 			cup.races.remove_at(i)
 			_show()))
 		_list.add_child(row)

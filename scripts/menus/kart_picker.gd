@@ -17,7 +17,7 @@ const CARD := Vector2(330, 490)
 ## The bars on each card, as [label, what they measure].
 const BARS := [["Speed", "speed"], ["Pull", "pull"], ["Grip", "grip"], ["Control", "control"], ["Off-road", "offroad"]]
 ## Each player's colour, for their tag when two are picking.
-const PLAYER_COLOURS := [Color("#4fa8ff"), Color("#ffa63d")]
+const PLAYER_COLOURS := UiKit.PLAYERS
 
 var _go: Callable
 var _back: Callable
@@ -73,11 +73,11 @@ func _ready() -> void:
 		top.add_child(_name)
 	_chosen_label = Label.new()
 	_chosen_label.size_flags_horizontal = SIZE_EXPAND_FILL
-	_chosen_label.add_theme_font_size_override("font_size", 26)
+	_chosen_label.theme_type_variation = "LeadLabel"
 	top.add_child(_chosen_label)
 	_race = MenuStyle.button("Next" if player == 1 else "Race", func() -> void: _go.call())
 	_race.custom_minimum_size.x = 220.0
-	MenuStyle.mark(_race, true)
+	_race.theme_type_variation = "MainButton"
 	top.add_child(_race)
 	var at := 2
 	if _ai and player != 2:
@@ -117,18 +117,11 @@ func go_back() -> void:
 ## A big tag in the player's colour saying whose turn it is to pick.
 func _player_tag() -> PanelContainer:
 	var tag := PanelContainer.new()
-	var box := StyleBoxFlat.new()
-	box.bg_color = PLAYER_COLOURS[player - 1]
-	box.set_corner_radius_all(10)
-	box.content_margin_left = 18.0
-	box.content_margin_right = 18.0
-	box.content_margin_top = 4.0
-	box.content_margin_bottom = 4.0
-	tag.add_theme_stylebox_override("panel", box)
+	tag.add_theme_stylebox_override("panel", UiKit.pad(UiKit.slant(PLAYER_COLOURS[player - 1]), 22, 4, UiKit.LEAN, 48.0))
+	tag.size_flags_vertical = SIZE_SHRINK_CENTER
 	var label := Label.new()
 	label.text = "PLAYER %d" % player
-	label.add_theme_font_size_override("font_size", 30)
-	label.add_theme_color_override("font_color", BuilderStyle.ON_ACCENT)
+	label.theme_type_variation = "TagLabel"
 	tag.add_child(label)
 	return tag
 
@@ -139,7 +132,6 @@ func _difficulty_row() -> HBoxContainer:
 	row.add_theme_constant_override("separation", 10)
 	var label := Label.new()
 	label.text = "AI drivers"
-	label.add_theme_font_size_override("font_size", 22)
 	row.add_child(label)
 	for level in Difficulty.LEVELS:
 		var button := MenuStyle.button(Difficulty.name_of(level), _show_level.bind(level))
@@ -148,8 +140,7 @@ func _difficulty_row() -> HBoxContainer:
 		row.add_child(button)
 		_levels[level] = button
 	_level_about = Label.new()
-	_level_about.add_theme_font_size_override("font_size", 17)
-	_level_about.add_theme_color_override("font_color", Color(1, 1, 1, 0.65))
+	_level_about.theme_type_variation = "NoteLabel"
 	_level_about.size_flags_horizontal = SIZE_EXPAND_FILL
 	_level_about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(_level_about)
@@ -171,8 +162,7 @@ func _conditions_row() -> HBoxContainer:
 	_time.custom_minimum_size = Vector2(260, 48)
 	row.add_child(_time)
 	_conditions_about = Label.new()
-	_conditions_about.add_theme_font_size_override("font_size", 17)
-	_conditions_about.add_theme_color_override("font_color", Color(1, 1, 1, 0.65))
+	_conditions_about.theme_type_variation = "NoteLabel"
 	_conditions_about.size_flags_horizontal = SIZE_EXPAND_FILL
 	_conditions_about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	row.add_child(_conditions_about)
@@ -234,6 +224,7 @@ static func _ranges(all: Array) -> Dictionary:
 
 func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	var card := ScrollButton.new()
+	card.theme_type_variation = "CardButton"
 	card.custom_minimum_size = CARD
 	card.focus_mode = FOCUS_ALL
 	card.set_meta("kart", key)
@@ -242,7 +233,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	box.mouse_filter = MOUSE_FILTER_IGNORE
 	box.add_theme_constant_override("separation", 6)
 	box.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
-	box.offset_left = 14.0
+	box.offset_left = 20.0
 	box.offset_right = -14.0
 	box.offset_top = 10.0
 	box.offset_bottom = -12.0
@@ -258,7 +249,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	var own := key == Game.OWN_KART
 	var title := Label.new()
 	title.text = ("The garage kart, %s" if player == 2 else "Your kart, %s") % design.name if own else design.name
-	title.add_theme_font_size_override("font_size", 24)
+	title.theme_type_variation = "LeadLabel"
 	box.add_child(title)
 	var problems: Array[String] = design.problems() if own else ([] as Array[String])
 	var about := Label.new()
@@ -266,8 +257,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	about.text = design.about if not own else (built if problems.is_empty() else problems[0])
 	about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	about.custom_minimum_size = Vector2(CARD.x - 28.0, 0)
-	about.add_theme_font_size_override("font_size", 16)
-	about.add_theme_color_override("font_color", Color(1, 1, 1, 0.65) if problems.is_empty() else BuilderStyle.DANGER)
+	about.theme_type_variation = "SmallLabel" if problems.is_empty() else "DangerLabel"
 	box.add_child(about)
 	var spacer := Control.new()
 	spacer.size_flags_vertical = SIZE_EXPAND_FILL
@@ -281,8 +271,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 		var label := Label.new()
 		label.text = bar[0]
 		label.custom_minimum_size.x = 90.0
-		label.add_theme_font_size_override("font_size", 15)
-		label.add_theme_color_override("font_color", Color(1, 1, 1, 0.75))
+		label.theme_type_variation = "SmallLabel"
 		row.add_child(label)
 		var range: Vector2 = ranges[bar[1]]
 		var amount := inverse_lerp(range.x, range.y, measured[bar[1]]) if range.y > range.x else 1.0
@@ -314,6 +303,6 @@ class StatBar:
 
 	func _draw() -> void:
 		var middle := size.y * 0.5
-		var bar := Rect2(0, middle - 4, size.x, 8)
-		draw_rect(bar, Color(1, 1, 1, 0.12))
-		draw_rect(Rect2(bar.position, Vector2(bar.size.x * amount, bar.size.y)), BuilderStyle.DATA)
+		var bar := Rect2(0, middle - 5, size.x, 10)
+		UiKit.draw_slant(self, bar, UiKit.EDGE)
+		UiKit.draw_slant(self, Rect2(bar.position, Vector2(bar.size.x * amount, bar.size.y)), UiKit.BLUE)

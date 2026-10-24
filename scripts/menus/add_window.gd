@@ -22,9 +22,6 @@ func _init(title := "") -> void:
 
 func _ready() -> void:
 	theme = MenuStyle.theme()
-	var panel := BuilderStyle.scrim(16, 1.0)
-	panel.set_content_margin_all(24)
-	add_theme_stylebox_override("panel", panel)
 	# It stays open while Android's share sheet or file picker is in front,
 	# and closes with Close. Nothing behind it can be tapped meanwhile.
 	popup_window = false
@@ -58,9 +55,9 @@ func _ready() -> void:
 	_said = Label.new()
 	_said.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_said.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_said.add_theme_color_override("font_color", MenuStyle.ACCENT)
+	_said.theme_type_variation = "AccentLabel"
 	column.add_child(_said)
-	column.add_child(MenuStyle.link("Close", hide))
+	column.add_child(MenuStyle.link("Close", hide, "close"))
 	popup_hide.connect(func() -> void:
 		done.emit(_any_added)
 		queue_free())

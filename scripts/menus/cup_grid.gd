@@ -12,7 +12,7 @@ extends Control
 ## Game.cups_for_two), and both players pick a kart.
 
 const TROPHIES := { 1: "Gold trophy", 2: "Silver trophy", 3: "Bronze trophy" }
-const MEDALS := { 1: Color("#f2b632"), 2: Color("#cdd3db"), 3: Color("#c47a45") }
+const MEDALS := UiKit.MEDALS
 ## How wide a card can get, and how few go across.
 const CARD_WIDTH := 200.0
 const GAP := 14
@@ -66,8 +66,11 @@ func _ready() -> void:
 					Game.show_your_cups()))
 		add.set_meta("add", true)
 	else:
+		var number := 0
 		for cup in GrandPrix.cups():
 			var card := _cup_card(cup.id, cup.name, cup.get("trophy", {}), Color(cup.get("colour", "#a3a2a4")), cup.tracks.map(func(id): return Tracks.path_of(id)))
+			number += 1
+			card.number = "%02d" % number
 			card.tapped.connect(_pick.bind(cup.id))
 		if mode == Game.MODE_GRAND_PRIX:
 			var mine := _card_with_words("Your cups", "Make your own, from any course", Game.show_your_cups)
@@ -165,20 +168,27 @@ func _pick(id: String) -> void:
 
 
 func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, paths: Array) -> MenuCard:
-	var card := MenuCard.new()
+	var card := MenuCard.new(colour)
 	card.set_meta("cup", id)
+	# A medal marker for each level, in order, coloured by your best place.
+	var medals: Array[Color] = []
 	var won := []
 	for level in Difficulty.LEVELS:
 		var place := Records.best_cup_place(id, level, _for_two())
 		if place > 0 and place <= 3:
-			won.append([level, place])
+			medals.append(MEDALS[place])
+			won.append("%s %s" % [Difficulty.name_of(level), ["", "gold", "silver", "bronze"][place]])
+		else:
+			medals.append(Color.TRANSPARENT)
+	card.medals = medals
+	card.tooltip_text = ", ".join(won)
 	var finish := TrophyModel.finish_for(best_place(id, _for_two()))
 	var key := TrophyThumbnails.key_of(spec, colour, finish)
 	var trophy := card.picture(TrophyThumbnails.picture(key), TROPHY)
 	_pictures.append(trophy)
 	_trophies[key] = _trophies.get(key, []) + [trophy]
 	Game.trophy_pictures().take(spec, colour, finish)
-	card.line(cup_name, 22)
+	card.line(cup_name)
 	var layouts := HBoxContainer.new()
 	layouts.add_theme_constant_override("separation", 4)
 	layouts.mouse_filter = MOUSE_FILTER_IGNORE
@@ -189,18 +199,6 @@ func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, pa
 		view.custom_minimum_size = Vector2(0.0, 40.0)
 		view.size_flags_horizontal = SIZE_EXPAND_FILL
 		layouts.add_child(view)
-	var levels := HBoxContainer.new()
-	levels.alignment = BoxContainer.ALIGNMENT_CENTER
-	levels.add_theme_constant_override("separation", 8)
-	levels.mouse_filter = MOUSE_FILTER_IGNORE
-	levels.custom_minimum_size.y = 22.0
-	card.content.add_child(levels)
-	for done in won:
-		var label := Label.new()
-		label.text = Difficulty.name_of(done[0])
-		label.add_theme_font_size_override("font_size", 15)
-		label.add_theme_color_override("font_color", MEDALS[done[1]])
-		levels.add_child(label)
 	_grid.add_child(card)
 	return card
 
@@ -218,8 +216,7 @@ func _your_cup(mine: CupDesign, path: String) -> void:
 	links.mouse_filter = MOUSE_FILTER_IGNORE
 	card.content.add_child(links)
 	for pair in [["Change", Game.show_cup_builder.bind(path)], ["Share", func() -> void: ShareWindow.open(mine.to_dict(), self)]]:
-		var link := MenuStyle.link(pair[0], pair[1])
-		link.add_theme_font_size_override("font_size", 20)
+		var link := MenuStyle.chip(pair[0], pair[1])
 		# The card's words ignore the mouse, but these have to be tapped.
 		link.mouse_filter = MOUSE_FILTER_STOP
 		links.add_child(link)
@@ -228,12 +225,10 @@ func _your_cup(mine: CupDesign, path: String) -> void:
 ## A card with only words on it, for the ones at the end.
 func _card_with_words(text: String, more: String, action: Callable) -> MenuCard:
 	var card := MenuCard.new()
-	var gap := Control.new()
-	gap.custom_minimum_size.y = 40.0
-	gap.mouse_filter = MOUSE_FILTER_IGNORE
-	card.content.add_child(gap)
-	card.line(text, 24)
-	card.line(more, 16, Color(1.0, 1.0, 1.0, 0.6))
+	card.content.alignment = BoxContainer.ALIGNMENT_CENTER
+	card.plus()
+	card.line(text)
+	card.line(more, false)
 	card.tapped.connect(action)
 	_grid.add_child(card)
 	return card

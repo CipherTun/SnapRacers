@@ -5,16 +5,12 @@ extends Control
 
 
 func _ready() -> void:
-	var column := MenuStyle.screen(self)
-	column.add_child(MenuStyle.title())
-	var gap := Control.new()
-	gap.custom_minimum_size = Vector2(0.0, 24.0)
-	column.add_child(gap)
-	column.add_child(MenuStyle.button("Single player", Game.show_single_player))
-	column.add_child(MenuStyle.button("Multiplayer", Game.show_multiplayer))
-	column.add_child(MenuStyle.button("Editors", Game.show_editors))
-	column.add_child(MenuStyle.button("Settings", Game.show_settings))
-	column.add_child(MenuStyle.button("About", Game.show_about))
+	var column := MenuStyle.menu_screen(self)
+	column.add_child(MenuStyle.big_button("Single player", "race", Game.show_single_player))
+	column.add_child(MenuStyle.big_button("Multiplayer", "two", Game.show_multiplayer))
+	column.add_child(MenuStyle.big_button("Editors", "wrench", Game.show_editors))
+	column.add_child(MenuStyle.big_button("Settings", "gear", Game.show_settings))
+	column.add_child(MenuStyle.big_button("About", "info", Game.show_about))
 	# A web page can't close itself, so there it has no Quit.
 	if not OS.has_feature("web"):
 		MenuStyle.back_at_bottom(column, go_back, "Quit")

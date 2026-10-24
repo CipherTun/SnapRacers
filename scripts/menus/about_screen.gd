@@ -9,7 +9,6 @@ func _ready() -> void:
 	column.add_child(MenuStyle.title("SnapRacers", "Version %s" % ProjectSettings.get_setting("application/config/version", "")))
 	var text := Label.new()
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	text.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.85))
 	text.text = "\n".join([
 		"SnapRacers is a kart racing game where you build your kart out of bricks and then race it.",
 		"",

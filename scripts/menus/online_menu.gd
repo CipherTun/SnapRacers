@@ -24,8 +24,7 @@ func _ready() -> void:
 	var column := MenuStyle.page(self, "Online", go_back, 760.0)
 	_problem = Label.new()
 	_problem.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_problem.add_theme_color_override("font_color", BuilderStyle.DANGER)
-	_problem.add_theme_font_size_override("font_size", 20)
+	_problem.theme_type_variation = "DangerLabel"
 	_problem.text = Game.net.last_problem
 	_problem.visible = _problem.text != ""
 	column.add_child(_problem)
@@ -64,8 +63,7 @@ func _ready() -> void:
 			MenuStyle.button("Find Bluetooth games", _look.bind(NetSession.BLUETOOTH))))
 		_looking = Label.new()
 		_looking.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		_looking.add_theme_color_override("font_color", BuilderStyle.DATA)
-		_looking.add_theme_font_size_override("font_size", 20)
+		_looking.theme_type_variation = "DataLabel"
 		_looking.visible = false
 		column.add_child(_looking)
 		_nearby = VBoxContainer.new()
@@ -109,7 +107,7 @@ func _show_found() -> void:
 	if _finder.found.is_empty():
 		var none := Label.new()
 		none.text = "No games found yet" if not OS.has_feature("web") else ""
-		none.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+		none.theme_type_variation = "NoteLabel"
 		_found.add_child(none)
 		return
 	for address in _found_sorted():

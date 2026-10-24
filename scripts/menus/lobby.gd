@@ -22,8 +22,7 @@ func _ready() -> void:
 	var column := MenuStyle.page(self, "Lobby", go_back, 760.0)
 	_status = Label.new()
 	_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_status.add_theme_font_size_override("font_size", 20)
-	_status.add_theme_color_override("font_color", BuilderStyle.DATA)
+	_status.theme_type_variation = "DataLabel"
 	column.add_child(_status)
 	column.add_child(MenuStyle.heading("Who's racing"))
 	_people = VBoxContainer.new()
@@ -43,6 +42,7 @@ func _ready() -> void:
 	_ready_button.custom_minimum_size.y = 72.0
 	row.add_child(_ready_button)
 	_start = MenuStyle.button("Start", Game.net.start)
+	_start.theme_type_variation = "MainButton"
 	_start.size_flags_horizontal = SIZE_EXPAND_FILL
 	_start.custom_minimum_size.y = 72.0
 	row.add_child(_start)
@@ -50,7 +50,6 @@ func _ready() -> void:
 
 	_picker = PopupPanel.new()
 	_picker.theme = MenuStyle.theme()
-	_picker.add_theme_stylebox_override("panel", BuilderStyle.scrim(12, 0.9))
 	add_child(_picker)
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
@@ -106,14 +105,13 @@ func _show() -> void:
 			var line := Label.new()
 			var kart := str(player.get("kart", {}).get("name", "a kart"))
 			line.text = "%s   %s, in the %s" % ["✓" if member.ready else "·", player.name, kart]
-			line.add_theme_font_size_override("font_size", 22)
 			if peer == net.my_id():
-				line.add_theme_color_override("font_color", Color("#f2cd37"))
+				line.theme_type_variation = "AccentLabel"
 			_people.add_child(line)
 	if net.settings.get("ai", true) and net.player_count() < NetSession.MOST_KARTS:
 		var fill := Label.new()
 		fill.text = "     and %d AI driver%s" % [NetSession.MOST_KARTS - net.player_count(), "" if NetSession.MOST_KARTS - net.player_count() == 1 else "s"]
-		fill.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+		fill.theme_type_variation = "NoteLabel"
 		_people.add_child(fill)
 
 	_show_settings(host)
@@ -183,7 +181,6 @@ func _show_settings(host: bool) -> void:
 	else:
 		var label := Label.new()
 		label.text = "%s\n%s\n%s" % [what, ("AI drivers in the empty places, %s" % Difficulty.name_of(s.difficulty).to_lower()) if s.ai else "No AI drivers", Conditions.pick_name(s.get("weather", Conditions.RANDOM), s.get("time", Conditions.RANDOM))]
-		label.add_theme_font_size_override("font_size", 22)
 		_settings.add_child(label)
 		_offer_to_keep(s, cup)
 
@@ -203,7 +200,7 @@ func _offer_to_keep(s: Dictionary, cup: bool) -> void:
 	if have != "":
 		var kept := Label.new()
 		kept.text = "It's with your cups" if cup else "It's with your courses"
-		kept.add_theme_color_override("font_color", MenuStyle.ACCENT)
+		kept.theme_type_variation = "AccentLabel"
 		_settings.add_child(kept)
 		return
 	_settings.add_child(MenuStyle.button("Keep this cup" if cup else "Keep this course", func() -> void:

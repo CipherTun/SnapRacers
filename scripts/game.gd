@@ -672,9 +672,12 @@ func show_loading(on: bool) -> void:
 		back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		var label := Label.new()
 		label.text = "Loading"
-		label.add_theme_font_size_override("font_size", 40)
+		label.uppercase = true
+		label.theme_type_variation = "TitleLabel"
 		root.add_child(label)
 		label.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+		label.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		label.grow_vertical = Control.GROW_DIRECTION_BOTH
 		add_child(_loading)
 	elif not on and _loading != null:
 		print("Loading took %d ms" % (Time.get_ticks_msec() - _loading_since))

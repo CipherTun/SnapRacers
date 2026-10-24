@@ -28,8 +28,7 @@ func _ready() -> void:
 	_owners.add_theme_constant_override("separation", 8)
 	add_child(_owners)
 	_prompt = Label.new()
-	_prompt.add_theme_font_size_override("font_size", 20)
-	_prompt.add_theme_color_override("font_color", MenuStyle.ACCENT)
+	_prompt.theme_type_variation = "AccentLabel"
 	_prompt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_prompt.visible = false
 	add_child(_prompt)
@@ -95,7 +94,6 @@ func _show() -> void:
 		var label := Label.new()
 		var device := Game.controllers.device_of(person) if Game.controllers != null else -1
 		label.text = "Player %d   %s" % [person + 1, Controllers.name_of(device) if device != -1 else "No controller"]
-		label.add_theme_font_size_override("font_size", 22)
 		label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		row.add_child(label)
 		var pick := MenuStyle.button("Change", _wait.bind(["owner", "", person]))
@@ -111,22 +109,19 @@ func _show() -> void:
 	for heading in ["", "Key", "Controller", "Or"]:
 		var label := Label.new()
 		label.text = heading
-		label.add_theme_font_size_override("font_size", 18)
-		label.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+		label.theme_type_variation = "NoteLabel"
 		_grid.add_child(label)
 	var settings := Game.settings
 	var switch := Game.controllers != null and Game.controllers.is_switch(Game.controllers.device_of(_person))
 	for action in InputBindings.ACTIONS:
 		var name := Label.new()
 		name.text = InputBindings.NAMES[action]
-		name.add_theme_font_size_override("font_size", 20)
 		name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_grid.add_child(name)
 		if action == "menu":
 			# The menu's always Esc on a keyboard, which is Back everywhere.
 			var esc := Label.new()
 			esc.text = "Esc"
-			esc.add_theme_font_size_override("font_size", 20)
 			_grid.add_child(esc)
 		else:
 			_grid.add_child(_cell(InputBindings.key_name(InputBindings.key(settings, _person, action)), ["key", action, 0]))
@@ -138,7 +133,7 @@ func _show() -> void:
 func _cell(text: String, what: Array) -> Button:
 	var button := MenuStyle.button(text, _wait.bind(what))
 	button.custom_minimum_size = Vector2(150.0, 44.0)
-	button.add_theme_font_size_override("font_size", 18)
+	button.theme_type_variation = "CellButton"
 	if what == _waiting:
 		MenuStyle.mark(button, true)
 		button.text = "..."
