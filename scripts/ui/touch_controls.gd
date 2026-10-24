@@ -48,7 +48,10 @@ const BUTTON_COLOURS := {
 const REACH := 1.9
 
 ## How far up this one's controls sit (see HEIGHT).
-var height := HEIGHT
+var height := HEIGHT:
+	set(value):
+		height = value
+		queue_redraw()
 ## "stick" or "buttons" (see STEERING).
 var steering := "stick":
 	set(value):
@@ -69,8 +72,8 @@ var look_back := false
 ## left alone for the button.
 var blockers: Array[Control] = []
 
-## What's on the gadget buttons above GO, set by the HUD. It's a name, or an
-## empty string when there's no button there.
+## What's on the gadget buttons above GO, set by the HUD with show_gadget().
+## It's a name, or an empty string when there's no button there.
 var gadget_names: Array[String] = ["", ""]
 ## Whether each power-up can be used right now.
 var gadget_ready: Array[bool] = [false, false]
@@ -92,16 +95,56 @@ var _finger_at := {} # finger index -> position
 ## The gadget a finger holding GO has slid onto, so it's only used once each
 ## time the finger gets there.
 var _slid_onto := {} # finger index -> gadget button name
+## What the last _update() drew, so it only redraws when that changes.
+var _drawn := []
+## Sizes worked out for the words on the buttons, by text and radius.
+var _word_sizes := {}
+## Draws the pictures on gadgets that can't be used yet, faded as a whole.
+var _faded: Control
 
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	mouse_filter = MOUSE_FILTER_IGNORE
+	_faded = Control.new()
+	_faded.mouse_filter = MOUSE_FILTER_IGNORE
+	_faded.modulate = Color(1, 1, 1, 0.4)
+	add_child(_faded)
+	_faded.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
+	_faded.draw.connect(_draw_faded)
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_word_sizes.clear()
+	if what == NOTIFICATION_RESIZED or what == NOTIFICATION_VISIBILITY_CHANGED:
 		queue_redraw()
+
+
+## Sets what's on a gadget button, redrawing only when it's changed.
+func show_gadget(slot: int, gadget_name: String, kind: String, uses: int, ready: bool) -> void:
+	if gadget_names[slot] == gadget_name and gadget_kinds[slot] == kind and gadget_uses[slot] == uses and gadget_ready[slot] == ready:
+		return
+	gadget_names[slot] = gadget_name
+	gadget_kinds[slot] = kind
+	gadget_uses[slot] = uses
+	gadget_ready[slot] = ready
+	queue_redraw()
+
+
+## Where the controls are drawn, as boxes, with room for both gadgets whether
+## or not there's anything on them, for the HUD to keep its pills clear of.
+func areas() -> Array[Rect2]:
+	var out: Array[Rect2] = []
+	if size.y <= 0.0:
+		return out
+	var circles := _buttons(true)
+	if steering == "stick":
+		circles["stick"] = _stick()
+	for name in circles:
+		var r: float = circles[name][1]
+		out.append(Rect2(circles[name][0] - Vector2(r, r), Vector2(r, r) * 2.0))
+	return out
 
 
 func _process(delta: float) -> void:
@@ -124,8 +167,10 @@ func _stick() -> Array:
 	return stick.stick
 
 
-func _buttons() -> Dictionary:
-	var out := _placed_buttons()
+## Every button's middle and radius. With `all_gadgets` both gadget buttons
+## are there even when there's nothing on them.
+func _buttons(all_gadgets := false) -> Dictionary:
+	var out := _placed_buttons(all_gadgets)
 	_clear_of_holes(out, ["left", "right"])
 	_clear_of_holes(out, ["gas", "brake", "gadget0", "gadget1", "look"])
 	_clear_of_holes(out, ["reset"])
@@ -165,7 +210,7 @@ func _clear_of_holes(circles: Dictionary, group: Array) -> void:
 			return
 
 
-func _placed_buttons() -> Dictionary:
+func _placed_buttons(all_gadgets := false) -> Dictionary:
 	var s := size
 	# These shrink in a narrow split screen half too, so the brake stays clear
 	# of the stick.
@@ -193,9 +238,9 @@ func _placed_buttons() -> Dictionary:
 		out["left"] = [Vector2(arrow * 1.3, ay), arrow]
 		out["right"] = [Vector2(arrow * 3.75, ay), arrow]
 	var small := r * 0.62
-	if gadget_names[0] != "":
+	if gadget_names[0] != "" or all_gadgets:
 		out["gadget0"] = [around.call(-112.0), small]
-	if gadget_names[1] != "":
+	if gadget_names[1] != "" or all_gadgets:
 		out["gadget1"] = [around.call(-157.0), small]
 	return out
 
@@ -338,7 +383,10 @@ func _update() -> void:
 	brake = 1.0 if held.has("brake") else 0.0
 	reset = held.has("reset")
 	look_back = held.has("look")
-	queue_redraw()
+	var drawn := [_knob, _stick_finger != -1, held]
+	if drawn != _drawn:
+		_drawn = drawn
+		queue_redraw()
 
 
 ## How much to steer with the buttons held. Both at once cancel out.
@@ -357,6 +405,7 @@ static func stick_to_steer(knob: float) -> float:
 
 
 func _draw() -> void:
+	_faded.queue_redraw()
 	if size.y <= 0.0:
 		return # not laid out yet
 	var buttons := _buttons()
@@ -374,7 +423,7 @@ func _draw() -> void:
 		var ready := true
 		if name.begins_with("gadget"):
 			ready = gadget_ready[int(name.substr(6))]
-		_round_button(centre, radius, colour if ready else UiKit.BUTTON_GREY, lit, ready)
+		_round_button(centre, radius, colour if ready else UiKit.BUTTON_GREY, lit, ready, name.begins_with("gadget"))
 		var ink := Color(UiKit.WHITE, 1.0 if ready else 0.5)
 		match name:
 			"gas", "brake":
@@ -386,57 +435,89 @@ func _draw() -> void:
 				var way := -1.0 if name == "left" else 1.0
 				var tip := centre + Vector2(radius * 0.45 * way, 0.0)
 				var back := centre - Vector2(radius * 0.3 * way, 0.0)
-				draw_colored_polygon(PackedVector2Array([tip, back + Vector2(0.0, -radius * 0.45), back + Vector2(0.0, radius * 0.45)]), UiKit.YELLOW if lit else UiKit.WHITE)
+				var arrow := PackedVector2Array([tip, back + Vector2(0.0, -radius * 0.45), back + Vector2(0.0, radius * 0.45)])
+				draw_colored_polygon(arrow, UiKit.YELLOW if lit else UiKit.WHITE)
+				arrow.append(tip)
+				draw_polyline(arrow, Color(UiKit.INK, 0.6), 2.0, true)
 			_:
 				var slot := int(name.substr(6))
 				if gadget_kinds[slot] != "":
-					PowerupIcons.draw(self, gadget_kinds[slot], centre, radius * 1.15)
-					if gadget_uses[slot] > 1:
-						var count := "x%d" % gadget_uses[slot]
-						var digits := UiKit.font("digits")
-						var at := centre + Vector2(radius * 0.25, radius * 0.75)
-						draw_string_outline(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, Color(0, 0, 0, 0.9))
-						draw_string(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, UiKit.YELLOW)
+					# One that can't be used yet is drawn faded by _draw_faded().
+					if ready:
+						_gadget_picture(self, slot, centre, radius)
 				else:
 					_words(font, centre, gadget_names[slot], radius * 0.6, colour.darkened(0.5))
 	if steering == "buttons":
 		return
-	# The stick is a dark round pad with a white rim, marks either side for
+	# The stick is a faint round pad with a white rim, marks either side for
 	# how far it goes, and the knob, which lights up yellow while you're
 	# holding it.
 	var stick := _stick()
 	var middle: Vector2 = stick[0]
 	var r: float = stick[1]
 	var travel := r * 0.68
-	draw_circle(middle, r, Color(0, 0, 0, 0.3))
-	draw_arc(middle, r - 2.0, 0.0, TAU, 64, Color(UiKit.WHITE, 0.7), 4.0, true)
+	draw_circle(middle, r, Color(UiKit.WHITE, 0.16))
+	draw_arc(middle, r - 2.0, 0.0, TAU, 64, Color(UiKit.WHITE, 0.5), 3.0, true)
 	for x in [-0.6, -0.4, 0.4, 0.6]:
 		draw_line(middle + Vector2(r * x, -8.0), middle + Vector2(r * x, 8.0), Color(UiKit.WHITE, 0.35), 3.0)
 	var holding := _stick_finger != -1
 	var knob := middle + Vector2(_knob * travel, 0.0)
-	draw_circle(knob, r * 0.3, UiKit.YELLOW if holding else Color(UiKit.WHITE, 0.75))
-	draw_arc(knob, r * 0.3, 0.0, TAU, 40, UiKit.INK, 3.0, true)
+	draw_circle(knob, r * 0.3, Color(UiKit.YELLOW, 0.9) if holding else Color(UiKit.WHITE, 0.5))
+	draw_arc(knob, r * 0.3, 0.0, TAU, 40, Color(UiKit.INK, 0.5), 2.0, true)
 
 
-## A solid round button in its colour with a hard shadow under it, brighter
-## while it's held and faded when it can't be used.
-func _round_button(centre: Vector2, radius: float, colour: Color, lit: bool, ready: bool) -> void:
-	var alpha := 0.95 if lit else (0.82 if ready else 0.4)
+## The pictures on gadgets that can't be used yet, drawn on _faded so each
+## fades as a whole.
+func _draw_faded() -> void:
+	if size.y <= 0.0:
+		return
+	var buttons := _buttons()
+	for slot in gadget_kinds.size():
+		var name := "gadget%d" % slot
+		if buttons.has(name) and gadget_kinds[slot] != "" and not gadget_ready[slot]:
+			_gadget_picture(_faded, slot, buttons[name][0], buttons[name][1])
+
+
+## A gadget's power-up picture, with how many goes are left when there's more
+## than one.
+func _gadget_picture(item: CanvasItem, slot: int, centre: Vector2, radius: float) -> void:
+	PowerupIcons.draw(item, gadget_kinds[slot], centre, radius * 1.15)
+	if gadget_uses[slot] > 1:
+		var count := "x%d" % gadget_uses[slot]
+		var digits := UiKit.font("digits")
+		var at := centre + Vector2(radius * 0.25, radius * 0.75)
+		item.draw_string_outline(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, Color(0, 0, 0, 0.9))
+		item.draw_string(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, UiKit.YELLOW)
+
+
+## A see-through round button in its colour with a light rim, so the road
+## shows through it, stronger while it's held and fainter when it can't be
+## used.
+func _round_button(centre: Vector2, radius: float, colour: Color, lit: bool, ready: bool, gadget: bool) -> void:
+	var alpha := 0.28
+	if lit:
+		alpha = 0.55
+	elif gadget:
+		alpha = 0.45 if ready else 0.12
 	var face := colour.lightened(0.2) if lit else colour
-	draw_circle(centre + Vector2(0.0, 5.0), radius, Color(0, 0, 0, 0.35 * alpha))
 	draw_circle(centre, radius, Color(face, alpha))
-	draw_arc(centre, radius - 2.0, 0.0, TAU, 48, Color(UiKit.WHITE if lit else colour.lightened(0.4), alpha), 3.0, true)
+	var rim := UiKit.WHITE if lit else colour.lightened(0.5)
+	draw_arc(centre, radius - 1.5, 0.0, TAU, 48, Color(rim, 0.8 if ready else 0.3), 3.0, true)
 
 
 ## Upright white words in the middle of a button, as big as fit across it.
 func _words(font: Font, centre: Vector2, text: String, radius: float, edge: Color) -> void:
 	if text == "":
 		return
-	var font_size := int(radius * 0.55)
-	var wide := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	if wide > radius * 1.5:
-		font_size = int(font_size * radius * 1.5 / wide)
-		wide = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
-	var at := centre + Vector2(-wide * 0.5, font.get_ascent(font_size) * 0.5 - font.get_descent(font_size) * 0.35)
+	var key := "%s|%s" % [text, radius]
+	if not _word_sizes.has(key):
+		var font_size := int(radius * 0.55)
+		var wide := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		if wide > radius * 1.5:
+			font_size = int(font_size * radius * 1.5 / wide)
+			wide = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+		_word_sizes[key] = [font_size, Vector2(-wide * 0.5, font.get_ascent(font_size) * 0.5 - font.get_descent(font_size) * 0.35)]
+	var font_size: int = _word_sizes[key][0]
+	var at: Vector2 = centre + _word_sizes[key][1]
 	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, maxi(4, font_size / 7), edge)
 	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.WHITE)

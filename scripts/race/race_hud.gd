@@ -36,6 +36,14 @@ var _lap: Label
 var _slots: PowerupSlots
 var _clock: Label
 var _corner: VBoxContainer
+## Where the corner was last put to keep clear of the touch controls.
+var _corner_spot := Vector2(24, 12)
+## Face to face, the part of this half the shared map covers.
+var _map_room := Rect2()
+## The row with the status pill, and how far up from the bottom it was last
+## put to keep clear of the touch controls.
+var _bottom: HBoxContainer
+var _bottom_down := 0.0
 var _safe: SafeArea
 ## Face to face with two players, where the map they share sits on the line
 ## at the top of the half.
@@ -179,12 +187,14 @@ func _ready() -> void:
 
 	# What's going on, just above the power-ups.
 	var bottom := HBoxContainer.new()
+	_bottom = bottom
 	bottom.alignment = BoxContainer.ALIGNMENT_CENTER
 	bottom.mouse_filter = MOUSE_FILTER_IGNORE
 	add_child(bottom)
 	bottom.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
-	bottom.offset_bottom = -SLOTS_UP - PowerupSlots.BOX - 10.0
-	bottom.offset_top = bottom.offset_bottom - 54.0
+	_bottom_down = -SLOTS_UP - PowerupSlots.BOX - 10.0
+	bottom.offset_bottom = _bottom_down
+	bottom.offset_top = _bottom_down - 54.0
 	# A taller pill grows up, away from the power-ups.
 	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	var status_pill := _pill(bottom)
@@ -265,12 +275,60 @@ static func held_name(kart: Kart, slot: int) -> String:
 
 
 ## Moves your place, lap and the clock down below the map two players share
-## face to face, which reaches `down` into the top of this half.
-func make_room_for_map(down: float) -> void:
+## face to face, which reaches `down` into the top of this half and is `wide`
+## across its middle.
+func make_room_for_map(down: float, wide: float) -> void:
 	if _face_to_face and _corner != null:
-		_corner.position.y = maxf(8.0, down + 10.0)
+		_map_room = Rect2((size.x - wide) * 0.5, 0.0, wide, down)
+		_corner_spot = Vector2(24.0, maxf(8.0, down + 10.0))
+		_corner.position = _corner_spot
 		if _safe != null:
 			_safe.moved(_corner)
+
+
+## Keeps your place and lap and the status pill out from under the touch
+## controls. Face to face the corner tries below the map, then beside the
+## menu button, then under it. The status pill moves up past any control
+## it would sit on.
+func _clear_of_touch() -> void:
+	if touch == null or _safe == null:
+		return
+	var areas: Array[Rect2] = touch.areas()
+	if areas.is_empty():
+		return
+	if _face_to_face:
+		var taken := areas.duplicate()
+		taken.append_array([_map_room, _menu.get_rect(), _camera.get_rect()])
+		var spots := [
+			Vector2(24.0, maxf(8.0, _map_room.end.y + 10.0)),
+			Vector2(_menu.get_rect().end.x + 12.0, 12.0),
+			Vector2(24.0, _menu.get_rect().end.y + 10.0),
+		]
+		var spot: Vector2 = spots[0]
+		for each: Vector2 in spots:
+			var box := Rect2(each, _corner.size).grow(4.0)
+			if box.end.y <= size.y and taken.all(func(r: Rect2) -> bool: return not r.intersects(box)):
+				spot = each
+				break
+		if spot != _corner_spot:
+			_corner_spot = spot
+			_corner.position = spot
+			_safe.moved(_corner)
+	var pill: Control = _status.get_parent().get_parent()
+	if not pill.visible:
+		return
+	var down := -SLOTS_UP - PowerupSlots.BOX - 10.0
+	var box := Rect2(Vector2(_bottom.position.x + pill.position.x, size.y + down - pill.size.y), pill.size)
+	for i in 4:
+		for r in areas:
+			if r.grow(8.0).intersects(box):
+				box.position.y = r.position.y - 8.0 - box.size.y
+	down = box.end.y - size.y
+	if down != _bottom_down:
+		_bottom_down = down
+		_bottom.offset_bottom = down
+		_bottom.offset_top = down - 54.0
+		_safe.moved(_bottom)
 
 
 func buttons() -> Array[Control]:
@@ -359,11 +417,8 @@ func _process(delta: float) -> void:
 	_slots.show_held(me.kart.held, me.kart.held_uses)
 	if touch != null:
 		for slot in Powerups.HOLD:
-			touch.gadget_names[slot] = held_name(me.kart, slot) if me.kart.held[slot] != "" else ""
-			touch.gadget_kinds[slot] = me.kart.held[slot]
-			touch.gadget_uses[slot] = me.kart.held_uses[slot]
-			touch.gadget_ready[slot] = me.kart.can_use(slot)
-		touch.queue_redraw()
+			var held: String = me.kart.held[slot]
+			touch.show_gadget(slot, held_name(me.kart, slot) if held != "" else "", held, me.kart.held_uses[slot], me.kart.can_use(slot))
 	var shown := me.progress.finish_time if me.progress.finished else race.time
 	if practice:
 		# The lap you're on, since the whole session could go on for ages.
@@ -437,6 +492,7 @@ func _process(delta: float) -> void:
 	if _results.visible:
 		_fill_results()
 		_show_waiting()
+	_clear_of_touch()
 
 
 func _build_results() -> void:

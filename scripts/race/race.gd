@@ -472,7 +472,7 @@ func _fit_hud(viewport: SubViewport, human: Racer) -> void:
 	# Face to face, the shared map reaches into the top of each half, so
 	# what's there moves down out of its way.
 	if split == Game.FACE_TO_FACE and human.hud != null and human.hud.map != null:
-		human.hud.make_room_for_map(human.hud.map.across * 0.5 / grow)
+		human.hud.make_room_for_map(human.hud.map.across * 0.5 / grow, human.hud.map.across / grow)
 
 
 ## The one map two players share, on the line between their halves, with

@@ -162,6 +162,8 @@ func _screens(folder: String, window_size: String) -> void:
 			racer.progress.lap_times.append(58.42)
 			racer.kart.slowdown_left = Kart.RESET_SLOWDOWN_TIME * 0.6
 			racer.hud.flash("Chase camera")
+		# Player 1's second gadget waits, to show one that can't be used yet.
+		race.humans[0].kart._gadget_wait[1] = 999.0
 		await frames(20)
 		await _shoot(folder, "race_" + tag)
 		race.open_menu(race.humans[0])
