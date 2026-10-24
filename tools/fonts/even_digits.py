@@ -1,4 +1,4 @@
-"""Makes a copy of Chakra Petch Bold Italic with every digit the same width,
+"""Makes a copy of Chakra Petch Bold with every digit the same width,
 for clocks that don't jiggle. The font has no tnum feature, and the phone's
 text server can't use one anyway.
 
@@ -9,8 +9,8 @@ from pathlib import Path
 from fontTools.ttLib import TTFont
 
 FOLDER = Path(__file__).resolve().parents[2] / "art/fonts/chakra_petch"
-SOURCE = FOLDER / "ChakraPetch-BoldItalic.ttf"
-OUT = FOLDER / "ChakraPetch-BoldItalic-EvenDigits.ttf"
+SOURCE = FOLDER / "ChakraPetch-Bold.ttf"
+OUT = FOLDER / "ChakraPetch-Bold-EvenDigits.ttf"
 
 font = TTFont(SOURCE)
 cmap = font.getBestCmap()

@@ -89,15 +89,14 @@ static func font(kind := "body") -> Font:
 	var f := FontVariation.new()
 	match kind:
 		"title":
-			f.base_font = load(_FONTS + "ChakraPetch-BoldItalic.ttf")
-			f.variation_transform = Transform2D(Vector2(1, 0), Vector2(-0.12, 1), Vector2.ZERO)
+			f.base_font = load(_FONTS + "ChakraPetch-Bold.ttf")
 			f.set_spacing(TextServer.SPACING_GLYPH, 1)
 		"heading":
-			f.base_font = load(_FONTS + "ChakraPetch-BoldItalic.ttf")
+			f.base_font = load(_FONTS + "ChakraPetch-Bold.ttf")
 			f.set_spacing(TextServer.SPACING_GLYPH, 1)
 		"digits":
 			# Made by tools/fonts/even_digits.py, as the font has no tnum.
-			f.base_font = load(_FONTS + "ChakraPetch-BoldItalic-EvenDigits.ttf")
+			f.base_font = load(_FONTS + "ChakraPetch-Bold-EvenDigits.ttf")
 		_:
 			f.base_font = load(_FONTS + "ChakraPetch-Bold.ttf")
 	_fonts[kind] = f

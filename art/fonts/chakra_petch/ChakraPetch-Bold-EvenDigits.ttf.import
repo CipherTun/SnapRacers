@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://75k4t2pxwrrm"
-path="res://.godot/imported/ChakraPetch-BoldItalic-EvenDigits.ttf-6f9daf1fe0eb7c010625ef088b29d2dc.fontdata"
+uid="uid://cstufj3nul073"
+path="res://.godot/imported/ChakraPetch-Bold-EvenDigits.ttf-e254747cc5d165af84b7181109f16df3.fontdata"
 
 [deps]
 
-source_file="res://art/fonts/chakra_petch/ChakraPetch-BoldItalic-EvenDigits.ttf"
-dest_files=["res://.godot/imported/ChakraPetch-BoldItalic-EvenDigits.ttf-6f9daf1fe0eb7c010625ef088b29d2dc.fontdata"]
+source_file="res://art/fonts/chakra_petch/ChakraPetch-Bold-EvenDigits.ttf"
+dest_files=["res://.godot/imported/ChakraPetch-Bold-EvenDigits.ttf-e254747cc5d165af84b7181109f16df3.fontdata"]
 
 [params]
 
