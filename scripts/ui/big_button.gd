@@ -21,6 +21,8 @@ func _init(words := "", what := "", more := "") -> void:
 	picture = what
 	theme_type_variation = "BigButton"
 	focus_mode = FOCUS_ALL
+	# The words are drawn by hand, so the text only sizes the button by its clipped width.
+	clip_text = true
 
 
 func _notification(what: int) -> void:

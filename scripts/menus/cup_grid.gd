@@ -173,7 +173,9 @@ func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, pa
 	# A medal marker for each level, in order, coloured by your best place.
 	var medals: Array[Color] = []
 	var won := []
+	var names: Array[String] = []
 	for level in Difficulty.LEVELS:
+		names.append(Difficulty.name_of(level))
 		var place := Records.best_cup_place(id, level, _for_two())
 		if place > 0 and place <= 3:
 			medals.append(MEDALS[place])
@@ -181,6 +183,7 @@ func _cup_card(id: String, cup_name: String, spec: Dictionary, colour: Color, pa
 		else:
 			medals.append(Color.TRANSPARENT)
 	card.medals = medals
+	card.medal_names = names
 	card.tooltip_text = ", ".join(won)
 	var finish := TrophyModel.finish_for(best_place(id, _for_two()))
 	var key := TrophyThumbnails.key_of(spec, colour, finish)

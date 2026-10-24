@@ -24,6 +24,12 @@ var medals: Array[Color] = []:
 		medals = value
 		queue_redraw()
 
+## The level's name for each marker, of which three letters are drawn on it.
+var medal_names: Array[String] = []:
+	set(value):
+		medal_names = value
+		queue_redraw()
+
 var _stripe := Color.TRANSPARENT
 ## The first line of words, yellow while the card's picked out.
 var _title: Label
@@ -114,15 +120,23 @@ func _draw() -> void:
 		var tint := Color(_stripe.lightened(0.25), 0.6) if _stripe.a > 0.0 else UiKit.FADED
 		draw_string(font, Vector2(size.x - EDGE - 8.0 - wide, 10.0 + font.get_ascent(high)), number, HORIZONTAL_ALIGNMENT_LEFT, -1, high, tint)
 	if medals.any(func(c: Color) -> bool: return c.a > 0.0):
-		# One under the other down the left, clear of the picture.
+		# One under the other down the left, clear of the picture. Each has the
+		# first three letters of its level on it.
 		var y := 12.0
-		for colour in medals:
-			var at := Rect2(float(LEFT) + 2.0, y, 24.0, 20.0)
+		var body := UiKit.font("body")
+		var lift := (body.get_ascent(UiKit.SMALL) - body.get_descent(UiKit.SMALL)) * 0.5
+		for i in medals.size():
+			var colour := medals[i]
+			var at := Rect2(float(LEFT) + 2.0, y, 46.0, 20.0)
 			if colour.a > 0.0:
 				UiKit.draw_slant(self, Rect2(at.position + Vector2(2, 2), at.size), UiKit.SHADOW_COLOUR, 0.2)
 				UiKit.draw_slant(self, at, colour, 0.2)
 			else:
 				UiKit.draw_slant(self, at, UiKit.EDGE, 0.2)
+			if i < medal_names.size():
+				var word := medal_names[i].substr(0, 3).to_upper()
+				var wide := body.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SMALL).x
+				draw_string(body, Vector2(at.get_center().x - wide * 0.5, at.get_center().y + lift), word, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SMALL, UiKit.INK if colour.a > 0.0 else UiKit.FADED)
 			y += 24.0
 
 

@@ -250,13 +250,16 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	var title := Label.new()
 	title.text = ("The garage kart, %s" if player == 2 else "Your kart, %s") % design.name if own else design.name
 	title.theme_type_variation = "LeadLabel"
+	# A long garage name goes on to a second line.
+	title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	title.custom_minimum_size = Vector2(CARD.x - 34.0, 0)
 	box.add_child(title)
 	var problems: Array[String] = design.problems() if own else ([] as Array[String])
 	var about := Label.new()
 	var built := "The one in the garage." if player == 2 else "The one you built in the garage."
 	about.text = design.about if not own else (built if problems.is_empty() else problems[0])
 	about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	about.custom_minimum_size = Vector2(CARD.x - 28.0, 0)
+	about.custom_minimum_size = Vector2(CARD.x - 34.0, 0)
 	about.theme_type_variation = "SmallLabel" if problems.is_empty() else "DangerLabel"
 	box.add_child(about)
 	var spacer := Control.new()

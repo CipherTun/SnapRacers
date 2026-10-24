@@ -5,7 +5,7 @@ extends Node
 ## hidden. It needs a screen.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --windowed --path . res://tools/shots/menu_still.tscn
 ## After `--`, a course name picks the course and a number how many frames
-## it drives first. Change MainMenu.STILL_COURSE to
+## it drives first. Change RaceWindow.COURSE to
 ## match.
 
 const OUT := "res://art/ui/menu_race.jpg"

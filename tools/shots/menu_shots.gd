@@ -120,6 +120,12 @@ func shot(which: String) -> void:
 
 # ----------------------------------------------------------- every screen
 
+## The picker for player two with the longest name a garage kart can have.
+func _long_name_picker() -> void:
+	Game.design.name = "Wwwwwwwwwwwwwwww"
+	Game.show_kart_picker(Game.show_menu, Game.show_menu, true, true)
+
+
 func _screens(only: Array) -> void:
 	get_window().mode = Window.MODE_WINDOWED
 	await frames(5)
@@ -165,6 +171,7 @@ func _screens(only: Array) -> void:
 		["your_courses", Game.show_course_grid.bind(Game.MODE_RACE, true, CourseGrid.YOURS)],
 		["cup_builder", Game.show_cup_builder.bind("")],
 		["kart_picker", Game.show_kart_picker.bind(Game.show_menu, Game.show_menu, true)],
+		["kart_picker_long", _long_name_picker],
 	]
 	for pair in screens:
 		if not want.call(pair[0]):
