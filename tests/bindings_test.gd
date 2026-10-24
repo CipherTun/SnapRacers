@@ -98,7 +98,7 @@ func _initialize() -> void:
 	# A default the player gave to something else isn't doubled up.
 	var clash := ConfigFile.new()
 	B.set_pad(clash, 0, "go", 0, [B.BUTTON, JOY_BUTTON_X, 1])
-	check(B.pad(clash, 0, "look_back").is_empty() and B.pad(clash, 0, "gadget_1") == [[B.BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1]], "a default button given to another action isn't used twice")
+	check(B.pad(clash, 0, "look_back").is_empty() and B.pad(clash, 0, "gadget_1") == [[B.BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1], [B.BUTTON, JOY_BUTTON_PADDLE1, 1]], "a default button given to another action isn't used twice")
 
 	# The Switch layout swaps A and B, and X and Y, for driving and menus.
 	check(Controllers.sounds_like_switch("Nintendo Switch Pro Controller") and not Controllers.sounds_like_switch("Xbox Wireless Controller"), "a Switch controller is known by its name")

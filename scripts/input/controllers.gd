@@ -24,8 +24,17 @@ const LAYOUT_NAMES := {"auto": "Auto", "xbox": "Xbox", "switch": "Switch"}
 const SWAPS := {JOY_BUTTON_A: JOY_BUTTON_B, JOY_BUTTON_B: JOY_BUTTON_A, JOY_BUTTON_X: JOY_BUTTON_Y, JOY_BUTTON_Y: JOY_BUTTON_X}
 const NINTENDO := ["nintendo", "switch", "pro controller", "joy-con", "joycon"]
 
+## Valve's vendor id, with the Deck's own controller and Steam's virtual
+## pad, which repeats a controller's presses while Steam Input is on.
+const VALVE := 0x28de
+const DECK_PAD := 0x1205
+const STEAM_PAD := 0x11ff
+
 ## Device ids of the controllers with their buttons swapped.
 static var swapped := {}
+## Device ids of controllers left out, so a press doesn't count twice (see
+## ignored_pads).
+static var ignored := {}
 
 ## Device id to player, 0 for player 1.
 var owners := {}
@@ -34,7 +43,8 @@ var settings: ConfigFile
 
 func _ready() -> void:
 	Input.joy_connection_changed.connect(_on_connection)
-	for device in Input.get_connected_joypads():
+	_find_ignored()
+	for device in usable_joypads():
 		_give(device)
 	_find_swaps()
 	# Swaps the buttons on each press before anything else in the game sees it.
@@ -81,9 +91,55 @@ func _find_swaps() -> void:
 
 
 func _swap_event(event: InputEvent) -> void:
+	# A left out controller's presses and pushes still come through, so
+	# they're turned into nothing anything listens for.
+	if (event is InputEventJoypadButton or event is InputEventJoypadMotion) and ignored.has(event.device):
+		if event is InputEventJoypadButton:
+			event.pressed = false
+			event.button_index = JOY_BUTTON_INVALID
+		else:
+			event.axis_value = 0.0
+		return
 	var press := event as InputEventJoypadButton
 	if press != null:
 		press.button_index = button(press.device, press.button_index) as JoyButton
+
+
+## Which of these controllers to leave out, given as dictionaries with
+## "device", "name", "vendor_id" and "product_id". With Steam Input on, Steam
+## makes a virtual pad that repeats the Deck's own controller, and if both
+## show up the virtual one is left out. The Deck's own has the back buttons.
+static func ignored_pads(pads: Array) -> Array:
+	var has_deck := pads.any(func(pad: Dictionary) -> bool:
+		return (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == DECK_PAD) or str(pad.get("name", "")).to_lower().contains("steam deck"))
+	if not has_deck:
+		return []
+	var out := []
+	for pad in pads:
+		var virtual: bool = (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == STEAM_PAD) or str(pad.get("name", "")).to_lower().contains("steam virtual")
+		if virtual:
+			out.append(pad.device)
+	return out
+
+
+## The controllers plugged in that the game listens to.
+static func usable_joypads() -> Array[int]:
+	var out: Array[int] = []
+	for device in Input.get_connected_joypads():
+		if not ignored.has(device):
+			out.append(device)
+	return out
+
+
+func _find_ignored() -> void:
+	var pads := []
+	for device in Input.get_connected_joypads():
+		var info := Input.get_joy_info(device)
+		pads.append({"device": device, "name": Input.get_joy_name(device), "vendor_id": info.get("vendor_id", 0), "product_id": info.get("product_id", 0)})
+	ignored.clear()
+	for device in ignored_pads(pads):
+		ignored[device] = true
+		owners.erase(device)
 
 
 ## The controller player `person` has, or -1.
@@ -127,8 +183,13 @@ static func name_of(device: int) -> String:
 
 func _on_connection(device: int, connected: bool) -> void:
 	_find_swaps()
+	_find_ignored()
 	if connected:
 		_give(device)
+		# Steam's pad may have just been left out, so its player gets the
+		# Deck's own one.
+		for usable in usable_joypads():
+			_give(usable)
 	else:
 		var person: int = owners.get(device, -1)
 		owners.erase(device)
@@ -138,7 +199,7 @@ func _on_connection(device: int, connected: bool) -> void:
 
 
 func _give(device: int) -> void:
-	if owners.has(device):
+	if owners.has(device) or ignored.has(device):
 		return
 	var guid := _guid(device)
 	var free := []

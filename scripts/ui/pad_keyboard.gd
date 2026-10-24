@@ -102,8 +102,13 @@ func _key(label: String, row: HBoxContainer, wide := 1.0) -> Button:
 	return key
 
 
-## X, Y, Start and B, so the commonest keys are a button away.
+## X, Y, Start and B, so the commonest keys are a button away. Real keys go
+## into the box too, so another keyboard on the screen (like Steam's) or a
+## keyboard plugged in still types while this one's up.
 func _shortcuts(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed:
+		_typed(event)
+		return
 	if not event is InputEventJoypadButton or not event.pressed:
 		return
 	match event.button_index:
@@ -115,6 +120,25 @@ func _shortcuts(event: InputEvent) -> void:
 			_done()
 		_:
 			return
+	set_input_as_handled()
+
+
+func _typed(key: InputEventKey) -> void:
+	match key.keycode:
+		KEY_BACKSPACE:
+			_delete()
+		KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE:
+			_done()
+		_:
+			if key.unicode < 32:
+				return
+			var text := String.chr(key.unicode)
+			# Typed as it comes, without this keyboard's own capitals.
+			if box.max_length > 0 and box.text.length() + 1 > box.max_length:
+				return
+			box.insert_text_at_caret(text)
+			_capital = text == " "
+			_changed()
 	set_input_as_handled()
 
 

@@ -376,7 +376,7 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 	racer_hud.person = index
 	layer.add_child(racer_hud)
 	var touch := TouchControls.new()
-	touch.visible = DisplayServer.is_touchscreen_available()
+	touch.visible = TouchControls.shown_at_start()
 	# Lower down in a split screen half, where there's less room.
 	touch.height = TouchControls.HEIGHT if humans.size() == 1 else TouchControls.HEIGHT_SPLIT
 	touch.steering = Game.steering(index)

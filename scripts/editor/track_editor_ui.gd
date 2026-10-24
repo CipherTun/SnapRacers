@@ -679,6 +679,7 @@ func _build_dialogs() -> void:
 	scroll.add_child(_load_list)
 
 	_new_dialog = ConfirmationDialog.new()
+	PadFocus.close_on_b(_new_dialog)
 	_new_dialog.theme = MenuStyle.theme()
 	_new_dialog.title = "Start a new course?"
 	_new_dialog.dialog_text = "This clears the course. Undo brings it back."
@@ -688,6 +689,7 @@ func _build_dialogs() -> void:
 	add_child(_new_dialog)
 
 	_name_dialog = ConfirmationDialog.new()
+	PadFocus.close_on_b(_name_dialog)
 	_name_dialog.theme = MenuStyle.theme()
 	_name_dialog.title = "Name your course"
 	_name_dialog.ok_button_text = "Rename"

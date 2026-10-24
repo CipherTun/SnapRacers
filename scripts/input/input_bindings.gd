@@ -36,8 +36,9 @@ const DEFAULT_PAD := {
 	"left": [[AXIS, JOY_AXIS_LEFT_X, -1], [BUTTON, JOY_BUTTON_DPAD_LEFT, 1]],
 	"right": [[AXIS, JOY_AXIS_LEFT_X, 1], [BUTTON, JOY_BUTTON_DPAD_RIGHT, 1]],
 	"reset": [[BUTTON, JOY_BUTTON_Y, 1]],
-	"gadget_1": [[BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1]],
-	"gadget_2": [[BUTTON, JOY_BUTTON_LEFT_SHOULDER, 1]],
+	# The Deck's upper back buttons, R4 and L4, use them too.
+	"gadget_1": [[BUTTON, JOY_BUTTON_RIGHT_SHOULDER, 1], [BUTTON, JOY_BUTTON_PADDLE1, 1]],
+	"gadget_2": [[BUTTON, JOY_BUTTON_LEFT_SHOULDER, 1], [BUTTON, JOY_BUTTON_PADDLE2, 1]],
 	"look_back": [[BUTTON, JOY_BUTTON_X, 1]],
 	"view": [[BUTTON, JOY_BUTTON_BACK, 1]],
 	"menu": [[BUTTON, JOY_BUTTON_START, 1]],
@@ -48,6 +49,7 @@ const BUTTON_NAMES := {
 	JOY_BUTTON_LEFT_SHOULDER: "LB", JOY_BUTTON_RIGHT_SHOULDER: "RB",
 	JOY_BUTTON_BACK: "Back", JOY_BUTTON_START: "Start", JOY_BUTTON_GUIDE: "Home",
 	JOY_BUTTON_LEFT_STICK: "Left stick in", JOY_BUTTON_RIGHT_STICK: "Right stick in",
+	JOY_BUTTON_PADDLE1: "R4", JOY_BUTTON_PADDLE2: "L4", JOY_BUTTON_PADDLE3: "R5", JOY_BUTTON_PADDLE4: "L5",
 	JOY_BUTTON_DPAD_UP: "D-pad up", JOY_BUTTON_DPAD_DOWN: "D-pad down", JOY_BUTTON_DPAD_LEFT: "D-pad left", JOY_BUTTON_DPAD_RIGHT: "D-pad right",
 }
 ## A Switch controller's names where they're different, with the triggers

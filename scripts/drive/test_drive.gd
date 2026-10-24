@@ -69,7 +69,7 @@ func _ready() -> void:
 	view.pressed.connect(player.press_view)
 
 	var touch := TouchControls.new()
-	touch.visible = DisplayServer.is_touchscreen_available()
+	touch.visible = TouchControls.shown_at_start()
 	touch.steering = Game.steering(0)
 	touch.blockers.append(garage)
 	touch.blockers.append(view)

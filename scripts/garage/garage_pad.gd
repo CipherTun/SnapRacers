@@ -244,7 +244,7 @@ static func _nearest(points: Array, from: Vector2, direction: Vector2) -> int:
 ## The sticks: the left one hops while it's held over, and the right one
 ## turns the camera.
 func _process(delta: float) -> void:
-	var pads := Input.get_connected_joypads()
+	var pads := Controllers.usable_joypads()
 	if pads.is_empty() or garage == null:
 		return
 	var pad: int = pads[0]

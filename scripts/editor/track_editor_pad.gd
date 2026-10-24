@@ -148,7 +148,7 @@ func _release_focus() -> void:
 ## The sticks: the right one turns the view and the left one moves a
 ## landmark in hand.
 func _process(delta: float) -> void:
-	var pads := Input.get_connected_joypads()
+	var pads := Controllers.usable_joypads()
 	if pads.is_empty() or editor == null:
 		return
 	var pad: int = pads[0]

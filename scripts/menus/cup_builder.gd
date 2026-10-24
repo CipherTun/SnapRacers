@@ -64,6 +64,7 @@ func _ready() -> void:
 	MenuStyle.back_at_bottom(column, go_back)
 
 	_delete_dialog = ConfirmationDialog.new()
+	PadFocus.close_on_b(_delete_dialog)
 	_delete_dialog.theme = MenuStyle.theme()
 	_delete_dialog.title = "Delete this cup?"
 	_delete_dialog.dialog_text = "The courses in it stay where they are."

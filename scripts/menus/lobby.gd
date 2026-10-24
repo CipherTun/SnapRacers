@@ -247,6 +247,8 @@ func _pick() -> void:
 				if mine != null and mine.problems().is_empty():
 					_picker_list.add_child(_choice(mine.name, {"course": mine.to_dict(), "laps": mine.laps}))
 	_picker.popup_centered()
+	# The old list is only freed at the end of the frame.
+	PadFocus.focus_first.call_deferred(_picker_list)
 
 
 func _choice(label: String, changes: Dictionary) -> Button:

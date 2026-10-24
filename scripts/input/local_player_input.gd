@@ -49,9 +49,10 @@ func _physics_process(_delta: float) -> void:
 				if B.key_down(settings, who, action):
 					push[action] = 1.0
 
-	if any_joypad and not Input.get_connected_joypads().is_empty():
-		if not Input.get_connected_joypads().has(joypad):
-			joypad = Input.get_connected_joypads()[0]
+	var pads := Controllers.usable_joypads()
+	if any_joypad and not pads.is_empty():
+		if not pads.has(joypad):
+			joypad = pads[0]
 	elif Game.controllers != null:
 		joypad = Game.controllers.device_of(person)
 	if joypad >= 0:

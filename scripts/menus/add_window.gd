@@ -29,6 +29,7 @@ func _ready() -> void:
 	# and closes with Close. Nothing behind it can be tapped meanwhile.
 	popup_window = false
 	exclusive = true
+	PadFocus.close_on_b(self)
 	var column := VBoxContainer.new()
 	column.custom_minimum_size = Vector2(560.0, 0.0)
 	column.add_theme_constant_override("separation", 12)

@@ -60,6 +60,10 @@ sudo apt install snapracers
 
 It updates with the rest of the system.
 
+### Steam Deck
+
+Use the x86_64 AppImage. In Desktop Mode, download it, right-click it and turn on **Is executable** under **Properties › Permissions**. Then add it to Steam with **Add a Non-Steam Game**, so it's in your library in Game Mode. It runs full screen there, and in a window in Desktop Mode. The touch controls come up when you touch the screen.
+
 ## Playing in a browser
 
 [Play SnapRacers](https://hunke.ws/fdroid/play/snapracers/) in a browser with WebGL 2. Your karts, drivers, courses and records are saved in that browser. Two players can share a keyboard or use controllers. To race online from the browser, join a dedicated server.
@@ -220,7 +224,7 @@ Outdoor records count only in clear daytime, and indoor runs always count. Other
 
 Touch, controllers and keys work in the menus, races, garage, driver screen and track editor. Each player picks a controller and changes their keys and buttons in Settings. Tap a binding, then press its replacement.
 
-Power-ups start on LB and RB. Pick the Xbox or Switch button layout in Settings. A Switch controller uses the names printed on its buttons. Press A on a name box to open the screen keyboard, X to delete, Y for a space and Start to finish.
+Power-ups start on LB and RB, and on L4 and R4 on a Steam Deck. Pick the Xbox or Switch button layout in Settings. A Switch controller uses the names printed on its buttons. Press A on a name box to open the screen keyboard, X to delete, Y for a space and Start to finish.
 
 ## Online
 

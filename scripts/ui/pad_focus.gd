@@ -95,6 +95,17 @@ static func focus_first(root: Node) -> void:
 		first.grab_focus()
 
 
+## B closes a window that doesn't close on B by itself, like the share and
+## add windows and the dialogs, where it's Cancel.
+static func close_on_b(window: Window) -> void:
+	window.window_input.connect(func(event: InputEvent) -> void:
+		if event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_B:
+			window.set_input_as_handled()
+			window.hide()
+			if window is AcceptDialog:
+				window.canceled.emit())
+
+
 ## Whether this is a controller or key press that moves around a menu.
 func _navigating(event: InputEvent) -> bool:
 	if event is InputEventJoypadButton:
@@ -111,7 +122,7 @@ static func first_button(root: Node) -> Control:
 	var best: Control = null
 	for node in root.find_children("*", "Control", true, false):
 		var control := node as Control
-		if control.focus_mode == Control.FOCUS_NONE or not control.is_visible_in_tree() or control is LineEdit:
+		if control.focus_mode == Control.FOCUS_NONE or not control.is_visible_in_tree() or control is LineEdit or control.is_queued_for_deletion():
 			continue
 		if not (control is BaseButton or control is Slider):
 			continue

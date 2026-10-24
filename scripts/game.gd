@@ -104,13 +104,14 @@ func _ready() -> void:
 	Sounds.setup(volume(Sounds.MUSIC_BUS), volume(Sounds.EFFECTS_BUS))
 	plugin = NetPlugin.new()
 	add_child(plugin)
-	# A on a controller presses buttons, like Enter. (B goes back, through
-	# PadFocus.)
-	var accept := InputEventJoypadButton.new()
-	accept.device = -1
-	accept.button_index = JOY_BUTTON_A
-	if not InputMap.action_has_event("ui_accept", accept):
-		InputMap.action_add_event("ui_accept", accept)
+	# A on a controller presses buttons, like Enter, and B closes a popup or
+	# dialog, like Esc. (Elsewhere B goes back, through PadFocus.)
+	for pair in [["ui_accept", JOY_BUTTON_A], ["ui_cancel", JOY_BUTTON_B]]:
+		var press := InputEventJoypadButton.new()
+		press.device = -1
+		press.button_index = pair[1]
+		if not InputMap.action_has_event(pair[0], press):
+			InputMap.action_add_event(pair[0], press)
 	var focus := PadFocus.new()
 	focus.screen = func() -> Node: return _screen
 	focus.back = _go_back
@@ -140,6 +141,7 @@ func start_server(host: Node) -> void:
 ## unless they pick otherwise, so they come out the same every time.
 func start(host: Node, splash := true) -> void:
 	_host = host
+	SteamDeck.fit_window(get_window())
 	part_pictures()
 	if not splash:
 		settings.set_value("race", "weather", "clear")
