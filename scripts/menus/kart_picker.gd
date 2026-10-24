@@ -12,8 +12,8 @@ extends Control
 
 const COLUMNS := 3
 ## A card's size. Buttons don't grow to fit what's put inside them, so it's
-## set to fit the picture, the name, three lines about it and the bars.
-const CARD := Vector2(330, 490)
+## set to fit the picture, the name, four lines about it and the bars, with the page above it on a 720 high screen.
+const CARD := Vector2(330, 410)
 ## The bars on each card, as [label, what they measure].
 const BARS := [["Speed", "speed"], ["Pull", "pull"], ["Grip", "grip"], ["Control", "control"], ["Off-road", "offroad"]]
 ## Each player's colour, for their tag when two are picking.
@@ -231,7 +231,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	var box := VBoxContainer.new()
 	box.name = "Box"
 	box.mouse_filter = MOUSE_FILTER_IGNORE
-	box.add_theme_constant_override("separation", 6)
+	box.add_theme_constant_override("separation", 4)
 	box.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	box.offset_left = 20.0
 	box.offset_right = -14.0
@@ -240,7 +240,7 @@ func _card(key: String, design: KartDesign, ranges: Dictionary) -> Button:
 	card.add_child(box)
 	var picture := TextureRect.new()
 	picture.name = "Picture"
-	picture.custom_minimum_size = Vector2(0, 170)
+	picture.custom_minimum_size = Vector2(0, 100)
 	picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	picture.mouse_filter = MOUSE_FILTER_IGNORE
