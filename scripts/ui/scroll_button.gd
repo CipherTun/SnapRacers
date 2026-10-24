@@ -24,6 +24,8 @@ var _scroll_at := Vector2.ZERO
 func _init() -> void:
 	mouse_filter = MOUSE_FILTER_PASS
 	pressed.connect(_emit_tapped)
+	focus_entered.connect(func() -> void: UiMotion.pop(self))
+	button_down.connect(func() -> void: UiMotion.press(self))
 
 
 func _ready() -> void:

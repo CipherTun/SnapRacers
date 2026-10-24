@@ -212,29 +212,39 @@ func _screens(only: Array) -> void:
 		Game.show_your_cups()
 		await frames(20)
 		var add := AddWindow.open(host.get_child(-1), "Add a cup")
-		await frames(10)
+		await frames(20)
 		await save("add_window")
 		add.hide()
 		ShareWindow.open(GrandPrix.cup_by_id("gearbox"), host.get_child(-1))
-		await frames(10)
+		await frames(20)
 		await save("share_window")
 		Game.show_settings()
 		await frames(10)
 		var field: LineEdit = host.get_child(-1).find_children("*", "LineEdit", true, false)[0]
 		PadKeyboard.open(field)
-		await frames(10)
+		await frames(20)
 		await save("pad_keyboard")
 		Game.show_cup_builder("")
 		await frames(10)
 		var builder: CupBuilder = host.get_child(-1)
 		builder._delete_dialog.popup_centered()
-		await frames(10)
+		await frames(20)
 		await save("dialog")
 		builder._delete_dialog.hide()
 		Game.show_loading(true)
-		await frames(10)
+		await frames(20)
 		await save("loading")
 		Game.show_loading(false)
+	# Frames mid-way through the menus' motion, slowed down, only when asked.
+	if only.has("motion"):
+		await _motion("single_player", Game.show_single_player)
+		await _motion("cups", Game.show_cups)
+		await _motion("kart_picker", Game.show_kart_picker.bind(Game.show_menu, Game.show_menu, true))
+		await _motion("add_window", func() -> void: AddWindow.open(host.get_child(-1), "Add a cup"))
+		await _motion("focus_pop", func() -> void:
+			PadFocus.using_pad = true
+			host.get_child(-1).find_children("*", "BigButton", true, false)[1].grab_focus())
+		PadFocus.using_pad = false
 	host.queue_free()
 	await frames(3)
 	DirAccess.remove_absolute(ProjectSettings.globalize_path("user://shots_records.cfg"))
@@ -243,6 +253,8 @@ func _screens(only: Array) -> void:
 
 
 func save(which: String) -> void:
+	# Long enough for the menus' motion to finish (see UiMotion).
+	await get_tree().create_timer(0.4).timeout
 	for i in 3:
 		await get_tree().process_frame
 		await RenderingServer.frame_post_draw
@@ -255,6 +267,22 @@ func save(which: String) -> void:
 			picture.fill_rect(Rect2i(hole), Color.BLACK)
 	picture.save_png("%s/%s.png" % [_folder, name])
 	print("saved ", name)
+
+
+## Shoots every frame while `action` plays out from the main menu, with
+## time slowed to a quarter so the motion spreads over more frames.
+func _motion(which: String, action: Callable) -> void:
+	DirAccess.make_dir_recursive_absolute(_folder + "/motion")
+	Game.show_menu()
+	await frames(40)
+	Engine.time_scale = 0.25
+	action.call()
+	for i in 14:
+		await RenderingServer.frame_post_draw
+		get_viewport().get_texture().get_image().save_png("%s/motion/%s-%02d.png" % [_folder, which, i])
+	Engine.time_scale = 1.0
+	for window in host.get_child(-1).find_children("*", "Window", true, false):
+		window.hide()
 
 
 func frames(n: int) -> void:

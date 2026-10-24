@@ -84,6 +84,9 @@ var cup_shown := ""
 var _part_pictures: PartThumbnails
 var _trophy_pictures: TrophyThumbnails
 var _loading: CanvasLayer
+## The backdrop a new screen fades in over (see UiMotion), shown only while
+## it does.
+var _fade_back: CanvasLayer
 var _loading_since := 0
 var _portrait := false
 
@@ -142,6 +145,7 @@ func start_server(host: Node) -> void:
 func start(host: Node, splash := true) -> void:
 	_host = host
 	SteamDeck.fit_window(get_window())
+	_start_motion()
 	part_pictures()
 	if not splash:
 		settings.set_value("race", "weather", "clear")
@@ -152,6 +156,24 @@ func start(host: Node, splash := true) -> void:
 		_swap(SplashScreen.new())
 	else:
 		show_menu()
+
+
+## Sets up the menus' motion, unless there's no screen (the headless tests).
+func _start_motion() -> void:
+	if DisplayServer.get_name() == "headless" or _fade_back != null:
+		return
+	_fade_back = CanvasLayer.new()
+	_fade_back.layer = -1
+	_fade_back.visible = false
+	var back := MenuStyle.backdrop()
+	_fade_back.add_child(back)
+	back.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	add_child(_fade_back)
+	get_tree().node_added.connect(_on_node_added)
+
+
+func _on_node_added(node: Node) -> void:
+	UiMotion.watch(node)
 
 
 ## The pictures of the parts for the garage, taken once for the whole game.
@@ -699,6 +721,12 @@ func _swap(next: Node) -> void:
 		Sounds.music("menu")
 	_set_portrait(next is Race and race_split() == FACE_TO_FACE)
 	_host.add_child(next)
+	# Menus fade in over the backdrop, races and the splash just appear. The
+	# backdrop's hidden first, as it would cover a race.
+	if _fade_back != null:
+		_fade_back.visible = false
+		if not next is Race and not next is SplashScreen:
+			UiMotion.open_screen(next, _fade_back)
 	# With a controller in hand, the new screen's first button is picked out.
 	if not next is Race:
 		PadFocus.focus_first.call_deferred(next)
