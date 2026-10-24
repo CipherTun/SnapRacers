@@ -1,0 +1,14 @@
+Package: snapracers
+Version: @VERSION@
+Architecture: @ARCH@
+Maintainer: Dan Hunke <14335001+roge-rm@users.noreply.github.com>
+Installed-Size: @SIZE@
+Depends: libc6, libgl1, libx11-6, libxcursor1, libxi6, libxinerama1, libxrandr2, libxkbcommon0, libudev1
+Recommends: libpulse0, libasound2t64 | libasound2
+Section: games
+Priority: optional
+Homepage: https://github.com/roge-rm/SnapRacers
+Description: kart racing game: build karts from parts and race them
+ Build karts, bikes and trucks from parts, pick a driver and race on
+ courses in all kinds of weather, alone, split screen or online. The
+ desktop build of the Android game. It needs OpenGL 3.3.

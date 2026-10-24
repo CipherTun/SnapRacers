@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=SnapRacers
+GenericName=Kart racing game
+Comment=Build karts from parts and race them
+Exec=snapracers
+Icon=snapracers
+Terminal=false
+Categories=Game;
+Keywords=kart;racing;cars;build;
+StartupWMClass=SnapRacers

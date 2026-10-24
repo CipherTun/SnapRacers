@@ -40,6 +40,26 @@ Add [my F-Droid repo](https://hunke.ws/fdroid/repo?fingerprint=80438B253C257BCCE
 
 You can also get an APK from [Releases](https://github.com/roge-rm/SnapRacers/releases). Use the usual APK, or the one marked `32bit` for older phones and tablets that need it. Both need Android 8.1 or newer.
 
+### On a computer
+
+Get these from [Releases](https://github.com/roge-rm/SnapRacers/releases):
+
+- `snapracers-V-x86_64.AppImage` and `snapracers-V-aarch64.AppImage` run on most Linux desktops. Mark the file executable and open it.
+- `snapracers_V_amd64.deb` and `snapracers_V_arm64.deb` are for Debian, Ubuntu and Raspberry Pi OS.
+- `snapracers-V-setup.exe` installs on 64-bit Windows 10 and 11 for your user only, with a Start menu entry. `snapracers-V-windows-x64.zip` is the same game to unzip and run.
+- `SHA256SUMS` has a checksum for each file.
+
+On Debian 13, Ubuntu 24.04 and newer, and Raspberry Pi OS (64-bit), you can also use [my apt repo](https://hunke.ws/apt/). Run these once:
+
+```sh
+sudo curl -fsSLo /etc/apt/keyrings/hunke.asc https://hunke.ws/apt/hunke.asc
+echo "deb [signed-by=/etc/apt/keyrings/hunke.asc] https://hunke.ws/apt stable main" | sudo tee /etc/apt/sources.list.d/hunke.list
+sudo apt update
+sudo apt install snapracers
+```
+
+It updates with the rest of the system.
+
 ## Playing in a browser
 
 [Play SnapRacers](https://hunke.ws/fdroid/play/snapracers/) in a browser with WebGL 2. Your karts, drivers, courses and records are saved in that browser. Two players can share a keyboard or use controllers. To race online from the browser, join a dedicated server.
@@ -238,6 +258,9 @@ tools/build-android.sh --install  # x86_64 APK, installed on SnapRacers_Pixel_5
 tools/build-engine.sh web         # browser engine
 tools/build-web.sh                # browser build in build/web
 tools/build-web.sh --serve        # serve over HTTPS on port 8060
+tools/build-engine.sh desktop     # Linux x86_64, Linux arm64 and Windows engines, in Docker
+tools/package-desktop.sh          # .deb, AppImage, setup.exe and zip in build/desktop/release
+tools/build-release.sh            # everything, in ~/Projects/releases/snapracers-V
 tools/build-plugin.sh             # Android network plugin
 tools/build-server.sh --run       # build and run a local dedicated server
 ```

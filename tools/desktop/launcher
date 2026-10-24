@@ -1,0 +1,3 @@
+#!/bin/sh
+# SnapRacers, from its Debian package.
+exec /usr/lib/snapracers/snapracers "$@"
