@@ -224,7 +224,7 @@ func _add_grass() -> void:
 	plane.size = Vector2(bounds.size.x, bounds.size.z)
 	mesh.mesh = plane
 	mesh.position = Vector3(centre.x, 0.0, centre.z)
-	mesh.material_override = baseplate(Color(_theme.get("ground", "#4b9f4a")), _theme.get("floor", "grass"))
+	mesh.material_override = ground_material(_theme)
 	body.add_child(mesh)
 	add_child(body)
 
@@ -234,14 +234,21 @@ func _baseplate(colour: Color) -> ShaderMaterial:
 
 
 ## The studded green baseplate the courses sit on, in a colour. A "mud" floor
-## gets wet patches over it like a mud road.
-static func baseplate(colour: Color, floor_type: String = "grass") -> ShaderMaterial:
+## gets wet patches over it like a mud road. With `litter` it gets fallen
+## leaves and bare dirt, like a jungle floor.
+static func baseplate(colour: Color, floor_type: String = "grass", litter := false) -> ShaderMaterial:
 	road_material()
 	var material := ShaderMaterial.new()
 	material.shader = _grass_shader
 	material.set_shader_parameter("colour", colour)
 	material.set_shader_parameter("mud_floor", 1.0 if floor_type == "mud" else 0.0)
+	material.set_shader_parameter("litter", 1.0 if litter else 0.0)
 	return material
+
+
+## The baseplate as a theme (see Scenery.THEMES) has it.
+static func ground_material(theme: Dictionary) -> ShaderMaterial:
+	return baseplate(Color(theme.get("ground", "#4b9f4a")), theme.get("floor", "grass"), theme.get("litter", false))
 
 
 ## The outline of the road across, as edges to sweep along the track. Each

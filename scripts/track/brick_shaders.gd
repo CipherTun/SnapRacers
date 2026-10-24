@@ -195,6 +195,9 @@ shader_type spatial;
 uniform vec4 colour = vec4(0.18, 0.48, 0.2, 1.0);
 // 1 for a mud floor, which gets wet patches like a mud road.
 uniform float mud_floor = 0.0;
+// 1 for a jungle floor: darker earthy green with fallen leaves and patches
+// of bare dirt.
+uniform float litter = 0.0;
 varying vec3 world;
 """ + COMMON + """
 void vertex() {
@@ -203,6 +206,21 @@ void vertex() {
 
 void fragment() {
 	vec3 col = pow(colour.rgb, vec3(2.2));
+	if (litter > 0.5) {
+		vec2 p = world.xz;
+		vec3 earth = pow(vec3(0.34, 0.25, 0.15), vec3(2.2));
+		col = mix(col * 0.78, earth, 0.18);
+		// Bare dirt in soft patches a few metres across.
+		float dirt = smoothstep(0.56, 0.72, blotches(p * 0.11) * 0.7 + blotches(p * 0.45 + 5.1) * 0.3);
+		col = mix(col, earth * (0.85 + 0.3 * blotches(p * 1.7)), dirt * 0.85);
+		// Fallen leaves in browns, ochre and olive, fading to their average
+		// far off so they don't shimmer.
+		float fade = clamp(1.0 - length(fwidth(p)) * 6.0, 0.0, 1.0);
+		float leaves = smoothstep(0.64, 0.74, blotches(p * 4.5 + 1.3)) * fade;
+		float tone = blotches(p * 1.3 + 9.7);
+		vec3 leaf = mix(pow(vec3(0.46, 0.24, 0.1), vec3(2.2)), pow(vec3(0.36, 0.32, 0.14), vec3(2.2)), tone);
+		col = mix(col, leaf, leaves * 0.75 + 0.06 * (1.0 - fade));
+	}
 	col = studs(world.xz, col);
 	float s = max(seam(world.x, 8.0, 0.025), seam(world.z, 8.0, 0.025));
 	col *= 1.0 - 0.3 * s;

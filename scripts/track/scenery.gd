@@ -84,6 +84,11 @@ const LAMP_EVERY := 20.0
 ## far out (see _far_skyline()), and "undergrowth_max" caps how many
 ## undergrowth props it gets, MAX_UNDERGROWTH if it's left out.
 ## "filler_max" caps the fillers the same way, MAX_FILLERS if it's left out.
+## "drop" puts road up in the air on a ridge, with the ground falling away
+## that many metres below the hills beside it, like a mountain road (see
+## Terrain).
+## "litter" draws the ground as a jungle floor with fallen leaves and bare
+## dirt. It's only a look, the grip stays the floor's.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -340,6 +345,7 @@ const THEMES := {
 	"alps_pass": {
 		"ground": "#8a9670", "curbs": ["#f2cd37", "#1b2a34"], "wall": "#635f61",
 		"sky": ["#4a86cc", "#eaf0f6"], "peaks": true,
+		"drop": 26.0, "supports": "rock", "supports_colour": "#7f7b76",
 		"landmarks": ["snowy_peak", "cable_car", "snowy_chalet", "snowy_peak"],
 		"fillers": {"rocks": 5, "snowy_pine": 3, "pine": 1, "cows": 1, "snowman": 1},
 	},
@@ -373,7 +379,7 @@ const THEMES := {
 		"sky": ["#4a92d0", "#e4efe0"], "karsts": true,
 		"landmarks": ["canopy_walk", "canopy_walk", "parrots", "jungle_hut", "parrots"],
 		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "bush": 1},
-		"filler_reach": 34.0,
+		"filler_reach": 34.0, "litter": true,
 		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_falls": {
@@ -381,7 +387,7 @@ const THEMES := {
 		"sky": ["#5590c8", "#e2ece2"], "karsts": true,
 		"landmarks": ["waterfall", "rope_bridge", "waterfall", "jungle_hut", "pond"],
 		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "bush": 1},
-		"filler_reach": 34.0,
+		"filler_reach": 34.0, "litter": true,
 		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_temple": {
@@ -389,7 +395,7 @@ const THEMES := {
 		"sky": ["#3f8ad8", "#eaf0dc"], "karsts": true,
 		"landmarks": ["stepped_pyramid", "stone_head", "stone_head", "ruins", "stone_head"],
 		"fillers": {"jungle_tree": 4, "jungle_sapling": 4, "palm": 1, "ruins": 1},
-		"filler_reach": 34.0,
+		"filler_reach": 34.0, "litter": true,
 		"undergrowth": {"fern": 3, "jungle_sapling": 2, "jungle_bush": 3},
 	},
 	"jungle_swamp": {
@@ -457,7 +463,7 @@ var keep_off: Array = []
 
 var _rng := RandomNumberGenerator.new()
 var _kit := SceneryKit.new()
-var _placed: Array = [] # [position, radius]
+var _placed: Array = [] # [position, radius], and how far down it reaches for sky props in Props.DEPTH
 ## The sea, seen from above, as (x, z), or empty. `_out` is the way from the
 ## shore out to sea.
 var _sea := Rect2()
@@ -682,7 +688,10 @@ func _add(prop: String, at: Vector3, facing := -1) -> void:
 		_kit.begin(prop, Props.ROOM.get(prop, 3.0) <= SMALL)
 	Props.add(_kit, prop, at, _rng, f)
 	_kit.done()
-	_placed.append([at, Props.ROOM.get(prop, 3.0)])
+	if Props.DEPTH.has(prop):
+		_placed.append([at, Props.ROOM.get(prop, 3.0), Props.DEPTH[prop]])
+	else:
+		_placed.append([at, Props.ROOM.get(prop, 3.0)])
 
 
 # Along the road.
@@ -1076,7 +1085,8 @@ func _sky_islands() -> void:
 			if Vector2(other[0].x - top.x, other[0].z - top.z).length() < other[1] + radius + 6.0 and absf(other[0].y - top.y) < radius + other[1]:
 				return false
 		for spot in _placed:
-			if Vector2(spot[0].x - top.x, spot[0].z - top.z).length() < spot[1] + radius + 2.0 and top.y > spot[0].y - 25.0:
+			var depth: float = spot[2] if spot.size() > 2 else 25.0
+			if Vector2(spot[0].x - top.x, spot[0].z - top.z).length() < spot[1] + radius + 2.0 and top.y > spot[0].y - depth:
 				return false
 		return true
 	# Under the road.
@@ -1296,9 +1306,13 @@ func _far_level(middle: Vector2, half: Vector2) -> float:
 
 ## Plain ground in the theme's colour from the edge of the baseplate out past
 ## the far ring, with its top at `level`, so the far peaks or mesas stand on
-## something.
+## something. A jungle floor's is darker and browner, about as the leaves and
+## dirt look from far off (see BrickShaders.BASEPLATE).
 func _far_floor(middle: Vector2, half: Vector2, level: float) -> void:
-	_kit.box(Vector3(middle.x, level - 1.0, middle.y), Vector3(half.x * 2.0, 1.0, half.y * 2.0), Color(theme.get("ground", "#4b9f4a")), SceneryKit.PLAIN, false)
+	var colour := Color(theme.get("ground", "#4b9f4a"))
+	if theme.get("litter", false):
+		colour = (colour.srgb_to_linear() * 0.78).lerp(Color(0.34, 0.25, 0.15).srgb_to_linear(), 0.3).linear_to_srgb()
+	_kit.box(Vector3(middle.x, level - 1.0, middle.y), Vector3(half.x * 2.0, 1.0, half.y * 2.0), colour, SceneryKit.PLAIN, false)
 
 
 ## What the pit building looks like on this theme (see Props.pit_building()).

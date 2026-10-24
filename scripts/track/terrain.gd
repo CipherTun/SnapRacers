@@ -20,6 +20,18 @@ const CELL := 4.0
 const BLEND := 30.0
 ## How far below the road the ground sits under it, out of sight.
 const SINK := 0.03
+## On a theme with "drop" (see Scenery.THEMES) road up in the air runs along
+## the top of a ridge: the ground comes up to LEDGE below the road's edge,
+## where the theme's supports show as a cliff, and falls away CLIFF metres
+## for every metre out, down into a valley that many metres below the hills.
+## The valley reaches DROP_REACH past the road's edge, and stays clear of
+## road on the ground by RUNOFF, easing back over DROP_BANK past that. Road
+## DROP_FULL higher than the hills gets the whole drop, lower road less.
+const DROP_REACH := 70.0
+const DROP_FULL := 4.0
+const DROP_BANK := 16.0
+const CLIFF := 1.6
+const LEDGE := 7.0
 
 var track: TrackPath
 ## The corner of the grid, and how many points across and down it has.
@@ -77,6 +89,12 @@ func _on_ground(k: int) -> bool:
 		and track.points[k].y - track.grounds[k] < TrackBuilder.RAISED
 
 
+## Whether the road at this sample is up in the air off the ground, for a
+## theme's drop.
+func _up_high(k: int) -> bool:
+	return track.solids[k] and not track.stickies[k] and track.points[k].y - track.grounds[k] >= TrackBuilder.RAISED
+
+
 ## Whether the road at this sample is solid but not lying flat on the
 ## ground, like a banked bend or a wall ride, which the hills have to keep
 ## under.
@@ -92,12 +110,21 @@ func _work_out_heights() -> void:
 	var gap: PackedFloat32Array = flat[1]
 	var tilted: PackedInt32Array = leaning[0]
 	var tilted_gap: PackedFloat32Array = leaning[1]
+	var drop: float = Scenery.theme_named(track.theme).get("drop", 0.0)
+	var high: Array = _spread(_up_high) if drop > 0.0 else []
 	heights.resize(cols * rows)
 	for z in rows:
 		for x in cols:
 			var i := z * cols + x
 			var at := _point(x, z)
 			var h := track.ground_height(at.x, at.y)
+			if not high.is_empty() and high[0][i] >= 0:
+				var up: int = high[0][i]
+				var lift := clampf((track.points[up].y - track.grounds[up] - TrackBuilder.RAISED) / DROP_FULL, 0.0, 1.0)
+				var near := 1.0 - smoothstep(edge, edge + DROP_REACH, high[1][i])
+				var away := smoothstep(edge + Scenery.RUNOFF, edge + Scenery.RUNOFF + DROP_BANK, gap[i])
+				var ridge := _low_edge(up, edge) - LEDGE - maxf(high[1][i] - edge, 0.0) * CLIFF
+				h = maxf(h - drop * lift * near * away, ridge)
 			# Beside road on the ground, the ground comes up to meet its lower
 			# edge, which is the road's height unless it's starting to lean.
 			var k := nearest[i]
@@ -197,7 +224,7 @@ func _ready() -> void:
 	var look := MeshInstance3D.new()
 	look.mesh = mesh
 	var theme := Scenery.theme_named(track.theme)
-	look.material_override = TrackBuilder.baseplate(Color(theme.get("ground", "#4b9f4a")), theme.get("floor", "grass"))
+	look.material_override = TrackBuilder.ground_material(theme)
 	add_child(look)
 	var shape := CollisionShape3D.new()
 	shape.shape = mesh.create_trimesh_shape()

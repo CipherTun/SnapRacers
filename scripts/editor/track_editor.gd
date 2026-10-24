@@ -536,7 +536,7 @@ func _refresh() -> void:
 			child.queue_free()
 		var look := Scenery.theme_named(course.theme)
 		SkyAndSun.add_to(_sky, 400.0, Color.TRANSPARENT, look.get("sky", []))
-		_ground.material_override = TrackBuilder.baseplate(Color(look.ground), look.get("floor", "grass"))
+		_ground.material_override = TrackBuilder.ground_material(look)
 	var problems := course.problems()
 	ui.show_course(course, track.length, problems, not track.closes and not course.pieces.is_empty())
 	ui.set_undo_state(not _undo.is_empty(), not _redo.is_empty())

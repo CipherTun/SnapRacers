@@ -67,7 +67,7 @@ const ROOM := {
 	"city_block": 7.5, "townhouses": 7.0, "traffic_light": 1.2, "neon_sign": 2.6, "street_tree": 1.4, "armco": 3.4,
 	"phone_box": 1.0, "double_decker": 5.6, "tuk_tuk": 2.0, "neon_tower": 9.0, "lantern_gate": 5.0,
 	"tunnel_mouth": 13.0, "spire_tower": 10.5, "clock_tower": 5.0, "overpass": 17.0, "chedi": 7.5,
-	"hot_air_balloon": 5.0, "airship": 14.0, "falls_isle": 13.0, "rainbow": 17.0, "weather_vane": 7.0,
+	"hot_air_balloon": 5.0, "airship": 14.0, "falls_isle": 16.0, "rainbow": 17.0, "weather_vane": 7.0,
 	"windmill_isle": 9.0, "sky_lighthouse": 8.0, "sky_dock": 14.0, "sky_isle": 6.0, "cloud_puff": 6.0,
 }
 ## Props that sit all or mostly under the road, so they only suit courses up
@@ -76,6 +76,9 @@ const BELOW_ROAD := ["falls_isle", "rainbow", "weather_vane", "windmill_isle", "
 ## Props built well above or below where they stand. The editor picks these
 ## by the middle of what's built, instead of just above the ground.
 const OFF_THE_GROUND := BELOW_ROAD + ["hot_air_balloon", "airship"]
+## How far below where they stand these sky props reach, so islands keep out
+## of them. Any other reaches 25 m down.
+const DEPTH := {"falls_isle": 38.0}
 
 
 ## Builds the named prop. Unknown names build nothing.
@@ -2492,11 +2495,12 @@ static func airship(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumber
 
 
 ## A big island with trees and a waterfall pouring off it, and a smaller
-## one below that the water lands on and spills off again.
+## one below that the water lands on and spills off again. The lower one and
+## its spray stay inside ROOM (16 m) and DEPTH.
 static func falls_isle(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
 	_sky_isle(kit, at + Vector3.DOWN * 3.0, 11.0, rng, 3, true)
 	var a := rng.randf() * TAU
-	_sky_isle(kit, at + Vector3(cos(a) * 9.0, -24.0, sin(a) * 9.0), 6.5, rng, 1, true)
+	_sky_isle(kit, at + Vector3(cos(a) * 8.5, -24.0, sin(a) * 8.5), 6.5, rng, 1, true)
 
 
 ## A rainbow standing on two clouds, side on to the way it faces. Its feet
