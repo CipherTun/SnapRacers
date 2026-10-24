@@ -125,19 +125,37 @@ func _draw() -> void:
 		var y := 12.0
 		var body := UiKit.font("body")
 		var lift := (body.get_ascent(UiKit.SMALL) - body.get_descent(UiKit.SMALL)) * 0.5
+		var tilt := _tilt()
 		for i in medals.size():
 			var colour := medals[i]
-			var at := Rect2(float(LEFT) + 2.0, y, 46.0, 20.0)
+			# Leans with the card and sits against the stripe.
+			var at := Rect2(_stripe_end(y + 20.0, tilt), y, 46.0, 20.0)
 			if colour.a > 0.0:
-				UiKit.draw_slant(self, Rect2(at.position + Vector2(2, 2), at.size), UiKit.SHADOW_COLOUR, 0.2)
-				UiKit.draw_slant(self, at, colour, 0.2)
+				UiKit.draw_slant(self, Rect2(at.position + Vector2(2, 2), at.size), UiKit.SHADOW_COLOUR, tilt)
+				UiKit.draw_slant(self, at, colour, tilt)
 			else:
-				UiKit.draw_slant(self, at, UiKit.EDGE, 0.2)
+				UiKit.draw_slant(self, at, UiKit.EDGE, tilt)
 			if i < medal_names.size():
 				var word := medal_names[i].substr(0, 3).to_upper()
 				var wide := body.get_string_size(word, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SMALL).x
 				draw_string(body, Vector2(at.get_center().x - wide * 0.5, at.get_center().y + lift), word, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.SMALL, UiKit.INK if colour.a > 0.0 else UiKit.FADED)
 			y += 24.0
+
+
+## How far the card's box leans for each pixel of height, as SlantBox works it
+## out.
+func _tilt() -> float:
+	var height := 200.0
+	if size.y > height:
+		return UiKit.CARD_LEAN * height / size.y
+	return UiKit.CARD_LEAN
+
+
+## Where the stripe's right edge is at `y` down the card, or where it would be
+## on a card without one.
+func _stripe_end(y: float, tilt: float) -> float:
+	var shift := size.y * tilt * 0.5
+	return shift + 1.0 + 2.0 + UiKit.STRIPE_WIDTH + (size.y * 0.5 - y) * tilt
 
 
 class PlusBlock extends Control:
