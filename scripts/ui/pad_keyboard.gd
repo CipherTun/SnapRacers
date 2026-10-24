@@ -5,6 +5,7 @@ extends PopupPanel
 ## other way to. Press A on a typing box to bring it up, then pick out keys
 ## with the d-pad and press them with A. X deletes, Y is a space, and Start
 ## or B is done. Done hands the box what was typed as if Enter was pressed.
+## A real keyboard types too, and its Escape puts the text back how it was.
 ##
 ## Each key press changes the box straight away, the same as typing would, so
 ## whatever listens for the box changing keeps up.
@@ -19,6 +20,8 @@ var _capital := true
 var _letters: Array[Button] = []
 var _shift: Button
 var _shown: Label
+## The box's text when the keyboard came up, for Escape.
+var _was := ""
 
 
 ## Lets a controller bring up the keyboard on this box.
@@ -58,6 +61,7 @@ func _init() -> void:
 func _ready() -> void:
 	# It types on the end, where a name's usually added to or deleted from.
 	box.caret_column = box.text.length()
+	_was = box.text
 	_capital = _word_start()
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", 6)
@@ -87,7 +91,6 @@ func _ready() -> void:
 	_key("Space", bottom, 3.0).pressed.connect(_type.bind(" "))
 	_key("Delete", bottom, 2.0).pressed.connect(_delete)
 	_key("Done", bottom, 2.0).pressed.connect(_done)
-	window_input.connect(_shortcuts)
 	_show()
 	_letters[0].grab_focus.call_deferred()
 
@@ -104,9 +107,11 @@ func _key(label: String, row: HBoxContainer, wide := 1.0) -> Button:
 
 ## X, Y, Start and B, so the commonest keys are a button away. Real keys go
 ## into the box too, so another keyboard on the screen (like Steam's) or a
-## keyboard plugged in still types while this one's up.
-func _shortcuts(event: InputEvent) -> void:
-	if event is InputEventKey and event.pressed:
+## keyboard plugged in still types while this one's up. This runs in the
+## keyboard's own viewport before its buttons see the event, so handling it
+## here stops Space or Enter also pressing the key that's picked out.
+func _input(event: InputEvent) -> void:
+	if event is InputEventKey:
 		_typed(event)
 		return
 	if not event is InputEventJoypadButton or not event.pressed:
@@ -123,14 +128,23 @@ func _shortcuts(event: InputEvent) -> void:
 	set_input_as_handled()
 
 
+## A real key. The arrows and Tab still move between the keys on the screen,
+## and everything else, let go or held with Ctrl or Alt, goes no further.
 func _typed(key: InputEventKey) -> void:
+	if key.keycode in [KEY_UP, KEY_DOWN, KEY_LEFT, KEY_RIGHT, KEY_TAB]:
+		return
+	set_input_as_handled()
+	if not key.pressed:
+		return
 	match key.keycode:
 		KEY_BACKSPACE:
 			_delete()
-		KEY_ENTER, KEY_KP_ENTER, KEY_ESCAPE:
+		KEY_ENTER, KEY_KP_ENTER:
 			_done()
+		KEY_ESCAPE:
+			_cancel()
 		_:
-			if key.unicode < 32:
+			if key.unicode < 32 or key.ctrl_pressed or key.alt_pressed or key.meta_pressed:
 				return
 			var text := String.chr(key.unicode)
 			# Typed as it comes, without this keyboard's own capitals.
@@ -139,7 +153,6 @@ func _typed(key: InputEventKey) -> void:
 			box.insert_text_at_caret(text)
 			_capital = text == " "
 			_changed()
-	set_input_as_handled()
 
 
 func _type(text: String) -> void:
@@ -175,6 +188,17 @@ func _done() -> void:
 	hide()
 	box.grab_focus()
 	box.text_submitted.emit(box.text)
+	queue_free()
+
+
+## Closes without changing the box.
+func _cancel() -> void:
+	if box.text != _was:
+		box.text = _was
+		box.caret_column = _was.length()
+		box.text_changed.emit(box.text)
+	hide()
+	box.grab_focus()
 	queue_free()
 
 

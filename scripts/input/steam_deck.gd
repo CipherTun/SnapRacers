@@ -20,7 +20,7 @@ static func is_deck() -> bool:
 		return fake == "1"
 	if OS.get_name() != "Linux":
 		return false
-	return deck_from(_read("/sys/class/dmi/id/sys_vendor"), _read("/sys/class/dmi/id/product_name"))
+	return deck_from(_read("/sys/class/dmi/id/sys_vendor"), _read("/sys/class/dmi/id/product_name"), OS.get_environment("SteamDeck"))
 
 
 static func game_mode() -> bool:
@@ -28,20 +28,24 @@ static func game_mode() -> bool:
 	if fake != "":
 		return fake == "1"
 	var env := {}
-	for name in ["XDG_CURRENT_DESKTOP", "SteamGamepadUI", "SteamDeck"]:
+	for name in ["XDG_CURRENT_DESKTOP", "GAMESCOPE_WAYLAND_DISPLAY", "SteamGamepadUI"]:
 		env[name] = OS.get_environment(name)
 	return game_mode_from(env)
 
 
-## Whether the firmware's vendor and product names are a Deck's.
-static func deck_from(vendor: String, product: String) -> bool:
-	return vendor.strip_edges() == "Valve" and PRODUCTS.has(product.strip_edges())
+## Whether the firmware's vendor and product names are a Deck's, or Steam's
+## SteamDeck variable says so. Steam sets that to 1 for what it starts on a
+## Deck, in Game Mode or on the desktop.
+static func deck_from(vendor: String, product: String, steam_deck := "") -> bool:
+	return (vendor.strip_edges() == "Valve" and PRODUCTS.has(product.strip_edges())) or steam_deck == "1"
 
 
 ## Whether these environment variables mean Game Mode: gamescope is Game
-## Mode's compositor, and Steam sets the other two for what it starts there.
+## Mode's compositor, and Steam sets SteamGamepadUI for what it starts from
+## its big screen view.
 static func game_mode_from(env: Dictionary) -> bool:
-	return env.get("XDG_CURRENT_DESKTOP", "") == "gamescope" or env.get("SteamGamepadUI", "") != "" or env.get("SteamDeck", "") != ""
+	var ui: String = env.get("SteamGamepadUI", "")
+	return env.get("XDG_CURRENT_DESKTOP", "") == "gamescope" or env.get("GAMESCOPE_WAYLAND_DISPLAY", "") != "" or (ui != "" and ui != "0")
 
 
 ## Full screen in Game Mode, and a window the size of the Deck's screen on

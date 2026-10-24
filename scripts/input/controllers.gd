@@ -107,19 +107,36 @@ func _swap_event(event: InputEvent) -> void:
 
 ## Which of these controllers to leave out, given as dictionaries with
 ## "device", "name", "vendor_id" and "product_id". With Steam Input on, Steam
-## makes a virtual pad that repeats the Deck's own controller, and if both
-## show up the virtual one is left out. The Deck's own has the back buttons.
+## can make a second copy of the Deck's own controls, which may carry the
+## Deck's ids and name too. With more than one pad that looks like the Deck's,
+## one is kept: the real one if there is one, then the lowest device id. Any
+## other controller, Steam's virtual copy of it or not, is always kept.
 static func ignored_pads(pads: Array) -> Array:
-	var has_deck := pads.any(func(pad: Dictionary) -> bool:
-		return (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == DECK_PAD) or str(pad.get("name", "")).to_lower().contains("steam deck"))
-	if not has_deck:
+	var decks := pads.filter(_looks_like_deck)
+	if decks.size() < 2:
 		return []
+	var keep: Dictionary = decks[0]
+	for pad: Dictionary in decks:
+		var better := _virtual(keep) and not _virtual(pad)
+		var same := _virtual(keep) == _virtual(pad)
+		if better or (same and int(pad.device) < int(keep.device)):
+			keep = pad
 	var out := []
-	for pad in pads:
-		var virtual: bool = (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == STEAM_PAD) or str(pad.get("name", "")).to_lower().contains("steam virtual")
-		if virtual:
+	for pad: Dictionary in decks:
+		if pad.device != keep.device:
 			out.append(pad.device)
+	out.sort()
 	return out
+
+
+## Whether a pad's ids or name say it's the Deck's own controls.
+static func _looks_like_deck(pad: Dictionary) -> bool:
+	return (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == DECK_PAD) or str(pad.get("name", "")).to_lower().contains("steam deck")
+
+
+## Whether a pad's Steam's virtual one, by its ids or name.
+static func _virtual(pad: Dictionary) -> bool:
+	return (int(pad.get("vendor_id", 0)) == VALVE and int(pad.get("product_id", 0)) == STEAM_PAD) or str(pad.get("name", "")).to_lower().contains("virtual")
 
 
 ## The controllers plugged in that the game listens to.
@@ -131,15 +148,31 @@ static func usable_joypads() -> Array[int]:
 	return out
 
 
-func _find_ignored() -> void:
+func _find_ignored(gone := -1) -> void:
 	var pads := []
 	for device in Input.get_connected_joypads():
 		var info := Input.get_joy_info(device)
 		pads.append({"device": device, "name": Input.get_joy_name(device), "vendor_id": info.get("vendor_id", 0), "product_id": info.get("product_id", 0)})
-	ignored.clear()
+	var now := {}
 	for device in ignored_pads(pads):
-		ignored[device] = true
-		owners.erase(device)
+		now[device] = true
+	set_ignored(now, gone)
+
+
+## Leaves out these controllers. One newly left out goes the same way as
+## coming unplugged, and one that's usable again is handed out like one just
+## plugged in. `gone` is a controller that's just been unplugged, so it isn't
+## handed out.
+func set_ignored(now: Dictionary, gone := -1) -> void:
+	var was := ignored.duplicate()
+	ignored.clear()
+	ignored.merge(now)
+	for device in ignored:
+		if not was.has(device):
+			_drop(device)
+	for device in was:
+		if not ignored.has(device) and device != gone:
+			_give(device)
 
 
 ## The controller player `person` has, or -1.
@@ -183,19 +216,20 @@ static func name_of(device: int) -> String:
 
 func _on_connection(device: int, connected: bool) -> void:
 	_find_swaps()
-	_find_ignored()
+	_find_ignored(-1 if connected else device)
 	if connected:
 		_give(device)
-		# Steam's pad may have just been left out, so its player gets the
-		# Deck's own one.
-		for usable in usable_joypads():
-			_give(usable)
 	else:
-		var person: int = owners.get(device, -1)
-		owners.erase(device)
-		if person != -1:
-			unplugged.emit(person)
+		_drop(device)
 	changed.emit()
+
+
+## Takes a controller off its player, who's told it came unplugged.
+func _drop(device: int) -> void:
+	var person: int = owners.get(device, -1)
+	owners.erase(device)
+	if person != -1:
+		unplugged.emit(person)
 
 
 func _give(device: int) -> void:

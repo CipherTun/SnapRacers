@@ -119,6 +119,7 @@ func _ready() -> void:
 	await _touch_controls()
 	await _other_keyboard()
 	await _left_out()
+	_hand_out()
 	await _race_menu()
 	Game.show_settings()
 	await frames(4)
@@ -230,6 +231,24 @@ func _touch_controls() -> void:
 	touch.free()
 
 
+## A real key let go and pressed, with these modifiers held.
+func key(code: Key, ctrl := false) -> void:
+	for down in [true, false]:
+		var event := InputEventKey.new()
+		event.keycode = code
+		event.physical_keycode = code
+		var printed := String(OS.get_keycode_string(code)).to_lower()
+		event.unicode = 32 if code == KEY_SPACE else (printed.unicode_at(0) if printed.length() == 1 else 0)
+		event.ctrl_pressed = ctrl
+		event.pressed = down
+		Input.parse_input_event(event)
+		await frames(2)
+
+
+func keyboards() -> Array:
+	return get_tree().root.find_children("*", "PadKeyboard", true, false).filter(func(k): return not k.is_queued_for_deletion())
+
+
 ## With the keyboard on the screen up, real keys still type, so Steam's own
 ## keyboard works as well.
 func _other_keyboard() -> void:
@@ -240,26 +259,52 @@ func _other_keyboard() -> void:
 	box.text = "Ab"
 	box.grab_focus()
 	await pad(JOY_BUTTON_A)
-	var keys := get_tree().root.find_children("*", "PadKeyboard", true, false)
-	check(not keys.is_empty(), "A on the name brings up the keyboard on the screen")
+	check(not keyboards().is_empty(), "A on the name brings up the keyboard on the screen")
 	for code in [KEY_Z, KEY_BACKSPACE, KEY_C]:
-		for down in [true, false]:
-			var key := InputEventKey.new()
-			key.keycode = code
-			key.unicode = 0 if code == KEY_BACKSPACE else String(OS.get_keycode_string(code)).to_lower().unicode_at(0)
-			key.pressed = down
-			Input.parse_input_event(key)
-			await frames(2)
+		await key(code)
 	check(box.text == "Abc", "and real keys type into the box while it's up (%s)" % box.text)
-	for down in [true, false]:
-		var enter := InputEventKey.new()
-		enter.keycode = KEY_ENTER
-		enter.pressed = down
-		Input.parse_input_event(enter)
-		await frames(2)
-	keys = get_tree().root.find_children("*", "PadKeyboard", true, false).filter(func(k): return not k.is_queued_for_deletion())
-	check(keys.is_empty() and screen() is SettingsScreen, "Enter is done")
+	await key(KEY_SPACE)
+	check(box.text == "Abc ", "a real Space types one space, without pressing the key picked out (%s)" % box.text)
+	var keys: PadKeyboard = keyboards()[0]
+	var picked := keys.gui_get_focus_owner()
+	await key(KEY_RIGHT)
+	check(keys.gui_get_focus_owner() != picked and keys.gui_get_focus_owner() is Button, "the arrows move between the keys on the screen")
+	await key(KEY_SPACE)
+	check(box.text == "Abc  ", "and Space after them still only types a space (%s)" % box.text)
+	await key(KEY_A, true)
+	check(box.text == "Abc  ", "Ctrl and a letter types nothing (%s)" % box.text)
+	await key(KEY_ENTER)
+	check(keyboards().is_empty() and screen() is SettingsScreen, "Enter is done")
+	check(box.text == "Abc  ", "and keeps the text")
+	box.grab_focus()
+	await pad(JOY_BUTTON_A)
+	await key(KEY_X)
+	check(box.text == "Abc  x", "the keyboard comes up again and types (%s)" % box.text)
+	await key(KEY_ESCAPE)
+	check(keyboards().is_empty() and screen() is SettingsScreen, "Escape closes it and only it")
+	check(box.text == "Abc  ", "and puts the text back how it was (%s)" % box.text)
 	Game.set_setting("player", "name", was)
+
+
+## A controller that becomes left out goes the way of one unplugged, and one
+## that's usable again is handed out like one just plugged in.
+func _hand_out() -> void:
+	var pads := Controllers.new()
+	pads.settings = ConfigFile.new()
+	var gone := []
+	pads.unplugged.connect(func(person: int) -> void: gone.append(person))
+	pads._give(40)
+	pads._give(41)
+	check(pads.device_of(0) == 40 and pads.device_of(1) == 41, "two controllers, one each")
+	pads.set_ignored({41: true})
+	check(pads.owner_of(41) == -1 and gone == [1], "the one left out comes off player 2, who's told it's unplugged (%s)" % [gone])
+	pads.set_ignored({})
+	check(pads.device_of(1) == 41, "and it goes back to player 2 when it's usable again")
+	pads.set_ignored({41: true}, 41)
+	pads.set_ignored({}, 41)
+	check(pads.owner_of(41) == -1, "but not if it was unplugged")
+	pads.free()
+	Controllers.ignored.clear()
 
 
 ## A controller left out (Steam's copy of the Deck's) does nothing.
@@ -290,18 +335,25 @@ func _pure() -> void:
 	var deck := {"device": 0, "name": "Steam Deck", "vendor_id": 0x28de, "product_id": 0x1205}
 	var steam := {"device": 1, "name": "Steam Virtual Gamepad", "vendor_id": 0x28de, "product_id": 0x11ff}
 	var xbox := {"device": 2, "name": "Xbox Wireless Controller", "vendor_id": 0x045e, "product_id": 0x0b13}
-	check(Controllers.ignored_pads([deck, steam]) == [1], "with the Deck's own pad and Steam's copy of it, Steam's is left out")
-	check(Controllers.ignored_pads([steam, deck]) == [1], "whichever order they come in")
-	check(Controllers.ignored_pads([steam]).is_empty(), "Steam's pad on its own is used")
-	check(Controllers.ignored_pads([deck]).is_empty(), "and the Deck's on its own")
+	var deck_copy := {"device": 4, "name": "Steam Deck", "vendor_id": 0x28de, "product_id": 0x11ff}
+	var same := {"device": 5, "name": "Steam Deck", "vendor_id": 0x28de, "product_id": 0x1205}
+	check(Controllers.ignored_pads([deck, deck_copy]) == [4], "with the Deck's own pad and Steam's copy of it, Steam's is left out")
+	check(Controllers.ignored_pads([deck_copy, deck]) == [4], "whichever order they come in")
+	check(Controllers.ignored_pads([same, deck]) == [5] and Controllers.ignored_pads([deck, same]) == [5], "two pads the same as the Deck's keeps one")
+	check(Controllers.ignored_pads([deck_copy]).is_empty() and Controllers.ignored_pads([deck]).is_empty(), "the Deck's or Steam's copy on its own is used")
+	check(Controllers.ignored_pads([deck, steam]).is_empty(), "Steam's pad that doesn't say it's the Deck's is used")
 	check(Controllers.ignored_pads([steam, xbox]).is_empty(), "Steam's copy of another controller is used")
-	var unnamed := {"device": 3, "name": "Steam Virtual Gamepad", "vendor_id": 0, "product_id": 0}
-	check(Controllers.ignored_pads([deck, unnamed]) == [3], "Steam's pad goes by its name too")
+	check(Controllers.ignored_pads([deck, deck_copy, steam, xbox]) == [4], "and with the Deck's copy, only that's left out")
+	var named := {"device": 3, "name": "Steam Virtual Gamepad (Steam Deck)", "vendor_id": 0, "product_id": 0}
+	check(Controllers.ignored_pads([deck, named]) == [3], "Steam's copy goes by its name too")
 	check(SteamDeck.deck_from("Valve", "Jupiter") and SteamDeck.deck_from("Valve\n", "Galileo\n"), "a Deck, LCD or OLED, by its firmware names")
-	check(not SteamDeck.deck_from("Valve", "Index") and not SteamDeck.deck_from("ASUS", "Jupiter"), "and nothing else")
+	check(SteamDeck.deck_from("", "", "1"), "or by Steam saying so")
+	check(not SteamDeck.deck_from("Valve", "Index") and not SteamDeck.deck_from("ASUS", "Jupiter", "0"), "and nothing else")
 	check(SteamDeck.game_mode_from({"XDG_CURRENT_DESKTOP": "gamescope"}), "Game Mode by gamescope")
-	check(SteamDeck.game_mode_from({"SteamGamepadUI": "1"}) and SteamDeck.game_mode_from({"SteamDeck": "1"}), "or Steam's own markers")
-	check(not SteamDeck.game_mode_from({"XDG_CURRENT_DESKTOP": "KDE"}), "and not on a desktop")
+	check(SteamDeck.game_mode_from({"GAMESCOPE_WAYLAND_DISPLAY": "gamescope-0"}), "or gamescope's display")
+	check(SteamDeck.game_mode_from({"SteamGamepadUI": "1"}), "or Steam's big screen view")
+	check(not SteamDeck.game_mode_from({"XDG_CURRENT_DESKTOP": "KDE", "SteamDeck": "1"}), "and not on the Deck's desktop")
+	check(not SteamDeck.game_mode_from({"SteamDeck": "0", "SteamGamepadUI": "0"}), "or another computer")
 	check(InputBindings.pad(ConfigFile.new(), 0, "gadget_1").has([InputBindings.BUTTON, JOY_BUTTON_PADDLE1, 1]), "R4 uses power-up 1")
 	check(InputBindings.pad(ConfigFile.new(), 0, "gadget_2").has([InputBindings.BUTTON, JOY_BUTTON_PADDLE2, 1]), "and L4 power-up 2")
 	var remapped := ConfigFile.new()
