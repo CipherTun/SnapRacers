@@ -138,7 +138,8 @@ static func grow(window: Window) -> void:
 		old.kill()
 	var scale_to := func(s: float) -> void:
 		window.canvas_transform = Transform2D(0.0, Vector2(s, s), 0.0, Vector2(window.size) * (1.0 - s) * 0.5)
-	scale_to.call(GROW_FROM)
+	# Deferred, as about_to_popup comes before the window takes its new size.
+	scale_to.call_deferred(GROW_FROM)
 	var tween := window.create_tween()
 	window.set_meta("grow_tween", tween)
 	tween.tween_method(scale_to, GROW_FROM, 1.0, GROW).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
