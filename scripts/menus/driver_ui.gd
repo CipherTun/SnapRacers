@@ -334,6 +334,7 @@ class DriverTile:
 		custom_minimum_size = BuilderStyle.TILE + Vector2(0, 16)
 		autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		add_theme_font_size_override("font_size", 14)
+		add_theme_font_override("font", UiKit.font("body"))
 		if picked:
 			for state in ["font_color", "font_hover_color", "font_pressed_color"]:
 				add_theme_color_override(state, MenuStyle.ACCENT)

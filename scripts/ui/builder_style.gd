@@ -5,14 +5,13 @@ extends RefCounted
 ## Whatever you're building fills the screen and every panel floats over it on
 ## its own dark, see-through backing.
 
-# The colours, with the accent (the same as the menus'), red for danger and for
-# things that are wrong, blue for numbers and the see-through black behind
-# panels.
-const DANGER := Color("#ff6b6b")
-const DATA := Color("#7fd8ff")
+# The colours, from UiKit: red for danger and for things that are wrong, blue
+# for numbers and the see-through black behind panels.
+const DANGER := UiKit.DANGER
+const DATA := UiKit.BLUE
 const SCRIM := Color(0, 0, 0, 0.65)
 ## The dark ink on the accent coloured buttons.
-const ON_ACCENT := Color("#1a1030")
+const ON_ACCENT := UiKit.ON_ACCENT
 const TILE := Vector2(104, 104)
 ## Behind the thing being built.
 const BACKGROUND := Color("#2b3440")
@@ -38,50 +37,37 @@ static func word(text: String, colour: Color, action: Callable) -> Button:
 	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size = Vector2(0, 48)
 	button.add_theme_font_size_override("font_size", 19)
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+	button.add_theme_stylebox_override("focus", UiKit.focus_ring(UiKit.LEAN, 0.0))
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(state, colour)
 	button.add_theme_color_override("font_disabled_color", Color(colour, 0.35))
 	button.pressed.connect(action)
 	return button
 
 
-## Dresses a button as a small tinted pill, for the smaller controls.
+## Dresses a button as a small tinted chip, for the smaller controls.
 static func chip(button: Button, text: String) -> void:
 	button.text = text.to_upper()
 	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size = Vector2(96, 48)
 	button.add_theme_font_size_override("font_size", 19)
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = Color(MenuStyle.ACCENT, 0.32 if state == "pressed" else 0.18)
-		if state == "disabled":
-			box.bg_color = Color(1, 1, 1, 0.06)
-		box.set_corner_radius_all(24)
-		box.content_margin_left = 16
-		box.content_margin_right = 16
-		button.add_theme_stylebox_override(state, box)
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+	for state in UiKit.STATES:
+		button.add_theme_stylebox_override(state, UiKit.chip(state))
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(state, MenuStyle.ACCENT)
 	button.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.35))
 
 
-## A pill button with a coloured fill.
+## A slanted button with a coloured fill.
 static func pill(text: String, fill: Color, ink: Color, action: Callable, height := 56.0) -> Button:
 	var button := Button.new()
 	button.text = text.to_upper()
 	button.focus_mode = Control.FOCUS_ALL
 	button.custom_minimum_size = Vector2(0, height)
 	button.add_theme_font_size_override("font_size", 22)
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = fill if state != "disabled" else Color(1, 1, 1, 0.06)
-		if state == "pressed":
-			box.bg_color = fill.lightened(0.15)
-		box.set_corner_radius_all(int(height * 0.5))
-		box.content_margin_left = 28
-		box.content_margin_right = 28
-		button.add_theme_stylebox_override(state, box)
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+	for state in UiKit.STATES:
+		button.add_theme_stylebox_override(state, UiKit.solid(state, fill, UiKit.LEAN, height))
+	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(state, ink)
 	button.add_theme_color_override("font_disabled_color", Color(1, 1, 1, 0.35))
 	button.pressed.connect(action)
@@ -115,7 +101,7 @@ static func menu(items: Array) -> PopupMenu:
 	list.theme = MenuStyle.theme()
 	list.add_theme_font_size_override("font_size", 24)
 	list.add_theme_constant_override("v_separation", 18)
-	list.add_theme_stylebox_override("panel", scrim(10, 0.88))
+	list.add_theme_stylebox_override("panel", UiKit.popup())
 	for i in items.size():
 		list.add_item(items[i], i)
 	return list

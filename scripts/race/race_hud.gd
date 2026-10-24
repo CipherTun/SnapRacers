@@ -323,10 +323,7 @@ func _centred(top: VBoxContainer) -> HBoxContainer:
 ## The theme's font with every digit the same width, so a ticking clock
 ## doesn't jiggle.
 static func _even_digits() -> Font:
-	var font := FontVariation.new()
-	font.base_font = ThemeDB.fallback_font
-	font.opentype_features = { TextServerManager.get_primary_interface().name_to_tag("tnum"): 1 }
-	return font
+	return UiKit.font("digits")
 
 
 ## A quick note in a pill under the clock, which fades after a moment.

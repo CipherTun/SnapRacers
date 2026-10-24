@@ -433,6 +433,7 @@ func _tile(label: String) -> ScrollButton:
 	tile.expand_icon = true
 	tile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	tile.add_theme_font_size_override("font_size", 14)
+	tile.add_theme_font_override("font", UiKit.font("body"))
 	for state in ["normal", "hover", "pressed"]:
 		tile.add_theme_stylebox_override(state, BuilderStyle.tile_box(state))
 	return tile

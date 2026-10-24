@@ -34,7 +34,7 @@ const TRACKS := "res://data/tracks"
 
 var design: KartDesign
 var character: CharacterDesign
-## The theme for in-game panels (the garage and the race HUD).
+## The theme for every screen, the HUD and the garage (UiKit.theme()).
 var theme: Theme
 var settings := ConfigFile.new()
 ## The track the next race is on. Race again keeps it.
@@ -98,9 +98,9 @@ func _ready() -> void:
 	if design == null or design.parts.is_empty():
 		design = KartDesign.load_file(STARTER)
 	character = CharacterDesign.load_file(CURRENT_DRIVER if FileAccess.file_exists(CURRENT_DRIVER) else ROSTER + "/racer.json")
-	theme = Theme.new()
-	theme.default_font_size = 22
-	MenuStyle.add_switches(theme)
+	theme = UiKit.theme()
+	# Popups and anything else without a theme of its own get it too.
+	get_tree().root.theme = theme
 	Sounds.setup(volume(Sounds.MUSIC_BUS), volume(Sounds.EFFECTS_BUS))
 	plugin = NetPlugin.new()
 	add_child(plugin)

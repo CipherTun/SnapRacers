@@ -1,6 +1,7 @@
 extends Node
 
-## Retakes the README's builder and kart-picker screens at 1280 x 720.
+## Retakes the main menu and the README's builder and kart-picker screens at
+## 1280 x 720.
 ## Run with a separate XDG_DATA_HOME so editor autosaves stay in that profile:
 ##   xvfb-run -a -s '-screen 0 1280x720x24' tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . --fixed-fps 60 --disable-render-loop res://tools/shots/menu_shots.tscn
 const OUT := "res://build/shots/readme"
@@ -17,6 +18,11 @@ func _ready() -> void:
 	Game.design = Game.stock_kart("quarter_mile").duplicate_design()
 	Game.character = Game.roster_driver("racer").duplicate_design()
 	Game.settings.set_value("race", "kart", "quarter_mile")
+
+	Game.show_menu()
+	await screen_of(MainMenu)
+	await ready_pictures()
+	await shot("menu")
 
 	Game.show_garage()
 	var garage: Garage = await screen_of(Garage)

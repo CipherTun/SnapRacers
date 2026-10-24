@@ -1,126 +1,29 @@
 class_name MenuStyle
 extends RefCounted
 
-## The look every menu screen shares, with a dark navy to purple backdrop, a
-## big white title and a column of soft purple pill buttons.
+## Builds the menu screens: a dark backdrop with speed stripes, a big title
+## and a column of slanted buttons, all from UiKit.
 
-const TOP := Color("#16213a")
-const BOTTOM := Color("#2b1b3d")
-const ACCENT := Color("#b39dff")
+const TOP := UiKit.INK
+const BOTTOM := UiKit.INK_LOW
+const ACCENT := UiKit.ACCENT
 const COLUMN_WIDTH := 460.0
-const BUTTON_HEIGHT := 60.0
-
-static var _theme: Theme
+const BUTTON_HEIGHT := UiKit.BUTTON_HEIGHT
 
 
-## The theme for menu screens, with white text, pill buttons and accent
-## highlights.
+## The theme for every screen (see UiKit).
 static func theme() -> Theme:
-	if _theme != null:
-		return _theme
-	_theme = Theme.new()
-	_theme.default_font_size = 22
-	var states := {
-		"normal": Color(ACCENT, 0.18),
-		"hover": Color(ACCENT, 0.26),
-		"pressed": Color(ACCENT, 0.36),
-		"focus": Color(ACCENT, 0.18),
-		"disabled": Color(1.0, 1.0, 1.0, 0.06),
-	}
-	for state in states:
-		var box := StyleBoxFlat.new()
-		box.bg_color = states[state]
-		box.set_corner_radius_all(int(BUTTON_HEIGHT * 0.5))
-		box.content_margin_left = 24
-		box.content_margin_right = 24
-		box.content_margin_top = 10
-		box.content_margin_bottom = 10
-		if state == "focus":
-			# A white ring just outside the button picked out with a
-			# controller or the keys, so it can't be mixed up with the
-			# accent ring on a chosen one.
-			box.draw_center = false
-			box.border_color = Color.WHITE
-			box.set_border_width_all(4)
-			box.set_expand_margin_all(5)
-			box.set_corner_radius_all(int(BUTTON_HEIGHT * 0.5) + 5)
-		_theme.set_stylebox(state, "Button", box)
-	for colour_name in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
-		_theme.set_color(colour_name, "Button", Color.WHITE)
-	_theme.set_color("font_disabled_color", "Button", Color(1.0, 1.0, 1.0, 0.35))
-	_theme.set_color("font_color", "Label", Color.WHITE)
-
-	var field := StyleBoxFlat.new()
-	field.bg_color = Color(1.0, 1.0, 1.0, 0.04)
-	field.border_color = Color(1.0, 1.0, 1.0, 0.45)
-	field.set_border_width_all(2)
-	field.set_corner_radius_all(8)
-	field.content_margin_left = 16
-	field.content_margin_right = 16
-	field.content_margin_top = 10
-	field.content_margin_bottom = 10
-	_theme.set_stylebox("normal", "LineEdit", field)
-	var field_focus := field.duplicate() as StyleBoxFlat
-	field_focus.border_color = ACCENT
-	_theme.set_stylebox("focus", "LineEdit", field_focus)
-	_theme.set_color("font_color", "LineEdit", Color.WHITE)
-	_theme.set_color("caret_color", "LineEdit", ACCENT)
-	add_switches(_theme)
-	return _theme
+	return UiKit.theme()
 
 
-## Pictures for the on and off switches (CheckButton). The engine's own are
-## drawn from SVG, which our cut down engine leaves out, so on a phone or the
-## web they'd be blank.
+## Pictures for the switches and the other controls the engine draws from SVG.
 static func add_switches(to: Theme) -> void:
-	var on := _switch(true, 1.0)
-	var off := _switch(false, 1.0)
-	var on_dim := _switch(true, 0.4)
-	var off_dim := _switch(false, 0.4)
-	for side in ["", "_mirrored"]:
-		to.set_icon("checked" + side, "CheckButton", on)
-		to.set_icon("unchecked" + side, "CheckButton", off)
-		to.set_icon("checked_disabled" + side, "CheckButton", on_dim)
-		to.set_icon("unchecked_disabled" + side, "CheckButton", off_dim)
-
-
-## A switch drawn as a picture: a pill with a round handle at one end, in the
-## accent colour when it's on.
-static func _switch(on: bool, alpha: float) -> ImageTexture:
-	var width := 60
-	var height := 32
-	var image := Image.create_empty(width, height, false, Image.FORMAT_RGBA8)
-	var radius := (height - 1) * 0.5
-	var track: Color = Color(ACCENT, alpha) if on else Color(1.0, 1.0, 1.0, 0.22 * alpha)
-	var knob_at := Vector2(width - 1 - radius if on else radius, radius)
-	for y in height:
-		for x in width:
-			# How far inside the pill this pixel is, for a soft edge.
-			var along := clampf(x, radius, width - 1 - radius)
-			var inside := radius - Vector2(x - along, y - radius).length() + 0.5
-			var colour := Color(track, track.a * clampf(inside, 0.0, 1.0))
-			var knob := clampf(radius - 4.0 - Vector2(x, y).distance_to(knob_at) + 0.5, 0.0, 1.0)
-			image.set_pixel(x, y, colour.blend(Color(1.0, 1.0, 1.0, knob * alpha)))
-	return ImageTexture.create_from_image(image)
+	UiKit.add_pictures(to)
 
 
 ## Fills the whole screen with the backdrop, top to bottom.
-static func backdrop() -> TextureRect:
-	var gradient := Gradient.new()
-	gradient.set_color(0, TOP)
-	gradient.set_color(1, BOTTOM)
-	var texture := GradientTexture2D.new()
-	texture.gradient = gradient
-	texture.fill_from = Vector2(0.0, 0.0)
-	texture.fill_to = Vector2(0.0, 1.0)
-	texture.width = 4
-	texture.height = 256
-	var rect := TextureRect.new()
-	rect.texture = texture
-	rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	rect.stretch_mode = TextureRect.STRETCH_SCALE
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	return rect
+static func backdrop() -> Control:
+	return UiKit.backdrop()
 
 
 ## A full screen with the backdrop and a centred column to put things in. It
@@ -154,7 +57,7 @@ static func title(text := "SnapRacers", subtitle := "") -> VBoxContainer:
 	var label := Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	label.add_theme_font_size_override("font_size", 64)
+	label.theme_type_variation = "TitleLabel"
 	box.add_child(label)
 	if subtitle != "":
 		var sub := Label.new()
@@ -180,16 +83,15 @@ static func button(text: String, action: Callable, subtitle := "") -> Button:
 ## outline, or puts it back to plain.
 static func mark(b: Button, on: bool) -> void:
 	var colour := ACCENT if on else Color.WHITE
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
+	for state in ["font_color", "font_hover_color", "font_focus_color"]:
 		b.add_theme_color_override(state, colour)
-	for state in ["normal", "hover", "pressed"]:
+	for state in ["normal", "hover"]:
 		b.remove_theme_stylebox_override(state)
 		if on:
-			var box := b.get_theme_stylebox(state).duplicate() as StyleBoxFlat
-			if box != null:
-				box.border_color = ACCENT
-				box.set_border_width_all(3)
-				b.add_theme_stylebox_override(state, box)
+			var box := UiKit.pill(state) as SlantBox
+			box.edge = ACCENT
+			box.edge_width = 3
+			b.add_theme_stylebox_override(state, box)
 
 
 ## Back (or Quit) under a menu's buttons.
@@ -213,12 +115,13 @@ static func link(text: String, action: Callable) -> Button:
 	b.add_theme_color_override("font_hover_color", ACCENT.lightened(0.2))
 	b.add_theme_color_override("font_pressed_color", ACCENT.darkened(0.2))
 	b.add_theme_font_size_override("font_size", 26)
+	b.add_theme_stylebox_override("focus", UiKit.focus_ring(UiKit.LEAN, 2.0))
 	b.pressed.connect(action)
 	return b
 
 
 ## A slider for a setting, big enough for a thumb, with a thick track filled in
-## the accent colour up to a round handle.
+## the accent colour up to a slanted handle (see UiKit).
 static func slider(value: float, changed: Callable, low := 0.0, high := 1.0, step := 0.1) -> HSlider:
 	var s := HSlider.new()
 	s.min_value = low
@@ -228,32 +131,8 @@ static func slider(value: float, changed: Callable, low := 0.0, high := 1.0, ste
 	s.focus_mode = Control.FOCUS_ALL
 	s.custom_minimum_size = Vector2(320.0, 48.0)
 	s.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	var track := StyleBoxFlat.new()
-	track.bg_color = Color(1.0, 1.0, 1.0, 0.15)
-	track.set_corner_radius_all(5)
-	track.content_margin_top = 5.0
-	track.content_margin_bottom = 5.0
-	var filled := track.duplicate() as StyleBoxFlat
-	filled.bg_color = ACCENT
-	s.add_theme_stylebox_override("slider", track)
-	s.add_theme_stylebox_override("grabber_area", filled)
-	s.add_theme_stylebox_override("grabber_area_highlight", filled)
-	var knob := _knob(28, Color.WHITE)
-	s.add_theme_icon_override("grabber", knob)
-	s.add_theme_icon_override("grabber_highlight", knob)
 	s.value_changed.connect(changed)
 	return s
-
-
-## A round handle, drawn as a picture.
-static func _knob(size: int, colour: Color) -> ImageTexture:
-	var image := Image.create_empty(size, size, false, Image.FORMAT_RGBA8)
-	var middle := (size - 1) * 0.5
-	for y in size:
-		for x in size:
-			var d := Vector2(x - middle, y - middle).length()
-			image.set_pixel(x, y, Color(colour, clampf(middle - d + 0.5, 0.0, 1.0)))
-	return ImageTexture.create_from_image(image)
 
 
 ## A heading, with a line of grey explanation under it when there's one.
@@ -263,13 +142,14 @@ static func heading(text: String, explanation := "") -> VBoxContainer:
 	var label := Label.new()
 	label.text = text
 	label.add_theme_font_size_override("font_size", 26)
+	label.add_theme_font_override("font", UiKit.font("heading"))
 	box.add_child(label)
 	if explanation != "":
 		var more := Label.new()
 		more.text = explanation
 		more.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		more.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.6))
 		more.add_theme_font_size_override("font_size", 18)
+		more.add_theme_color_override("font_color", UiKit.MUTED)
 		box.add_child(more)
 	return box
 
@@ -305,6 +185,7 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	var label := Label.new()
 	label.text = heading_text
 	label.add_theme_font_size_override("font_size", 44)
+	label.add_theme_font_override("font", UiKit.font("title"))
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(label)
 	top.add_child(link("Back", back))
