@@ -29,6 +29,13 @@ const DANGER := Color("#ff6b6b")
 ## Player 1 and player 2 on a shared screen.
 const PLAYERS := [Color("#4fa8ff"), Color("#ffa63d")]
 const MEDALS := { 1: Color("#f2b632"), 2: Color("#cdd3db"), 3: Color("#c47a45") }
+## The touch buttons in a race: GO, brake, look back, a gadget, and the rest
+## (reset and the steering buttons).
+const GO_GREEN := Color("#2fb84c")
+const BRAKE_RED := Color("#e0283a")
+const LOOK_BLUE := Color("#1f78d1")
+const GADGET_PURPLE := Color("#7b3fc4")
+const BUTTON_GREY := Color("#6e6e7c")
 
 # Type sizes, in UI pixels. SMALL is the smallest anything gets, so it stays
 # readable on a phone.
@@ -47,6 +54,12 @@ const LEAD := 24
 const WORD_SIZE := 24
 ## A line of explanation under a heading.
 const NOTE := 18
+## Your place in a race.
+const HUD_PLACE := 44
+## The countdown and GO! in the middle of a race.
+const COUNTDOWN := 120
+## How many goes are left, on a power-up box or a gadget button.
+const BADGE := 20
 
 # Spacing steps.
 const GAP_XS := 4
@@ -222,6 +235,19 @@ static func panel(lean := PANEL_LEAN, underline := false) -> SlantBox:
 	return box
 
 
+## A small button on the race screen, like the menu and camera ones.
+static func hud_button(state: String) -> SlantBox:
+	var box: SlantBox
+	match state:
+		"pressed":
+			box = slant(PANEL_HOVER, PANEL_LEAN, YELLOW, 2)
+		"hover":
+			box = slant(PANEL_HOVER, PANEL_LEAN, Color(1, 1, 1, 0.3), 1)
+		_:
+			box = slant(Color(0.02, 0.02, 0.05, 0.8), PANEL_LEAN, Color(1, 1, 1, 0.2), 1)
+	return box
+
+
 ## The backing of a popup or dialog: square, nearly solid, with a red stripe
 ## down the left.
 static func popup() -> SlantBox:
@@ -310,6 +336,19 @@ static func theme() -> Theme:
 	for kind in ["PageTitleLabel", "BannerLabel"]:
 		t.set_color("font_outline_color", kind, Color.BLACK)
 		t.set_constant("outline_size", kind, 6)
+	# The race screen's words, with a black edge so they read over the race.
+	for kind in [
+		["HudPlaceLabel", "title", HUD_PLACE, YELLOW, 6], ["HudLabel", "heading", LEAD, WHITE, 4],
+		["HudBestLabel", "heading", LEAD, GREEN, 4], ["HudClockLabel", "digits", DIGITS, WHITE, 4],
+		["HudNoteLabel", "heading", NOTE, YELLOW, 4], ["CountdownLabel", "title", COUNTDOWN, YELLOW, 14],
+		["TimeLabel", "digits", BODY, WHITE, 0], ["TimeAccentLabel", "digits", BODY, YELLOW, 0],
+	]:
+		t.set_type_variation(kind[0], "Label")
+		t.set_font("font", kind[0], font(kind[1]))
+		t.set_font_size("font_size", kind[0], kind[2])
+		t.set_color("font_color", kind[0], kind[3])
+		t.set_color("font_outline_color", kind[0], Color(0, 0, 0, 0.85))
+		t.set_constant("outline_size", kind[0], kind[4])
 	_add_button_kinds(t)
 
 	for type in ["LineEdit", "SpinBox"]:
@@ -604,7 +643,8 @@ static func icon_picture(what: String, ink: Color, size := 20) -> ImageTexture:
 ## Draws a small line picture centred on `c`, `s` pixels across, onto any
 ## control from its _draw(). The pictures: race (a chequered flag), two
 ## (people), wrench, gear, info, close, back, plus, trophy, clock, loop,
-## person, track.
+## person, track, pause, camera, reset (an arrow going round) and look (an
+## eye with an arrow pointing back).
 static func draw_icon(on: CanvasItem, what: String, c: Vector2, s: float, ink: Color, w := 3.0) -> void:
 	var k := s / 24.0
 	var p := func(x: float, y: float) -> Vector2: return c + Vector2(x, y) * k
@@ -665,6 +705,35 @@ static func draw_icon(on: CanvasItem, what: String, c: Vector2, s: float, ink: C
 			var road := PackedVector2Array([p.call(-10, 10), p.call(-4, -2), p.call(4, 2), p.call(10, -10)])
 			on.draw_polyline(road, ink, w * 1.6, true)
 			on.draw_line(p.call(6, -10), p.call(10, -10), ink, w)
+		"pause":
+			for x in [-5.0, 5.0]:
+				on.draw_line(p.call(x, -9), p.call(x, 9), ink, w * 1.35)
+		"camera":
+			on.draw_rect(Rect2(p.call(-11, -6), Vector2(22, 15) * k), ink, false, w)
+			on.draw_circle(p.call(0, 1.5), 4.0 * k, ink)
+			on.draw_rect(Rect2(p.call(-5, -10), Vector2(10, 4) * k), ink)
+		"reset":
+			var r := 9.0 * k
+			var end := deg_to_rad(320.0)
+			on.draw_arc(c, r, deg_to_rad(40.0), end, 28, ink, w, true)
+			var tip := c + Vector2.from_angle(end) * r
+			var ahead := Vector2.from_angle(end + PI * 0.5)
+			var out := Vector2.from_angle(end)
+			on.draw_colored_polygon(PackedVector2Array([tip + ahead * 6.5 * k, tip + out * 5.5 * k, tip - out * 5.5 * k]), ink)
+		"look":
+			var eye := PackedVector2Array()
+			for i in 17:
+				var t := i / 16.0
+				eye.append(p.call(lerpf(-11, 11, t), -3 - sin(t * PI) * 6.5))
+			for i in range(15, 0, -1):
+				var t := i / 16.0
+				eye.append(p.call(lerpf(-11, 11, t), -3 + sin(t * PI) * 6.5))
+			eye.append(eye[0])
+			on.draw_polyline(eye, ink, w * 0.8, true)
+			on.draw_circle(p.call(0, -3), 3.4 * k, ink)
+			on.draw_line(p.call(9, 9.5), p.call(-7, 9.5), ink, w * 0.9, true)
+			on.draw_line(p.call(-8, 9.5), p.call(-3.5, 5.5), ink, w * 0.9, true)
+			on.draw_line(p.call(-8, 9.5), p.call(-3.5, 13.5), ink, w * 0.9, true)
 
 
 static func _half_disc(on: CanvasItem, base: Vector2, r: float, ink: Color) -> void:

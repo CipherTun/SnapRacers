@@ -68,9 +68,8 @@ const LOST_SHOWN_FOR := 15.0
 const LOST_FADED := 0.2
 ## How far up from the bottom the power-up boxes sit.
 const SLOTS_UP := 16.0
-## The pills' colours.
-const PILL := Color(0.04, 0.04, 0.1, 0.55)
-const BEST := Color("#7dff8a")
+## The menu and camera buttons' size.
+const BUTTON := Vector2(56.0, 48.0)
 var _menu: IconButton
 var _camera: IconButton
 var _fps: Label
@@ -97,12 +96,12 @@ func _ready() -> void:
 	corner.add_theme_constant_override("separation", 8)
 	add_child(corner)
 	corner.position = Vector2(24, 12)
-	var standing := _pill(corner)
+	var standing := _pill(corner, true)
 	var lines := VBoxContainer.new()
 	lines.add_theme_constant_override("separation", -6)
 	standing.add_child(lines)
-	_place = _label(44, lines)
-	_lap = _label(24, lines)
+	_place = _label("HudPlaceLabel", lines)
+	_lap = _label("HudLabel", lines)
 	# With two on one phone they share one map between them (see Race).
 	if race != null and me != null and race.humans.size() < 2:
 		map = CourseMap.new()
@@ -150,13 +149,11 @@ func _ready() -> void:
 	var clock_lines := VBoxContainer.new()
 	clock_lines.add_theme_constant_override("separation", -4)
 	timing.add_child(clock_lines)
-	_clock = _label(30, clock_lines)
-	_clock.add_theme_font_override("font", _even_digits())
+	_clock = _label("HudClockLabel", clock_lines)
 	_clock.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_clock_more = _label(18, clock_lines)
+	_clock_more = _label("HudNoteLabel", clock_lines)
 	_clock_more.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_clock_more.add_theme_color_override("font_color", MenuStyle.ACCENT.lightened(0.3))
-	_split = _label(22, _pill(timing_home if where != "top" else _centred(top)))
+	_split = _label("HudLabel", _pill(timing_home if where != "top" else _centred(top)))
 	_split.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_split.get_parent().visible = false
 	if where == "corner":
@@ -166,7 +163,7 @@ func _ready() -> void:
 	if where == "right":
 		for pill in [timing, _split.get_parent()]:
 			pill.size_flags_horizontal = Control.SIZE_SHRINK_END
-	_message = _label(24, _pill(_centred(top)))
+	_message = _label("HudLabel", _pill(_centred(top)))
 	_message.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_message.get_parent().visible = false
 
@@ -188,29 +185,23 @@ func _ready() -> void:
 	bottom.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
 	bottom.offset_bottom = -SLOTS_UP - PowerupSlots.BOX - 10.0
 	bottom.offset_top = bottom.offset_bottom - 54.0
+	# A taller pill grows up, away from the power-ups.
+	bottom.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	var status_pill := _pill(bottom)
 	var status_lines := VBoxContainer.new()
 	status_lines.add_theme_constant_override("separation", 4)
 	status_pill.add_child(status_lines)
-	_status = _label(22, status_lines)
+	_status = _label("HudLabel", status_lines)
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_bar = ProgressBar.new()
 	_status_bar.show_percentage = false
 	_status_bar.custom_minimum_size = Vector2(200.0, 6.0)
 	_status_bar.mouse_filter = MOUSE_FILTER_IGNORE
-	var fill := StyleBoxFlat.new()
-	fill.bg_color = Color("#f2cd37")
-	fill.set_corner_radius_all(3)
-	var track_box := StyleBoxFlat.new()
-	track_box.bg_color = Color(1.0, 1.0, 1.0, 0.15)
-	track_box.set_corner_radius_all(3)
-	_status_bar.add_theme_stylebox_override("fill", fill)
-	_status_bar.add_theme_stylebox_override("background", track_box)
 	status_lines.add_child(_status_bar)
 	status_pill.visible = false
 
 	# The countdown and GO!, big in the middle, popping in.
-	_big = _label(120)
+	_big = _label("CountdownLabel")
 	_big.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_big.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_big.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
@@ -220,23 +211,26 @@ func _ready() -> void:
 	_menu = IconButton.new("pause", "Menu")
 	# The driving keys and buttons mustn't press the HUD's buttons.
 	_menu.focus_mode = FOCUS_NONE
+	_hud_look(_menu)
 	add_child(_menu)
 	_menu.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
-	_menu.offset_left = -IconButton.SIZE * 0.5
-	_menu.offset_right = IconButton.SIZE * 0.5
+	_menu.offset_left = -BUTTON.x * 0.5
+	_menu.offset_right = BUTTON.x * 0.5
 	_menu.offset_top = 14.0
-	_menu.offset_bottom = 14.0 + IconButton.SIZE
+	_menu.offset_bottom = 14.0 + BUTTON.y
 	_menu.pressed.connect(func() -> void: pause_pressed.emit())
 
 	# The camera button, left of where the touch controls put reset.
 	_camera = IconButton.new("camera", "Change the view")
 	_camera.focus_mode = FOCUS_NONE
+	_hud_look(_camera)
 	add_child(_camera)
+	# Its middle stays where a round 48 wide one's was, 166 in from the right.
 	_camera.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
-	_camera.offset_left = -190.0
-	_camera.offset_right = -190.0 + IconButton.SIZE
+	_camera.offset_left = -166.0 - BUTTON.x * 0.5
+	_camera.offset_right = -166.0 + BUTTON.x * 0.5
 	_camera.offset_top = 16.0
-	_camera.offset_bottom = 16.0 + IconButton.SIZE
+	_camera.offset_bottom = 16.0 + BUTTON.y
 	_camera.pressed.connect(func() -> void: camera_pressed.emit())
 	# Face to face, the map two players share sits on the line between them,
 	# right where the menu button would be, so the menu goes in the top left
@@ -245,11 +239,11 @@ func _ready() -> void:
 	if _face_to_face:
 		_menu.set_anchors_and_offsets_preset(PRESET_TOP_LEFT)
 		_menu.offset_left = 24.0
-		_menu.offset_right = 24.0 + IconButton.SIZE
+		_menu.offset_right = 24.0 + BUTTON.x
 		_menu.offset_top = 16.0
-		_menu.offset_bottom = 16.0 + IconButton.SIZE
+		_menu.offset_bottom = 16.0 + BUTTON.y
 
-	_fps = _label(18)
+	_fps = _label("HudNoteLabel")
 	_fps.set_anchors_and_offsets_preset(PRESET_BOTTOM_LEFT)
 	_fps.offset_top = -30.0
 	_fps.offset_left = 12.0
@@ -283,32 +277,31 @@ func buttons() -> Array[Control]:
 	return [_menu, _camera, _results, map] if map != null else [_menu, _camera, _results]
 
 
-func _label(size: int, parent: Node = null) -> Label:
+## A label in one of the kit's HUD kinds, like "HudLabel" (see UiKit.theme()).
+func _label(kind: String, parent: Node = null) -> Label:
 	var label := Label.new()
-	label.add_theme_font_size_override("font_size", size)
-	label.add_theme_color_override("font_outline_color", Color(0.0, 0.0, 0.0, 0.8))
-	label.add_theme_constant_override("outline_size", maxi(4, size / 10) if parent != null else maxi(6, size / 8))
+	label.theme_type_variation = kind
 	label.mouse_filter = MOUSE_FILTER_IGNORE
 	(parent if parent != null else self).add_child(label)
 	return label
 
 
-## A rounded, dark, see-through pill to put words in, so they read over
-## anything behind them.
-func _pill(parent: Node) -> PanelContainer:
+## The kit's dark slanted panel to put words in, so they read over anything
+## behind them, with a red line along the bottom when `underline` is set.
+func _pill(parent: Node, underline := false) -> PanelContainer:
 	var pill := PanelContainer.new()
 	pill.mouse_filter = MOUSE_FILTER_IGNORE
-	var box := StyleBoxFlat.new()
-	box.bg_color = PILL
-	box.set_corner_radius_all(14)
-	box.content_margin_left = 16.0
-	box.content_margin_right = 16.0
-	box.content_margin_top = 4.0
-	box.content_margin_bottom = 6.0
-	pill.add_theme_stylebox_override("panel", box)
+	pill.add_theme_stylebox_override("panel", UiKit.panel(UiKit.PANEL_LEAN, underline))
 	pill.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	parent.add_child(pill)
 	return pill
+
+
+## The menu and camera buttons as small dark slanted boxes.
+static func _hud_look(button: IconButton) -> void:
+	button.custom_minimum_size = BUTTON
+	for state in ["normal", "hover", "pressed", "disabled"]:
+		button.add_theme_stylebox_override(state, UiKit.hud_button(state))
 
 
 ## A row across the top that keeps what's put in it in the middle.
@@ -318,12 +311,6 @@ func _centred(top: VBoxContainer) -> HBoxContainer:
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	top.add_child(row)
 	return row
-
-
-## The theme's font with every digit the same width, so a ticking clock
-## doesn't jiggle.
-static func _even_digits() -> Font:
-	return UiKit.font("digits")
 
 
 ## A quick note in a pill under the clock, which fades after a moment.
@@ -372,7 +359,9 @@ func _process(delta: float) -> void:
 	_slots.show_held(me.kart.held, me.kart.held_uses)
 	if touch != null:
 		for slot in Powerups.HOLD:
-			touch.gadget_names[slot] = held_name(me.kart, slot).replace(" x", "\n") if me.kart.held[slot] != "" else ""
+			touch.gadget_names[slot] = held_name(me.kart, slot) if me.kart.held[slot] != "" else ""
+			touch.gadget_kinds[slot] = me.kart.held[slot]
+			touch.gadget_uses[slot] = me.kart.held_uses[slot]
 			touch.gadget_ready[slot] = me.kart.can_use(slot)
 		touch.queue_redraw()
 	var shown := me.progress.finish_time if me.progress.finished else race.time
@@ -394,7 +383,7 @@ func _process(delta: float) -> void:
 		var lap: float = me.progress.lap_times[-1]
 		var best := laps > 1 and lap <= me.progress.best_lap()
 		_split.text = "Lap %d   %s%s" % [laps, clock(lap), "   best" if best else ""]
-		_split.add_theme_color_override("font_color", BEST if best else Color.WHITE)
+		_split.theme_type_variation = "HudBestLabel" if best else "HudLabel"
 		_split_left = 4.0
 	_laps_seen = laps
 	_split_left = maxf(_split_left - delta, 0.0)
@@ -453,18 +442,15 @@ func _process(delta: float) -> void:
 func _build_results() -> void:
 	_results = PanelContainer.new()
 	_results.visible = false
+	_results.add_theme_stylebox_override("panel", UiKit.popup())
 	add_child(_results)
 	_results.set_anchors_and_offsets_preset(PRESET_CENTER)
-	var margin := MarginContainer.new()
-	for side in ["left", "right", "top", "bottom"]:
-		margin.add_theme_constant_override("margin_" + side, 18)
-	_results.add_child(margin)
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 10)
-	margin.add_child(box)
+	box.add_theme_constant_override("separation", UiKit.GAP_M)
+	_results.add_child(box)
 	_results_title = Label.new()
 	_results_title.text = "Results"
-	_results_title.add_theme_font_size_override("font_size", 32)
+	_results_title.theme_type_variation = "HeadingLabel"
 	box.add_child(_results_title)
 	_results_list = GridContainer.new()
 	_results_list.columns = 4 if race.mode == Game.MODE_GRAND_PRIX else (2 if race.mode == Game.MODE_TIME_TRIAL else 3)
@@ -489,8 +475,7 @@ func _build_results() -> void:
 		choices = [["Leave", menu_pressed]]
 		var next := Label.new()
 		next.text = "The standings come up once everyone's home" if race.mode == Game.MODE_GRAND_PRIX else "Back to the lobby once everyone's home"
-		next.add_theme_font_size_override("font_size", 18)
-		next.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+		next.theme_type_variation = "NoteLabel"
 		box.add_child(next)
 		box.move_child(next, box.get_child_count() - 2)
 	for pair in choices:
@@ -498,6 +483,8 @@ func _build_results() -> void:
 		button.text = pair[0]
 		button.custom_minimum_size = Vector2(160, 60)
 		button.focus_mode = FOCUS_ALL
+		if row.get_child_count() == 0:
+			button.theme_type_variation = "MainButton"
 		var signal_to_send: Signal = pair[1]
 		button.pressed.connect(func() -> void: signal_to_send.emit())
 		row.add_child(button)
@@ -505,8 +492,7 @@ func _build_results() -> void:
 			_next = button
 	if _next != null and race.humans.size() > 1:
 		_waiting = Label.new()
-		_waiting.add_theme_font_size_override("font_size", 18)
-		_waiting.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+		_waiting.theme_type_variation = "NoteLabel"
 		_waiting.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		box.add_child(_waiting)
 
@@ -570,4 +556,9 @@ func _fill_results() -> void:
 			cell.text = rows[i][column]
 			cell.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT if column >= 2 or (columns == 2 and column == 1) else HORIZONTAL_ALIGNMENT_LEFT
 			var gold: bool = i < highlight.size() and highlight[i]
-			cell.add_theme_color_override("font_color", Color("#f2cd37") if gold else Color.WHITE)
+			# Times in even-width digits, and you or a new record in yellow.
+			var time := column == columns - 1 if columns == 2 else column == 2
+			if time:
+				cell.theme_type_variation = "TimeAccentLabel" if gold else "TimeLabel"
+			else:
+				cell.theme_type_variation = "AccentLabel" if gold else ""

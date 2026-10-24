@@ -36,12 +36,12 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	mouse_filter = MOUSE_FILTER_STOP
 	var shade := ColorRect.new()
-	shade.color = Color(0.0, 0.0, 0.0, 0.7)
+	shade.color = Color(UiKit.INK, 0.7)
 	shade.set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	add_child(shade)
 
 	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(16, 0.9))
+	panel.add_theme_stylebox_override("panel", UiKit.popup())
 	add_child(panel)
 	panel.set_anchors_and_offsets_preset(PRESET_CENTER)
 	panel.grow_horizontal = GROW_DIRECTION_BOTH
@@ -51,13 +51,13 @@ func _ready() -> void:
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
 	var column := VBoxContainer.new()
-	column.add_theme_constant_override("separation", 12)
+	column.add_theme_constant_override("separation", UiKit.GAP_M)
 	column.custom_minimum_size = Vector2(440.0, 0.0)
 	scroll.add_child(column)
 
 	var title := Label.new()
 	title.text = "Paused" if pauses else "Menu"
-	title.add_theme_font_size_override("font_size", 34)
+	title.theme_type_variation = "HeadingLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
 	_resume = BuilderStyle.main_pill("Resume", func() -> void: resume_pressed.emit())
@@ -74,7 +74,7 @@ func _ready() -> void:
 
 	if racer.hud != null and racer.hud.touch != null and DisplayServer.is_touchscreen_available():
 		var choices := HBoxContainer.new()
-		choices.add_theme_constant_override("separation", 8)
+		choices.add_theme_constant_override("separation", UiKit.GAP_S)
 		var buttons := {}
 		for how in TouchControls.STEERING:
 			var button := MenuStyle.button(TouchControls.STEERING[how], func() -> void:
@@ -119,10 +119,9 @@ func _ready() -> void:
 ## A setting's name on the left and what changes it on the right.
 func _row(text: String, control: Control) -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 16)
+	row.add_theme_constant_override("separation", UiKit.GAP_L)
 	var label := Label.new()
 	label.text = text
-	label.add_theme_font_size_override("font_size", 22)
 	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(label)
 	if control is HSlider:

@@ -18,13 +18,17 @@ const SIZE := 190.0
 ## How much of the course the close up shows across, in metres.
 const CLOSE_ACROSS := 260.0
 const HIDDEN_SIZE := 44.0
-const LINE := Color(1.0, 1.0, 1.0, 0.6)
-const EDGE := Color(0.0, 0.0, 0.0, 0.45)
-const YOU := Color("#f2cd37")
-const OTHERS := Color(1.0, 1.0, 1.0, 0.85)
-const CPU := Color(1.0, 1.0, 1.0, 0.6)
-## The dark square behind the map, so the course stands out over the race.
-const BACKING := Color(0.0, 0.0, 0.0, 0.2)
+const LINE := Color(UiKit.WHITE, 0.85)
+const EDGE := Color(0.0, 0.0, 0.0, 0.5)
+const YOU := UiKit.YELLOW
+const OTHERS := Color(UiKit.WHITE, 0.85)
+const CPU := Color(UiKit.WHITE, 0.6)
+const START := UiKit.RED
+## The dark ring round a kart's dot.
+const DOT_EDGE := UiKit.INK
+## The dark square behind the map, so the course stands out over the race,
+## with the panels' thin light edge.
+const BACKING := Color(0.0, 0.0, 0.0, 0.3)
 ## Fainter on the shared map in split screen, where it sits over both views.
 const SHARED_BACKING := Color(0.0, 0.0, 0.0, 0.05)
 
@@ -89,7 +93,8 @@ func next_mode() -> String:
 
 func _draw() -> void:
 	if mode == "hidden":
-		draw_rect(Rect2(Vector2.ZERO, size), Color(0.0, 0.0, 0.0, 0.25))
+		draw_rect(Rect2(Vector2.ZERO, size), BACKING)
+		draw_rect(Rect2(Vector2.ZERO, size), UiKit.EDGE, false, 1.0)
 		var ring := PackedVector2Array()
 		for k in 9:
 			ring.append(size * 0.5 + Vector2(cos(k * TAU / 8.0), sin(k * TAU / 8.0) * 0.6) * size.x * 0.3)
@@ -98,6 +103,8 @@ func _draw() -> void:
 	if track == null or _line.size() < 2:
 		return
 	draw_rect(Rect2(Vector2.ZERO, size), SHARED_BACKING if shared() else BACKING)
+	if not shared():
+		draw_rect(Rect2(Vector2.ZERO, size), UiKit.EDGE, false, 1.0)
 	var to_map := _whole() if mode != "close" else _close_up()
 	var shown := to_map * _line
 	# A bigger map has thicker lines and dots to go with it.
@@ -107,7 +114,7 @@ func _draw() -> void:
 	# The start line, across the road.
 	var start := to_map * _line[0]
 	var tick := (to_map * (_line[0] + Vector2(track.start.basis.x.x, track.start.basis.x.z) * 12.0)) - start
-	draw_line(start - tick * thick, start + tick * thick, Color.WHITE, 3.0 * thick, true)
+	draw_line(start - tick * thick, start + tick * thick, START, 3.0 * thick, true)
 	var marked: Array = players.map(func(p): return p[0])
 	# Draw opponents first so the brighter human markers stay on top.
 	for kart in karts:
@@ -120,11 +127,11 @@ func _draw() -> void:
 		var kart: Kart = player[0]
 		if is_instance_valid(kart):
 			var spot := to_map * Vector2(kart.global_position.x, kart.global_position.z)
-			draw_circle(spot, 9.0 * thick, Color.BLACK)
+			draw_circle(spot, 9.0 * thick, DOT_EDGE)
 			draw_circle(spot, 7.0 * thick, player[1])
 	if you != null:
 		var at := to_map * Vector2(you.global_position.x, you.global_position.z)
-		draw_circle(at, 8.0, Color.BLACK)
+		draw_circle(at, 8.0, DOT_EDGE)
 		draw_circle(at, 6.0, YOU)
 
 

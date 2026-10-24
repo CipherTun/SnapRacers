@@ -38,6 +38,11 @@ const STICK_DEADZONE := 0.06
 ## up in each half of a split screen.
 const HEIGHT := 0.4
 const HEIGHT_SPLIT := 0.25
+## Each button's colour. Reset and the steering buttons are grey.
+const BUTTON_COLOURS := {
+	"gas": UiKit.GO_GREEN, "brake": UiKit.BRAKE_RED, "look": UiKit.LOOK_BLUE,
+	"gadget0": UiKit.GADGET_PURPLE, "gadget1": UiKit.GADGET_PURPLE,
+}
 ## How far look back and the gadgets sit from the middle of GO, in GO's
 ## radius, which leaves a small gap between them.
 const REACH := 1.9
@@ -69,6 +74,10 @@ var blockers: Array[Control] = []
 var gadget_names: Array[String] = ["", ""]
 ## Whether each power-up can be used right now.
 var gadget_ready: Array[bool] = [false, false]
+## Which power-up is on each gadget button, for its picture (see
+## PowerupIcons), and how many goes it has left.
+var gadget_kinds: Array[String] = ["", ""]
+var gadget_uses: Array[int] = [0, 0]
 
 var _reset_tapped := false
 var _gadget_tapped: Array[bool] = [false, false]
@@ -356,45 +365,78 @@ func _draw() -> void:
 		held.append_array(["gas", "brake"])
 	if held.has("gas_look"):
 		held.append_array(["gas", "look"])
-	var labels := { "gas": "GO", "brake": "BRAKE", "reset": "RESET", "look": "LOOK\nBACK", "gadget0": gadget_names[0], "gadget1": gadget_names[1], "left": "", "right": "" }
-	var font := get_theme_default_font()
+	var font := UiKit.font("title")
 	for name in buttons:
 		var centre: Vector2 = buttons[name][0]
 		var radius: float = buttons[name][1]
-		var alpha := 0.55 if held.has(name) else 0.28
-		var ring := Color(1, 1, 1, 0.8)
+		var lit: bool = held.has(name)
+		var colour: Color = BUTTON_COLOURS.get(name, UiKit.BUTTON_GREY)
+		var ready := true
 		if name.begins_with("gadget"):
-			# Gold when it can be used, faded when it can't.
-			var ready: bool = gadget_ready[int(name.substr(6))]
-			alpha = 0.45 if ready else 0.12
-			ring = Color("#f2cd37") if ready else Color(1, 1, 1, 0.3)
-		draw_circle(centre, radius, Color(1, 1, 1, alpha))
-		draw_arc(centre, radius, 0.0, TAU, 48, ring, 3.0, true)
-		var font_size := int(radius * (0.3 if name.begins_with("gadget") or name == "look" else 0.4))
-		var text: String = labels[name]
-		var text_size := font.get_multiline_string_size(text, HORIZONTAL_ALIGNMENT_CENTER, -1, font_size)
-		var top_left := centre - text_size * 0.5 + Vector2(0.0, font_size * 0.8)
-		draw_multiline_string(font, top_left, text, HORIZONTAL_ALIGNMENT_CENTER, text_size.x, font_size, -1, Color(0, 0, 0, 0.75))
-		if name == "left" or name == "right":
-			# An arrow pointing the way it steers.
-			var way := -1.0 if name == "left" else 1.0
-			var tip := centre + Vector2(radius * 0.45 * way, 0.0)
-			var back := centre - Vector2(radius * 0.3 * way, 0.0)
-			var arrow_colour := Color(MenuStyle.ACCENT, 0.95) if held.has(name) else Color(0, 0, 0, 0.6)
-			draw_colored_polygon(PackedVector2Array([tip, back + Vector2(0.0, -radius * 0.45), back + Vector2(0.0, radius * 0.45)]), arrow_colour)
+			ready = gadget_ready[int(name.substr(6))]
+		_round_button(centre, radius, colour if ready else UiKit.BUTTON_GREY, lit, ready)
+		var ink := Color(UiKit.WHITE, 1.0 if ready else 0.5)
+		match name:
+			"gas", "brake":
+				_words(font, centre, "GO" if name == "gas" else "BRAKE", radius, colour.darkened(0.5))
+			"look", "reset":
+				UiKit.draw_icon(self, name, centre, radius * 1.05, ink, 3.2)
+			"left", "right":
+				# An arrow pointing the way it steers.
+				var way := -1.0 if name == "left" else 1.0
+				var tip := centre + Vector2(radius * 0.45 * way, 0.0)
+				var back := centre - Vector2(radius * 0.3 * way, 0.0)
+				draw_colored_polygon(PackedVector2Array([tip, back + Vector2(0.0, -radius * 0.45), back + Vector2(0.0, radius * 0.45)]), UiKit.YELLOW if lit else UiKit.WHITE)
+			_:
+				var slot := int(name.substr(6))
+				if gadget_kinds[slot] != "":
+					PowerupIcons.draw(self, gadget_kinds[slot], centre, radius * 1.15)
+					if gadget_uses[slot] > 1:
+						var count := "x%d" % gadget_uses[slot]
+						var digits := UiKit.font("digits")
+						var at := centre + Vector2(radius * 0.25, radius * 0.75)
+						draw_string_outline(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, Color(0, 0, 0, 0.9))
+						draw_string(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, UiKit.YELLOW)
+				else:
+					_words(font, centre, gadget_names[slot], radius * 0.6, colour.darkened(0.5))
 	if steering == "buttons":
 		return
-	# The stick is a faint round pad with a groove across it, a dot in the
-	# middle so you can find it, and the knob, which lights up while you're
+	# The stick is a dark round pad with a white rim, marks either side for
+	# how far it goes, and the knob, which lights up yellow while you're
 	# holding it.
 	var stick := _stick()
 	var middle: Vector2 = stick[0]
 	var r: float = stick[1]
 	var travel := r * 0.68
-	draw_circle(middle, r, Color(1, 1, 1, 0.16))
-	draw_arc(middle, r, 0.0, TAU, 64, Color(1, 1, 1, 0.5), 3.0, true)
-	draw_line(middle - Vector2(travel, 0.0), middle + Vector2(travel, 0.0), Color(1, 1, 1, 0.3), 6.0, true)
-	draw_circle(middle, r * 0.07, Color(1, 1, 1, 0.45))
+	draw_circle(middle, r, Color(0, 0, 0, 0.3))
+	draw_arc(middle, r - 2.0, 0.0, TAU, 64, Color(UiKit.WHITE, 0.7), 4.0, true)
+	for x in [-0.6, -0.4, 0.4, 0.6]:
+		draw_line(middle + Vector2(r * x, -8.0), middle + Vector2(r * x, 8.0), Color(UiKit.WHITE, 0.35), 3.0)
 	var holding := _stick_finger != -1
-	var knob_colour := Color(MenuStyle.ACCENT, 0.9) if holding else Color(1, 1, 1, 0.5)
-	draw_circle(middle + Vector2(_knob * travel, 0.0), r * 0.3, knob_colour)
+	var knob := middle + Vector2(_knob * travel, 0.0)
+	draw_circle(knob, r * 0.3, UiKit.YELLOW if holding else Color(UiKit.WHITE, 0.75))
+	draw_arc(knob, r * 0.3, 0.0, TAU, 40, UiKit.INK, 3.0, true)
+
+
+## A solid round button in its colour with a hard shadow under it, brighter
+## while it's held and faded when it can't be used.
+func _round_button(centre: Vector2, radius: float, colour: Color, lit: bool, ready: bool) -> void:
+	var alpha := 0.95 if lit else (0.82 if ready else 0.4)
+	var face := colour.lightened(0.2) if lit else colour
+	draw_circle(centre + Vector2(0.0, 5.0), radius, Color(0, 0, 0, 0.35 * alpha))
+	draw_circle(centre, radius, Color(face, alpha))
+	draw_arc(centre, radius - 2.0, 0.0, TAU, 48, Color(UiKit.WHITE if lit else colour.lightened(0.4), alpha), 3.0, true)
+
+
+## Upright white words in the middle of a button, as big as fit across it.
+func _words(font: Font, centre: Vector2, text: String, radius: float, edge: Color) -> void:
+	if text == "":
+		return
+	var font_size := int(radius * 0.55)
+	var wide := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	if wide > radius * 1.5:
+		font_size = int(font_size * radius * 1.5 / wide)
+		wide = font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x
+	var at := centre + Vector2(-wide * 0.5, font.get_ascent(font_size) * 0.5 - font.get_descent(font_size) * 0.35)
+	draw_string_outline(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, maxi(4, font_size / 7), edge)
+	draw_string(font, at, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, UiKit.WHITE)

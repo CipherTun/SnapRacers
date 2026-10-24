@@ -12,6 +12,12 @@ extends Node
 ## window's size, and SNAPRACERS_CUTOUT tries a camera hole. An upright
 ## window only takes face to face. Under xvfb-run the window is the screen.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/hud_shots.tscn -- slots 1280 1280x720
+##
+## With "screens" it takes the whole race screen with the touch controls up
+## and two gadgets held, then the race's menu, then the results, alone, side
+## by side and face to face, into a folder at a window size. SNAPRACERS_CUTOUT
+## tries a camera hole, drawn in black on the pictures.
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --windowed --path . res://tools/shots/hud_shots.tscn -- screens /srv/downloads/temp/debug/snapracers/ui-looks/m5 1280x800
 
 const OUT := "res://build/shots"
 
@@ -24,6 +30,10 @@ func frames(n: int) -> void:
 func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(OUT)
 	var args := OS.get_cmdline_user_args()
+	if args.size() > 2 and args[0] == "screens":
+		await _screens(args[1], args[2])
+		get_tree().quit()
+		return
 	if args.size() > 0 and args[0] == "slots":
 		await _slots(args[1] if args.size() > 1 else "", args[2] if args.size() > 2 else "1280x720")
 		get_tree().quit()
@@ -122,6 +132,59 @@ func _slots(tag: String, window_size: String) -> void:
 	add_child(sheet)
 	await frames(4)
 	await _save("slots_icons" + end)
+
+
+func _screens(folder: String, window_size: String) -> void:
+	var wh := window_size.split_floats("x")
+	get_window().mode = Window.MODE_WINDOWED
+	await frames(5)
+	get_window().size = Vector2i(int(wh[0]), int(wh[1]))
+	await frames(10)
+	DirAccess.make_dir_recursive_absolute(folder)
+	var host := Node.new()
+	add_child(host)
+	Game.start(host, false)
+	var split_was = Game.settings.get_value("race", "split", Game.SOLO)
+	# Face to face is for a phone held upright, so an upright window only
+	# takes that.
+	var splits := [Game.SOLO, Game.SIDE_BY_SIDE, Game.FACE_TO_FACE] if wh[0] > wh[1] else [Game.FACE_TO_FACE]
+	for split in splits:
+		var race := await _start(host, split)
+		var tag: String = split if split != Game.SOLO else "solo"
+		for racer in race.humans:
+			racer.kart.held = ["triple_turbo", "shield"]
+			racer.kart.held_uses = [3, 1]
+			racer.hud.touch.visible = true
+			# The stick on your own and whatever's set in a split screen, so
+			# both kinds get seen.
+			if split == Game.SOLO:
+				racer.hud.touch.steering = "stick"
+			racer.progress.lap_times.append(58.42)
+			racer.kart.slowdown_left = Kart.RESET_SLOWDOWN_TIME * 0.6
+			racer.hud.flash("Chase camera")
+		await frames(20)
+		await _shoot(folder, "race_" + tag)
+		race.open_menu(race.humans[0])
+		await frames(4)
+		await _shoot(folder, "pause_" + tag)
+		race.close_menu(race.humans[0])
+		await frames(4)
+		race.humans[0].hud.show_results()
+		await frames(10)
+		await _shoot(folder, "results_" + tag)
+	Game.settings.set_value("race", "split", split_was)
+
+
+func _shoot(folder: String, which: String) -> void:
+	await RenderingServer.frame_post_draw
+	var picture := get_viewport().get_texture().get_image()
+	var name := "%s-%dx%d" % [which, picture.get_width(), picture.get_height()]
+	if OS.get_environment("SNAPRACERS_CUTOUT") != "":
+		name += "-cutout"
+		for hole in SafeArea.pretend:
+			picture.fill_rect(Rect2i(hole), Color.BLACK)
+	picture.save_png("%s/%s.png" % [folder, name])
+	print("saved ", name)
 
 
 func _solo(host: Node, end: String) -> void:
