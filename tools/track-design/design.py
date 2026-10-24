@@ -119,8 +119,9 @@ def parse(text):
     SR4.3/SL4.3 slant right/left 4 long 3 across, U2+1/U2-1 ramp up/down a
     level, C2 crest (C2h3 for one 3 m high), J jump, OR/OL loop, XR/XL corkscrew,
     K a level crossing. Add ^1 or ^-1 to any piece to climb
-    or drop a level along it, !o for open edges, !d dirt, !v gravel, !i ice,
-    !s sand, !g grass, !m mud."""
+    or drop a level along it, !o for open edges, !w for walls all along, !l
+    or !r for walls with the left or right side open, !d dirt, !v gravel,
+    !i ice, !s sand, !g grass, !m mud."""
     import re
     lines = [l.split('#')[0].strip() for l in text.splitlines()]
     lines = [l for l in lines if l]
@@ -174,6 +175,9 @@ def parse(text):
                 spec["rise"] = climb
         for f in flags:
             if f == "o": spec["edges"] = "open"
+            elif f == "w": spec["edges"] = "walls"
+            elif f == "l": spec["edges"] = "left_open"
+            elif f == "r": spec["edges"] = "right_open"
             elif f == "d": spec["surface"] = "dirt"
             elif f == "v": spec["surface"] = "gravel"
             elif f == "i": spec["surface"] = "ice"

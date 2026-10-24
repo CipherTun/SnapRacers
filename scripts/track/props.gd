@@ -64,6 +64,9 @@ const ROOM := {
 	"windpump": 3.0, "red_rocks": 2.4,
 	"jungle_tree": 3.0, "jungle_sapling": 1.6, "jungle_bush": 1.6, "fern": 1.2, "parrots": 1.6, "stepped_pyramid": 17.5, "stone_head": 2.6,
 	"waterfall": 14.0, "rope_bridge": 11.0, "canopy_walk": 15.0, "karst": 13.0, "jungle_hut": 5.0,
+	"city_block": 7.5, "townhouses": 7.0, "traffic_light": 1.2, "neon_sign": 2.6, "street_tree": 1.4, "armco": 3.4,
+	"phone_box": 1.0, "double_decker": 5.6, "tuk_tuk": 2.0, "neon_tower": 9.0, "lantern_gate": 5.0,
+	"tunnel_mouth": 13.0, "spire_tower": 10.5, "clock_tower": 5.0, "overpass": 17.0, "chedi": 7.5,
 }
 
 
@@ -179,6 +182,22 @@ static func add(kit: SceneryKit, prop: String, at: Vector3, rng: RandomNumberGen
 		"canopy_walk": canopy_walk(kit, at_grid, facing, rng)
 		"karst": karst(kit, at_grid, rng, 1.0, true)
 		"jungle_hut": jungle_hut(kit, at_grid, facing, rng)
+		"city_block": city_block(kit, at_grid, facing, rng)
+		"townhouses": townhouses(kit, at_grid, facing, rng)
+		"traffic_light": traffic_light(kit, at_grid, facing)
+		"neon_sign": neon_sign(kit, at_grid, facing, rng)
+		"street_tree": street_tree(kit, at_grid, rng)
+		"armco": armco(kit, at_grid, facing)
+		"phone_box": phone_box(kit, at_grid, facing)
+		"double_decker": double_decker(kit, at_grid, facing)
+		"tuk_tuk": tuk_tuk(kit, at_grid, facing, rng)
+		"neon_tower": neon_tower(kit, at_grid, facing, rng)
+		"lantern_gate": lantern_gate(kit, at_grid, facing)
+		"tunnel_mouth": tunnel_mouth(kit, at_grid, facing)
+		"spire_tower": spire_tower(kit, at_grid, rng, 1.0, true)
+		"clock_tower": clock_tower(kit, at_grid, facing)
+		"overpass": overpass(kit, at_grid, facing)
+		"chedi": chedi(kit, at_grid)
 
 
 ## Turns an offset from a prop's middle by its facing.
@@ -1099,6 +1118,9 @@ static func pit_building(kit: SceneryKit, at: Vector3, length: float, facing: in
 		# The race control tower on one end, all windows.
 		_box(kit, at, tower, Vector3(6.0, 5.0, depth), facing, LIGHT_GREY, SceneryKit.WINDOWS)
 		_box(kit, at, tower + Vector3(0.0, 5.0, 0.0), Vector3(6.6, 0.4, depth + 0.6), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+		if style == "city":
+			# In the city it has a glowing sign on the roof.
+			_box(kit, at, tower + Vector3(0.0, 5.4, depth * 0.5 - 0.3), Vector3(5.0, 1.4, 0.3), facing, YELLOW, SceneryKit.GLOW, false)
 	_box(kit, at, Vector3(0.0, 4.2, 0.2), Vector3(length, 0.9, 0.3), facing, WOOD.darkened(0.3) if western or jungle else BLUE, SceneryKit.SMOOTH, false)
 
 
@@ -2153,6 +2175,190 @@ static func jungle_hut(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNum
 		_box(kit, at, Vector3(3.6, 0.05, 2.0 + z * 1.75), Vector3(0.55, 0.35, 0.5), facing, canoe, SceneryKit.SMOOTH, false)
 		_box(kit, at, Vector3(3.6, 0.1, 2.0 + z * 2.15), Vector3(0.3, 0.32, 0.3), facing, canoe, SceneryKit.SMOOTH, false)
 	_box(kit, at, Vector3(3.6, 0.3, 2.0), Vector3(0.55, 0.12, 2.8), facing, BLACK, SceneryKit.SMOOTH, false)
+
+
+# The city, always raced at night. Windows light up by themselves after dark
+# (SceneryKit.WINDOWS), and signs and lanterns glow, so nothing here needs a
+# real light.
+
+const CITY_WALLS := [Color("#5b6470"), Color("#7a7f86"), Color("#4e5d6e"), Color("#8a7a6a"), Color("#c9b79c"), Color("#6a5a50")]
+const NEON := [Color("#ff4fa3"), Color("#36d6f4"), Color("#f5cd2f"), Color("#8cff5a"), Color("#b39dff"), Color("#ff7a2a")]
+const CONCRETE := Color("#9a9a94")
+const LANTERN := Color("#ff5a3a")
+
+
+## An office block with lit windows and a flat roof, with a box of machinery
+## on top. Never wider than 10.5 m, so it fits its room.
+static func city_block(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var w := rng.randf_range(7.5, 10.5)
+	var d := rng.randf_range(7.5, 10.5)
+	var h := rng.randf_range(10.0, 26.0)
+	var colour: Color = CITY_WALLS[rng.randi() % CITY_WALLS.size()]
+	_box(kit, at, Vector3.ZERO, Vector3(w, h, d), facing, colour, SceneryKit.WINDOWS)
+	_box(kit, at, Vector3(0.0, h, 0.0), Vector3(w + 0.3, 0.4, d + 0.3), facing, colour.darkened(0.35), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(rng.randf_range(-1.5, 1.5), h + 0.4, rng.randf_range(-1.5, 1.5)), Vector3(3.0, 1.8, 2.4), facing, LIGHT_GREY, SceneryKit.SMOOTH, false)
+
+
+## A row of three narrow terraced houses with lit windows, each its own
+## colour, under one roof.
+static func townhouses(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var h := rng.randf_range(7.0, 9.5)
+	for k in 3:
+		var colour: Color = [Color("#8a4a3a"), Color("#c9b79c"), Color("#f2f3f2"), Color("#6a5a50"), Color("#a05a3a")][rng.randi() % 5]
+		_box(kit, at, Vector3(-4.0 + k * 4.0, 0.0, 0.0), Vector3(4.0, h, 6.0), facing, colour, SceneryKit.WINDOWS)
+	_roof(kit, at + Vector3.UP * h, 12.0, 6.0, deg_to_rad(30.0), facing, DARK_GREY, false)
+	_box(kit, at, Vector3(0.0, 0.0, 3.05), Vector3(12.0, 0.6, 0.1), facing, BLACK, SceneryKit.SMOOTH, false)
+
+
+## A traffic light on a post, its lamps lit red, amber and green.
+static func traffic_light(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	kit.cylinder(at, 0.12, 3.4, DARK_GREY, SceneryKit.SMOOTH, true)
+	_box(kit, at, Vector3(0.0, 3.2, 0.1), Vector3(0.5, 1.5, 0.4), facing, BLACK, SceneryKit.SMOOTH, false)
+	for k in 3:
+		var lamp: Color = [Color("#3ae86a"), Color("#ffb020"), Color("#ff3b24")][k]
+		_box(kit, at, Vector3(0.0, 3.3 + k * 0.45, 0.32), Vector3(0.3, 0.3, 0.06), facing, lamp, SceneryKit.GLOW, false)
+
+
+## A glowing sign on two posts, in a bright colour.
+static func neon_sign(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var colour: Color = NEON[rng.randi() % NEON.size()]
+	for x in [-1.6, 1.6]:
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(0.25, 2.4, 0.25), facing, DARK_GREY)
+	_box(kit, at, Vector3(0.0, 2.4, 0.0), Vector3(4.4, 1.8, 0.3), facing, BLACK, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 2.6, 0.12), Vector3(3.8, 1.4, 0.1), facing, colour, SceneryKit.GLOW, false)
+
+
+## A small tree in a square planter.
+static func street_tree(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator) -> void:
+	kit.box(at, Vector3(1.6, 0.5, 1.6), CONCRETE, SceneryKit.BRICK, false)
+	kit.cylinder(at + Vector3.UP * 0.5, 0.15, 2.0, BROWN, SceneryKit.BRICK, true)
+	var leaves: Color = [GREEN, BRIGHT_GREEN, Color("#3a7d3e")][rng.randi() % 3]
+	kit.box(at + Vector3.UP * 2.3, Vector3(2.2, 1.6, 2.2), leaves, SceneryKit.BRICK, false)
+	kit.box(at + Vector3.UP * 3.9, Vector3(1.4, 0.8, 1.4), leaves.lightened(0.1), SceneryKit.BRICK, false)
+
+
+## A length of steel crash barrier on posts, along the way it faces.
+static func armco(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	for x in [-2.8, 0.0, 2.8]:
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(0.2, 0.8, 0.2), facing, DARK_GREY)
+	_box(kit, at, Vector3(0.0, 0.35, 0.15), Vector3(6.2, 0.35, 0.1), facing, LIGHT_GREY, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.8, 0.0), Vector3(6.2, 0.08, 0.3), facing, LIGHT_GREY, SceneryKit.SMOOTH, false)
+
+
+## A red phone box with a lit window band and a domed top.
+static func phone_box(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	_box(kit, at, Vector3.ZERO, Vector3(1.0, 2.5, 1.0), facing, RED)
+	_box(kit, at, Vector3(0.0, 1.0, 0.0), Vector3(1.04, 1.1, 1.04), facing, Color("#ffe6b0"), SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, 2.5, 0.0), Vector3(1.15, 0.3, 1.15), facing, RED.darkened(0.15), SceneryKit.SMOOTH, false)
+
+
+## A red double decker bus parked side on, with lit windows on both decks.
+static func double_decker(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	_box(kit, at, Vector3(0.0, 0.4, 0.0), Vector3(10.5, 4.0, 2.5), facing, RED)
+	for y in [1.5, 3.3]:
+		_box(kit, at, Vector3(0.0, y, 0.0), Vector3(10.0, 0.8, 2.56), facing, Color("#ffe6b0"), SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, 4.4, 0.0), Vector3(10.3, 0.15, 2.3), facing, RED.darkened(0.2), SceneryKit.SMOOTH, false)
+	for x in [-3.6, 3.4]:
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(1.1, 0.8, 2.6), facing, BLACK, SceneryKit.SMOOTH, false)
+
+
+## A three wheeled taxi with a canopy roof, in a bright colour.
+static func tuk_tuk(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var colour: Color = [YELLOW, AZURE, RED, GREEN][rng.randi() % 4]
+	_box(kit, at, Vector3(0.0, 0.3, 0.3), Vector3(1.4, 0.8, 2.2), facing, colour)
+	_box(kit, at, Vector3(0.0, 1.1, 0.0), Vector3(0.1, 0.9, 0.1), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 2.0, 0.5), Vector3(1.5, 0.15, 2.6), facing, colour.darkened(0.3), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.0, 0.3), Vector3(1.5, 0.4, 2.0), facing, BLACK, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.9, -0.85), Vector3(0.5, 0.2, 0.06), facing, Color("#fff1d6"), SceneryKit.GLOW, false)
+
+
+## A tall narrow building covered in glowing signs: two long ones down the
+## front and a big one on the roof.
+static func neon_tower(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
+	var h := rng.randf_range(30.0, 40.0)
+	var colour: Color = CITY_WALLS[rng.randi() % 3]
+	_box(kit, at, Vector3.ZERO, Vector3(11.0, h, 9.0), facing, colour, SceneryKit.WINDOWS)
+	_box(kit, at, Vector3(0.0, h, 0.0), Vector3(11.4, 0.5, 9.4), facing, colour.darkened(0.4), SceneryKit.SMOOTH, false)
+	for x in [-3.8, 3.8]:
+		_box(kit, at, Vector3(x, 4.0, 4.7), Vector3(1.6, h - 8.0, 0.4), facing, NEON[rng.randi() % NEON.size()], SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, h + 0.5, 0.0), Vector3(0.4, 2.0, 0.4), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, h + 2.5, 0.0), Vector3(9.0, 3.0, 0.4), facing, NEON[rng.randi() % NEON.size()], SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, 0.0, 4.55), Vector3(6.0, 3.0, 0.1), facing, Color("#ffe6b0"), SceneryKit.GLOW, false)
+
+
+## A red gate with two cross beams and paper lanterns glowing along the
+## lower one.
+static func lantern_gate(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	for x in [-3.0, 3.0]:
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(0.6, 6.0, 0.6), facing, RED)
+	_box(kit, at, Vector3(0.0, 4.6, 0.0), Vector3(7.4, 0.5, 0.5), facing, RED, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 6.0, 0.0), Vector3(9.0, 0.6, 0.8), facing, BLACK, SceneryKit.SMOOTH, false)
+	for x in [-1.8, -0.6, 0.6, 1.8]:
+		_box(kit, at, Vector3(x, 3.5, 0.0), Vector3(0.6, 0.9, 0.6), facing, LANTERN, SceneryKit.GLOW, false)
+
+
+## A road going into a tunnel under a grassy bank: a concrete face with a
+## dark mouth, lamps over it, and the road running in.
+static func tunnel_mouth(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	_box(kit, at, Vector3(0.0, 0.0, -4.0), Vector3(20.0, 8.0, 8.0), facing, Color("#4f6a44"), SceneryKit.PLAIN)
+	_box(kit, at, Vector3(0.0, 0.0, 0.2), Vector3(16.0, 7.0, 0.8), facing, CONCRETE)
+	_box(kit, at, Vector3(0.0, 0.0, 0.5), Vector3(10.0, 5.0, 0.4), facing, Color("#0e1014"), SceneryKit.PLAIN, false)
+	_box(kit, at, Vector3(0.0, 5.4, 0.7), Vector3(7.0, 0.3, 0.2), facing, Color("#fff1d6"), SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, -0.05, 4.0), Vector3(10.0, 0.1, 6.0), facing, DARK_GREY, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.0, 4.0), Vector3(0.3, 0.02, 5.0), facing, WHITE, SceneryKit.SMOOTH, false)
+
+
+## A very tall tower in steps, getting narrower up to a spire. `size`
+## scales it, and only its base is solid, if `solid`.
+static func spire_tower(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator, size: float, solid: bool) -> void:
+	var colour: Color = [Color("#7fa6c9"), Color("#5b7fa3"), Color("#a3b5c4")][rng.randi() % 3]
+	var w := 14.0 * size
+	var y := 0.0
+	for k in 4:
+		var h := (16.0 + rng.randf() * 10.0) * size
+		kit.box(at + Vector3.UP * y, Vector3(w, h, w), colour, SceneryKit.WINDOWS, solid and k == 0)
+		y += h
+		w *= 0.7
+	kit.cylinder(at + Vector3.UP * y, 0.6 * size, 22.0 * size, LIGHT_GREY, SceneryKit.SMOOTH)
+	kit.box(at + Vector3.UP * (y + 22.0 * size), Vector3(0.8, 0.8, 0.8) * size, Color("#ff3b24"), SceneryKit.GLOW, false)
+
+
+## A clock tower in pale stone with a lit clock face on each side, a belfry
+## and a pointed spire.
+static func clock_tower(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	var stone := Color("#c9b79c")
+	_box(kit, at, Vector3.ZERO, Vector3(6.0, 22.0, 6.0), facing, stone)
+	_box(kit, at, Vector3(0.0, 22.0, 0.0), Vector3(7.0, 6.0, 7.0), facing, stone.darkened(0.1), SceneryKit.BRICK, false)
+	_box(kit, at, Vector3(0.0, 23.0, 0.0), Vector3(7.2, 4.0, 4.0), facing, Color("#fff1d6"), SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, 23.0, 0.0), Vector3(4.0, 4.0, 7.2), facing, Color("#fff1d6"), SceneryKit.GLOW, false)
+	_box(kit, at, Vector3(0.0, 28.0, 0.0), Vector3(5.6, 4.0, 5.6), facing, stone.darkened(0.2), SceneryKit.BRICK, false)
+	kit.cone(at + Vector3.UP * 32.0, 3.6, 9.0, Color("#3a4a3a"), SceneryKit.SMOOTH)
+	kit.cylinder(at + Vector3.UP * 41.0, 0.12, 2.0, YELLOW, SceneryKit.SMOOTH)
+
+
+## A stretch of raised expressway beside the road, on concrete pillars, with
+## its own lamps.
+static func overpass(kit: SceneryKit, at: Vector3, facing: int) -> void:
+	for x in [-11.0, 0.0, 11.0]:
+		_box(kit, at, Vector3(x, 0.0, 0.0), Vector3(2.0, 8.0, 2.0), facing, CONCRETE)
+		_box(kit, at, Vector3(x, 7.0, 0.0), Vector3(2.4, 1.0, 9.0), facing, CONCRETE.darkened(0.1), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 8.0, 0.0), Vector3(30.0, 1.2, 10.0), facing, CONCRETE, SceneryKit.SMOOTH, false)
+	for z in [-4.8, 4.8]:
+		_box(kit, at, Vector3(0.0, 9.2, z), Vector3(30.0, 0.9, 0.4), facing, LIGHT_GREY, SceneryKit.SMOOTH, false)
+	for x in [-10.0, 0.0, 10.0]:
+		_box(kit, at, Vector3(x, 9.2, 4.8), Vector3(0.2, 3.0, 0.2), facing, LIGHT_GREY, SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x, 12.0, 4.2), Vector3(0.5, 0.25, 1.2), facing, Color("#fff1d6"), SceneryKit.LAMP, false)
+
+
+## A temple spire in gold: square steps, a round bell and a long point.
+static func chedi(kit: SceneryKit, at: Vector3) -> void:
+	var gold := Color("#e0b030")
+	kit.box(at, Vector3(10.0, 1.5, 10.0), WHITE, SceneryKit.BRICK, true)
+	kit.box(at + Vector3.UP * 1.5, Vector3(7.5, 1.5, 7.5), WHITE, SceneryKit.BRICK, false)
+	kit.cylinder(at + Vector3.UP * 3.0, 3.2, 5.0, gold, SceneryKit.SMOOTH)
+	kit.cone(at + Vector3.UP * 8.0, 3.2, 3.0, gold, SceneryKit.SMOOTH)
+	kit.cylinder(at + Vector3.UP * 11.0, 0.9, 2.0, gold.lightened(0.1), SceneryKit.SMOOTH)
+	kit.cone(at + Vector3.UP * 13.0, 0.9, 9.0, gold, SceneryKit.SMOOTH)
 
 
 # Fans.

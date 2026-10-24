@@ -5,7 +5,7 @@ extends RefCounted
 ## black brick with a plate in the cup's colour and a round stem, and has its
 ## own top: a two handled cup, a wheel, a gear, an arch, a chequered flag,
 ## mountains, a lightning bolt, a corkscrew, a palm tree, a cable car, a
-## cactus or a stone head from a jungle temple.
+## cactus, a stone head from a jungle temple or a traffic light.
 ##
 ## It comes in plain light grey, for a cup you haven't won yet, or in gold,
 ## silver or bronze for your best finish. The plinth keeps its colours either
@@ -14,7 +14,7 @@ extends RefCounted
 ## A trophy is a little over 1 m across and up to 2 m tall, standing on its own
 ## origin.
 
-const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus", "temple_head"]
+const TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm", "cable_car", "cactus", "temple_head", "traffic_light"]
 ## The tops your own cups get picked from. Kept as it is so a cup you made
 ## keeps its trophy when new cups add tops.
 const OWN_TOPS := ["cup", "wheel", "gear", "arch", "flag", "peak", "bolt", "spiral", "palm"]
@@ -86,6 +86,8 @@ static func pieces(spec: Dictionary, colour: Color, finish := "grey") -> Array:
 			_cactus(add, metal)
 		"temple_head":
 			_temple_head(add, metal)
+		"traffic_light":
+			_traffic_light(add, metal)
 		_:
 			_cup(add, metal)
 	return out
@@ -318,3 +320,17 @@ static func _temple_head(add: Callable, metal: Material) -> void:
 	add.call(_brick(Vector3(0.14, 0.14, 0.06)), _up(TOP_AT + 0.42, 0.0, -0.28), metal)
 	add.call(_brick(Vector3(0.2, 0.06, 0.07)), _up(TOP_AT + 0.37, 0.0, -0.285), metal)
 	add.call(_brick(Vector3(0.24, 0.06, 0.04)), _up(TOP_AT + 0.31, 0.0, -0.27), metal)
+
+
+## A traffic light on a short post: a tall box with three round lamps down
+## the front, each under a little hood.
+static func _traffic_light(add: Callable, metal: Material) -> void:
+	add.call(MeshKit.rounded_cylinder(0.07, 0.3, 0.02, 16), _up(TOP_AT + 0.15), metal)
+	add.call(_brick(Vector3(0.36, 0.06, 0.3)), _up(TOP_AT + 0.31), metal)
+	add.call(_brick(Vector3(0.32, 0.78, 0.24)), _up(TOP_AT + 0.73), metal)
+	add.call(_brick(Vector3(0.36, 0.05, 0.28)), _up(TOP_AT + 1.13), metal)
+	var face := Basis(Vector3.RIGHT, PI * 0.5)
+	for k in 3:
+		var y := TOP_AT + 0.49 + k * 0.24
+		add.call(MeshKit.rounded_cylinder(0.08, 0.05, 0.015, 16), Transform3D(face, Vector3(0.0, y, -0.13)), metal)
+		add.call(_brick(Vector3(0.22, 0.03, 0.1)), _up(y + 0.1, 0.0, -0.17), metal)

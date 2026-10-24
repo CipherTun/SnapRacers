@@ -5,7 +5,9 @@ extends RefCounted
 ## starts and stay the same all race. Left to chance, they suit the course:
 ## snowy courses mostly snow, the Alps often, deserts get dust storms and
 ## never rain, canyons are mostly clear with dust and hardly any rain, jungles
-## often rain or fog and never snow or dust, and beaches are mostly sunny. Halls are always the same, since they're indoors.
+## often rain or fog and never snow or dust, cities are always at night with
+## rain and fog now and then, and beaches are mostly sunny. Halls are always
+## the same, since they're indoors.
 ##
 ## A race's conditions travel online as a dictionary, worked out once by the
 ## host, so everyone races in the same weather with the same puddles.
@@ -32,6 +34,7 @@ const CLIMATE_OF := {
 	"desert": "desert", "park_desert": "desert",
 	"canyon_cactus": "canyon", "canyon_ranch": "canyon", "canyon_mesa": "canyon", "canyon_mine": "canyon",
 	"jungle_canopy": "jungle", "jungle_falls": "jungle", "jungle_temple": "jungle", "jungle_swamp": "jungle",
+	"city_tokyo": "city", "city_dubai": "city", "city_london": "city", "city_bangkok": "city",
 	"golden_hills": "dry", "mine": "dry",
 	"gran_canaria": "beach", "sardinia": "beach", "malta": "beach", "trulli": "beach",
 	"brittany": "coastal", "phillip_island": "coastal", "delta": "coastal", "kent_downs": "coastal",
@@ -40,8 +43,8 @@ const CLIMATE_OF := {
 	"hall_red": "indoor", "hall_green": "indoor", "hall_blue": "indoor", "hall_neon": "indoor",
 }
 
-## Themes always raced at one time of day, whatever the player picks. The
-## weather's still left to chance.
+## Themes (or climates) always raced at one time of day, whatever the player
+## picks. The weather's still left to chance.
 const FIXED_TIMES := {"city": "night"}
 
 ## How likely each weather is in each climate, in the order of WEATHERS:
@@ -56,6 +59,7 @@ const WEATHER_ODDS := {
 	"desert": [65, 0, 0, 0, 0, 35],
 	"canyon": [62, 3, 0, 3, 7, 25],
 	"jungle": [36, 30, 0, 20, 14, 0],
+	"city": [55, 22, 3, 12, 6, 2],
 	"dry": [70, 0, 0, 5, 10, 15],
 	"volcanic": [55, 0, 0, 25, 20, 0],
 	"space": [85, 0, 0, 15, 0, 0],
@@ -120,6 +124,8 @@ static func picked(player_pick: String, course_pick: String, fixed := "") -> Str
 static func fixed_time(theme: String, course_time: String, fixed: bool) -> String:
 	if FIXED_TIMES.has(theme):
 		return FIXED_TIMES[theme]
+	if FIXED_TIMES.has(CLIMATE_OF.get(theme, "")):
+		return FIXED_TIMES[CLIMATE_OF[theme]]
 	if fixed and TIMES.has(course_time):
 		return course_time
 	return ""

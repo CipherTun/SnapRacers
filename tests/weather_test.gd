@@ -101,6 +101,8 @@ func _initialize() -> void:
 	# picks, with the weather still left to chance.
 	var city := Conditions.fixed_time("city", Conditions.RANDOM, false)
 	check(city == "night" and Conditions.picked("day", Conditions.RANDOM, city) == "night", "a city course is always at night, even when you pick day")
+	var city_themes := Scenery.THEMES.keys().filter(func(t): return Conditions.CLIMATE_OF.get(t, "") == "city")
+	check(city_themes.size() >= 4 and city_themes.all(func(t): return Conditions.fixed_time(t, "day", true) == "night"), "every City Cup theme is at night (%d themes)" % city_themes.size())
 	check(Conditions.fixed_time("orchard", "dusk", true) == "dusk" and Conditions.fixed_time("orchard", "dusk", false) == "" and Conditions.fixed_time("orchard", Conditions.RANDOM, true) == "", "a course can keep its own time of day, and only when it's set to")
 	check(Conditions.picked("rain", Conditions.RANDOM, "") == "rain" and Conditions.picked(Conditions.RANDOM, "fog", "") == "fog", "without one the picks work as before")
 	var weathers := {}

@@ -79,7 +79,9 @@ const LAMP_EVERY := 20.0
 ## stands far out (see _far_karsts()). "undergrowth" is small cheap fillers
 ## packed in thick along the road (see _undergrowth()), and "filler_reach"
 ## keeps the fillers within that many metres past the runoff, 64 if it's
-## left out.
+## left out. A city theme has "skyline": a ring of tall lit towers stands
+## far out (see _far_skyline()), and "undergrowth_max" caps how many
+## undergrowth props it gets, MAX_UNDERGROWTH if it's left out.
 const THEMES := {
 	"orchard": {
 		"ground": "#4b9f4a", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#c4281c",
@@ -368,6 +370,42 @@ const THEMES := {
 		"filler_reach": 34.0,
 		"undergrowth": {"fern": 2, "reeds": 1, "jungle_sapling": 2, "jungle_bush": 3},
 	},
+	"city_tokyo": {
+		"ground": "#5d6266", "curbs": ["#c4281c", "#f2f3f2"], "wall": "#f2f3f2",
+		"sky": ["#3f6aa8", "#dfe6ee"], "skyline": true, "floor": "dirt",
+		"landmarks": ["tunnel_mouth", "neon_tower", "neon_tower", "lantern_gate", "pagoda", "lantern_gate"],
+		"fillers": {"city_block": 6, "neon_sign": 2, "street_tree": 2, "armco": 1},
+		"filler_reach": 44.0,
+		"undergrowth": {"street_tree": 2, "traffic_light": 1, "neon_sign": 1},
+		"undergrowth_max": 70,
+	},
+	"city_dubai": {
+		"ground": "#a8977a", "curbs": ["#f5cd2f", "#1b2a34"], "wall": "#d7c599",
+		"sky": ["#4a8ed8", "#f2e6d2"], "skyline": true, "floor": "dirt",
+		"landmarks": ["spire_tower", "spire_tower", "skyscraper", "skyscraper", "spire_tower"],
+		"fillers": {"city_block": 6, "palm": 2, "neon_sign": 1, "armco": 1},
+		"filler_reach": 44.0,
+		"undergrowth": {"street_tree": 1, "traffic_light": 1},
+		"undergrowth_max": 70,
+	},
+	"city_london": {
+		"ground": "#5f665e", "curbs": ["#c4281c", "#f2f3f2"], "wall": "#c4281c",
+		"sky": ["#5a7fa8", "#e2e6ea"], "skyline": true, "floor": "dirt",
+		"landmarks": ["clock_tower", "double_decker", "townhouses", "double_decker", "townhouses"],
+		"fillers": {"townhouses": 5, "city_block": 2, "street_tree": 3, "double_decker": 1, "armco": 1},
+		"filler_reach": 44.0,
+		"undergrowth": {"street_tree": 2, "phone_box": 1, "traffic_light": 1},
+		"undergrowth_max": 70,
+	},
+	"city_bangkok": {
+		"ground": "#5e625a", "curbs": ["#f5cd2f", "#c4281c"], "wall": "#f5cd2f",
+		"sky": ["#4a86c8", "#e8e6dc"], "skyline": true, "floor": "dirt",
+		"landmarks": ["overpass", "chedi", "overpass", "chedi"],
+		"fillers": {"city_block": 6, "neon_sign": 2, "tuk_tuk": 1, "armco": 1},
+		"filler_reach": 44.0,
+		"undergrowth": {"street_tree": 2, "tuk_tuk": 1, "traffic_light": 1, "neon_sign": 1},
+		"undergrowth_max": 70,
+	},
 	"golden_hills": {
 		"ground": "#a8965c", "curbs": ["#d8261c", "#f2f2f2"], "wall": "#da8540",
 		"sky": ["#3f86d6", "#e8eef2"], "floor": "dirt",
@@ -458,6 +496,8 @@ func _ready() -> void:
 			_far_mesas()
 		if theme.get("karsts", false):
 			_far_karsts()
+		if theme.get("skyline", false):
+			_far_skyline()
 	if _sea.size != Vector2.ZERO:
 		_build_sea()
 	# Only things near the road need to be solid. And nothing that ended up on
@@ -954,6 +994,12 @@ func _between(k: int, side: float, edge: float) -> Vector3:
 				partner = j
 	if partner < 0 or nearest > BARRIER_REACH or track.distances[partner] < track.distances[k]:
 		return Vector3.INF
+	# Walls all along both bits of road already keep karts from cutting across.
+	# A cut bend's inside is open, so it still needs the tire line.
+	var here: TrackPiece = track.pieces[track.piece_of[k]]
+	var there: TrackPiece = track.pieces[track.piece_of[partner]]
+	if here.forced_walls() and not here.cut and there.forced_walls() and not there.cut:
+		return Vector3.INF
 	var at := p + right * nearest * 0.5
 	at = _grounded(at)
 	# Not on any road (a crossing, say), or on a cut bend's dirt.
@@ -1171,6 +1217,36 @@ func _far_karsts() -> void:
 	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
 
 
+## Tall towers with lit windows in a ring far out round the course, like
+## _far_peaks(). None of them is solid and none of them breaks.
+func _far_skyline() -> void:
+	var low := Vector2(INF, INF)
+	var high := -Vector2(INF, INF)
+	for p in track.points:
+		low = low.min(Vector2(p.x, p.z))
+		high = high.max(Vector2(p.x, p.z))
+	var middle := (low + high) * 0.5
+	var half := (high - low) * 0.5 + Vector2.ONE * (REACH + 30.0)
+	var half_out := half
+	var level := _far_level(middle, (high - low) * 0.5 + Vector2.ONE * (REACH + 30.0))
+	var count := 30
+	for k in count:
+		var a := TAU * (k + _rng.randf_range(-0.35, 0.35)) / count
+		var dir := Vector2(cos(a), sin(a))
+		var reach := minf(half.x / maxf(absf(dir.x), 0.01), half.y / maxf(absf(dir.y), 0.01))
+		var spot := middle + dir * (reach + _rng.randf_range(0.0, 120.0))
+		var at := Vector3(spot.x, level - 1.0, spot.y)
+		half_out = half_out.max((spot - middle).abs())
+		var kit := _kit if Graphics.draws_far(at) else SceneryKit.new()
+		var w := _rng.randf_range(14.0, 26.0)
+		var h := _rng.randf_range(40.0, 110.0)
+		var colour: Color = Props.CITY_WALLS[_rng.randi() % Props.CITY_WALLS.size()].darkened(0.15)
+		kit.box(at, Vector3(w, h, w * _rng.randf_range(0.7, 1.0)), colour, SceneryKit.WINDOWS, false)
+		if _rng.randf() < 0.5:
+			kit.box(at + Vector3.UP * h, Vector3(w * 0.6, h * 0.25, w * 0.6), colour, SceneryKit.WINDOWS, false)
+	_far_floor(middle, half_out + Vector2.ONE * 150.0, level)
+
+
 ## How high the far ring and the ground under it go: a metre below the lowest
 ## ground on the baseplate, which is the whole box of `half` round `middle`,
 ## or the road.
@@ -1203,6 +1279,8 @@ func _pit_style() -> String:
 		return "western"
 	if theme.get("karsts", false):
 		return "jungle"
+	if theme.get("skyline", false):
+		return "city"
 	return ""
 
 
@@ -1313,8 +1391,9 @@ func _undergrowth() -> void:
 		cells[j] = t
 	_kit.far = true
 	var count := 0
+	var most: int = theme.get("undergrowth_max", MAX_UNDERGROWTH)
 	for i in cells:
-		if count >= MAX_UNDERGROWTH:
+		if count >= most:
 			break
 		var pick := _rng.randi() % total
 		var prop := ""

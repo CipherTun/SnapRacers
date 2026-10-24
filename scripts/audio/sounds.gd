@@ -41,7 +41,7 @@ const ALL := [
 	"engine/engine_diesel", "engine/engine_v8", "engine/electric_motor", "engine/jet",
 	"loop/skid", "loop/rumble", "loop/wind", "loop/rain", "loop/storm", "loop/gale",
 ]
-const TUNES := ["menu", "race_one", "race_two", "race_three", "race_four", "race_indoor", "race_rally", "race_coaster", "race_legends", "race_beach", "race_alpine", "race_canyon", "race_jungle"]
+const TUNES := ["menu", "race_one", "race_two", "race_three", "race_four", "race_indoor", "race_rally", "race_coaster", "race_legends", "race_beach", "race_alpine", "race_canyon", "race_jungle", "race_city"]
 
 static var _music: AudioStreamPlayer
 static var _music_name := ""

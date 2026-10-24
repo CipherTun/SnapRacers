@@ -185,6 +185,17 @@ def keys(f, d, v):
     return tone * (0.85 + 0.15 * np.sin(2 * np.pi * 4.5 * t)) * adsr(n, 0.005, 0.4, 0.5, 0.2) * 0.35 * v
 
 
+def night_lead(f, d, v):
+    """A soft synth lead for driving at night: two saws a little apart, a
+    slow vibrato and a filter that opens as the note starts."""
+    n = seconds(d + 0.1)
+    t = times(n)
+    wobble = 1.0 + 0.004 * np.sin(2 * np.pi * 4.8 * t) * np.clip((t - 0.2) * 3.0, 0.0, 1.0)
+    tone = saw(f * wobble, n, harmonics=28) * 0.5 + saw(f * 1.008 * wobble, n, harmonics=28) * 0.4 + square(f / 2.0, n, 0.5, harmonics=10) * 0.15
+    tone = sweep_lowpass(tone, 900 + 2600 * (1.0 - decay(n, 0.12)) * decay(n, 0.9))
+    return tone * adsr(n, 0.03, 0.2, 0.7, 0.1) * 0.6 * v
+
+
 # Making patterns.
 
 def melody(steps_per_bar, *bars):
@@ -852,7 +863,54 @@ def race_jungle():
     return render(bpm, bars, parts, wet=0.2)
 
 
+def race_city():
+    """The City cup: driving through the city at night, with a pulsing synth
+    bass in eighths, a steady four on the floor, ticking arpeggios and a soft
+    synth lead, in F sharp minor."""
+    bpm = 112
+    verse = ["F#m", "F#m", "D", "D", "A", "A", "E", "E"]
+    chorus = ["D", "E", "F#m", "F#m", "D", "E", "C#m", "C#m"]
+    breakdown = ["Bm", "D", "E", "E"]
+    chords = verse + chorus + verse + breakdown
+    a = [
+        [("C#5", 4), ("F#5", 2), ("A5", 2), ("G#5", 4), ("F#5", 4)],
+        [("E5", 2), ("F#5", 2), ("C#5", 12)],
+        [("D5", 4), ("F#5", 2), ("A5", 2), ("B5", 4), ("A5", 4)],
+        [("F#5", 4), ("E5", 2), ("D5", 2), ("F#5", 8)],
+        [("E5", 4), ("A5", 2), ("C#6", 2), ("B5", 4), ("A5", 4)],
+        [("G#5", 2), ("A5", 2), ("E5", 12)],
+        [("B5", 4), ("G#5", 2), ("E5", 2), ("F#5", 2), ("G#5", 2), ("B5", 4)],
+        [("G#5", 8), (".", 8)],
+    ]
+    b = [
+        [("F#5", 2), ("A5", 2), ("D6", 4), ("C#6", 4), ("A5", 4)],
+        [("G#5", 2), ("B5", 2), ("E6", 6), (".", 2), ("C#6", 2), ("B5", 2)],
+        [("C#6", 6), ("A5", 2), ("F#5", 4), ("A5", 4)],
+        [("C#6", 4), ("E6", 4), ("C#6", 8)],
+        [("D6", 4), ("C#6", 2), ("A5", 2), ("F#5", 4), ("A5", 4)],
+        [("B5", 4), ("G#5", 2), ("E5", 2), ("B5", 4), ("E6", 4)],
+        [("E6", 4), ("C#6", 2), ("G#5", 2), ("E5", 4), ("G#5", 4)],
+        [("C#6", 8), (".", 8)],
+    ]
+    rest = [[(".", 16)]]
+    tune = melody(16, *(a + b + a + rest * 4))
+    bars = len(chords)
+    # The drums drop to the hats and bass for the breakdown at the end.
+    full = bars - len(breakdown)
+    parts = [
+        (kick, drums("x...x...x...x...", full), 0.6, 0.0, 0.0),
+        (clap, drums("....x.......x...", full), 0.3, 0.1, 0.15),
+        (hat, drums("..x...x...x...x.", bars), 0.16, 0.35, 0.03),
+        (hat, drums("o.o.o.o.o.o.o.o.", bars), 0.07, -0.35, 0.02),
+        (bass, bassline(chords, "rororororororoo5", 1), 0.5, 0.0, 0.0),
+        (pluck, arps(chords, 4, order=(0, 1, 2, 3), every=1), 0.12, -0.4, 0.25),
+        (pad, held(chords, 3), 0.35, 0.0, 0.4),
+        (night_lead, tune, 0.4, 0.15, 0.3),
+    ]
+    return render(bpm, bars, parts, wet=0.24)
+
+
 TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
          "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
          "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
-         "race_jungle": race_jungle}
+         "race_jungle": race_jungle, "race_city": race_city}

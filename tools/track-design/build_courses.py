@@ -40,6 +40,10 @@ INFO = {
  "cascade_creek": ("Kart track in Pavas, San José, Costa Rica", "Down by the waterfall and over the creek on the rope bridge, through the mud on the river bank."),
  "pyramid_plunge": ("Kart track in Cancún, Quintana Roo, Mexico", "Past the old stepped pyramid and the stone heads, and off the jump into the jungle."),
  "monsoon_mire": ("Sentul Gokart Raceway, Bogor, West Java, Indonesia", "Through the mud in the monsoon rain, among the stilt houses and the tall green rock towers."),
+ "lantern_lane": ("Shin-Tokyo Circuit, Ichihara, Chiba, Japan", "Between the walls under the neon signs, past the lantern gates and the tunnel."),
+ "skyline_sprint": ("Jebel Ali Go Karting, Dubai, United Arab Emirates", "Fast and walled in among the tallest towers in the desert, lit up all night."),
+ "double_decker_dash": ("Revolution Karting, Mile End, London, UK", "Round and round the old streets by the clock tower, past the parked buses."),
+ "tuk_tuk_turns": ("Topkart Bangkok, Bangkok, Thailand", "Twisting back and forth under the expressway, past the golden temple spires."),
  "windsurf_way": "Twisting around between the palms and the parasols, a stone's throw from the beach.",
  "coral_cove": "Fast and open on the coast, past the old watchtower and the white villas.",
  "blue_lagoon": "Tight and twisty under the walls of the old harbour fort.",
@@ -60,22 +64,25 @@ def rotate_to_longest_straight(pieces):
     """Moves the start line into the longest run of straights at ground level,
     with three tiles behind it for the grid where it can, and up to four in
     front so the pack spreads out before the first corner.
-    The lap is the same, it just starts somewhere else."""
+    The lap is the same, it just starts somewhere else. Straights with walls
+    all along count too, and keep their walls."""
     units = []  # one entry per straight tile, or the piece itself
     level = 0
     for p in pieces:
-        if p["type"] == "straight" and "surface" not in p and "edges" not in p:
-            units += [("S", level)] * int(p.get("length", 1))
+        walls = p.get("edges") == "walls"
+        if p["type"] == "straight" and "surface" not in p and ("edges" not in p or walls):
+            units += [("S" if not walls else "W", level)] * int(p.get("length", 1))
         else:
             units.append((p, level))
             level += int(p.get("rise", 0)) if p["type"] in ("ramp", "curve", "slant") else 0
     n = len(units)
+    straight = lambda u: u in ("S", "W")
     best, best_len = 0, 0
     for i in range(n):
-        if units[i][0] != "S" or units[i][1] != 0 or units[i - 1][0] == "S":
+        if not straight(units[i][0]) or units[i][1] != 0 or straight(units[i - 1][0]):
             continue
         j = i
-        while units[j % n][0] == "S" and j - i < n:
+        while straight(units[j % n][0]) and j - i < n:
             j += 1
         if j - i > best_len:
             best, best_len = i, j - i
@@ -84,15 +91,23 @@ def rotate_to_longest_straight(pieces):
     rotated = units[split:] + units[:split]
     out = []
     run = 0
+    kind = "S"
     for u, _ in rotated + [(None, 0)]:
-        if u == "S":
+        if straight(u) and (run == 0 or u == kind):
+            kind = u
             run += 1
             continue
         while run > 0:
             chunk = min(3, run)
-            out.append({"type": "straight", "length": chunk})
+            piece = {"type": "straight", "length": chunk}
+            if kind == "W":
+                piece["edges"] = "walls"
+            out.append(piece)
             run -= chunk
-        if u is not None:
+        if straight(u):
+            kind = u
+            run = 1
+        elif u is not None:
             out.append(u)
     return out, best_len
 
