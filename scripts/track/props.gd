@@ -62,7 +62,7 @@ const ROOM := {
 	"cable_car": 35.0, "ski_jump": 33.0,
 	"mesa": 38.0, "butte": 16.0, "saloon": 8.0, "water_tower": 3.5, "saguaro": 1.6, "mine_carts": 8.0,
 	"windpump": 3.0, "red_rocks": 2.4,
-	"jungle_tree": 3.0, "jungle_sapling": 1.6, "jungle_bush": 1.6, "fern": 1.2, "parrots": 1.6, "stepped_pyramid": 17.5, "stone_head": 2.6,
+	"jungle_tree": 3.0, "jungle_sapling": 1.6, "jungle_bush": 1.6, "fern": 1.2, "parrots": 1.6, "stepped_pyramid": 17.5, "stone_head": 4.6,
 	"waterfall": 14.0, "rope_bridge": 11.0, "canopy_walk": 15.0, "karst": 13.0, "jungle_hut": 5.0,
 	"city_block": 7.5, "townhouses": 7.0, "traffic_light": 1.2, "neon_sign": 2.6, "street_tree": 1.4, "armco": 3.4,
 	"phone_box": 1.0, "double_decker": 5.6, "tuk_tuk": 2.0, "neon_tower": 9.0, "lantern_gate": 5.0,
@@ -1374,21 +1374,29 @@ static func _cow(kit: SceneryKit, spot: Vector3, face: Basis, rng: RandomNumberG
 	var patch: Color = [BLACK, BROWN][rng.randi() % 2]
 	var grazing := rng.randf() < 0.5
 	var along := face * Basis(Vector3.RIGHT, PI * 0.5)
-	for x in [-0.24, 0.24]:
-		for z in [-0.42, 0.42]:
+	# The hind legs stand wider apart than the front ones, with a thigh each.
+	for z in [-0.42, 0.42]:
+		var wide := 0.28 if z < 0.0 else 0.24
+		for x in [-wide, wide]:
 			kit.turned_box(spot + face * Vector3(x, 0.32, z), Vector3(0.22, 0.5, 0.22), face, coat.darkened(0.08))
 			kit.turned_box(spot + face * Vector3(x, 0.06, z), Vector3(0.24, 0.12, 0.24), face, DARK_GREY)
-	# The body, a fat cylinder with narrower ones out the ends to round it off.
-	kit.turned_cylinder(spot + face * Vector3(0.0, 0.88, 0.0), 0.42, 1.2, along, coat)
-	kit.turned_cylinder(spot + face * Vector3(0.0, 0.88, 0.0), 0.34, 1.42, along, coat)
+	for x in [-0.3, 0.3]:
+		kit.turned_box(spot + face * Vector3(x, 0.74, -0.44), Vector3(0.22, 0.5, 0.42), face, coat.darkened(0.04))
+	# The body, a fat cylinder with narrower ones out the ends to round it off,
+	# plain so it has no seams like a barrel, and hip bones up at the back.
+	kit.turned_cylinder(spot + face * Vector3(0.0, 0.88, 0.0), 0.42, 1.2, along, coat, SceneryKit.PLAIN)
+	kit.turned_cylinder(spot + face * Vector3(0.0, 0.88, 0.0), 0.34, 1.42, along, coat, SceneryKit.PLAIN)
+	for x in [-0.24, 0.24]:
+		kit.turned_box(spot + face * Vector3(x, 1.18, -0.5), Vector3(0.18, 0.08, 0.24), face, coat, SceneryKit.PLAIN)
 	if patched:
 		for side in [-1.0, 1.0]:
 			kit.turned_box(spot + face * Vector3(side * 0.4, 0.92, rng.randf_range(-0.3, 0.2)), Vector3(0.08, 0.42, 0.5), face, patch)
 		kit.turned_box(spot + face * Vector3(0.0, 1.29, rng.randf_range(-0.35, 0.1)), Vector3(0.36, 0.06, 0.4), face, patch)
-	kit.turned_box(spot + face * Vector3(0.0, 0.48, -0.2), Vector3(0.3, 0.14, 0.28), face, PINK)
-	# The tail, with a tuft on the end.
-	kit.turned_box(spot + face * Vector3(0.0, 0.9, -0.74), Vector3(0.06, 0.5, 0.06), face, coat.darkened(0.15))
-	kit.turned_box(spot + face * Vector3(0.0, 0.62, -0.74), Vector3(0.14, 0.16, 0.14), face, coat.darkened(0.35))
+	kit.turned_box(spot + face * Vector3(0.0, 0.46, -0.3), Vector3(0.32, 0.18, 0.3), face, PINK)
+	# The long tail, a little off centre, with a pale tuft on a plain cow.
+	var pale := Color("#efe4c4")
+	kit.turned_box(spot + face * Vector3(0.08, 0.92, -0.75), Vector3(0.08, 0.66, 0.06), face, coat.darkened(0.25), SceneryKit.PLAIN)
+	kit.turned_box(spot + face * Vector3(0.08, 0.52, -0.75), Vector3(0.15, 0.2, 0.12), face, pale if not patched else BLACK, SceneryKit.PLAIN)
 	# The big head, down in the grass or up looking about.
 	var head := Vector3(0.0, 0.6, 0.92) if grazing else Vector3(0.0, 1.2, 0.84)
 	kit.turned_box(spot + face * head, Vector3(0.66, 0.6, 0.6), face, coat)
@@ -1465,24 +1473,25 @@ static func _crag(kit: SceneryKit, foot: Vector3, height: float, snow_line: floa
 	# The cap is a smaller block in the same corner, standing a little proud.
 	var lift := h * 0.02
 	var cap := clampf((height - snow_line) / (height * 0.67), 0.2, 0.45)
-	kit.turned_box(foot + tall * (top - basis * (dims * cap * 0.5) + up * lift), dims * cap, tall * basis, WHITE)
+	kit.turned_box(foot + tall * (top - basis * (dims * cap * 0.5) + up * lift), dims * cap, tall * basis, WHITE, SceneryKit.PLAIN)
+	# Snow lies down the ridges below the cap in uneven patches, each a small
+	# block in the same corner as the cap, set at a point down one ridge so it
+	# wraps the ridge like the cap wraps the top.
 	for s in streaks:
 		var i := rng.randi() % 3
-		var n := basis * Vector3(1.0 if i == 0 else 0.0, 1.0 if i == 1 else 0.0, 1.0 if i == 2 else 0.0)
-		# Straight down the face, from its top corner to the far one.
-		var down := basis * Vector3(0.0 if i == 0 else -dims.x, 0.0 if i == 1 else -dims.y, 0.0 if i == 2 else -dims.z)
-		var length := down.length()
-		down /= length
-		var side := down.cross(n)
-		# It comes out from under the cap and narrows as it goes down.
-		var across := side * length * rng.randf_range(-0.06, 0.06)
-		var from := cap * 0.6
-		var to := cap + 0.12
-		for part in 2:
-			var centre := top + down * length * (from + to) * 0.5 + across + n * lift * 0.05
-			kit.turned_box(foot + tall * centre, Vector3(length * (0.07 if part == 0 else 0.035), length * (to - from), lift), tall * Basis(side, down, n), WHITE)
-			from = to - 0.02
-			to = from + rng.randf_range(0.08, 0.16)
+		var axis := Vector3(1.0 if i == 0 else 0.0, 1.0 if i == 1 else 0.0, 1.0 if i == 2 else 0.0)
+		var others := Vector3.ONE - axis
+		var t := cap * rng.randf_range(0.5, 0.75)
+		var size := cap * rng.randf_range(0.45, 0.6)
+		for part in 2 + rng.randi() % 2:
+			# Shorter down the ridge than across it, a little proud of both faces.
+			var down := rng.randf_range(0.5, 0.9)
+			var patch := dims * size * (others + axis * down)
+			var corner := top - basis * (axis * dims * t) + basis * (others * lift * 0.5)
+			kit.turned_box(foot + tall * (corner - basis * (patch * 0.5)), patch, tall * basis, WHITE, SceneryKit.PLAIN)
+			# The next one overlaps this one, so they stay joined.
+			t += size * down * rng.randf_range(0.6, 0.85)
+			size *= rng.randf_range(0.55, 0.75)
 
 
 ## A cable car line up to a peak: a station at the bottom, two pylons, a
@@ -1980,33 +1989,35 @@ static func stepped_pyramid(kit: SceneryKit, at: Vector3, facing: int, rng: Rand
 static func stone_head(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
 	var stone := BASALT.lightened(rng.randf_range(-0.05, 0.08))
 	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
+	# Built at 1, then scaled up so it stands out as a landmark from the road.
+	var k := 1.8
 	# The jaw, the face and the top of the head.
-	_box(kit, at, Vector3(0.0, -0.5, 0.0), Vector3(2.6, 1.3, 2.4), facing, stone.darkened(0.05))
-	_box(kit, at, Vector3(0.0, 0.8, 0.0), Vector3(3.0, 1.9, 2.7), facing, stone)
-	_box(kit, at, Vector3(0.0, 2.7, 0.0), Vector3(2.8, 0.5, 2.5), facing, stone)
+	_box(kit, at, Vector3(0.0, -0.5, 0.0) * k, Vector3(2.6, 1.3, 2.4) * k, facing, stone.darkened(0.05))
+	_box(kit, at, Vector3(0.0, 0.8, 0.0) * k, Vector3(3.0, 1.9, 2.7) * k, facing, stone)
+	_box(kit, at, Vector3(0.0, 2.7, 0.0) * k, Vector3(2.8, 0.5, 2.5) * k, facing, stone)
 	# The helmet, with a band across the front and a strap down each side.
-	_box(kit, at, Vector3(0.0, 3.0, -0.05), Vector3(3.2, 0.8, 2.85), facing, stone.darkened(0.08), SceneryKit.BRICK, false)
-	_box(kit, at, Vector3(0.0, 3.8, -0.1), Vector3(2.7, 0.4, 2.4), facing, stone.darkened(0.08), SceneryKit.BRICK, false)
-	_box(kit, at, Vector3(0.0, 2.95, 1.35), Vector3(3.0, 0.35, 0.25), facing, stone.lightened(0.1), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 3.0, -0.05) * k, Vector3(3.2, 0.8, 2.85) * k, facing, stone.darkened(0.08), SceneryKit.BRICK, false)
+	_box(kit, at, Vector3(0.0, 3.8, -0.1) * k, Vector3(2.7, 0.4, 2.4) * k, facing, stone.darkened(0.08), SceneryKit.BRICK, false)
+	_box(kit, at, Vector3(0.0, 2.95, 1.35) * k, Vector3(3.0, 0.35, 0.25) * k, facing, stone.lightened(0.1), SceneryKit.SMOOTH, false)
 	for x in [-1.55, 1.55]:
-		_box(kit, at, Vector3(x, 1.2, 0.3), Vector3(0.2, 1.8, 0.7), facing, stone.darkened(0.08), SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x, 1.2, 0.3) * k, Vector3(0.2, 1.8, 0.7) * k, facing, stone.darkened(0.08), SceneryKit.SMOOTH, false)
 		# A round plug in each ear.
-		kit.turned_cylinder(at + _turn(Vector3(x * 1.06, 1.5, 0.0), facing), 0.45, 0.25, face * Basis(Vector3.BACK, PI * 0.5), stone.lightened(0.06))
+		kit.turned_cylinder(at + _turn(Vector3(x * 1.06, 1.5, 0.0) * k, facing), 0.45 * k, 0.25 * k, face * Basis(Vector3.BACK, PI * 0.5), stone.lightened(0.06))
 	# The brow, the eyes looking out, the broad nose and the lips.
 	var front := 1.35
-	_box(kit, at, Vector3(0.0, 2.35, front), Vector3(2.4, 0.25, 0.25), facing, stone.darkened(0.05), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 2.35, front) * k, Vector3(2.4, 0.25, 0.25) * k, facing, stone.darkened(0.05), SceneryKit.SMOOTH, false)
 	for x in [-0.65, 0.65]:
-		_box(kit, at, Vector3(x, 1.85, front), Vector3(0.75, 0.38, 0.1), facing, stone.lightened(0.25), SceneryKit.SMOOTH, false)
-		_box(kit, at, Vector3(x * 0.92, 1.88, front + 0.06), Vector3(0.28, 0.32, 0.06), facing, BLACK, SceneryKit.SMOOTH, false)
-	_box(kit, at, Vector3(0.0, 1.15, front), Vector3(0.55, 0.8, 0.35), facing, stone.lightened(0.04), SceneryKit.SMOOTH, false)
-	_box(kit, at, Vector3(0.0, 1.0, front + 0.1), Vector3(1.0, 0.4, 0.35), facing, stone.lightened(0.04), SceneryKit.SMOOTH, false)
-	_box(kit, at, Vector3(0.0, 0.45, front), Vector3(1.3, 0.38, 0.22), facing, stone.lightened(0.08), SceneryKit.SMOOTH, false)
-	_box(kit, at, Vector3(0.0, 0.6, front + 0.12), Vector3(1.0, 0.07, 0.04), facing, BLACK, SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x, 1.85, front) * k, Vector3(0.75, 0.38, 0.1) * k, facing, stone.lightened(0.25), SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x * 0.92, 1.88, front + 0.06) * k, Vector3(0.28, 0.32, 0.06) * k, facing, BLACK, SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 1.15, front) * k, Vector3(0.55, 0.8, 0.35) * k, facing, stone.lightened(0.04), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 1.0, front + 0.1) * k, Vector3(1.0, 0.4, 0.35) * k, facing, stone.lightened(0.04), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.45, front) * k, Vector3(1.3, 0.38, 0.22) * k, facing, stone.lightened(0.08), SceneryKit.SMOOTH, false)
+	_box(kit, at, Vector3(0.0, 0.6, front + 0.12) * k, Vector3(1.0, 0.07, 0.04) * k, facing, BLACK, SceneryKit.SMOOTH, false)
 	for x in [-0.55, 0.55]:
-		_box(kit, at, Vector3(x, 0.66, front + 0.12), Vector3(0.18, 0.07, 0.04), facing, BLACK, SceneryKit.SMOOTH, false)
+		_box(kit, at, Vector3(x, 0.66, front + 0.12) * k, Vector3(0.18, 0.07, 0.04) * k, facing, BLACK, SceneryKit.SMOOTH, false)
 	# Moss on top.
 	for m in 2:
-		_box(kit, at, Vector3(rng.randf_range(-0.8, 0.8), 4.2, rng.randf_range(-0.8, 0.4)), Vector3(rng.randf_range(0.8, 1.4), 0.15, rng.randf_range(0.8, 1.2)), facing, MOSS, SceneryKit.BRICK, false)
+		_box(kit, at, Vector3(rng.randf_range(-0.8, 0.8), 4.2, rng.randf_range(-0.8, 0.4)) * k, Vector3(rng.randf_range(0.8, 1.4), 0.15, rng.randf_range(0.8, 1.2)) * k, facing, MOSS, SceneryKit.BRICK, false)
 
 
 ## A waterfall pouring off a mossy cliff into a round pool, with foam where
@@ -2489,7 +2500,7 @@ static func falls_isle(kit: SceneryKit, at: Vector3, rng: RandomNumberGenerator)
 
 
 ## A rainbow standing on two clouds, side on to the way it faces. Its feet
-## are well below the road.
+## are well below the road. Its bands are plain, with no seams.
 static func rainbow(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumberGenerator) -> void:
 	var face := Basis(Vector3.UP, posmod(facing, 4) * PI * 0.5)
 	var foot := at + Vector3.DOWN * 10.0
@@ -2501,7 +2512,7 @@ static func rainbow(kit: SceneryKit, at: Vector3, facing: int, rng: RandomNumber
 			var t := (k + 0.5) / steps * PI
 			var spot := foot + face * Vector3(cos(t) * r, sin(t) * r, 0.0)
 			var tilt := face * Basis(Vector3.BACK, t)
-			kit.turned_box(spot, Vector3(1.25, r * PI / steps + 0.4, 1.0), tilt, bands[b])
+			kit.turned_box(spot, Vector3(1.25, r * PI / steps + 0.4, 1.0), tilt, bands[b], SceneryKit.PLAIN)
 	for side in [-1.0, 1.0]:
 		cloud(kit, foot + face * Vector3(side * 13.0, 0.0, 0.0), 10.0, rng)
 

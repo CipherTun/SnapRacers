@@ -24,7 +24,7 @@ const EDGE := 1.5
 const NOT_ON := ["ramp", "jump", "loop", "corkscrew", "wallride", "bank"]
 ## For looking them up quickly, a grid of squares this big.
 const CELL := 4.0
-const WATER := Color("#0d1116")
+const WATER := Color("#34404c")
 ## Where in the race (0 at the start, 1 at the end) each one starts to grow,
 ## and how much of the race it takes to get to full size. A few have started
 ## before GO, so there's a little water from the start, and all are full by

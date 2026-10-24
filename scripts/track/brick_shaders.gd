@@ -235,7 +235,7 @@ void fragment() {
 ##   4 water, smooth and shiny with slow ripples
 ##   5 plain plastic, for parts that move
 ##   6 a lamp, which shines when it's dark
-##   7 a puddle on the road, dark and wet, a little shiny
+##   7 a puddle on the road, shallow shiny water with the sky in it
 ##   8 a snow drift, soft and matt, never snowed over so its shading shows
 const BLOCK := """
 shader_type spatial;
@@ -295,12 +295,14 @@ void fragment() {
 		rough = 0.9;
 		spec = 0.15;
 	} else if (pattern > 6.5) {
-		// A puddle: dark water that only shines a little, so it reads
-		// against the wet road under a grey sky.
+		// A puddle: shallow water, glassy, with the pale sky in it, more so
+		// the flatter you look across it, so it reads as water and not a hole.
 		float ripple = sin(pattern_position.x * 1.7 + TIME * 1.3) * sin(pattern_position.z * 1.5 - TIME * 1.1);
-		col *= 0.9 + 0.1 * ripple;
-		rough = 0.4;
-		spec = 0.1;
+		float glance = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 3.0);
+		vec3 sky_tint = vec3(0.42, 0.5, 0.6);
+		col = mix(col, sky_tint, 0.1 + 0.3 * glance) * (0.92 + 0.08 * ripple);
+		rough = 0.1;
+		spec = 0.45;
 	} else if (pattern > 5.5) {
 		// A lamp, which shines when it's dark.
 		EMISSION = col * 2.5 * lamps_on;
