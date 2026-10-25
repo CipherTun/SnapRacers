@@ -23,7 +23,7 @@ Dan
     <td align="center"><img src="screenshots/snow.png" width="400" height="225" alt="Snow racing at Frostbite Forest"></td>
   </tr>
   <tr>
-    <td align="center"><img src="screenshots/cups.png" width="400" height="225" alt="All nine Grand Prix cups"></td>
+    <td align="center"><img src="screenshots/cups.png" width="400" height="225" alt="All fourteen Grand Prix cups"></td>
     <td align="center"><img src="screenshots/karts.png" width="400" height="225" alt="The kart picker"></td>
   </tr>
   <tr>
@@ -82,7 +82,7 @@ To slide, hold the gas and brake together while steering. On a touch screen you 
 
 Grass and sand slow you down, and a slide ends as soon as a wheel leaves the road. Sand slows you more than grass. If you get stuck or lose parts, reset puts you upright and repairs the kart. You slow down briefly and go through other karts for one second.
 
-The button in the corner, or Start on a controller, opens the race menu. It pauses a race on your own or in split screen, where either player can carry on. Online the race keeps going while your menu is open.
+Tap your place in the top corner, or press Start on a controller, to open the race menu. It pauses a race on your own or in split screen, where either player can carry on. Online the race keeps going while your menu is open.
 
 ### Power-ups
 

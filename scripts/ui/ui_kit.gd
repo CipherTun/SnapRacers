@@ -83,6 +83,8 @@ const PANEL_LEAN := 0.3
 ## The hard drop shadow under panels and buttons.
 const SHADOW := Vector2(6, 6)
 const SHADOW_COLOUR := Color(0, 0, 0, 0.5)
+## The dark edge round a count drawn over a picture, like x2 on a gadget.
+const BADGE_OUTLINE := Color(0, 0, 0, 0.9)
 ## The stripes on cards and panels.
 const STRIPE_WIDTH := 10.0
 const UNDERLINE := 6.0
@@ -412,7 +414,10 @@ static func theme() -> Theme:
 	_add_sliders(t)
 	_add_scroll_bars(t)
 	add_pictures(t)
-	BuilderStyle.add_to(t)
+	# Loaded by path, so the race code that uses the kit (touch controls,
+	# sounds) doesn't pull in the editors' buttons and Game with them, which
+	# tests run with -s can't load.
+	load("res://scripts/ui/builder_style.gd").add_to(t)
 	return t
 
 

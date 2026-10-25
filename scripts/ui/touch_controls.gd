@@ -486,7 +486,7 @@ func _gadget_picture(item: CanvasItem, slot: int, centre: Vector2, radius: float
 		var count := "x%d" % gadget_uses[slot]
 		var digits := UiKit.font("digits")
 		var at := centre + Vector2(radius * 0.25, radius * 0.75)
-		item.draw_string_outline(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, Color(0, 0, 0, 0.9))
+		item.draw_string_outline(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, UiKit.BADGE_OUTLINE)
 		item.draw_string(digits, at, count, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, UiKit.YELLOW)
 
 

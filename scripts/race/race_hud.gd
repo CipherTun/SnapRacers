@@ -99,7 +99,7 @@ const MESSAGE_FADE := 0.5
 ## Made once for every HUD: nothing, for the menu button over your place and
 ## lap, and the faint track behind the status bar.
 static var _nothing: StyleBoxEmpty
-static var _bar_back: StyleBoxFlat
+static var _bar_back: SlantBox
 var _fps: Label
 var _results: PanelContainer
 var _results_title: Label
@@ -117,8 +117,7 @@ func _ready() -> void:
 	set_anchors_and_offsets_preset(PRESET_FULL_RECT)
 	if _nothing == null:
 		_nothing = StyleBoxEmpty.new()
-		_bar_back = StyleBoxFlat.new()
-		_bar_back.bg_color = Color(0, 0, 0, 0.45)
+		_bar_back = UiKit.slant(Color(UiKit.SHADOW_COLOUR, 0.45), 0.0, Color.TRANSPARENT, 0, false)
 
 	_small = race != null and race.humans.size() > 1
 	# Your place and lap in a pill in the top left corner, with the map under

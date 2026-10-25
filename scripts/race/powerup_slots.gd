@@ -29,8 +29,8 @@ func _init() -> void:
 	mouse_filter = MOUSE_FILTER_IGNORE
 	custom_minimum_size = Vector2(BOX * Powerups.HOLD + GAP * (Powerups.HOLD - 1), BOX)
 	if _empty == null:
-		_empty = UiKit.slant(Color(0, 0, 0, 0.25), LEAN, Color(1, 1, 1, 0.3), 2, false)
-		_held = UiKit.slant(Color(0.02, 0.02, 0.05, 0.8), LEAN, UiKit.YELLOW, 3)
+		_empty = UiKit.slant(Color(UiKit.SHADOW_COLOUR, 0.25), LEAN, Color(UiKit.WHITE, 0.3), 2, false)
+		_held = UiKit.slant(Color(UiKit.PANEL, 0.8), LEAN, UiKit.YELLOW, 3)
 	for slot in Powerups.HOLD:
 		kinds.append("")
 		uses.append(0)
@@ -77,6 +77,6 @@ func _draw() -> void:
 				var text := "x%d" % uses[slot]
 				var at := Vector2(BOX * 0.5 - 8.0, BOX * 0.5 - 6.0)
 				var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE).x
-				draw_string_outline(font, at - Vector2(width, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, Color(0, 0, 0, 0.9))
+				draw_string_outline(font, at - Vector2(width, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, 5, UiKit.BADGE_OUTLINE)
 				draw_string(font, at - Vector2(width, 0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, UiKit.BADGE, UiKit.YELLOW)
 	draw_set_transform(Vector2.ZERO)

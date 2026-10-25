@@ -110,10 +110,14 @@ func shot(which: String) -> void:
 		RenderingServer.force_draw.call_deferred()
 		await RenderingServer.frame_post_draw
 	var picture := get_viewport().get_texture().get_image()
+	# On a big screen the window can come out bigger than asked; the UI
+	# scales with it, so a smaller copy looks the same as 1280 x 720.
 	if picture.get_size() != Vector2i(1280, 720):
-		push_error("Unexpected screenshot dimensions: %s" % picture.get_size())
-		get_tree().quit(1)
-		return
+		if picture.get_width() * 9 != picture.get_height() * 16:
+			push_error("Unexpected screenshot dimensions: %s" % picture.get_size())
+			get_tree().quit(1)
+			return
+		picture.resize(1280, 720, Image.INTERPOLATE_LANCZOS)
 	picture.save_png("%s/%s.png" % [OUT, which])
 	print("saved ", which)
 

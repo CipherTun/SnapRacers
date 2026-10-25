@@ -43,6 +43,8 @@ func _ready() -> void:
 	race.add_child(driver)
 	race.player.ai = driver
 	race.player.kart.controls = driver.controls
+	# On a computer the touch controls wait for a touch, so show them like on a phone.
+	race.player.hud.touch.visible = true
 	# BUILD_UP=1 shows the rain or snow as it is by the end of the race.
 	if OS.has_environment("BUILD_UP"):
 		race.build_up = float(OS.get_environment("BUILD_UP"))
@@ -54,6 +56,11 @@ func _ready() -> void:
 		# Also works with --disable-render-loop for fast software-rendered shots.
 		RenderingServer.force_draw.call_deferred()
 		await RenderingServer.frame_post_draw
-		get_viewport().get_texture().get_image().save_png("%s/race_%s_%d.png" % [OUT, name, i + 1])
+		# On a big screen the window can come out bigger than asked; the UI
+		# scales with it, so a smaller copy looks the same as 1280 x 720.
+		var picture := get_viewport().get_texture().get_image()
+		if picture.get_size() != Vector2i(1280, 720):
+			picture.resize(1280, 720, Image.INTERPOLATE_LANCZOS)
+		picture.save_png("%s/race_%s_%d.png" % [OUT, name, i + 1])
 	print("saved race_%s" % name)
 	get_tree().quit()

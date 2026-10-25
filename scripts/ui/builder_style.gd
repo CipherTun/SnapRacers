@@ -188,9 +188,9 @@ static func tile_box(state: String, picked := false) -> StyleBox:
 		"pressed":
 			box = UiKit.slant(Color(UiKit.ACCENT, 0.3), UiKit.CARD_LEAN, Color.TRANSPARENT, 0, false)
 		"hover":
-			box = UiKit.slant(Color(1, 1, 1, 0.12), UiKit.CARD_LEAN, Color.TRANSPARENT, 0, false)
+			box = UiKit.slant(Color(UiKit.WHITE, 0.12), UiKit.CARD_LEAN, Color.TRANSPARENT, 0, false)
 		_:
-			box = UiKit.slant(Color(1, 1, 1, 0.07), UiKit.CARD_LEAN, Color.TRANSPARENT, 0, false)
+			box = UiKit.slant(Color(UiKit.WHITE, 0.07), UiKit.CARD_LEAN, Color.TRANSPARENT, 0, false)
 	if picked:
 		box.fill = Color(UiKit.ACCENT, 0.22 if state != "pressed" else 0.34)
 		box.edge = UiKit.ACCENT
@@ -315,7 +315,7 @@ static func _make_icon_box(state: String, on: bool, height: float) -> StyleBox:
 		"pressed":
 			box = UiKit.slant(UiKit.ACCENT.lightened(0.3) if on else Color(UiKit.ACCENT, 0.35), BUTTON_LEAN, UiKit.ACCENT, 2, false)
 		"disabled":
-			box = UiKit.slant(Color(SCRIM, 0.3), BUTTON_LEAN, Color(1, 1, 1, 0.06), 1, false)
+			box = UiKit.slant(Color(SCRIM, 0.3), BUTTON_LEAN, Color(UiKit.WHITE, 0.06), 1, false)
 		_:
 			box = UiKit.slant(UiKit.ACCENT if on else Color(SCRIM, 0.55), BUTTON_LEAN, Color.TRANSPARENT if on else UiKit.EDGE, 1, false)
 	box.lean_height = height

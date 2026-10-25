@@ -45,9 +45,7 @@ func _ready() -> void:
 
 	speed_label = Label.new()
 	speed_label.position = Vector2(24, 16)
-	speed_label.add_theme_font_size_override("font_size", 28)
-	speed_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	speed_label.add_theme_constant_override("outline_size", 6)
+	speed_label.theme_type_variation = "HudLabel"
 	hud_root.add_child(speed_label)
 
 	var garage := Button.new()
