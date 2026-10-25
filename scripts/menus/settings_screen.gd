@@ -95,6 +95,33 @@ func _controls_page() -> Control:
 			row.add_child(button)
 		for how in choices:
 			MenuStyle.mark(choices[how], how == Game.steering(person))
+	page.add_child(MenuStyle.heading("Touch controls"))
+	var size_row := HBoxContainer.new()
+	size_row.add_theme_constant_override("separation", 10)
+	page.add_child(size_row)
+	var size_label := Label.new()
+	size_label.text = "Size"
+	size_label.custom_minimum_size = Vector2(120.0, 0.0)
+	size_row.add_child(size_label)
+	var sizes := {}
+	for pick in TouchControls.SIZES:
+		var button := MenuStyle.button(TouchControls.SIZES[pick], func() -> void:
+			Game.set_touch_size(pick)
+			for other in sizes:
+				MenuStyle.mark(sizes[other], other == pick))
+		button.custom_minimum_size = Vector2(160.0, 48.0)
+		sizes[pick] = button
+		size_row.add_child(button)
+	for pick in sizes:
+		MenuStyle.mark(sizes[pick], pick == Game.touch_size())
+	var height_row := HBoxContainer.new()
+	height_row.add_theme_constant_override("separation", 10)
+	page.add_child(height_row)
+	var height_label := Label.new()
+	height_label.text = "Height"
+	height_label.custom_minimum_size = Vector2(120.0, 0.0)
+	height_row.add_child(height_label)
+	height_row.add_child(MenuStyle.slider(Game.touch_height(), Game.set_touch_height, TouchControls.HEIGHT_LOWEST, TouchControls.HEIGHT_HIGHEST, 0.05))
 	page.add_child(ControlsPage.new())
 	return page
 

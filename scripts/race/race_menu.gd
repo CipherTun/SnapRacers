@@ -88,6 +88,28 @@ func _ready() -> void:
 		for how in buttons:
 			MenuStyle.mark(buttons[how], how == Game.steering(person))
 		column.add_child(_row("Steering", choices))
+		var sizes := HBoxContainer.new()
+		sizes.add_theme_constant_override("separation", UiKit.GAP_S)
+		var size_buttons := {}
+		for pick in TouchControls.SIZES:
+			var button := MenuStyle.button(TouchControls.SIZES[pick], func() -> void:
+				Game.set_touch_size(pick)
+				for touch in _touches():
+					touch.control_size = pick
+				for other in size_buttons:
+					MenuStyle.mark(size_buttons[other], other == pick))
+			button.custom_minimum_size = Vector2(110.0, 48.0)
+			size_buttons[pick] = button
+			sizes.add_child(button)
+		for pick in size_buttons:
+			MenuStyle.mark(size_buttons[pick], pick == Game.touch_size())
+		column.add_child(_row("Controls size", sizes))
+		var raise := func(value: float) -> void:
+			Game.set_touch_height(value)
+			var touches := _touches()
+			for touch in touches:
+				touch.height = TouchControls.height_for(value, touches.size() > 1)
+		column.add_child(_row("Controls height", MenuStyle.slider(Game.touch_height(), raise, TouchControls.HEIGHT_LOWEST, TouchControls.HEIGHT_HIGHEST, 0.05)))
 
 	if racer.camera != null:
 		_camera_button = MenuStyle.button(RaceCamera.NAMES[racer.camera.view], func() -> void:
@@ -114,6 +136,19 @@ func _ready() -> void:
 	panel.position = (get_viewport_rect().size - panel.size) * 0.5
 	if PadFocus.using_pad and focus_on_open:
 		_resume.grab_focus.call_deferred()
+
+
+## Every player's touch controls in this race, which share their size and
+## height.
+func _touches() -> Array[TouchControls]:
+	var out: Array[TouchControls] = []
+	if race != null:
+		for human in race.humans:
+			if human.hud != null and human.hud.touch != null:
+				out.append(human.hud.touch)
+	if out.is_empty() and racer.hud != null and racer.hud.touch != null:
+		out.append(racer.hud.touch)
+	return out
 
 
 ## A setting's name on the left and what changes it on the right.

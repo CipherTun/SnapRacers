@@ -19,6 +19,13 @@ extends Node
 ## tries a camera hole, drawn in black on the pictures.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --windowed --path . res://tools/shots/hud_shots.tscn -- screens /srv/downloads/temp/debug/snapracers/ui-looks/m5 1280x800
 
+##
+## With "touch" it takes the race screen with the touch controls at each
+## size, then Medium at the lowest and highest height, into a folder with a
+## name on the end. Run it under xvfb-run with the screen the size to try, and
+## SNAPRACERS_DPI for that screen's dots per inch.
+##   SNAPRACERS_DPI=206 xvfb-run -s "-screen 0 1920x1200x24" tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/hud_shots.tscn -- touch /srv/downloads/temp/debug/snapracers/touch-size tab
+
 const OUT := "res://build/shots"
 
 
@@ -32,6 +39,10 @@ func _ready() -> void:
 	var args := OS.get_cmdline_user_args()
 	if args.size() > 2 and args[0] == "screens":
 		await _screens(args[1], args[2])
+		get_tree().quit()
+		return
+	if args.size() > 2 and args[0] == "touch":
+		await _touch_sizes(args[1], args[2])
 		get_tree().quit()
 		return
 	if args.size() > 0 and args[0] == "slots":
@@ -175,6 +186,29 @@ func _screens(folder: String, window_size: String) -> void:
 		await frames(10)
 		await _shoot(folder, "results_" + tag)
 	Game.settings.set_value("race", "split", split_was)
+
+
+func _touch_sizes(folder: String, tag: String) -> void:
+	DirAccess.make_dir_recursive_absolute(folder)
+	var host := Node.new()
+	add_child(host)
+	Game.start(host, false)
+	var race := await _start(host, Game.SOLO)
+	var touch: TouchControls = race.player.hud.touch
+	race.player.kart.held = ["triple_turbo", "shield"]
+	race.player.kart.held_uses = [3, 1]
+	touch.visible = true
+	touch.steering = "stick"
+	for pick in TouchControls.SIZES:
+		touch.control_size = pick
+		await frames(10)
+		await _shoot(folder, "%s_%s" % [tag, pick])
+	touch.control_size = "medium"
+	for picked in [TouchControls.HEIGHT_LOWEST, TouchControls.HEIGHT_HIGHEST]:
+		touch.height = TouchControls.height_for(picked, false)
+		await frames(10)
+		await _shoot(folder, "%s_medium_height%02d" % [tag, int(picked * 100.0)])
+	touch.height = TouchControls.HEIGHT
 
 
 func _shoot(folder: String, which: String) -> void:

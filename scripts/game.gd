@@ -628,6 +628,30 @@ func set_steering(person: int, how: String) -> void:
 	set_setting("controls", "player_%d" % (person + 1), how)
 
 
+## How big the touch controls are, "small", "medium" or "large" (see
+## TouchControls.SIZES), for everyone.
+func touch_size() -> String:
+	var pick: String = settings.get_value("controls", "touch_size", "medium")
+	return pick if TouchControls.SIZES.has(pick) else "medium"
+
+
+func set_touch_size(pick: String) -> void:
+	set_setting("controls", "touch_size", pick)
+
+
+## How far up the screen the touch controls sit on your own, as a share of
+## its height from the bottom (see TouchControls.height_for()).
+func touch_height() -> float:
+	var picked = settings.get_value("controls", "touch_height", TouchControls.HEIGHT)
+	if not (picked is float or picked is int):
+		return TouchControls.HEIGHT
+	return clampf(float(picked), TouchControls.HEIGHT_LOWEST, TouchControls.HEIGHT_HIGHEST)
+
+
+func set_touch_height(picked: float) -> void:
+	set_setting("controls", "touch_height", picked)
+
+
 ## The camera view each person last used (see RaceCamera), 0 for player 1.
 func camera_view(person: int) -> String:
 	return settings.get_value("camera", "player_%d" % (person + 1), "chase")

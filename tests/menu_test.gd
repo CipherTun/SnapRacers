@@ -122,6 +122,7 @@ func _ready() -> void:
 	touch.gadget_names = ["", ""]
 	touch.steering = "stick"
 	check(not touch._buttons().has("left"), "with the stick there are no steering buttons")
+	await _touch_sizes(touch)
 	touch.queue_free()
 	Game.set_steering(0, saved_steering)
 	await _camera_holes()
@@ -272,6 +273,97 @@ func _ready() -> void:
 	Game.set_setting("race", "player_two", saved_second)
 	print("All menu checks passed." if failures == 0 else "%d menu checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)
+
+
+## The touch controls are no bigger than a big phone's on a tablet, the
+## same as ever on a phone, and Small, Medium and Large and any height still
+## fit. Picked in Settings and kept.
+func _touch_sizes(touch: TouchControls) -> void:
+	var saved_size := Game.touch_size()
+	var saved_height := Game.touch_height()
+	var pills := screen().find_children("*", "Button", true, false).filter(func(b): return b.text == "Large")
+	check(pills.size() == 1, "settings has a touch controls size")
+	pills[0].pressed.emit()
+	check(Game.touch_size() == "large", "picking Large keeps it")
+	var sliders := screen().find_children("*", "HSlider", true, false).filter(func(sl): return is_equal_approx(sl.max_value, TouchControls.HEIGHT_HIGHEST))
+	check(sliders.size() == 1, "and a touch controls height")
+	sliders[0].value = 0.55
+	check(is_equal_approx(Game.touch_height(), 0.55), "moving it keeps it")
+	touch.gadget_names = ["Turbo", "Shield"]
+	# A Galaxy Tab (1920x1200 at 206 dpi) is 1280x800 in canvas units, and a
+	# Pixel 5 (2340x1080 at 432 dpi) 1560x720, both stretched 1.5 times.
+	var tab := 206.0 / 2.54 / 1.5
+	var phone := 432.0 / 2.54 / 1.5
+	touch.steering = "stick"
+	touch.height = TouchControls.HEIGHT
+	touch.size = Vector2(1560, 720)
+	touch.per_cm = 0.0
+	var uncapped := [touch._buttons().gas[1], touch._stick()[1]]
+	touch.per_cm = phone
+	touch.control_size = "medium"
+	check(is_equal_approx(touch._buttons().gas[1], uncapped[0]) and is_equal_approx(touch._stick()[1], uncapped[1]), "on a phone Medium is the same size as ever (GO %.2f cm across)" % [touch._buttons().gas[1] * 2.0 / phone])
+	var bigger := func(label: String) -> void:
+		touch.control_size = "medium"
+		var medium: float = touch._buttons().gas[1]
+		var medium_stick: float = touch._stick()[1]
+		touch.control_size = "large"
+		check(touch._buttons().gas[1] > medium and touch._stick()[1] > medium_stick, "%s Large is bigger than Medium" % label)
+		check(_clashes(touch).is_empty(), "%s Large controls fit %s" % [label, _clashes(touch)])
+	touch.per_cm = phone
+	bigger.call("on a phone")
+	touch.per_cm = 0.0
+	bigger.call("with no dpi")
+	touch.size = Vector2(1280, 800)
+	touch.per_cm = tab
+	var go := {}
+	for pick in TouchControls.SIZES:
+		touch.control_size = pick
+		var scale: float = TouchControls.SIZE_SCALES[pick]
+		var gas_cm: float = touch._buttons().gas[1] / tab
+		var stick_cm: float = touch._stick()[1] / tab
+		go[pick] = gas_cm
+		check(gas_cm <= TouchControls.GO_MOST_CM * scale + 0.001 and stick_cm <= TouchControls.STICK_MOST_CM * scale + 0.001, "on a tablet %s GO is %.2f cm across and the stick %.2f cm" % [pick, gas_cm * 2.0, stick_cm * 2.0])
+	check(go.small < go.medium and go.medium < go.large, "Small, Medium and Large get bigger")
+	for pick in TouchControls.SIZES:
+		touch.control_size = pick
+		for how in ["buttons", "stick"]:
+			touch.steering = how
+			for shape in [[Vector2(1280, 800), false], [Vector2(640, 800), true], [Vector2(1280, 400), true]]:
+				touch.size = shape[0]
+				for picked in [TouchControls.HEIGHT_LOWEST, TouchControls.HEIGHT, TouchControls.HEIGHT_HIGHEST]:
+					touch.height = TouchControls.height_for(picked, shape[1])
+					var trouble := _clashes(touch)
+					if not trouble.is_empty():
+						check(false, "%s %s controls fit at %.2f up a %dx%d screen %s" % [pick, how, picked, touch.size.x, touch.size.y, trouble])
+	touch.size = Vector2(1280, 800)
+	touch.control_size = "medium"
+	touch.steering = "stick"
+	touch.height = TouchControls.height_for(TouchControls.HEIGHT_LOWEST, false)
+	var low := touch._buttons()
+	check(low.brake[0].y + low.brake[1] <= 800.0, "at the lowest the brake is still on the screen")
+	touch.height = TouchControls.height_for(TouchControls.HEIGHT_HIGHEST, false)
+	check(touch._buttons().gas[0].y < low.gas[0].y, "and higher up they go up")
+	touch.height = TouchControls.HEIGHT
+	touch.per_cm = -1.0
+	Game.set_touch_size(saved_size)
+	Game.set_touch_height(saved_height)
+
+
+## Controls that run off the edge or sit on each other.
+func _clashes(touch: TouchControls) -> Array:
+	var all := touch._buttons(true)
+	if touch.steering == "stick":
+		all.stick = touch._stick()
+	var out := []
+	for a in all:
+		var c: Vector2 = all[a][0]
+		var r: float = all[a][1]
+		if c.x - r < -0.5 or c.y - r < -0.5 or c.x + r > touch.size.x + 0.5 or c.y + r > touch.size.y + 0.5:
+			out.append("%s off the edge" % a)
+		for b in all:
+			if str(a) < str(b) and c.distance_to(all[b][0]) < r + all[b][1] - 0.5:
+				out.append("%s on %s" % [a, b])
+	return out
 
 
 ## Nothing on a menu page or the driving controls sits under a camera hole,

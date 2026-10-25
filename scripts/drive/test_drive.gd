@@ -69,6 +69,8 @@ func _ready() -> void:
 	var touch := TouchControls.new()
 	touch.visible = TouchControls.shown_at_start()
 	touch.steering = Game.steering(0)
+	touch.control_size = Game.touch_size()
+	touch.height = TouchControls.height_for(Game.touch_height(), false)
 	touch.blockers.append(garage)
 	touch.blockers.append(view)
 	hud_root.add_child(touch)

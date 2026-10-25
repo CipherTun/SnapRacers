@@ -38,6 +38,20 @@ const STICK_DEADZONE := 0.06
 ## up in each half of a split screen.
 const HEIGHT := 0.4
 const HEIGHT_SPLIT := 0.25
+## How high they can be set in Settings, from the bottom (the brake still
+## stays on the screen, see _placed_buttons()) to three fifths up. A split
+## screen half scales HEIGHT_SPLIT the same way.
+const HEIGHT_LOWEST := 0.15
+const HEIGHT_HIGHEST := 0.6
+## How big they are, picked in Settings, against the biggest they get on a
+## big screen (GO_MOST_CM).
+const SIZES := {"small": "Small", "medium": "Medium", "large": "Large"}
+const SIZE_SCALES := {"small": 0.8, "medium": 1.0, "large": 1.25}
+## The most GO's and the stick's radius are on a phone or tablet, in cm, so a
+## tablet's aren't twice a phone's and far apart. A Pixel 5 has GO 0.83 cm
+## and the stick 1.08 cm, and these are about 15% more.
+const GO_MOST_CM := 0.95
+const STICK_MOST_CM := 1.25
 ## Each button's colour. Reset and the steering buttons are grey.
 const BUTTON_COLOURS := {
 	"gas": UiKit.GO_GREEN, "brake": UiKit.BRAKE_RED, "look": UiKit.LOOK_BLUE,
@@ -52,6 +66,15 @@ var height := HEIGHT:
 	set(value):
 		height = value
 		queue_redraw()
+## "small", "medium" or "large" (see SIZES).
+var control_size := "medium":
+	set(value):
+		control_size = value if SIZES.has(value) else "medium"
+		_word_sizes.clear()
+		queue_redraw()
+## Canvas units in a cm on the screen, or 0 for no cap by size. Below 0 it's
+## worked out from the screen (see units_per_cm()); tests set it.
+var per_cm := -1.0
 ## "stick" or "buttons" (see STEERING).
 var steering := "stick":
 	set(value):
@@ -101,6 +124,9 @@ var _drawn := []
 var _word_sizes := {}
 ## Draws the pictures on gadgets that can't be used yet, faded as a whole.
 var _faded: Control
+## The screen's dots per inch, read once, or SNAPRACERS_DPI on a computer to
+## try a tablet's size.
+static var _dpi := -1.0
 
 
 func _ready() -> void:
@@ -119,6 +145,46 @@ func _notification(what: int) -> void:
 		_word_sizes.clear()
 	if what == NOTIFICATION_RESIZED or what == NOTIFICATION_VISIBILITY_CHANGED:
 		queue_redraw()
+
+
+## How high the controls sit for a height picked in Settings, on your own or
+## in a split screen half.
+static func height_for(picked: float, split: bool) -> float:
+	picked = clampf(picked, HEIGHT_LOWEST, HEIGHT_HIGHEST)
+	return picked * HEIGHT_SPLIT / HEIGHT if split else picked
+
+
+## A radius from the screen-share one, `fraction_r`, capped at `most_cm` when
+## there's a size to go by, then scaled by `scale`. Smaller than Medium it
+## shrinks, bigger it grows past the share.
+static func fit(fraction_r: float, most_cm: float, units: float, scale: float) -> float:
+	var base := fraction_r if units <= 0.0 else minf(fraction_r, most_cm * units)
+	return base * scale
+
+
+## Canvas units in a cm on the screen, or 0 when it's not known. Only on a
+## phone or tablet, since a computer's dpi is often made up.
+func units_per_cm() -> float:
+	if per_cm >= 0.0:
+		return per_cm
+	if _dpi < 0.0:
+		_dpi = 0.0
+		var fake := OS.get_environment("SNAPRACERS_DPI")
+		if fake.is_valid_float():
+			_dpi = fake.to_float()
+		elif OS.has_feature("mobile"):
+			_dpi = float(DisplayServer.screen_get_dpi())
+		if _dpi < 100.0 or _dpi > 1000.0:
+			_dpi = 0.0
+	if _dpi <= 0.0 or not is_inside_tree():
+		return 0.0
+	var root := get_tree().root
+	var shown := root.get_visible_rect().size.y
+	if shown <= 0.0 or root.size.y <= 0:
+		return 0.0
+	# Window pixels per canvas unit, from the stretch.
+	var stretch := float(root.size.y) / shown
+	return _dpi / 2.54 / stretch
 
 
 ## Sets what's on a gadget button, redrawing only when it's changed.
@@ -160,11 +226,55 @@ func _process(delta: float) -> void:
 
 ## The stick's middle and radius, in the corner where your left thumb rests.
 func _stick() -> Array:
-	# In a split screen half it shrinks to fit next to the buttons.
-	var r := minf(minf(size.y * 0.17, size.x * 0.16), 125.0)
-	var stick := {"stick": [Vector2(r * 1.35, _middle(r)), r]}
+	var stick := {"stick": _stick_circle(_scale())}
 	_clear_of_holes(stick, ["stick"])
 	return stick.stick
+
+
+## In a split screen half it shrinks to fit next to the buttons.
+func _stick_circle(scale: float) -> Array:
+	var r := fit(minf(minf(size.y * 0.17, size.x * 0.16), 125.0), STICK_MOST_CM, units_per_cm(), scale)
+	return [Vector2(r * 1.35, _middle(r)), r]
+
+
+## The size scale in use. Large grows as far as everything still fits on the
+## screen without touching, so it can come out smaller than its usual scale.
+func _scale() -> float:
+	var wanted: float = SIZE_SCALES[control_size]
+	if wanted <= 1.0:
+		return wanted
+	var key := [size, height, wanted, steering, gadget_names, per_cm]
+	if key != _scale_key:
+		_scale_key = key
+		_scale_found = 1.0
+		var scale := wanted
+		while scale > 1.0:
+			var circles := _placed_buttons(true, scale)
+			if steering == "stick":
+				circles["stick"] = _stick_circle(scale)
+			if _overlaps(circles).is_empty():
+				_scale_found = scale
+				break
+			scale -= 0.01
+	return _scale_found
+
+
+var _scale_key := []
+var _scale_found := 1.0
+
+
+## The names of circles that run off the screen or sit on each other.
+func _overlaps(circles: Dictionary) -> Array:
+	var out := []
+	for a in circles:
+		var c: Vector2 = circles[a][0]
+		var r: float = circles[a][1]
+		if c.x - r < -0.5 or c.y - r < -0.5 or c.x + r > size.x + 0.5 or c.y + r > size.y + 0.5:
+			out.append(a)
+		for b in circles:
+			if str(a) < str(b) and c.distance_to(circles[b][0]) < r + circles[b][1] - 0.5:
+				out.append(a)
+	return out
 
 
 ## Every button's middle and radius. With `all_gadgets` both gadget buttons
@@ -210,11 +320,14 @@ func _clear_of_holes(circles: Dictionary, group: Array) -> void:
 			return
 
 
-func _placed_buttons(all_gadgets := false) -> Dictionary:
+func _placed_buttons(all_gadgets := false, scale := -1.0) -> Dictionary:
+	if scale < 0.0:
+		scale = _scale()
 	var s := size
 	# These shrink in a narrow split screen half too, so the brake stays clear
 	# of the stick.
-	var r := minf(minf(s.y * 0.13, s.x * 0.1), 110.0)
+	var units := units_per_cm()
+	var r := fit(minf(minf(s.y * 0.13, s.x * 0.1), 110.0), GO_MOST_CM, units, scale)
 	# GO, with the brake right under it, both kept on the screen.
 	var drop := r * 1.95
 	var y := minf(_middle(r), s.y - drop - r * 0.75 - r * 0.2)
@@ -233,7 +346,7 @@ func _placed_buttons(all_gadgets := false) -> Dictionary:
 	if steering == "buttons":
 		# The left and right buttons sit where the stick would be, big enough
 		# to find without looking.
-		var arrow := minf(minf(s.y * 0.13, s.x * 0.1), 105.0)
+		var arrow := fit(minf(minf(s.y * 0.13, s.x * 0.1), 105.0), GO_MOST_CM, units, scale)
 		var ay := _middle(arrow * 1.3)
 		out["left"] = [Vector2(arrow * 1.3, ay), arrow]
 		out["right"] = [Vector2(arrow * 3.75, ay), arrow]

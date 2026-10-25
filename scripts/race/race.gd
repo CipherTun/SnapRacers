@@ -378,7 +378,8 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 	var touch := TouchControls.new()
 	touch.visible = TouchControls.shown_at_start()
 	# Lower down in a split screen half, where there's less room.
-	touch.height = TouchControls.HEIGHT if humans.size() == 1 else TouchControls.HEIGHT_SPLIT
+	touch.height = TouchControls.height_for(Game.touch_height(), humans.size() > 1)
+	touch.control_size = Game.touch_size()
 	touch.steering = Game.steering(index)
 	touch.blockers.append_array(racer_hud.buttons())
 	racer_hud.add_child(touch)
