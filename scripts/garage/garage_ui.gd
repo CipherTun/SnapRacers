@@ -211,14 +211,14 @@ func set_mode(mode: Mode, what: String, moves := {}) -> void:
 	match mode:
 		Mode.PLACING:
 			_held_name.text = what
-			_hint = "Drag it or tap a dot where it goes."
+			_hint = ""
 		Mode.SELECTED:
 			_action_title.text = what
 			_hint = ""
 		Mode.PAINTING:
 			_hint = "Tap parts to paint them."
 		_:
-			_hint = "Drag a part from the left onto the kart, or tap one on the kart."
+			_hint = ""
 	_show_drawer(mode == Mode.IDLE or mode == Mode.PAINTING or _peek)
 	_show_status()
 

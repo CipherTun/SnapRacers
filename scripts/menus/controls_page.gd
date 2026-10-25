@@ -23,7 +23,7 @@ var _prompt: Label
 func _ready() -> void:
 	add_theme_constant_override("separation", 10)
 	if not owners_only:
-		add_child(MenuStyle.heading("Controllers", "With two players, each has their own"))
+		add_child(MenuStyle.heading("Controllers"))
 	_owners = VBoxContainer.new()
 	_owners.add_theme_constant_override("separation", 8)
 	add_child(_owners)
@@ -55,7 +55,7 @@ func _ready() -> void:
 		_show()
 		return
 
-	add_child(MenuStyle.heading("Buttons", "Tap one, then press the key or button for it"))
+	add_child(MenuStyle.heading("Buttons"))
 	var players := HBoxContainer.new()
 	players.add_theme_constant_override("separation", 10)
 	add_child(players)

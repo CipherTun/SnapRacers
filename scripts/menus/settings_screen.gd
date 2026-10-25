@@ -61,7 +61,7 @@ func _show_tab(index: int) -> void:
 func _player_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 10)
-	page.add_child(MenuStyle.heading("Name", "Shown in the results and to other players online"))
+	page.add_child(MenuStyle.heading("Name"))
 	var name_edit := LineEdit.new()
 	PadKeyboard.attach(name_edit)
 	name_edit.placeholder_text = "You"
@@ -121,7 +121,7 @@ func _sound_page() -> Control:
 func _display_page() -> Control:
 	var page := VBoxContainer.new()
 	page.add_theme_constant_override("separation", 10)
-	page.add_child(MenuStyle.heading("Graphics", "Lower draws less, for slower phones"))
+	page.add_child(MenuStyle.heading("Graphics"))
 	var levels := HBoxContainer.new()
 	levels.add_theme_constant_override("separation", 10)
 	page.add_child(levels)

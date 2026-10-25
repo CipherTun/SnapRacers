@@ -268,7 +268,7 @@ func _build_colours() -> void:
 	_colours.add_child(_swatches)
 
 
-## A hint, then sitting them in a kart and a big Done button, along the bottom.
+## Sitting them in a kart and a big Done button, along the bottom.
 func _build_bottom() -> void:
 	_bottom = VBoxContainer.new()
 	_bottom.alignment = BoxContainer.ALIGNMENT_END
@@ -278,14 +278,6 @@ func _build_bottom() -> void:
 	_bottom.grow_horizontal = GROW_DIRECTION_BOTH
 	_bottom.grow_vertical = GROW_DIRECTION_BEGIN
 	_bottom.offset_bottom = -14.0
-	var hint_panel := PanelContainer.new()
-	hint_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 4))
-	hint_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
-	_bottom.add_child(hint_panel)
-	var hint := Label.new()
-	hint.text = "Drag them to spin them around."
-	hint.theme_type_variation = "StatusLabel"
-	hint_panel.add_child(hint)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
 	row.add_theme_constant_override("separation", 10)
