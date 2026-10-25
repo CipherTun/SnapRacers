@@ -80,7 +80,7 @@ const DATA := BuilderStyle.DATA
 
 enum Mode { IDLE, PLACING, SELECTED, PAINTING }
 
-var _toolbar: HBoxContainer
+var _toolbar: PanelContainer
 var _undo: IconButton
 var _redo: IconButton
 var _mirror: IconButton
@@ -93,7 +93,7 @@ var _drawer: PanelContainer
 ## The drawer's row (the rail, then the tiles) and the rail itself, which
 ## make way for a camera hole partway down the side (see SafeArea).
 var _drawer_row: HBoxContainer
-var _rail_box: VBoxContainer
+var _rail_box: RailBox
 var _drawer_handle: Button
 var _drawer_open := true
 ## The drawer was pulled back out while a part is in hand, so it stays out.
@@ -319,12 +319,6 @@ func _process(delta: float) -> void:
 # Building the panels.
 
 func _build_toolbar() -> void:
-	_toolbar = HBoxContainer.new()
-	_toolbar.add_theme_constant_override("separation", 10)
-	add_child(_toolbar)
-	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
-	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
-	_toolbar.offset_top = 8.0
 	var close := IconButton.new("close", "Leave the garage")
 	close.pressed.connect(func() -> void: menu_pressed.emit())
 	_undo = IconButton.new("undo", "Undo")
@@ -339,8 +333,11 @@ func _build_toolbar() -> void:
 	_air.pressed.connect(func() -> void: air_toggled.emit(not _air.on))
 	var camera := IconButton.new("camera", "Camera views")
 	var more := IconButton.new("more", "Save, load or start again")
-	for button in [close, _undo, _redo, _mirror, _paint, _air, camera, more]:
-		_toolbar.add_child(button)
+	_toolbar = BuilderStyle.toolbar([[close], [_undo, _redo], [_mirror, _paint, _air], [camera], [more]])
+	add_child(_toolbar)
+	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
+	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
+	_toolbar.offset_top = 8.0
 
 	_views_menu = _menu(["Front", "Side", "Top", "Angle", "Fit the kart"])
 	_views_menu.id_pressed.connect(func(id: int) -> void: view_pressed.emit(["front", "side", "top", "angle", "fit"][id]))
@@ -375,23 +372,19 @@ func _pop_under(menu: PopupMenu, button: Control) -> void:
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
 	_drawer.offset_top = 8.0
 	_drawer.offset_bottom = -8.0
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
 	_drawer.add_child(row)
 	# The rail of tabs down the edge.
-	var rail := VBoxContainer.new()
-	rail.add_theme_constant_override("separation", 4)
-	row.add_child(rail)
+	var rail := BuilderStyle.dress_drawer(_drawer, row)
 	_rail_box = rail
 	_drawer_row = row
 	for i in CATEGORIES.size():
-		var tab := IconButton.new(CATEGORIES[i][3], CATEGORIES[i][0])
+		var tab := BuilderStyle.rail_tab(CATEGORIES[i][3], CATEGORIES[i][0])
 		tab.pressed.connect(_show_category.bind(i))
 		rail.add_child(tab)
 		_rail.append(tab)

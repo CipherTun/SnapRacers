@@ -128,14 +128,14 @@ const DANGER := BuilderStyle.DANGER
 const BOTTOM_GAP := -14.0
 const DATA := BuilderStyle.DATA
 
-var _toolbar: HBoxContainer
+var _toolbar: PanelContainer
 var _undo: IconButton
 var _redo: IconButton
 var _file_menu: PopupMenu
 
 var _drawer: PanelContainer
 var _drawer_row: HBoxContainer
-var _rail_box: VBoxContainer
+var _rail_box: RailBox
 var _rail: Array[IconButton] = []
 var _heading: Label
 var _tiles: GridContainer
@@ -332,12 +332,6 @@ func _process(delta: float) -> void:
 # Building the panels.
 
 func _build_toolbar() -> void:
-	_toolbar = HBoxContainer.new()
-	_toolbar.add_theme_constant_override("separation", 10)
-	add_child(_toolbar)
-	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
-	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
-	_toolbar.offset_top = 8.0
 	var close := IconButton.new("close", "Leave the track editor")
 	close.pressed.connect(func() -> void: menu_pressed.emit())
 	_undo = IconButton.new("undo", "Undo")
@@ -347,8 +341,11 @@ func _build_toolbar() -> void:
 	var fit := IconButton.new("fit", "Fit the course in view")
 	fit.pressed.connect(func() -> void: fit_pressed.emit())
 	var more := IconButton.new("more", "Save, load, share or start again")
-	for button in [close, _undo, _redo, fit, more]:
-		_toolbar.add_child(button)
+	_toolbar = BuilderStyle.toolbar([[close], [_undo, _redo], [fit], [more]])
+	add_child(_toolbar)
+	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
+	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
+	_toolbar.offset_top = 8.0
 	_file_menu = BuilderStyle.menu(["Save", "Load", "Rename", "Share", "New course"])
 	add_child(_file_menu)
 	_file_menu.id_pressed.connect(_on_file_menu)
@@ -373,23 +370,20 @@ func _on_file_menu(id: int) -> void:
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
 	_drawer.offset_top = 8.0
 	_drawer.offset_bottom = -8.0
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
 	_drawer.add_child(row)
-	var rail := VBoxContainer.new()
-	rail.add_theme_constant_override("separation", 4)
-	row.add_child(rail)
+	# The rail of tabs down the edge.
+	var rail := BuilderStyle.dress_drawer(_drawer, row)
 	_rail_box = rail
 	_drawer_row = row
 	var tabs: Array = CATEGORIES.map(func(c): return [c[0], c[1]]) + [["Landmarks", "landmarks"]]
 	for i in tabs.size():
-		var tab := IconButton.new(tabs[i][1], tabs[i][0])
+		var tab := BuilderStyle.rail_tab(tabs[i][1], tabs[i][0])
 		tab.pressed.connect(_show_category.bind(i))
 		rail.add_child(tab)
 		_rail.append(tab)

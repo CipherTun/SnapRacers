@@ -22,6 +22,18 @@ const BACKGROUND := Color("#2b3440")
 const PANEL_SLANT := 10.0
 ## The lean of the round-ish buttons: the tool buttons, swatches and arrows.
 const BUTTON_LEAN := 0.25
+## The thin lines between groups of buttons in a toolbar or a rail.
+const DIVIDER := Color(1, 1, 1, 0.2)
+## The darker band behind a drawer's rail of tabs.
+const RAIL_BAND := Color(0, 0, 0, 0.35)
+## A rail tab's size, and the room between the rail and the tiles.
+const RAIL_TAB := Vector2(48, 52)
+const RAIL_GAP := 14.0
+## How far above and below the buttons a toolbar's backing reaches, so it's
+## IconButton.SIZE plus twice this high.
+const BAR_PAD := 2.0
+## The lean of a button's box in a toolbar, the same as the bar's own sides.
+const BAR_LEAN := PANEL_SLANT / (48.0 + BAR_PAD * 2.0)
 
 
 ## The see-through panel behind a drawer, card or row of controls, padded
@@ -117,6 +129,64 @@ static func slide_clear(row: Control, left_panels: Array, right_panels: Array) -
 	if absf(want - shift) > 0.5:
 		row.set_anchor(SIDE_LEFT, 0.5 + want / width, true, false)
 		row.set_anchor(SIDE_RIGHT, 0.5 + want / width, true, false)
+
+
+## The toolbar along the top: one slanted bar with every button on it, and
+## a thin line between each group. `groups` is an array of arrays of
+## IconButtons.
+static func toolbar(groups: Array) -> PanelContainer:
+	var bar := PanelContainer.new()
+	bar.add_theme_stylebox_override("panel", scrim(4, BAR_PAD))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 2)
+	bar.add_child(row)
+	for i in groups.size():
+		if i > 0:
+			row.add_child(_BarDivider.new())
+		for button: IconButton in groups[i]:
+			button.look = "bar"
+			row.add_child(button)
+	return bar
+
+
+## The line between two groups on a toolbar, leaning like the bar.
+class _BarDivider extends Control:
+	func _init() -> void:
+		custom_minimum_size = Vector2(10, 48)
+		mouse_filter = MOUSE_FILTER_IGNORE
+
+	func _draw() -> void:
+		var middle := size * 0.5
+		var reach := 14.0
+		var across := reach * BAR_LEAN
+		draw_line(middle + Vector2(across, -reach), middle + Vector2(-across, reach), DIVIDER, 2.0, true)
+
+
+## Dresses a drawer down the left side and makes its rail of tabs: a darker
+## band down the drawer's left edge, flush with it, with the rail on it and
+## the tiles beside it in `row`.
+static func dress_drawer(drawer: PanelContainer, row: HBoxContainer) -> RailBox:
+	var box := scrim(9)
+	row.add_theme_constant_override("separation", int(RAIL_GAP))
+	# The band reaches from the drawer's edge to halfway between the rail and
+	# the tiles, measured halfway down, where the face's side is half the
+	# panel's slant across.
+	box.band = RAIL_BAND
+	box.band_width = box.content_margin_left + RAIL_TAB.x + RAIL_GAP * 0.5 - PANEL_SLANT * 0.5 - box.edge_width
+	drawer.add_theme_stylebox_override("panel", box)
+	var rail := RailBox.new()
+	rail.drawer = drawer
+	rail.add_theme_constant_override("separation", 0)
+	row.add_child(rail)
+	return rail
+
+
+## A tab for a drawer's rail.
+static func rail_tab(picture: String, tip: String) -> IconButton:
+	var tab := IconButton.new(picture, tip)
+	tab.custom_minimum_size = RAIL_TAB
+	tab.look = "rail"
+	return tab
 
 
 ## The stats chip in the top right: one line of numbers on a small panel,
@@ -294,10 +364,19 @@ static func choice_box(state: String) -> SlantBox:
 
 ## The see-through backing of a round-ish tool button: dark, solid accent
 ## when it's on.
-static func icon_box(state: String, on: bool, height: float) -> StyleBox:
-	var key := "%s %s %d" % [state, on, roundi(height)]
+## In a toolbar or rail (`look` "bar" or "rail") it has no box but when
+## it's on, hovered or held, and the rail draws its own for one that's on.
+## A rail tab leans by `rail_lean`, the slope of the drawer's side.
+static func icon_box(state: String, on: bool, height: float, look := "", rail_lean := 0.0) -> StyleBox:
+	var key := "%s %s %d %s %.4f" % [state, on, roundi(height), look, rail_lean]
 	if not _icon_boxes.has(key):
-		_icon_boxes[key] = _make_icon_box(state, on, height)
+		match look:
+			"bar":
+				_icon_boxes[key] = _make_bar_box(state, on, height)
+			"rail":
+				_icon_boxes[key] = _make_rail_box(state, on, rail_lean)
+			_:
+				_icon_boxes[key] = _make_icon_box(state, on, height)
 	return _icon_boxes[key]
 
 
@@ -320,3 +399,32 @@ static func _make_icon_box(state: String, on: bool, height: float) -> StyleBox:
 			box = UiKit.slant(UiKit.ACCENT if on else Color(SCRIM, 0.55), BUTTON_LEAN, Color.TRANSPARENT if on else UiKit.EDGE, 1, false)
 	box.lean_height = height
 	return box
+
+
+static func _make_bar_box(state: String, on: bool, height: float) -> StyleBox:
+	var box: SlantBox
+	match state:
+		"focus":
+			box = UiKit.slant(Color.TRANSPARENT, BAR_LEAN, UiKit.WHITE, 3, false)
+		"hover":
+			box = UiKit.slant(UiKit.ACCENT.lightened(0.15) if on else Color(UiKit.WHITE, 0.1), BAR_LEAN)
+		"pressed":
+			box = UiKit.slant(UiKit.ACCENT.lightened(0.3) if on else Color(UiKit.ACCENT, 0.35), BAR_LEAN)
+		_:
+			if not on or state == "disabled":
+				return StyleBoxEmpty.new()
+			box = UiKit.slant(UiKit.ACCENT, BAR_LEAN, Color.TRANSPARENT, 0, false)
+	box.shadow = Vector2.ZERO
+	box.lean_height = height
+	return box
+
+
+static func _make_rail_box(state: String, on: bool, rail_lean: float) -> StyleBox:
+	match state:
+		"focus":
+			return UiKit.slant(Color.TRANSPARENT, 0.0, UiKit.WHITE, 3, false)
+		"hover":
+			return UiKit.slant(UiKit.ACCENT.lightened(0.15) if on else Color(UiKit.WHITE, 0.08), rail_lean, Color.TRANSPARENT, 0, false)
+		"pressed":
+			return UiKit.slant(UiKit.ACCENT.lightened(0.3) if on else Color(UiKit.ACCENT, 0.35), rail_lean, Color.TRANSPARENT, 0, false)
+	return StyleBoxEmpty.new()

@@ -52,6 +52,16 @@ extends StyleBox
 	set(value):
 		underline_height = value
 		_dirty()
+## A band down the left side inside the edge, flush with it and as wide as
+## `band_width`, for a drawer's rail of tabs.
+@export var band := Color.TRANSPARENT:
+	set(value):
+		band = value
+		_dirty()
+@export var band_width := 0.0:
+	set(value):
+		band_width = value
+		_dirty()
 ## Past this height the box leans less, so its edge moves across no more than
 ## it would at this height and stays clear of the padding (see UiKit.pad()).
 ## Zero leans by `lean` at any height.
@@ -69,6 +79,7 @@ var _face: StyleBoxFlat
 var _shade: StyleBoxFlat
 var _stripe: StyleBoxFlat
 var _under: StyleBoxFlat
+var _band: StyleBoxFlat
 
 
 func _dirty() -> void:
@@ -85,6 +96,7 @@ func _build() -> void:
 	_shade = _flat(shadow_colour) if shadow != Vector2.ZERO and shadow_colour.a > 0.0 else null
 	_stripe = _flat(stripe) if stripe_width > 0.0 and stripe.a > 0.0 else null
 	_under = _flat(underline) if underline_height > 0.0 and underline.a > 0.0 else null
+	_band = _flat(band) if band_width > 0.0 and band.a > 0.0 else null
 
 
 func _flat(colour: Color) -> StyleBoxFlat:
@@ -98,10 +110,8 @@ func _draw(to_canvas_item: RID, rect: Rect2) -> void:
 	if _face == null:
 		_build()
 	rect = rect.grow(grow)
-	var tilt := lean
-	if lean_height > 0.0 and rect.size.y > lean_height + grow * 2.0:
-		tilt = lean * (lean_height + grow * 2.0) / rect.size.y
-	for box in [_face, _shade, _stripe, _under]:
+	var tilt := _tilt(rect.size.y)
+	for box in [_face, _shade, _stripe, _under, _band]:
 		if box != null:
 			box.skew = Vector2(tilt, 0.0)
 	# A skewed StyleBoxFlat hangs half its lean over each side, so it's drawn
@@ -112,10 +122,32 @@ func _draw(to_canvas_item: RID, rect: Rect2) -> void:
 		_shade.draw(to_canvas_item, Rect2(inner.position + shadow, inner.size))
 	_face.draw(to_canvas_item, inner)
 	var inset := float(edge_width)
+	if _band != null:
+		_band.draw(to_canvas_item, _part(inner, tilt, inset, inset + band_width, inset, inner.size.y - inset))
 	if _stripe != null:
 		_stripe.draw(to_canvas_item, _part(inner, tilt, inset + 2.0, inset + 2.0 + stripe_width, inset + 2.0, inner.size.y - inset - 2.0))
 	if _under != null:
 		_under.draw(to_canvas_item, _part(inner, tilt, 0.0, inner.size.x, inner.size.y - underline_height, inner.size.y))
+
+
+## How far across from the left of a rect `size` high its face's left side
+## is, at `y` down, inside the edge. The band ends `band_width` further on.
+func left_at(size: Vector2, y: float) -> float:
+	var h := size.y + grow * 2.0
+	var tilt := _tilt(h)
+	return (h - y - grow) * tilt - grow + edge_width
+
+
+## How far the top leans right for each pixel of height, for a drawer
+## `height` high.
+func tilt_for(height: float) -> float:
+	return _tilt(height + grow * 2.0)
+
+
+func _tilt(height: float) -> float:
+	if lean_height > 0.0 and height > lean_height + grow * 2.0:
+		return lean * (lean_height + grow * 2.0) / height
+	return lean
 
 
 ## The rect for a skewed piece of the face, from `x0` to `x1` across it and

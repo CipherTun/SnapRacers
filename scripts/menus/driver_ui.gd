@@ -27,14 +27,14 @@ const SWATCH := 42.0
 var slot := "head"
 var design: CharacterDesign
 
-var _toolbar: HBoxContainer
+var _toolbar: PanelContainer
 var _undo: IconButton
 var _redo: IconButton
 var _drawer: PanelContainer
 ## The drawer's row (the rail, then the tiles) and the rail itself, which
 ## make way for a camera hole partway down the side (see SafeArea).
 var _drawer_row: HBoxContainer
-var _rail_box: VBoxContainer
+var _rail_box: RailBox
 var _rail: Array[IconButton] = []
 var _heading: Label
 var _tiles: GridContainer
@@ -140,12 +140,6 @@ func _show_swatches() -> void:
 # Building the panels.
 
 func _build_toolbar() -> void:
-	_toolbar = HBoxContainer.new()
-	_toolbar.add_theme_constant_override("separation", 10)
-	add_child(_toolbar)
-	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
-	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
-	_toolbar.offset_top = 8.0
 	var close := IconButton.new("close", "Leave the driver screen")
 	close.pressed.connect(func() -> void: done_pressed.emit())
 	_undo = IconButton.new("undo", "Undo")
@@ -154,28 +148,28 @@ func _build_toolbar() -> void:
 	_redo.pressed.connect(func() -> void: redo_pressed.emit())
 	var dice := IconButton.new("dice", "A random driver")
 	dice.pressed.connect(func() -> void: random_pressed.emit())
-	for button in [close, _undo, _redo, dice]:
-		_toolbar.add_child(button)
+	_toolbar = BuilderStyle.toolbar([[close], [_undo, _redo], [dice]])
+	add_child(_toolbar)
+	_toolbar.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
+	_toolbar.grow_horizontal = GROW_DIRECTION_BOTH
+	_toolbar.offset_top = 8.0
 
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
 	_drawer.offset_top = 8.0
 	_drawer.offset_bottom = -8.0
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override("separation", 6)
 	_drawer.add_child(row)
-	var rail := VBoxContainer.new()
-	rail.add_theme_constant_override("separation", 4)
-	row.add_child(rail)
+	# The rail of tabs down the edge.
+	var rail := BuilderStyle.dress_drawer(_drawer, row)
 	_rail_box = rail
 	_drawer_row = row
 	for pair in SLOTS:
-		var tab := IconButton.new(pair[0], pair[1])
+		var tab := BuilderStyle.rail_tab(pair[0], pair[1])
 		tab.pressed.connect(func() -> void: show_slot(pair[0]))
 		rail.add_child(tab)
 		_rail.append(tab)

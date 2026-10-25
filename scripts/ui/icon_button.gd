@@ -6,6 +6,9 @@ extends Button
 ## everywhere the game runs.
 ##
 ## A toggle one fills with the accent colour while it's on.
+##
+## One in a toolbar or a drawer's rail has no box of its own, since the bar
+## or the rail is its backing (see BuilderStyle.toolbar() and RailBox).
 
 const SIZE := 48.0
 
@@ -15,6 +18,22 @@ var on := false:
 		on = value
 		_style()
 		queue_redraw()
+		if get_parent() is RailBox:
+			get_parent().queue_redraw()
+## "" for a button on its own, "bar" in a toolbar or "rail" in a drawer's rail.
+var look := "":
+	set(value):
+		look = value
+		_style()
+		queue_redraw()
+
+
+## How far a rail tab's box leans, set by its RailBox to match the drawer.
+var rail_lean := 0.0:
+	set(value):
+		if not is_equal_approx(rail_lean, value):
+			rail_lean = value
+			_style()
 
 
 func _init(what: String, tip := "") -> void:
@@ -27,7 +46,7 @@ func _init(what: String, tip := "") -> void:
 
 func _style() -> void:
 	for state in UiKit.STATES:
-		add_theme_stylebox_override(state, BuilderStyle.icon_box(state, on, SIZE))
+		add_theme_stylebox_override(state, BuilderStyle.icon_box(state, on, SIZE, look, rail_lean))
 
 
 func _draw() -> void:
