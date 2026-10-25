@@ -11,14 +11,25 @@ extends Control
 ##
 ## Antialiased lines are slow on phone GPUs, and a screen of cards has dozens,
 ## so each outline is drawn once into a picture at the screen's pixel size and
-## kept. It's drawn as lines only until its picture is ready.
+## kept. One picture is made each frame, the ones on screen first, and an
+## outline is drawn as lines until its picture is ready.
 
 const EDGE := Color(0.0, 0.0, 0.0, 0.5)
 const ROAD := Color(1.0, 1.0, 1.0, 0.9)
 ## How much higher one stretch of road has to be to be drawn on top.
 const LEVEL := 2.0
-## Most pictures kept before they're all dropped.
-const MOST_PICTURES := 300
+## Most pixels of pictures kept, about 32 MB. The oldest go first.
+const MOST_PIXELS := 8_000_000
+## The pictures were drawn over clear black, so their colours are already
+## multiplied by their alpha. This draws them that way and still fades them
+## with the modulate.
+const PREMULTIPLIED := """
+shader_type canvas_item;
+render_mode blend_premul_alpha;
+varying vec4 tint;
+void vertex() { tint = COLOR; }
+void fragment() { COLOR = texture(TEXTURE, UV) * vec4(tint.rgb * tint.a, tint.a); }
+"""
 
 var path := ""
 ## The colour for the start line and the loops.
@@ -27,13 +38,22 @@ var colour := MenuStyle.ACCENT
 var thickness := 3.0
 
 var _outline := {}
+## The course's part of the picture key, worked out with the outline.
+var _course_key := ""
+## The picture being drawn, held so it stays valid if the cache lets it go.
+var _picture: Texture2D
 static var _worked_out_on := -1
-## Pictures of outlines by _picture_key(), and the ones being made.
+## Pictures of outlines by _picture_key(), oldest first, with how many pixels
+## they hold all together, the ones being made and the ones that failed.
 static var _pictures := {}
+static var _pixels_kept := 0
 static var _making := {}
-## The pictures were drawn over clear black, so their colours are already
-## multiplied by their alpha.
-static var _premultiplied: CanvasItemMaterial
+static var _failed := {}
+## The frame a picture was last started on, and the last frame an outline on
+## screen was waiting for one.
+static var _started_on := -1
+static var _shown_waiting_on := -1
+static var _premultiplied: ShaderMaterial
 
 
 func _init(course := "", tint := MenuStyle.ACCENT) -> void:
@@ -44,12 +64,18 @@ func _init(course := "", tint := MenuStyle.ACCENT) -> void:
 
 func _ready() -> void:
 	resized.connect(queue_redraw)
+	# With the canvas_items stretch the screen's pixels per control pixel can
+	# change without the control changing size.
+	get_viewport().size_changed.connect(queue_redraw)
 	texture_filter = TEXTURE_FILTER_NEAREST
 	if path != "" and CourseOutline.is_ready(path):
-		_outline = CourseOutline.of(path)
-		set_process(false)
-	else:
-		set_process(true)
+		_set_outline()
+	set_process(true)
+
+
+func _set_outline() -> void:
+	_outline = CourseOutline.of(path)
+	_course_key = CourseOutline._key(path)
 
 
 func _process(_delta: float) -> void:
@@ -62,54 +88,86 @@ func _process(_delta: float) -> void:
 			if _worked_out_on == frame:
 				return
 			_worked_out_on = frame
-		_outline = CourseOutline.of(path)
+		_set_outline()
 		queue_redraw()
 		return
-	# Waiting for this outline's picture.
-	if _pictures.has(_picture_key()):
+	# The headless tests have no GPU to draw pictures with.
+	if DisplayServer.get_name() == "headless":
+		set_process(false)
+		return
+	var key := _picture_key()
+	if key == "":
+		return
+	if _pictures.has(key):
 		set_process(false)
 		queue_redraw()
+		return
+	if _failed.has(key):
+		set_process(false)
+		return
+	if _making.has(key):
+		return
+	var frame := Engine.get_process_frames()
+	var shown := _on_screen()
+	if shown:
+		_shown_waiting_on = frame
+	elif _shown_waiting_on >= frame - 1:
+		return
+	if _started_on == frame:
+		return
+	_started_on = frame
+	_making[key] = true
+	_make_picture(key, _outline, size, _scale(), thickness, colour, get_tree().root)
 
 
-## How many screen pixels there are to one of this control's.
+func _on_screen() -> bool:
+	if not is_visible_in_tree():
+		return false
+	return get_viewport().get_visible_rect().intersects(get_global_transform_with_canvas() * Rect2(Vector2.ZERO, size))
+
+
+## How many screen pixels there are to one of this control's, from the
+## stretch alone, so a card that grows for a moment when it's pressed doesn't
+## make pictures at sizes in between.
 func _scale() -> float:
-	var to_screen := get_viewport().get_final_transform() * get_global_transform_with_canvas()
-	return maxf(to_screen.get_scale().x, 0.01)
+	var viewport := get_viewport()
+	return maxf(viewport.get_final_transform().get_scale().x * viewport.get_canvas_transform().get_scale().x, 0.01)
 
 
 func _pixels() -> Vector2i:
 	return Vector2i((size * _scale()).round())
 
 
+## Which picture this outline needs now, or "" if it has no room.
 func _picture_key() -> String:
 	var pixels := _pixels()
-	return "%s %d %d %s %s" % [CourseOutline._key(path), pixels.x, pixels.y, colour.to_html(), thickness]
+	if pixels.x < 1 or pixels.y < 1:
+		return ""
+	return "%s %d %d %s %s" % [_course_key, pixels.x, pixels.y, colour.to_html(), thickness]
 
 
 func _draw() -> void:
 	if _outline.is_empty():
 		return
-	var pixels := _pixels()
-	if pixels.x < 1 or pixels.y < 1:
-		return
 	var key := _picture_key()
-	var picture: Texture2D = _pictures.get(key)
-	if picture != null:
+	if key == "":
+		return
+	_picture = _pictures.get(key)
+	if _picture != null:
 		if _premultiplied == null:
-			_premultiplied = CanvasItemMaterial.new()
-			_premultiplied.blend_mode = CanvasItemMaterial.BLEND_MODE_PREMULT_ALPHA
+			var shader := Shader.new()
+			shader.code = PREMULTIPLIED
+			_premultiplied = ShaderMaterial.new()
+			_premultiplied.shader = shader
 		if material != _premultiplied:
 			material = _premultiplied
-		draw_texture_rect(picture, Rect2(Vector2.ZERO, Vector2(pixels) / _scale()), false)
+		draw_texture_rect(_picture, Rect2(Vector2.ZERO, Vector2(_pixels()) / _scale()), false)
 		return
 	if material != null:
 		material = null
 	_paint(self, _outline, size, 1.0, thickness, colour)
-	# The headless tests have no GPU to draw pictures with.
-	if not _making.has(key) and DisplayServer.get_name() != "headless":
-		_making[key] = true
-		_make_picture.call_deferred(key, _outline, size, _scale(), thickness, colour, get_tree().root)
-	set_process(true)
+	if not _failed.has(key):
+		set_process(true)
 
 
 ## Draws the outline once in a viewport of its own, keeps what it drew and lets
@@ -121,16 +179,22 @@ static func _make_picture(key: String, outline: Dictionary, area: Vector2, scale
 	var painter := Node2D.new()
 	painter.draw.connect(func() -> void: _paint(painter, outline, area, scale, width, tint))
 	viewport.add_child(painter)
-	root.add_child(viewport)
+	root.add_child.call_deferred(viewport)
 
 
 static func _keep(key: String, image: Image) -> void:
 	_making.erase(key)
 	if image == null or image.is_empty():
+		_failed[key] = true
 		return
-	if _pictures.size() >= MOST_PICTURES:
-		_pictures.clear()
+	var pixels := image.get_width() * image.get_height()
+	while _pixels_kept + pixels > MOST_PIXELS and not _pictures.is_empty():
+		var oldest: String = _pictures.keys()[0]
+		var gone: Texture2D = _pictures[oldest]
+		_pixels_kept -= gone.get_width() * gone.get_height()
+		_pictures.erase(oldest)
 	_pictures[key] = ImageTexture.create_from_image(image)
+	_pixels_kept += pixels
 
 
 ## Draws the outline into `area` on `item`, `scale` times as big.
