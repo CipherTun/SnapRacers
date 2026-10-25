@@ -236,7 +236,7 @@ Up to eight karts can race together, with AI in the empty places if the host wan
 - For Bluetooth, pair two or three phones, then host and join over Bluetooth.
 - A dedicated server runs races on your network or the internet, with an admin page. Phones and browsers can join it. See [server/README.md](server/README.md).
 
-How do I connect? at the bottom of the online screen has the steps.
+In a browser you can join a server but not host or find games. Web players need the server to have a certificate.
 
 ## Graphics and sound
 

@@ -750,7 +750,7 @@ func _open_load() -> void:
 			var course := CourseDesign.load_file(path)
 			if course != null:
 				_load_list.add_child(_load_button(course.name, path))
-	_load_list.add_child(MenuStyle.heading("The game's courses", "Loading one makes a copy of your own"))
+	_load_list.add_child(MenuStyle.heading("The game's courses"))
 	for id in Tracks.all():
 		var track := TrackPath.load_file(Tracks.path_of(id))
 		_load_list.add_child(_load_button(track.name, Tracks.path_of(id)))

@@ -31,7 +31,7 @@ func _ready() -> void:
 
 	var two_row := HBoxContainer.new()
 	column.add_child(two_row)
-	var heading := MenuStyle.heading("Two of us on this phone", "On a split screen")
+	var heading := MenuStyle.heading("Two of us on this phone")
 	heading.size_flags_horizontal = SIZE_EXPAND_FILL
 	two_row.add_child(heading)
 	_two = CheckButton.new()
@@ -44,7 +44,7 @@ func _ready() -> void:
 	two_row.add_child(_two)
 
 	if not OS.has_feature("web"):
-		column.add_child(MenuStyle.heading("Host a game", "For phones on this Wi-Fi or this phone's hotspot"))
+		column.add_child(MenuStyle.heading("Host a game"))
 		var host := MenuStyle.button("Host a game", _host)
 		host.custom_minimum_size.y = 72.0
 		column.add_child(host)
@@ -53,7 +53,7 @@ func _ready() -> void:
 				MenuStyle.button("Host over Wi-Fi Direct", _host_direct, "No Wi-Fi needed"),
 				MenuStyle.button("Host over Bluetooth", _host_bluetooth, "For a few players")))
 
-	column.add_child(MenuStyle.heading("Join a game", "Games on this network show up here" if not OS.has_feature("web") else "Type a SnapRacers server's address"))
+	column.add_child(MenuStyle.heading("Join a game"))
 	_found = VBoxContainer.new()
 	_found.add_theme_constant_override("separation", 8)
 	column.add_child(_found)
@@ -86,7 +86,6 @@ func _ready() -> void:
 	join.custom_minimum_size.x = 140.0
 	row.add_child(join)
 
-	column.add_child(MenuStyle.heading("How do I connect?", HELP_WEB if OS.has_feature("web") else HELP_PHONE if Game.plugin.has() else HELP))
 	MenuStyle.back_at_bottom(column, go_back)
 
 	_finder = GameFinder.new()
@@ -96,9 +95,6 @@ func _ready() -> void:
 	_show_found()
 
 
-const HELP := "On the same Wi-Fi, one of you hosts and the others see it here. With no Wi-Fi, turn on one phone's hotspot, connect the others to it and host on that phone. Anywhere else, join a SnapRacers server by typing its address. A game on the internet needs port 27280 open."
-const HELP_PHONE := "On the same Wi-Fi, one phone hosts and the others see it here. With no Wi-Fi around, one phone hosts over Wi-Fi Direct and the others tap Find Wi-Fi Direct games (the host might have to accept each one), or one phone turns on its hotspot and hosts. Bluetooth works for two or three phones with no Wi-Fi at all. One hosts over Bluetooth, and the others tap Find Bluetooth games and pick the host's phone by its Bluetooth name. Pairing the phones first makes it quicker. Anywhere else, join a SnapRacers server by typing its address."
-const HELP_WEB := "In a browser you can join a SnapRacers server by typing its address, but you can't host or find games. The server needs a certificate for web players, which its admin can set up."
 
 
 func _show_found() -> void:

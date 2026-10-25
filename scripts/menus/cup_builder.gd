@@ -35,7 +35,7 @@ func _ready() -> void:
 		_show())
 	column.add_child(_name)
 
-	column.add_child(MenuStyle.heading("Races", "%d to %d, raced in order" % [CupDesign.FEWEST, CupDesign.MOST]))
+	column.add_child(MenuStyle.heading("Races"))
 	_list = VBoxContainer.new()
 	_list.add_theme_constant_override("separation", 6)
 	column.add_child(_list)
