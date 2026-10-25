@@ -271,6 +271,7 @@ func _ready() -> void:
 	Game.set_setting("player", "name", saved_name)
 	Game.set_setting("race", "split", saved_split)
 	Game.set_setting("race", "player_two", saved_second)
+	_check_picture_cache()
 	print("All menu checks passed." if failures == 0 else "%d menu checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)
 
@@ -512,3 +513,32 @@ func _controls_page() -> void:
 	else:
 		settings.set_value("bindings", "player_2", had)
 	Game.save_settings()
+
+
+## The course layout pictures (see CourseOutlineView) past their limit: the
+## ones being drawn stay, and the oldest others go with their sheet.
+func _check_picture_cache() -> void:
+	var picture := func(wide: int, high: int) -> AtlasTexture:
+		var made := AtlasTexture.new()
+		made.region = Rect2(0, 0, wide, high)
+		return made
+	var first := SubViewport.new()
+	var second := SubViewport.new()
+	CourseOutlineView._on_sheet[first] = 0
+	CourseOutlineView._on_sheet[second] = 0
+	var each := 1000 * 1000
+	var count := CourseOutlineView.MOST_PIXELS / each
+	for i in count:
+		CourseOutlineView._keep("cache test %d" % i, picture.call(1000, 1000), first)
+	# One in use and one not.
+	CourseOutlineView._users["cache test 0"] = 1
+	CourseOutlineView._keep("cache test new", picture.call(1000, 1000), second)
+	var kept := CourseOutlineView._pictures
+	check(kept.has("cache test 0") and not kept.has("cache test 1") and kept.has("cache test new"), "past the picture limit the oldest goes, but not one in use")
+	check(is_instance_valid(first) and not first.is_queued_for_deletion(), "and its sheet stays while it holds pictures")
+	CourseOutlineView._users.clear()
+	for i in count:
+		CourseOutlineView._keep("cache test more %d" % i, picture.call(1000, 1000), second)
+	check(not CourseOutlineView._on_sheet.has(first), "a sheet goes when none of its pictures are kept")
+	check(kept.has("cache test new"), "but not the pictures on the sheet being drawn")
+	second.free()

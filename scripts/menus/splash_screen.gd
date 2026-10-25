@@ -18,6 +18,9 @@ extends Control
 ## It has to draw on the real screen, which uses different versions of the same
 ## shaders than views off the screen do.
 ##
+## Last it opens the cup screen, so its course layouts get drawn into
+## pictures (see CourseOutlineView) and opening it later is quick.
+##
 ## Meanwhile it works out the layouts of the game's courses for the cup screen
 ## (see CourseOutline), a few each frame. The first launch builds every course
 ## to do it, and after that they're saved.
@@ -29,6 +32,8 @@ const WARM_FRAMES := 6
 const AT_LEAST := 0.8
 ## The frame the snowy race loses its fog on (see _clear_up()).
 const CLEAR_AT := 3
+## The most frames the cup screen's given to draw its course layouts.
+const CUPS_FRAMES := 90
 
 var _stages: Array[Callable] = []
 var _stage_count := 1
@@ -72,7 +77,7 @@ func _ready() -> void:
 	_status.theme_type_variation = "NoteLabel"
 	column.add_child(_status)
 
-	_stages = [_warm_race.bind("storm", "night"), _warm_race.bind("snow", "day"), _warm_garage, _warm_driver]
+	_stages = [_warm_race.bind("storm", "night"), _warm_race.bind("snow", "day"), _warm_garage, _warm_driver, _warm_cups]
 	_stage_count = _stages.size()
 	for cup in GrandPrix.cups():
 		for id in cup.tracks:
@@ -159,6 +164,23 @@ func _warm_driver() -> Node:
 	return builder
 
 
+## The cup screen, on a layer of its own so it fills the screen as it would.
+func _warm_cups() -> Node:
+	var layer := CanvasLayer.new()
+	layer.set_meta("cups", true)
+	var grid := CupGrid.new(Game.MODE_GRAND_PRIX)
+	layer.add_child(grid)
+	add_child(layer)
+	# Only for looking at: it can't be picked out with a controller or tapped.
+	for control: Control in grid.find_children("*", "Control", true, false) + [grid]:
+		control.focus_mode = Control.FOCUS_NONE
+		control.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var focused := get_viewport().gui_get_focus_owner()
+	if focused != null and grid.is_ancestor_of(focused):
+		focused.release_focus()
+	return layer
+
+
 ## Gets course layouts ready for up to a few milliseconds, and at least one.
 func _outline_some() -> void:
 	var from := Time.get_ticks_msec()
@@ -187,17 +209,28 @@ func _process(delta: float) -> void:
 	_outline_some()
 	var stages_total := float(_stage_count)
 	var finished := stages_total - _stages.size() - (1 if _scene != null else 0)
-	_bar.value = clampf((finished + float(_frames) / WARM_FRAMES) / stages_total, 0.0, 1.0) * 100.0
+	# The cup screen can take longer than WARM_FRAMES, so its share fills
+	# more and more slowly instead.
+	var part := minf(float(_frames) / WARM_FRAMES, 1.0)
+	if _scene != null and _scene.has_meta("cups"):
+		part = 1.0 - pow(0.5, float(_frames) / WARM_FRAMES)
+	_bar.value = clampf((finished + part) / stages_total, 0.0, 1.0) * 100.0
 	if _clear_later != null and _scene == _clear_later and _frames == CLEAR_AT:
 		_clear_up(_clear_later)
 		_clear_later = null
-	if _scene != null and _frames >= WARM_FRAMES:
+	if _scene != null and _frames >= WARM_FRAMES and not _drawing_cups():
 		_next_stage()
 	elif _scene == null and _shown >= AT_LEAST and _outlines.is_empty():
 		_done = true
 		print("Warm-up took %d ms, with %d ms of course layouts" % [Time.get_ticks_msec() - _began, _outlines_took])
 		Sounds.hushed = false
 		Game.show_menu()
+
+
+## Whether the cup screen's still drawing its pictures, for up to
+## CUPS_FRAMES frames.
+func _drawing_cups() -> bool:
+	return _scene.has_meta("cups") and _frames < CUPS_FRAMES and CourseOutlineView.busy()
 
 
 func go_back() -> void:

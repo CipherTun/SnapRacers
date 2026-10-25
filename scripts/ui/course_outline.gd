@@ -20,6 +20,7 @@ const EVERY := 4
 const LOOK := 2
 
 static var _kept := {}
+static var _tidied := false
 
 
 ## The outline of the course in this file.
@@ -27,10 +28,20 @@ static func of(path: String) -> Dictionary:
 	var key := _key(path)
 	if _kept.has(key):
 		return _kept[key]
-	var text := FileAccess.get_file_as_string(path)
-	var saved := "%s/%d-%s.json" % [SAVED, LOOK, text.md5_text()]
+	var text := ""
+	var saved := ""
+	# A released game's own courses only change with its version, so they're
+	# saved under that and their path, which saves reading and hashing them.
+	# Debug builds go by what's in the file, so edited courses show.
+	if path.begins_with("res://") and OS.has_feature("template") and not OS.is_debug_build():
+		saved = "%s/%d-%s-%s.json" % [SAVED, LOOK, ProjectSettings.get_setting("application/config/version", ""), path.md5_text()]
+	else:
+		text = FileAccess.get_file_as_string(path)
+		saved = "%s/%d-%s.json" % [SAVED, LOOK, text.md5_text()]
 	var outline := _read(saved)
 	if outline.is_empty():
+		if text == "":
+			text = FileAccess.get_file_as_string(path)
 		var data = JSON.parse_string(text)
 		var track := TrackPath.from_dict(data) if typeof(data) == TYPE_DICTIONARY else TrackPath.new()
 		outline = of_track(track)
@@ -117,6 +128,7 @@ static func _write(saved: String, outline: Dictionary) -> void:
 	for h in outline.heights:
 		heights.append(snappedf(h, 0.1))
 	DirAccess.make_dir_recursive_absolute(SAVED)
+	_tidy()
 	var file := FileAccess.open(saved, FileAccess.WRITE)
 	if file == null:
 		return
@@ -125,6 +137,19 @@ static func _write(saved: String, outline: Dictionary) -> void:
 		"line": flat.call(Array(outline.line)), "heights": heights, "loops": flat.call(outline.loops),
 		"across": [outline.across.x, outline.across.y],
 	}))
+
+
+## Deletes outlines saved by other versions of the game, once a run. Names
+## are LOOK-md5 or LOOK-version-md5.
+static func _tidy() -> void:
+	if _tidied:
+		return
+	_tidied = true
+	var version := str(ProjectSettings.get_setting("application/config/version", ""))
+	for name in DirAccess.get_files_at(SAVED):
+		var parts := name.get_basename().split("-")
+		if parts[0] != str(LOOK) or (parts.size() == 3 and parts[1] != version):
+			DirAccess.remove_absolute("%s/%s" % [SAVED, name])
 
 
 ## A line saying what's on a track, like "1866 m, 3 laps, a bridge and a jump".
