@@ -20,6 +20,8 @@ const PANEL_HOVER := Color(0.09, 0.09, 0.15, 0.9)
 ## The thin light line round a panel.
 const EDGE := Color(1, 1, 1, 0.15)
 const MUTED := Color(1, 1, 1, 0.6)
+## Text a little quieter than white, like a drawer's heading.
+const SOFT := Color(1, 1, 1, 0.85)
 const FADED := Color(1, 1, 1, 0.35)
 ## The accent: focus, the chosen one, you.
 const ACCENT := YELLOW
@@ -60,6 +62,10 @@ const HUD_PLACE := 44
 const COUNTDOWN := 120
 ## How many goes are left, on a power-up box or a gadget button.
 const BADGE := 20
+## The editors' small controls: chips, word buttons and the stats chip.
+const CHIP := 20
+## A part's name under its picture in an editor's drawer.
+const TINY := 14
 
 # Spacing steps.
 const GAP_XS := 4
@@ -406,6 +412,7 @@ static func theme() -> Theme:
 	_add_sliders(t)
 	_add_scroll_bars(t)
 	add_pictures(t)
+	BuilderStyle.add_to(t)
 	return t
 
 

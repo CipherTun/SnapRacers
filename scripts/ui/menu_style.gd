@@ -178,10 +178,17 @@ static func mark(b: Button, on: bool) -> void:
 	for state in ["normal", "hover"]:
 		b.remove_theme_stylebox_override(state)
 		if on:
-			var card := b.theme_type_variation == "CardButton"
-			var key: String = state + ("_card" if card else "")
+			var kind := b.theme_type_variation
+			var key: String = state + "_" + kind
 			if not _marked.has(key):
-				var box := (UiKit.card(state) if card else UiKit.pill(state)) as SlantBox
+				var box: SlantBox
+				match kind:
+					"CardButton":
+						box = UiKit.card(state)
+					"ChoiceButton":
+						box = BuilderStyle.choice_box(state)
+					_:
+						box = UiKit.pill(state)
 				box.edge = ACCENT
 				box.edge_width = 3
 				_marked[key] = box

@@ -160,7 +160,7 @@ func _build_toolbar() -> void:
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
@@ -183,8 +183,7 @@ func _build_drawer() -> void:
 	column.add_theme_constant_override("separation", 4)
 	row.add_child(column)
 	_heading = Label.new()
-	_heading.add_theme_font_size_override("font_size", 18)
-	_heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	_heading.theme_type_variation = "ShelfLabel"
 	_heading.custom_minimum_size.y = 40.0
 	_heading.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	column.add_child(_heading)
@@ -202,13 +201,7 @@ func _build_drawer() -> void:
 
 ## Their name and weight on one line in the top right, which opens into a card.
 func _build_card() -> void:
-	_chip = Button.new()
-	_chip.focus_mode = FOCUS_ALL
-	_chip.add_theme_font_size_override("font_size", 19)
-	for state in ["font_color", "font_hover_color", "font_pressed_color"]:
-		_chip.add_theme_color_override(state, BuilderStyle.DATA)
-	for state in ["normal", "hover", "pressed"]:
-		_chip.add_theme_stylebox_override(state, BuilderStyle.scrim(8))
+	_chip = BuilderStyle.stats_chip()
 	_chip.pressed.connect(func() -> void:
 		_chip.visible = false
 		_card.visible = true)
@@ -219,9 +212,7 @@ func _build_card() -> void:
 	_chip.offset_top = 8.0
 
 	_card = PanelContainer.new()
-	var style := BuilderStyle.scrim()
-	style.set_content_margin_all(14)
-	_card.add_theme_stylebox_override("panel", style)
+	_card.add_theme_stylebox_override("panel", BuilderStyle.scrim(14, 14))
 	_card.visible = false
 	add_child(_card)
 	_card.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
@@ -236,8 +227,7 @@ func _build_card() -> void:
 	box.add_child(top)
 	var title := Label.new()
 	title.text = "NAME"
-	title.add_theme_font_size_override("font_size", 18)
-	title.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	title.theme_type_variation = "ShelfLabel"
 	title.size_flags_horizontal = SIZE_EXPAND_FILL
 	top.add_child(title)
 	var close := IconButton.new("close", "Close")
@@ -253,23 +243,19 @@ func _build_card() -> void:
 	_name_edit.text_changed.connect(func(text: String) -> void: name_changed.emit(text))
 	box.add_child(_name_edit)
 	_weight = Label.new()
-	_weight.add_theme_font_size_override("font_size", 22)
-	_weight.add_theme_color_override("font_color", BuilderStyle.DATA)
+	_weight.theme_type_variation = "DataLabel"
 	box.add_child(_weight)
 	var about := Label.new()
 	about.text = "A heavier driver makes a steadier kart and a lighter one a quicker one."
 	about.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	about.custom_minimum_size = Vector2(270, 0)
-	about.add_theme_font_size_override("font_size", 17)
-	about.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	about.theme_type_variation = "NoteLabel"
 	box.add_child(about)
 
 
 func _build_colours() -> void:
 	_colours = PanelContainer.new()
-	var style := BuilderStyle.scrim(16)
-	style.set_content_margin_all(10)
-	_colours.add_theme_stylebox_override("panel", style)
+	_colours.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 10))
 	add_child(_colours)
 	_colours.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
 	_colours.grow_horizontal = GROW_DIRECTION_BEGIN
@@ -293,12 +279,12 @@ func _build_bottom() -> void:
 	_bottom.grow_vertical = GROW_DIRECTION_BEGIN
 	_bottom.offset_bottom = -14.0
 	var hint_panel := PanelContainer.new()
-	hint_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(8))
+	hint_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 4))
 	hint_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	_bottom.add_child(hint_panel)
 	var hint := Label.new()
 	hint.text = "Drag them to spin them around."
-	hint.add_theme_font_size_override("font_size", 18)
+	hint.theme_type_variation = "StatusLabel"
 	hint_panel.add_child(hint)
 	var row := HBoxContainer.new()
 	row.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -333,10 +319,4 @@ class DriverTile:
 		focus_mode = FOCUS_ALL
 		custom_minimum_size = BuilderStyle.TILE + Vector2(0, 16)
 		autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		add_theme_font_size_override("font_size", 14)
-		add_theme_font_override("font", UiKit.font("body"))
-		if picked:
-			for state in ["font_color", "font_hover_color", "font_pressed_color"]:
-				add_theme_color_override(state, MenuStyle.ACCENT)
-		for state in ["normal", "hover", "pressed"]:
-			add_theme_stylebox_override(state, BuilderStyle.tile_box(state, picked))
+		BuilderStyle.dress_tile(self, picked)

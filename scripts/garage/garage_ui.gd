@@ -296,7 +296,7 @@ func toast(text: String) -> void:
 func _show_status() -> void:
 	if _toast_left > 0.0:
 		return
-	var colour := Color(1, 1, 1, 0.85)
+	var colour := UiKit.SOFT
 	if _problem_count > 0 and _mode == Mode.IDLE:
 		_status.text = "%d thing%s to fix before it can race (see the card)" % [_problem_count, "" if _problem_count == 1 else "s"]
 		colour = DANGER
@@ -374,7 +374,7 @@ func _pop_under(menu: PopupMenu, button: Control) -> void:
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
@@ -400,8 +400,7 @@ func _build_drawer() -> void:
 	var heading := HBoxContainer.new()
 	column.add_child(heading)
 	_heading = Label.new()
-	_heading.add_theme_font_size_override("font_size", 18)
-	_heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	_heading.theme_type_variation = "ShelfLabel"
 	_heading.size_flags_horizontal = SIZE_EXPAND_FILL
 	heading.add_child(_heading)
 	var shut := IconButton.new("shut", "Put the parts away")
@@ -484,11 +483,7 @@ func show_picture(id: String, picture: Texture2D) -> void:
 
 
 func _build_stats() -> void:
-	_stats_chip = Button.new()
-	_stats_chip.focus_mode = FOCUS_ALL
-	_stats_chip.add_theme_font_size_override("font_size", 19)
-	for state in ["normal", "hover", "pressed"]:
-		_stats_chip.add_theme_stylebox_override(state, BuilderStyle.scrim(8))
+	_stats_chip = BuilderStyle.stats_chip()
 	_stats_chip.pressed.connect(func() -> void:
 		_stats_chip.visible = false
 		_stats_card.visible = true)
@@ -499,7 +494,7 @@ func _build_stats() -> void:
 	_stats_chip.offset_top = 8.0
 
 	_stats_card = PanelContainer.new()
-	_stats_card.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_stats_card.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 8))
 	_stats_card.visible = false
 	add_child(_stats_card)
 	_stats_card.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
@@ -513,7 +508,6 @@ func _build_stats() -> void:
 	var top := HBoxContainer.new()
 	box.add_child(top)
 	_stats_name = Label.new()
-	_stats_name.add_theme_font_size_override("font_size", 22)
 	_stats_name.size_flags_horizontal = SIZE_EXPAND_FILL
 	top.add_child(_stats_name)
 	var close := IconButton.new("close", "Close")
@@ -523,31 +517,23 @@ func _build_stats() -> void:
 		_stats_chip.visible = true)
 	top.add_child(close)
 	_stats_label = Label.new()
-	_stats_label.add_theme_font_size_override("font_size", 18)
-	_stats_label.add_theme_color_override("font_color", DATA)
+	_stats_label.theme_type_variation = "StatsLabel"
 	box.add_child(_stats_label)
 	_tip_label = Label.new()
 	_tip_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_tip_label.custom_minimum_size = Vector2(230, 0)
-	_tip_label.add_theme_font_size_override("font_size", 16)
-	_tip_label.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	_tip_label.theme_type_variation = "SmallLabel"
 	box.add_child(_tip_label)
 	_problems_label = Label.new()
 	_problems_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_problems_label.custom_minimum_size = Vector2(230, 0)
-	_problems_label.add_theme_color_override("font_color", DANGER)
-	_problems_label.add_theme_font_size_override("font_size", 17)
+	_problems_label.theme_type_variation = "ProblemLabel"
 	box.add_child(_problems_label)
 
 
 func _build_held_chip() -> void:
 	_held_chip = PanelContainer.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(MenuStyle.ACCENT, 0.25)
-	style.set_corner_radius_all(24)
-	style.content_margin_left = 8
-	style.content_margin_right = 4
-	_held_chip.add_theme_stylebox_override("panel", style)
+	_held_chip.add_theme_stylebox_override("panel", BuilderStyle.held_box())
 	add_child(_held_chip)
 	_held_chip.set_anchors_and_offsets_preset(PRESET_CENTER_TOP)
 	_held_chip.grow_horizontal = GROW_DIRECTION_BOTH
@@ -561,7 +547,7 @@ func _build_held_chip() -> void:
 	_held_picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(_held_picture)
 	_held_name = Label.new()
-	_held_name.add_theme_font_size_override("font_size", 20)
+	_held_name.theme_type_variation = "CardTitleLabel"
 	row.add_child(_held_name)
 	var drop := IconButton.new("close", "Put it down")
 	drop.custom_minimum_size = Vector2(40, 40)
@@ -572,9 +558,7 @@ func _build_held_chip() -> void:
 ## The controls for putting a part in hand exactly where you want it.
 func _build_placing() -> void:
 	_placing = PanelContainer.new()
-	var panel := BuilderStyle.scrim(16)
-	panel.set_content_margin_all(14)
-	_placing.add_theme_stylebox_override("panel", panel)
+	_placing.add_theme_stylebox_override("panel", BuilderStyle.scrim(9, 14))
 	add_child(_placing)
 	_placing.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
 	_placing.grow_horizontal = GROW_DIRECTION_BEGIN
@@ -622,7 +606,7 @@ func _build_placing() -> void:
 	for button in [turn, _flip, _way, _slide]:
 		button.size_flags_horizontal = SIZE_EXPAND_FILL
 		moves.add_child(button)
-	_place = BuilderStyle.pill("Place", MenuStyle.ACCENT, BuilderStyle.ON_ACCENT, func() -> void: place_pressed.emit(), 52.0)
+	_place = BuilderStyle.pill("Place", UiKit.ACCENT, BuilderStyle.ON_ACCENT, func() -> void: place_pressed.emit(), 52.0)
 	# Placing a part makes its own snap, so no click on top.
 	_place.set_meta("quiet", true)
 	column.add_child(_place)
@@ -631,21 +615,20 @@ func _build_placing() -> void:
 ## A picked out part's actions, which float beside it.
 func _build_actions() -> void:
 	_actions = PanelContainer.new()
-	_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim(8, 0.82))
+	_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim(8, 6, 0.75))
 	add_child(_actions)
 	var row := HBoxContainer.new()
 	_actions.add_child(row)
 	_action_title = Label.new()
-	_action_title.add_theme_font_size_override("font_size", 16)
-	_action_title.add_theme_color_override("font_color", Color(1, 1, 1, 0.6))
+	_action_title.theme_type_variation = "SmallLabel"
 	_action_title.custom_minimum_size = Vector2(150, 0)
 	_action_title.clip_text = true
 	row.add_child(_action_title)
-	row.add_child(BuilderStyle.word("Move", MenuStyle.ACCENT, func() -> void: move_pressed.emit()))
-	var turn := BuilderStyle.word("Turn", MenuStyle.ACCENT, func() -> void: turn_pressed.emit())
+	row.add_child(BuilderStyle.word("Move", UiKit.ACCENT, func() -> void: move_pressed.emit()))
+	var turn := BuilderStyle.word("Turn", UiKit.ACCENT, func() -> void: turn_pressed.emit())
 	_turn_buttons.append(turn)
 	row.add_child(turn)
-	row.add_child(BuilderStyle.word("Copy", MenuStyle.ACCENT, func() -> void: copy_pressed.emit()))
+	row.add_child(BuilderStyle.word("Copy", UiKit.ACCENT, func() -> void: copy_pressed.emit()))
 	row.add_child(BuilderStyle.word("Delete", DANGER, func() -> void: delete_pressed.emit()))
 	var close := IconButton.new("close", "Done")
 	close.custom_minimum_size = Vector2(40, 40)
@@ -669,7 +652,7 @@ func _place_actions() -> void:
 
 func _build_painting() -> void:
 	_painting = PanelContainer.new()
-	_painting.add_theme_stylebox_override("panel", BuilderStyle.scrim(16))
+	_painting.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 8))
 	add_child(_painting)
 	_painting.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
 	_painting.grow_horizontal = GROW_DIRECTION_BEGIN
@@ -727,11 +710,11 @@ func _build_bottom() -> void:
 	_bottom.grow_vertical = GROW_DIRECTION_BEGIN
 	_bottom.offset_bottom = -14.0
 	_status_panel = PanelContainer.new()
-	_status_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(8))
+	_status_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 4))
 	_status_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	_bottom.add_child(_status_panel)
 	_status = Label.new()
-	_status.add_theme_font_size_override("font_size", 18)
+	_status.theme_type_variation = "StatusLabel"
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_panel.add_child(_status)
 	var row := HBoxContainer.new()
@@ -748,13 +731,12 @@ func _build_bottom() -> void:
 func _build_dialogs() -> void:
 	_load_popup = PopupPanel.new()
 	_load_popup.theme = MenuStyle.theme()
-	_load_popup.add_theme_stylebox_override("panel", BuilderStyle.scrim(12, 0.9))
 	add_child(_load_popup)
 	var box := VBoxContainer.new()
 	_load_popup.add_child(box)
 	var title := Label.new()
 	title.text = "Load a kart"
-	title.add_theme_font_size_override("font_size", 26)
+	title.theme_type_variation = "LeadLabel"
 	box.add_child(title)
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
@@ -851,10 +833,7 @@ class PartTile:
 		focus_mode = FOCUS_ALL
 		custom_minimum_size = BuilderStyle.TILE
 		autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		add_theme_font_size_override("font_size", 14)
-		add_theme_font_override("font", UiKit.font("body"))
-		for state in ["normal", "hover", "pressed"]:
-			add_theme_stylebox_override(state, BuilderStyle.tile_box(state))
+		BuilderStyle.dress_tile(self)
 		tapped.connect(func() -> void:
 			if not _dragged:
 				chosen.emit())

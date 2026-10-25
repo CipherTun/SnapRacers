@@ -1,15 +1,13 @@
 class_name IconButton
 extends Button
 
-## A round button with a small picture drawn on it. The pictures are drawn with
-## lines instead of coming from an icon font, so they look the same everywhere
-## the game runs.
+## A small slanted button with a picture drawn on it. The pictures are drawn
+## with lines instead of coming from an icon font, so they look the same
+## everywhere the game runs.
 ##
-## A toggle one lights up in the accent colour while it's on.
+## A toggle one fills with the accent colour while it's on.
 
 const SIZE := 48.0
-const FILL := Color(1, 1, 1, 0.18)
-const ON_FILL := Color(0.702, 0.616, 1.0, 0.32) # the accent, faintly
 
 var picture := ""
 var on := false:
@@ -28,18 +26,13 @@ func _init(what: String, tip := "") -> void:
 
 
 func _style() -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var box := StyleBoxFlat.new()
-		box.bg_color = ON_FILL if on else FILL
-		if state == "pressed":
-			box.bg_color = box.bg_color.lightened(0.2)
-		box.set_corner_radius_all(int(SIZE * 0.5))
-		add_theme_stylebox_override(state, box)
+	for state in UiKit.STATES:
+		add_theme_stylebox_override(state, BuilderStyle.icon_box(state, on, SIZE))
 
 
 func _draw() -> void:
 	var c := Vector2(size) * 0.5
-	var ink := MenuStyle.ACCENT if on else Color(1, 1, 1, 0.3 if disabled else 0.9)
+	var ink := UiKit.ON_ACCENT if on else (UiKit.FADED if disabled else UiKit.WHITE)
 	var w := 3.0
 	match picture:
 		"close":

@@ -28,11 +28,8 @@ func _ready() -> void:
 		button.custom_minimum_size = Vector2(58, 58)
 		button.size = Vector2(58, 58)
 		button.focus_mode = FOCUS_ALL
-		for state in ["normal", "hover", "pressed"]:
-			var round := StyleBoxFlat.new()
-			round.bg_color = Color(1, 1, 1, 0.3 if state == "pressed" else 0.16)
-			round.set_corner_radius_all(29)
-			button.add_theme_stylebox_override(state, round)
+		for state in UiKit.STATES:
+			button.add_theme_stylebox_override(state, BuilderStyle.icon_box(state, false, 58.0))
 		button.set_meta("arrow", name)
 		button.fired.connect(func() -> void: nudged.emit(ARROWS[name][0]))
 		button.draw.connect(_draw_arrow.bind(button))
@@ -55,4 +52,4 @@ func _draw_arrow(button: Button) -> void:
 	var middle := button.size * 0.5
 	var side := Vector2(-dir.y, dir.x)
 	var points := PackedVector2Array([middle + dir * 13.0, middle - dir * 9.0 + side * 12.0, middle - dir * 9.0 - side * 12.0])
-	button.draw_colored_polygon(points, Color(1, 1, 1, 0.9))
+	button.draw_colored_polygon(points, UiKit.WHITE)

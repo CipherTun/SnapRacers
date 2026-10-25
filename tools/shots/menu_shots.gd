@@ -235,6 +235,12 @@ func _screens(only: Array) -> void:
 		await frames(20)
 		await save("loading")
 		Game.show_loading(false)
+	if want.call("garage"):
+		await _garage_shots()
+	if want.call("driver"):
+		await _driver_shots()
+	if want.call("track_editor"):
+		await _track_editor_shots()
 	# Frames mid-way through the menus' motion, slowed down, only when asked.
 	if only.has("motion"):
 		await _motion("single_player", Game.show_single_player)
@@ -288,3 +294,74 @@ func _motion(which: String, action: Callable) -> void:
 func frames(n: int) -> void:
 	for i in n:
 		await get_tree().process_frame
+
+
+# ----------------------------------------------------------- the editors
+
+## The garage idle, with its stats card open, holding a part, with a part
+## picked out, painting, and with a controller's focus on a rail tab.
+func _garage_shots() -> void:
+	Game.show_garage()
+	var garage: Garage = await screen_of(Garage)
+	garage.ui._show_category(2)
+	await ready_pictures()
+	await save("garage")
+	PadFocus.using_pad = true
+	garage.ui._rail[3].grab_focus()
+	await save("garage_focus")
+	garage.ui._tiles.get_child(1).grab_focus()
+	await save("garage_tile_focus")
+	PadFocus.using_pad = false
+	get_viewport().gui_release_focus()
+	garage.ui._stats_chip.pressed.emit()
+	await save("garage_card")
+	garage.ui._stats_card.visible = false
+	garage.ui._stats_chip.visible = true
+	garage.start_placing("p_curve_2x2")
+	await ready_pictures()
+	await save("garage_holding")
+	garage.cancel()
+	garage.select(0)
+	await frames(5)
+	await save("garage_selected")
+	garage.select(-1)
+	garage.set_painting(true)
+	await save("garage_paint")
+	garage.set_painting(false)
+
+
+## The driver screen, and with its card open.
+func _driver_shots() -> void:
+	Game.character = Game.roster_driver("brickley").duplicate_design()
+	Game.show_driver()
+	var driver: DriverBuilder = await screen_of(DriverBuilder)
+	await ready_pictures()
+	driver._last_touch = 0.0
+	driver._turntable.rotation.y = PI + 0.25
+	await save("driver")
+	driver.ui._chip.pressed.emit()
+	await save("driver_card")
+
+
+## The track editor, with its card open, a piece picked out and a landmark in
+## hand.
+func _track_editor_shots() -> void:
+	Game.show_track_editor()
+	var editor: TrackEditor = await screen_of(TrackEditor)
+	editor.load_course(Tracks.path_of("pithead_park"))
+	for i in 60:
+		await get_tree().process_frame
+	await ready_pictures()
+	await save("track_editor")
+	editor.ui._chip.pressed.emit()
+	await save("track_editor_card")
+	editor.ui._card.visible = false
+	editor.ui._chip.visible = true
+	editor._select(3)
+	await frames(5)
+	await save("track_editor_piece")
+	editor._select(-1)
+	editor.ui._show_category(editor.ui._rail.size() - 1)
+	await ready_pictures()
+	await frames(30)
+	await save("track_editor_landmarks")

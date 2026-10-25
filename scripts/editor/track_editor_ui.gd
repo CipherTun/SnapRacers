@@ -159,6 +159,7 @@ var _edges: Dictionary = {}
 var _landmark_actions: PanelContainer
 
 var _bottom: VBoxContainer
+var _safe: SafeArea
 var _status: Label
 var _status_panel: PanelContainer
 var _race: Button
@@ -199,6 +200,17 @@ func _ready() -> void:
 	safe.watch(_drawer, true)
 	safe.flow(_rail_box)
 	safe.flow(_drawer_row, 1)
+	_safe = safe
+	_bottom.resized.connect(_lift_actions)
+	_lift_actions()
+
+
+## The piece and landmark panels sit over the race buttons, which they'd
+## cover otherwise.
+func _lift_actions() -> void:
+	for panel in [_actions, _landmark_actions]:
+		panel.offset_bottom = _bottom.offset_bottom - _bottom.size.y - 8.0
+		_safe.moved(panel)
 
 
 ## Whether this screen position is on one of the panels instead of the course.
@@ -226,7 +238,7 @@ func show_course(course: CourseDesign, length: float, problems: Array[String], c
 	_about_label.text = "%d pieces, %d m a lap" % [course.pieces.size(), roundi(length)]
 	_laps_label.text = "%d lap%s" % [course.laps, "" if course.laps == 1 else "s"]
 	for id in _themes:
-		BuilderStyle.show_swatch(_themes[id], Color(Scenery.theme_named(id).ground).darkened(0.35), id == course.theme)
+		BuilderStyle.show_swatch(_themes[id], Color(Scenery.theme_named(id).ground).darkened(0.35), id == course.theme, UiKit.LEAN)
 	for id in _hills:
 		MenuStyle.mark(_hills[id], is_equal_approx(float(id), course.hills))
 	for id in _weathers:
@@ -276,7 +288,7 @@ func set_hint(text: String) -> void:
 ## A message for a few seconds, like "Saved".
 func toast(text: String) -> void:
 	_status.text = text
-	_status.add_theme_color_override("font_color", Color(1, 1, 1, 0.9))
+	_status.add_theme_color_override("font_color", UiKit.WHITE)
 	_status_panel.visible = true
 	_toast_left = 2.5
 
@@ -289,7 +301,7 @@ func _show_status() -> void:
 		_status.add_theme_color_override("font_color", DANGER)
 	else:
 		_status.text = _hint
-		_status.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+		_status.add_theme_color_override("font_color", UiKit.SOFT)
 	_status_panel.visible = _status.text != ""
 
 
@@ -344,7 +356,7 @@ func _on_file_menu(id: int) -> void:
 
 func _build_drawer() -> void:
 	_drawer = PanelContainer.new()
-	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_drawer.add_theme_stylebox_override("panel", BuilderStyle.scrim(9))
 	add_child(_drawer)
 	_drawer.set_anchors_and_offsets_preset(PRESET_LEFT_WIDE)
 	_drawer.offset_left = 8.0
@@ -368,8 +380,7 @@ func _build_drawer() -> void:
 	column.add_theme_constant_override("separation", 4)
 	row.add_child(column)
 	_heading = Label.new()
-	_heading.add_theme_font_size_override("font_size", 18)
-	_heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.85))
+	_heading.theme_type_variation = "ShelfLabel"
 	_heading.custom_minimum_size.y = 40.0
 	_heading.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	column.add_child(_heading)
@@ -399,7 +410,7 @@ func _show_category(index: int) -> void:
 			var label := Label.new()
 			label.text = entry[0]
 			label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-			label.add_theme_font_size_override("font_size", 14)
+			label.theme_type_variation = "TileLabel"
 			label.mouse_filter = MOUSE_FILTER_IGNORE
 			tile.add_child(label)
 			label.set_anchors_and_offsets_preset(PRESET_BOTTOM_WIDE)
@@ -432,10 +443,7 @@ func _tile(label: String) -> ScrollButton:
 	tile.vertical_icon_alignment = VERTICAL_ALIGNMENT_TOP
 	tile.expand_icon = true
 	tile.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	tile.add_theme_font_size_override("font_size", 14)
-	tile.add_theme_font_override("font", UiKit.font("body"))
-	for state in ["normal", "hover", "pressed"]:
-		tile.add_theme_stylebox_override(state, BuilderStyle.tile_box(state))
+	BuilderStyle.dress_tile(tile)
 	return tile
 
 
@@ -446,11 +454,7 @@ func _show_picture(prop: String, picture: Texture2D) -> void:
 
 
 func _build_card() -> void:
-	_chip = Button.new()
-	_chip.focus_mode = FOCUS_ALL
-	_chip.add_theme_font_size_override("font_size", 19)
-	for state in ["normal", "hover", "pressed"]:
-		_chip.add_theme_stylebox_override(state, BuilderStyle.scrim(8))
+	_chip = BuilderStyle.stats_chip()
 	_chip.pressed.connect(func() -> void:
 		_chip.visible = false
 		_card.visible = true)
@@ -461,25 +465,32 @@ func _build_card() -> void:
 	_chip.offset_top = 8.0
 
 	_card = PanelContainer.new()
-	_card.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_card.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 8))
 	_card.visible = false
 	add_child(_card)
-	_card.set_anchors_and_offsets_preset(PRESET_TOP_RIGHT)
+	# As tall as the screen, scrolling, since the themes alone are taller
+	# than a phone.
+	_card.set_anchors_and_offsets_preset(PRESET_RIGHT_WIDE)
 	_card.grow_horizontal = GROW_DIRECTION_BEGIN
 	_card.offset_right = -8.0
 	_card.offset_top = 8.0
+	_card.offset_bottom = -8.0
 	_card.custom_minimum_size = Vector2(330, 0)
+	var scroll := ScrollContainer.new()
+	scroll.follow_focus = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_card.add_child(scroll)
 	var box := VBoxContainer.new()
+	box.size_flags_horizontal = SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 8)
-	_card.add_child(box)
+	scroll.add_child(box)
 	var top := HBoxContainer.new()
 	box.add_child(top)
 	_name_label = Label.new()
-	_name_label.add_theme_font_size_override("font_size", 22)
 	_name_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	_name_label.clip_text = true
 	top.add_child(_name_label)
-	var rename := BuilderStyle.word("Rename", MenuStyle.ACCENT, _open_rename)
+	var rename := BuilderStyle.word("Rename", UiKit.ACCENT, _open_rename)
 	top.add_child(rename)
 	var close := IconButton.new("close", "Close")
 	close.custom_minimum_size = Vector2(40, 40)
@@ -488,8 +499,7 @@ func _build_card() -> void:
 		_chip.visible = true)
 	top.add_child(close)
 	_about_label = Label.new()
-	_about_label.add_theme_font_size_override("font_size", 18)
-	_about_label.add_theme_color_override("font_color", DATA)
+	_about_label.theme_type_variation = "StatsLabel"
 	box.add_child(_about_label)
 
 	var laps := HBoxContainer.new()
@@ -502,7 +512,7 @@ func _build_card() -> void:
 	_laps_label = Label.new()
 	_laps_label.custom_minimum_size = Vector2(80, 0)
 	_laps_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_laps_label.add_theme_font_size_override("font_size", 20)
+	_laps_label.theme_type_variation = "CardTitleLabel"
 	laps.add_child(_laps_label)
 	var more := IconButton.new("open", "More laps")
 	more.custom_minimum_size = Vector2(40, 40)
@@ -511,8 +521,7 @@ func _build_card() -> void:
 
 	var theme_heading := Label.new()
 	theme_heading.text = "Theme"
-	theme_heading.add_theme_font_size_override("font_size", 16)
-	theme_heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	theme_heading.theme_type_variation = "SmallLabel"
 	box.add_child(theme_heading)
 	var grid := GridContainer.new()
 	grid.columns = 2
@@ -521,17 +530,15 @@ func _build_card() -> void:
 	box.add_child(grid)
 	for id in THEME_NAMES:
 		var ground := Color(Scenery.theme_named(id).ground).darkened(0.35)
-		var ink := Color("#1b1b1b") if ground.get_luminance() > 0.5 else Color.WHITE
-		var swatch := BuilderStyle.pill(THEME_NAMES[id], ground, ink, func() -> void: theme_chosen.emit(id), 36.0)
-		swatch.add_theme_font_size_override("font_size", 15)
+		var ink := UiKit.INK if ground.get_luminance() > 0.5 else UiKit.WHITE
+		var swatch := BuilderStyle.pill(THEME_NAMES[id], ground, ink, func() -> void: theme_chosen.emit(id), 36.0, true)
 		swatch.custom_minimum_size.x = 150.0
 		grid.add_child(swatch)
 		_themes[id] = swatch
 
 	var hills_heading := Label.new()
 	hills_heading.text = "Hills"
-	hills_heading.add_theme_font_size_override("font_size", 16)
-	hills_heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	hills_heading.theme_type_variation = "SmallLabel"
 	box.add_child(hills_heading)
 	box.add_child(_choices(HILLS, _hills, func(id: String) -> void: hills_chosen.emit(float(id))))
 
@@ -539,8 +546,7 @@ func _build_card() -> void:
 	for which in [["Weather", Conditions.WEATHERS, Conditions.WEATHER_NAMES, _weathers, weather_chosen], ["Time of day", Conditions.TIMES, Conditions.TIME_NAMES, _times, time_chosen]]:
 		var heading := Label.new()
 		heading.text = which[0]
-		heading.add_theme_font_size_override("font_size", 16)
-		heading.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+		heading.theme_type_variation = "SmallLabel"
 		box.add_child(heading)
 		var items := [[which[2][Conditions.RANDOM], Conditions.RANDOM]]
 		for id in which[1]:
@@ -551,8 +557,7 @@ func _build_card() -> void:
 	_problems_label = Label.new()
 	_problems_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_problems_label.custom_minimum_size = Vector2(310, 0)
-	_problems_label.add_theme_color_override("font_color", DANGER)
-	_problems_label.add_theme_font_size_override("font_size", 17)
+	_problems_label.theme_type_variation = "ProblemLabel"
 	box.add_child(_problems_label)
 	_close_up = BuilderStyle.main_pill("Close it up", func() -> void: close_up_pressed.emit())
 	box.add_child(_close_up)
@@ -560,7 +565,7 @@ func _build_card() -> void:
 
 func _build_actions() -> void:
 	_actions = PanelContainer.new()
-	_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 8))
 	add_child(_actions)
 	_actions.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
 	_actions.grow_horizontal = GROW_DIRECTION_BEGIN
@@ -573,7 +578,7 @@ func _build_actions() -> void:
 	var top := HBoxContainer.new()
 	box.add_child(top)
 	_action_title = Label.new()
-	_action_title.add_theme_font_size_override("font_size", 20)
+	_action_title.theme_type_variation = "CardTitleLabel"
 	_action_title.size_flags_horizontal = SIZE_EXPAND_FILL
 	top.add_child(_action_title)
 	var done := IconButton.new("close", "Done with this piece")
@@ -583,13 +588,13 @@ func _build_actions() -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 16)
 	box.add_child(row)
-	row.add_child(BuilderStyle.word("Add after", MenuStyle.ACCENT, func() -> void: add_after_pressed.emit()))
+	row.add_child(BuilderStyle.word("Add after", UiKit.ACCENT, func() -> void: add_after_pressed.emit()))
 	row.add_child(BuilderStyle.word("Take out", DANGER, func() -> void: delete_pressed.emit()))
 	box.add_child(_choices(SURFACES, _surfaces, func(id: String) -> void: surface_chosen.emit(id)))
 	box.add_child(_choices(EDGES, _edges, func(id: String) -> void: edges_chosen.emit(id)))
 
 	_landmark_actions = PanelContainer.new()
-	_landmark_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim())
+	_landmark_actions.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 8))
 	_landmark_actions.visible = false
 	add_child(_landmark_actions)
 	_landmark_actions.set_anchors_and_offsets_preset(PRESET_BOTTOM_RIGHT)
@@ -602,8 +607,7 @@ func _build_actions() -> void:
 	_landmark_actions.add_child(lm)
 	var hint := Label.new()
 	hint.text = "Drag it where you want it"
-	hint.add_theme_font_size_override("font_size", 16)
-	hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	hint.theme_type_variation = "SmallLabel"
 	lm.add_child(hint)
 	var lm_row := HBoxContainer.new()
 	lm_row.add_theme_constant_override("separation", 10)
@@ -627,7 +631,7 @@ func _choices(items: Array, keep: Dictionary, picked: Callable, columns := 0) ->
 		var id: String = item[1]
 		var button := MenuStyle.button(item[0], picked.bind(id))
 		button.custom_minimum_size = Vector2(0, 40)
-		button.add_theme_font_size_override("font_size", 15)
+		button.theme_type_variation = "ChoiceButton"
 		keep[id] = button
 		row.add_child(button)
 	return row
@@ -642,11 +646,11 @@ func _build_bottom() -> void:
 	_bottom.grow_vertical = GROW_DIRECTION_BEGIN
 	_bottom.offset_bottom = -14.0
 	_status_panel = PanelContainer.new()
-	_status_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(8))
+	_status_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 4))
 	_status_panel.size_flags_horizontal = SIZE_SHRINK_CENTER
 	_bottom.add_child(_status_panel)
 	_status = Label.new()
-	_status.add_theme_font_size_override("font_size", 18)
+	_status.theme_type_variation = "StatusLabel"
 	_status.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_status_panel.add_child(_status)
 	var row := HBoxContainer.new()
@@ -662,13 +666,12 @@ func _build_bottom() -> void:
 func _build_dialogs() -> void:
 	_load_popup = PopupPanel.new()
 	_load_popup.theme = MenuStyle.theme()
-	_load_popup.add_theme_stylebox_override("panel", BuilderStyle.scrim(12, 0.9))
 	add_child(_load_popup)
 	var box := VBoxContainer.new()
 	_load_popup.add_child(box)
 	var title := Label.new()
 	title.text = "Load a course"
-	title.add_theme_font_size_override("font_size", 26)
+	title.theme_type_variation = "LeadLabel"
 	box.add_child(title)
 	var scroll := ScrollContainer.new()
 	scroll.follow_focus = true
