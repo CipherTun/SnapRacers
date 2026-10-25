@@ -343,8 +343,8 @@ func _driver_shots() -> void:
 	await save("driver_card")
 
 
-## The track editor, with its card open, a piece picked out and a landmark in
-## hand.
+## The track editor, with its card open, a piece picked out (with and
+## without the card) and a landmark in hand.
 func _track_editor_shots() -> void:
 	Game.show_track_editor()
 	var editor: TrackEditor = await screen_of(TrackEditor)
@@ -360,6 +360,11 @@ func _track_editor_shots() -> void:
 	editor._select(3)
 	await frames(5)
 	await save("track_editor_piece")
+	editor.ui._chip.pressed.emit()
+	await frames(5)
+	await save("track_editor_card_piece")
+	editor.ui._card.visible = false
+	editor.ui._chip.visible = true
 	editor._select(-1)
 	editor.ui._show_category(editor.ui._rail.size() - 1)
 	await ready_pictures()

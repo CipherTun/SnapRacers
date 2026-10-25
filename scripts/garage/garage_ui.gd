@@ -309,6 +309,7 @@ func _show_status() -> void:
 
 
 func _process(delta: float) -> void:
+	BuilderStyle.slide_clear(_bottom, [_drawer, _drawer_handle], [_stats_card, _placing, _actions, _painting])
 	if _toast_left > 0.0:
 		_toast_left -= delta
 		if _toast_left <= 0.0:

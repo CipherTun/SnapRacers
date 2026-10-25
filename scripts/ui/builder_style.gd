@@ -31,8 +31,9 @@ static func scrim(across := 8.0, down := 6.0, alpha := SCRIM.a) -> SlantBox:
 	return UiKit.pad(box, across, down, UiKit.PANEL_LEAN, PANEL_SLANT / UiKit.PANEL_LEAN) as SlantBox
 
 
-## A word button, bold capitals in a colour with no box.
-static func word(text: String, colour: Color, action: Callable) -> Button:
+## A word button, bold capitals in a colour with no box. One that `scrolls`
+## sits in a scrolling list (see ScrollButton.let_scroll).
+static func word(text: String, colour: Color, action: Callable, scrolls := false) -> Button:
 	var button := Button.new()
 	button.text = text.to_upper()
 	button.flat = true
@@ -43,7 +44,10 @@ static func word(text: String, colour: Color, action: Callable) -> Button:
 	for state in ["font_color", "font_hover_color", "font_pressed_color", "font_focus_color"]:
 		button.add_theme_color_override(state, colour)
 	button.add_theme_color_override("font_disabled_color", Color(colour, 0.35))
-	button.pressed.connect(action)
+	if scrolls:
+		ScrollButton.let_scroll(button, action)
+	else:
+		button.pressed.connect(action)
 	return button
 
 
@@ -82,12 +86,37 @@ static func pill(text: String, fill: Color, ink: Color, action: Callable, height
 
 
 ## The big accent button, and the dark one that sits beside it.
-static func main_pill(text: String, action: Callable) -> Button:
-	return pill(text, Color(UiKit.ACCENT, 0.9), ON_ACCENT, action)
+static func main_pill(text: String, action: Callable, scrolls := false) -> Button:
+	return pill(text, Color(UiKit.ACCENT, 0.9), ON_ACCENT, action, 56.0, scrolls)
 
 
 static func dark_pill(text: String, action: Callable) -> Button:
 	return pill(text, Color(SCRIM, 0.7), UiKit.WHITE, action)
+
+
+## Slides a row centred along the bottom sideways so it's clear of the
+## panels beside it: left of any in `right_panels` it's level with, and not
+## past any in `left_panels`. It never slides right. It moves the row's
+## anchors, so SafeArea, which only sets offsets, doesn't undo it.
+static func slide_clear(row: Control, left_panels: Array, right_panels: Array) -> void:
+	var width := row.get_parent_area_size().x
+	if width <= 0.0:
+		return
+	var shift := (row.anchor_left - 0.5) * width
+	var rect := row.get_global_rect()
+	rect.position.x -= shift
+	var want := 0.0
+	for panel: Control in right_panels:
+		var r := panel.get_global_rect()
+		if panel.is_visible_in_tree() and r.position.y < rect.end.y and r.end.y > rect.position.y:
+			want = minf(want, r.position.x - UiKit.GAP_S - rect.end.x)
+	for panel: Control in left_panels:
+		var r := panel.get_global_rect()
+		if panel.is_visible_in_tree() and r.position.y < rect.end.y and r.end.y > rect.position.y:
+			want = maxf(want, minf(r.end.x + UiKit.GAP_S - rect.position.x, 0.0))
+	if absf(want - shift) > 0.5:
+		row.set_anchor(SIDE_LEFT, 0.5 + want / width, true, false)
+		row.set_anchor(SIDE_RIGHT, 0.5 + want / width, true, false)
 
 
 ## The stats chip in the top right: one line of numbers on a small panel,
@@ -121,7 +150,8 @@ static func show_swatch(swatch: Button, colour: Color, picked: bool, lean := BUT
 		_swatches[key] = UiKit.pad(box, 8, 0, lean, height)
 	for state in ["normal", "hover", "pressed"]:
 		swatch.add_theme_stylebox_override(state, _swatches[key])
-	var ring := UiKit.slant(colour, lean, UiKit.WHITE, 4, false)
+	# Godot draws the focus box over the others, so it's only an edge.
+	var ring := UiKit.slant(Color.TRANSPARENT, lean, UiKit.WHITE, 4, false)
 	swatch.add_theme_stylebox_override("focus", UiKit.pad(ring, 8, 0, lean, height))
 
 
@@ -165,9 +195,10 @@ static func tile_box(state: String, picked := false) -> StyleBox:
 		box.fill = Color(UiKit.ACCENT, 0.22 if state != "pressed" else 0.34)
 		box.edge = UiKit.ACCENT
 		box.edge_width = 2
-	# A focused tile is drawn with this box instead of its usual one, so it
-	# keeps its fill and gets the white ring as its edge.
+	# Godot draws the focus box over the tile's usual one, so it's only a
+	# white edge and the hover or pressed fill shows through.
 	if state == "focus":
+		box.fill = Color.TRANSPARENT
 		box.edge = UiKit.WHITE
 		box.edge_width = 3
 	box.lean_height = TILE.y
@@ -225,6 +256,7 @@ static func add_to(t: Theme) -> void:
 	chip_hover.edge = Color(UiKit.ACCENT, 0.5)
 	t.set_stylebox("hover", "StatsChipButton", chip_hover)
 	var chip_ring := scrim(10, 6)
+	chip_ring.fill = Color.TRANSPARENT
 	chip_ring.edge = UiKit.WHITE
 	chip_ring.edge_width = 3
 	t.set_stylebox("focus", "StatsChipButton", chip_ring)
@@ -243,7 +275,7 @@ static func add_to(t: Theme) -> void:
 	for state in ["normal", "pressed", "disabled"]:
 		t.set_stylebox(state, "DrawerHandleButton", tab)
 	t.set_stylebox("hover", "DrawerHandleButton", tab_lit)
-	var tab_ring := UiKit.slant(SCRIM, 0.12, UiKit.WHITE, 3, false)
+	var tab_ring := UiKit.slant(Color.TRANSPARENT, 0.12, UiKit.WHITE, 3, false)
 	tab_ring.content_margin_left = 6
 	tab_ring.content_margin_right = 6
 	t.set_stylebox("focus", "DrawerHandleButton", tab_ring)
@@ -276,8 +308,8 @@ static func _make_icon_box(state: String, on: bool, height: float) -> StyleBox:
 	var box: SlantBox
 	match state:
 		"focus":
-			# Drawn instead of its usual box, so it keeps its fill.
-			box = UiKit.slant(UiKit.ACCENT if on else Color(SCRIM, 0.55), BUTTON_LEAN, UiKit.WHITE, 3, false)
+			# Drawn over its usual box, so it's only an edge.
+			box = UiKit.slant(Color.TRANSPARENT, BUTTON_LEAN, UiKit.WHITE, 3, false)
 		"hover":
 			box = UiKit.slant(UiKit.ACCENT.lightened(0.15) if on else Color(SCRIM, 0.75), BUTTON_LEAN, Color(UiKit.ACCENT, 0.6), 1, false)
 		"pressed":

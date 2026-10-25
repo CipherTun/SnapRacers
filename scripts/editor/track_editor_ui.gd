@@ -124,6 +124,8 @@ const THEME_NAMES := {
 	"sky": "Sky", "sky_falls": "Sky waterfalls", "sky_isles": "Sky islands", "sky_port": "Airship port", "sky_balloons": "Balloon festival",
 }
 const DANGER := BuilderStyle.DANGER
+## How far the race buttons sit up from the bottom of the screen.
+const BOTTOM_GAP := -14.0
 const DATA := BuilderStyle.DATA
 
 var _toolbar: HBoxContainer
@@ -206,11 +208,25 @@ func _ready() -> void:
 
 
 ## The piece and landmark panels sit over the race buttons, which they'd
-## cover otherwise.
+## cover otherwise. Built on where the buttons were put, before SafeArea
+## moves anything.
 func _lift_actions() -> void:
 	for panel in [_actions, _landmark_actions]:
-		panel.offset_bottom = _bottom.offset_bottom - _bottom.size.y - 8.0
+		panel.offset_bottom = BOTTOM_GAP - _bottom.size.y - 8.0
 		_safe.moved(panel)
+
+
+## The race buttons keep clear of the card and the drawer, and the card ends
+## above the piece or landmark panel when one's up.
+func _keep_clear() -> void:
+	BuilderStyle.slide_clear(_bottom, [_drawer], [_card, _actions, _landmark_actions])
+	var bottom := 1.0
+	if size.y > 0.0:
+		for panel: Control in [_actions, _landmark_actions]:
+			if panel.visible:
+				bottom = minf(bottom, panel.get_global_rect().position.y / size.y)
+	if not is_equal_approx(_card.anchor_bottom, bottom):
+		_card.set_anchor(SIDE_BOTTOM, bottom, true, false)
 
 
 ## Whether this screen position is on one of the panels instead of the course.
@@ -306,6 +322,7 @@ func _show_status() -> void:
 
 
 func _process(delta: float) -> void:
+	_keep_clear()
 	if _toast_left > 0.0:
 		_toast_left -= delta
 		if _toast_left <= 0.0:
@@ -490,11 +507,11 @@ func _build_card() -> void:
 	_name_label.size_flags_horizontal = SIZE_EXPAND_FILL
 	_name_label.clip_text = true
 	top.add_child(_name_label)
-	var rename := BuilderStyle.word("Rename", UiKit.ACCENT, _open_rename)
+	var rename := BuilderStyle.word("Rename", UiKit.ACCENT, _open_rename, true)
 	top.add_child(rename)
 	var close := IconButton.new("close", "Close")
 	close.custom_minimum_size = Vector2(40, 40)
-	close.pressed.connect(func() -> void:
+	ScrollButton.let_scroll(close, func() -> void:
 		_card.visible = false
 		_chip.visible = true)
 	top.add_child(close)
@@ -507,7 +524,7 @@ func _build_card() -> void:
 	box.add_child(laps)
 	var fewer := IconButton.new("shut", "Fewer laps")
 	fewer.custom_minimum_size = Vector2(40, 40)
-	fewer.pressed.connect(func() -> void: laps_changed.emit(-1))
+	ScrollButton.let_scroll(fewer, func() -> void: laps_changed.emit(-1))
 	laps.add_child(fewer)
 	_laps_label = Label.new()
 	_laps_label.custom_minimum_size = Vector2(80, 0)
@@ -516,7 +533,7 @@ func _build_card() -> void:
 	laps.add_child(_laps_label)
 	var more := IconButton.new("open", "More laps")
 	more.custom_minimum_size = Vector2(40, 40)
-	more.pressed.connect(func() -> void: laps_changed.emit(1))
+	ScrollButton.let_scroll(more, func() -> void: laps_changed.emit(1))
 	laps.add_child(more)
 
 	var theme_heading := Label.new()
@@ -559,7 +576,7 @@ func _build_card() -> void:
 	_problems_label.custom_minimum_size = Vector2(310, 0)
 	_problems_label.theme_type_variation = "ProblemLabel"
 	box.add_child(_problems_label)
-	_close_up = BuilderStyle.main_pill("Close it up", func() -> void: close_up_pressed.emit())
+	_close_up = BuilderStyle.main_pill("Close it up", func() -> void: close_up_pressed.emit(), true)
 	box.add_child(_close_up)
 
 
@@ -644,7 +661,7 @@ func _build_bottom() -> void:
 	_bottom.set_anchors_and_offsets_preset(PRESET_CENTER_BOTTOM)
 	_bottom.grow_horizontal = GROW_DIRECTION_BOTH
 	_bottom.grow_vertical = GROW_DIRECTION_BEGIN
-	_bottom.offset_bottom = -14.0
+	_bottom.offset_bottom = BOTTOM_GAP
 	_status_panel = PanelContainer.new()
 	_status_panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(10, 4))
 	_status_panel.size_flags_horizontal = SIZE_SHRINK_CENTER

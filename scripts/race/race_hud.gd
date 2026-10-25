@@ -298,7 +298,7 @@ static func held_name(kart: Kart, slot: int) -> String:
 func _place_map_room() -> void:
 	_map_room = Rect2((size.x - _map_wide) * 0.5, 0.0, _map_wide, _map_down)
 	if _safe != null:
-		_clear_of_touch()
+		_clear_of_touch(_touch_areas())
 
 
 ## Keeps your place, lap and the clock clear of the map two players share
@@ -315,19 +315,16 @@ func make_room_for_map(down: float, wide: float) -> void:
 		_top.offset_top = maxf(14.0, down + 8.0)
 		if _safe != null:
 			_safe.moved(_top)
-		_clear_of_touch()
+		_clear_of_touch(_touch_areas())
 
 
 ## Keeps your place and lap and the status line out from under the touch
 ## controls. Face to face the corner tries the top left, then below the map,
 ## then under the camera button. The status line moves up past any control
-## it would sit on.
-func _clear_of_touch() -> void:
+## it would sit on. `areas` are the touch controls' (see _touch_areas()).
+func _clear_of_touch(areas: Array[Rect2]) -> void:
 	if _safe == null:
 		return
-	var areas: Array[Rect2] = []
-	if touch != null and touch.visible:
-		areas = touch.areas()
 	if _face_to_face and _corner.size.y > 0.0:
 		var taken := areas.duplicate()
 		taken.append_array([_map_room, _camera.get_rect()])
@@ -544,30 +541,43 @@ func _process(delta: float) -> void:
 	if _results.visible:
 		_fill_results()
 		_show_waiting()
-	_clear_of_touch()
+	var areas := _touch_areas()
+	_clear_of_touch(areas)
 	# The menu button covers your place and lap, at least BUTTON big.
 	var target := _standing.get_global_rect()
 	target.size = target.size.max(BUTTON)
 	target.position -= get_global_rect().position
-	# Touch controls under it win, so the button keeps the biggest clear part.
-	if touch != null and touch.visible:
-		for r in touch.areas():
-			if not r.intersects(target):
-				continue
-			var pieces: Array[Rect2] = [
-				Rect2(target.position, Vector2(r.position.x - target.position.x, target.size.y)),
-				Rect2(Vector2(r.end.x, target.position.y), Vector2(target.end.x - r.end.x, target.size.y)),
-				Rect2(target.position, Vector2(target.size.x, r.position.y - target.position.y)),
-				Rect2(Vector2(target.position.x, r.end.y), Vector2(target.size.x, target.end.y - r.end.y)),
-			]
-			var best := Rect2(target.position, Vector2.ZERO)
-			for piece in pieces:
-				if piece.size.x > 0.0 and piece.size.y > 0.0 and piece.get_area() > best.get_area():
-					best = piece
-			target = best
-	_menu.position = target.position
-	_menu.size = target.size
+	# Touch controls under it win, so the button keeps the biggest clear part
+	# that's still BUTTON big. A sliver is too small to tap on purpose.
+	for r in areas:
+		if not r.intersects(target):
+			continue
+		var pieces: Array[Rect2] = [
+			Rect2(target.position, Vector2(r.position.x - target.position.x, target.size.y)),
+			Rect2(Vector2(r.end.x, target.position.y), Vector2(target.end.x - r.end.x, target.size.y)),
+			Rect2(target.position, Vector2(target.size.x, r.position.y - target.position.y)),
+			Rect2(Vector2(target.position.x, r.end.y), Vector2(target.size.x, target.end.y - r.end.y)),
+		]
+		var best := Rect2(target.position, Vector2.ZERO)
+		for piece in pieces:
+			if piece.size.x >= BUTTON.x and piece.size.y >= BUTTON.y and piece.get_area() > best.get_area():
+				best = piece
+		target = best
+	# With no such part there's no tap area (a controller's menu button
+	# still works).
+	var room := target.size.x >= BUTTON.x and target.size.y >= BUTTON.y
+	_menu.mouse_filter = MOUSE_FILTER_STOP if room else MOUSE_FILTER_IGNORE
+	if room:
+		_menu.position = target.position
+		_menu.size = target.size
 	_standing.modulate = Color(1.4, 1.4, 1.4) if _menu.button_pressed else Color.WHITE
+
+
+## The touch controls' areas in this HUD, or none when they're hidden.
+func _touch_areas() -> Array[Rect2]:
+	if touch != null and touch.visible:
+		return touch.areas()
+	return []
 
 
 func _build_results() -> void:
