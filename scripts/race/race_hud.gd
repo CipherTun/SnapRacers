@@ -41,6 +41,8 @@ var _corner: VBoxContainer
 var _corner_spot := Vector2(24, 12)
 ## Face to face, the part of this half the shared map covers.
 var _map_room := Rect2()
+var _map_down := 0.0
+var _map_wide := 0.0
 ## The row with the status pill, and how far up from the bottom it was last
 ## put to keep clear of the touch controls.
 var _bottom: HBoxContainer
@@ -257,8 +259,6 @@ func _ready() -> void:
 		_menu.add_theme_stylebox_override(state, _nothing)
 	add_child(_menu)
 	_menu.pressed.connect(func() -> void: pause_pressed.emit())
-	_menu.button_down.connect(func() -> void: _standing.modulate = Color(1.4, 1.4, 1.4))
-	_menu.button_up.connect(func() -> void: _standing.modulate = Color.WHITE)
 
 	# The camera button, left of where the touch controls put reset.
 	_camera = IconButton.new("camera", "Change the view")
@@ -294,12 +294,23 @@ static func held_name(kart: Kart, slot: int) -> String:
 	return name + (" x%d" % kart.held_uses[slot] if kart.held_uses[slot] > 1 else "")
 
 
+## Puts the room for the shared map in the middle of the top, as wide as the HUD is now.
+func _place_map_room() -> void:
+	_map_room = Rect2((size.x - _map_wide) * 0.5, 0.0, _map_wide, _map_down)
+	if _safe != null:
+		_clear_of_touch()
+
+
 ## Keeps your place, lap and the clock clear of the map two players share
 ## face to face, which reaches `down` into the top of this half and is `wide`
 ## across its middle, and puts the quick notes under it.
 func make_room_for_map(down: float, wide: float) -> void:
 	if _face_to_face and _corner != null:
-		_map_room = Rect2((size.x - wide) * 0.5, 0.0, wide, down)
+		_map_down = down
+		_map_wide = wide
+		_place_map_room()
+		if not resized.is_connected(_place_map_room):
+			resized.connect(_place_map_room)
 		# The quick notes go under the map.
 		_top.offset_top = maxf(14.0, down + 8.0)
 		if _safe != null:
@@ -325,19 +336,33 @@ func _clear_of_touch() -> void:
 			Vector2(24.0, maxf(8.0, _map_room.end.y + 10.0)),
 			Vector2(24.0, _camera.get_rect().end.y + 10.0),
 		]
+		# The first clear spot, else the one with the least overlap.
 		var spot: Vector2 = spots[1]
+		var least := INF
 		for each: Vector2 in spots:
 			var box := Rect2(each, _corner.size).grow(4.0)
-			if box.end.y <= size.y and taken.all(func(r: Rect2) -> bool: return not r.intersects(box)):
+			var over := 0.0 if box.end.y <= size.y else INF
+			for r: Rect2 in taken:
+				over += r.intersection(box).get_area()
+			if over < least:
+				least = over
 				spot = each
+			if over == 0.0:
 				break
 		if spot != _corner_spot:
 			_corner_spot = spot
 			_corner.position = spot
 			_safe.moved(_corner)
-	if not _status_box.visible or areas.is_empty():
+	if not _status_box.visible:
 		return
 	var down := -SLOTS_UP - PowerupSlots.BOX - 10.0
+	if areas.is_empty():
+		if down != _bottom_down:
+			_bottom_down = down
+			_bottom.offset_bottom = down
+			_bottom.offset_top = down - 54.0
+			_safe.moved(_bottom)
+		return
 	var box := Rect2(Vector2(_bottom.position.x + _status_box.position.x, size.y + down - _status_box.size.y), _status_box.size)
 	for i in 4:
 		for r in areas:
@@ -523,8 +548,26 @@ func _process(delta: float) -> void:
 	# The menu button covers your place and lap, at least BUTTON big.
 	var target := _standing.get_global_rect()
 	target.size = target.size.max(BUTTON)
-	_menu.position = target.position - get_global_rect().position
+	target.position -= get_global_rect().position
+	# Touch controls under it win, so the button keeps the biggest clear part.
+	if touch != null and touch.visible:
+		for r in touch.areas():
+			if not r.intersects(target):
+				continue
+			var pieces: Array[Rect2] = [
+				Rect2(target.position, Vector2(r.position.x - target.position.x, target.size.y)),
+				Rect2(Vector2(r.end.x, target.position.y), Vector2(target.end.x - r.end.x, target.size.y)),
+				Rect2(target.position, Vector2(target.size.x, r.position.y - target.position.y)),
+				Rect2(Vector2(target.position.x, r.end.y), Vector2(target.size.x, target.end.y - r.end.y)),
+			]
+			var best := Rect2(target.position, Vector2.ZERO)
+			for piece in pieces:
+				if piece.size.x > 0.0 and piece.size.y > 0.0 and piece.get_area() > best.get_area():
+					best = piece
+			target = best
+	_menu.position = target.position
 	_menu.size = target.size
+	_standing.modulate = Color(1.4, 1.4, 1.4) if _menu.button_pressed else Color.WHITE
 
 
 func _build_results() -> void:
