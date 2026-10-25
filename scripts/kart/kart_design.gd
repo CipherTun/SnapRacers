@@ -253,10 +253,11 @@ func fits(id: String, at: Vector3i, rot: int, ignore := -1) -> bool:
 	return fits_place(id, grid_place(id, at, rot), ignore)
 
 
-func fits_place(id: String, place: Transform3D, ignore := -1) -> bool:
+## `lift` is how many plates the whole kart goes up first, for a part that
+## would go under the floor.
+func fits_place(id: String, place: Transform3D, ignore := -1, lift := 0) -> bool:
 	var box := fine_box(id, place)
-	var area := AABB(Vector3.ZERO, Vector3(BUILD_SIZE) * Grid.UNIT_FINE)
-	if not area.grow(0.01).encloses(box):
+	if not in_area(id, place, lift):
 		return false
 	var kept := _kept()
 	for i in parts.size():
@@ -267,6 +268,48 @@ func fits_place(id: String, place: Transform3D, ignore := -1) -> bool:
 		if box.intersects(other_box) and clash(id, place, parts[i].id, other):
 			return false
 	return true
+
+
+## Whether a part here is inside the build area once the kart has gone up
+## `lift` plates.
+static func in_area(id: String, place: Transform3D, lift := 0) -> bool:
+	var area := AABB(Vector3(0.0, -lift * Grid.PLATE_FINE, 0.0), Vector3(BUILD_SIZE) * Grid.UNIT_FINE)
+	return area.grow(0.01).encloses(fine_box(id, place))
+
+
+## How many plates the kart has to go up for a part here to be above the
+## floor, like a wheel on a bike frame that sits on the floor.
+static func lift_for(id: String, place: Transform3D) -> int:
+	var low := fine_box(id, place).position.y
+	return maxi(0, ceili(-low / Grid.PLATE_FINE - 0.001))
+
+
+## How many plates the whole kart can go up and stay inside the build area,
+## leaving out part `ignore`.
+func headroom(ignore := -1) -> int:
+	var top := 0.0
+	for i in parts.size():
+		if i != ignore:
+			top = maxf(top, fine_box(parts[i].id, place_of(parts[i])).end.y)
+	return floori((BUILD_SIZE.y * Grid.PLATE_FINE - top) / Grid.PLATE_FINE + 0.001)
+
+
+## Whether a part here fits, with the kart going up first if that's what it
+## takes to keep the part above the floor.
+func fits_lifted(id: String, place: Transform3D, ignore := -1) -> bool:
+	var lift := lift_for(id, place)
+	if lift > 0 and lift > headroom(ignore):
+		return false
+	return fits_place(id, place, ignore, lift)
+
+
+## Moves every part up this many plates.
+func raise(plates: int) -> void:
+	for i in parts.size():
+		var p: Dictionary = parts[i]
+		var place := place_of(p)
+		place.origin.y += plates * Grid.PLATE_FINE
+		parts[i] = placed_entry(p.id, place, p.get("color"))
 
 
 ## Whether these two parts, where they've been put, hold onto each other.

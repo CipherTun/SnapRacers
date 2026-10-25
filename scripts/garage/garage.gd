@@ -24,6 +24,8 @@ const ORBIT_SPEED := 0.006
 const DRAG_START := 14.0 # pixels a finger has to move before it counts as a drag
 const GRAB_RADIUS := 90.0 # how close to the preview a drag has to start to move it
 const SNAP_RADIUS := 60.0 # how close to a dot a finger has to be to snap to it
+const SNAP_CM := 1.0 # and on a phone or tablet, how far to reach for a dot it fits on
+const SNAP_TRIES := 8 # how many of the nearest dots to try it on
 ## The colours of the dots, by what joins there.
 const DOT_COLOURS := {
 	"stud": Color("#b39dff"), "socket": Color("#b39dff"), "side": Color("#b39dff"), "clip": Color("#f2cd37"), "bar": Color("#f2cd37"),
@@ -72,6 +74,11 @@ var _twin_ghost: Node3D
 var _ghost_turn := Basis.IDENTITY
 var _twin_turn := Basis.IDENTITY
 var _ghost_ok := false
+## Why it doesn't fit where it is, for the note under its name.
+var _ghost_why := ""
+## How many plates the kart goes up when it's put down, to make room under a
+## part that goes below the floor.
+var _ghost_lift := 0
 ## The spot it's snapped onto and how (see Snap), or empty when it's just
 ## sitting on the grid.
 var _spot := {}
@@ -87,6 +94,9 @@ var _dots_shown := []
 ## once the kart changes.
 var _last_aim := []
 var _last_snap := []
+## The best way on for each dot tried so far, by [spot's place, type, turn],
+## and whether it fits and joins there. Empty once the kart changes.
+var _tried_spots := {}
 ## Which cells the part in hand works in, turned the way it is (see
 ## BuildMath.nearest_cell). It starts again with _last_aim.
 var _known_cells := {}
@@ -297,10 +307,12 @@ func lift(plates: int) -> void:
 	_shift(Vector3(0.0, plates * Grid.PLATE_FINE, 0.0))
 
 
-## Moves the part in hand off whatever spot it was snapped to.
+## Moves the part in hand off whatever spot it was snapped to. One that's
+## under the floor, with room for the kart to go up, can stay as far under.
 func _shift(by: Vector3) -> void:
+	var below := mini(KartDesign.lift_for(_holding, _ghost_place), design.headroom())
 	_ghost_place.origin += by
-	_ghost_place = _clamped(_holding, _ghost_place)
+	_ghost_place = _clamped(_holding, _ghost_place, below)
 	_spot = {}
 	_way = {}
 	_show_ghost()
@@ -396,6 +408,10 @@ func place() -> void:
 	# A move took its undo step when it started.
 	if _moving.is_empty():
 		_remember()
+	if _ghost_lift > 0:
+		design.raise(_ghost_lift)
+		_ghost_place.origin.y += _ghost_lift * Grid.PLATE_FINE
+		_ghost_lift = 0
 	var entry := KartDesign.placed_entry(_holding, _ghost_place, _holding_colour)
 	design.parts.append(entry)
 	var placed := design.parts.size() - 1
@@ -641,6 +657,7 @@ func _rebuild() -> void:
 	_node_keys.clear()
 	_last_aim = []
 	_last_snap = []
+	_tried_spots = {}
 	var stats := KartStats.compute(design, {}, null, Game.character.mass())
 	for i in design.parts.size():
 		var p: Dictionary = design.parts[i]
@@ -710,7 +727,7 @@ func _refresh_ui() -> void:
 		what = PartCatalog.get_part(id).get("name", id)
 		moves = { "turn": not KartDesign.is_wheel(id) }
 	ui.set_mode(_mode, what, moves)
-	ui.set_can_place(_ghost_ok)
+	ui.set_can_place(_ghost_ok, _ghost_why)
 	ui.set_history(not _undo.is_empty(), not _redo.is_empty())
 
 
@@ -791,24 +808,47 @@ func snap_to(spot: Dictionary) -> bool:
 	return true
 
 
-## The dot nearest this screen position, if there's one close enough that
-## isn't hidden behind the kart.
+## The nearest dot to this screen position the part fits on, within about a
+## centimetre on a phone, or failing that the nearest dot close enough. Dots
+## hidden behind the kart don't count.
 func _spot_under(screen_pos: Vector2, hit: BuildMath.Hit) -> Dictionary:
 	var eye := _camera.global_position
 	var depth := INF
 	if hit.is_hit() and hit.part != -1:
 		depth = (Grid.to_metres(hit.point) - eye).length() + Grid.STUD
-	var best := {}
-	var best_distance := SNAP_RADIUS
+	var reach := maxf(SNAP_RADIUS, SNAP_CM * TouchControls.units_per_cm_in(get_tree().root))
+	var close := []
+	var nearest := INF
 	for spot in _spots:
 		var at: Vector3 = _dot_position(spot)
-		if _camera.is_position_behind(at) or (at - eye).length() > depth:
+		var away := (at - eye).length()
+		if _camera.is_position_behind(at) or away > depth:
 			continue
 		var distance := _camera.unproject_position(at).distance_to(screen_pos)
-		if distance < best_distance:
-			best_distance = distance
-			best = spot
-	return best
+		if distance < reach:
+			close.append([distance, spot, away])
+			nearest = minf(nearest, away)
+	# With no part under the finger, dots on the far side of the kart lose to
+	# ones on this side.
+	if depth == INF:
+		close = close.filter(func(c: Array) -> bool: return c[2] <= nearest + Grid.STUD)
+	close.sort_custom(func(a: Array, b: Array) -> bool: return a[0] < b[0])
+	for k in mini(close.size(), SNAP_TRIES):
+		if _goes_on(close[k][1]):
+			return close[k][1]
+	if not close.is_empty() and close[0][0] < SNAP_RADIUS:
+		return close[0][1]
+	return {}
+
+
+## Whether the part in hand fits on this spot and joins there, the way it's
+## turned now.
+func _goes_on(spot: Dictionary) -> bool:
+	var key := [spot.at, spot.axis, spot.type, _ghost_place.basis]
+	if not _tried_spots.has(key):
+		var way := Snap.best(design, _holding, Snap.ways(_holding, spot, _ghost_place.basis, spot.at))
+		_tried_spots[key] = not way.is_empty() and way.fits and design.attaches_place(_holding, way.place)
+	return _tried_spots[key]
 
 
 func _show_ghost() -> void:
@@ -817,8 +857,17 @@ func _show_ghost() -> void:
 		return
 	_make_ghosts()
 	# It can go anywhere it fits. Parts not joined on are one of the things
-	# to fix before the kart can race.
-	_ghost_ok = design.fits_place(_holding, _ghost_place)
+	# to fix before the kart can race. One under the floor lifts the kart
+	# when it goes down.
+	_ghost_lift = KartDesign.lift_for(_holding, _ghost_place)
+	_ghost_why = ""
+	if _ghost_lift > design.headroom():
+		_ghost_why = "Too low, and the kart can't go higher"
+	elif not KartDesign.in_area(_holding, _ghost_place, _ghost_lift):
+		_ghost_why = "Sticks out past the edge"
+	elif not design.fits_place(_holding, _ghost_place, -1, _ghost_lift):
+		_ghost_why = "Inside another part"
+	_ghost_ok = _ghost_why == ""
 	_ghost.position = _world_centre(_holding, _ghost_place)
 	_ghost.visible = true
 	PartVisuals.set_ghost(_ghost, _ghost_ok)
@@ -827,19 +876,21 @@ func _show_ghost() -> void:
 	_twin_ghost.visible = mirror and _moving.is_empty() and not twin_place.is_equal_approx(_ghost_place)
 	if _twin_ghost.visible:
 		_twin_ghost.position = _world_centre(twin.id, twin_place)
-		PartVisuals.set_ghost(_twin_ghost, design.fits_place(twin.id, twin_place))
+		PartVisuals.set_ghost(_twin_ghost, design.fits_lifted(twin.id, twin_place))
 	_show_dots()
 	_refresh_ui()
 
 
-## Keeps a part inside the build area.
-func _clamped(id: String, place: Transform3D) -> Transform3D:
+## Keeps a part inside the build area, or with `below`, inside it once the
+## kart's gone up that many plates.
+func _clamped(id: String, place: Transform3D, below := 0) -> Transform3D:
 	var box := KartDesign.fine_box(id, place)
-	var most := Vector3(KartDesign.BUILD_SIZE) * Grid.UNIT_FINE
+	var least := Vector3(0.0, -below * Grid.PLATE_FINE, 0.0)
+	var most := Vector3(KartDesign.BUILD_SIZE) * Grid.UNIT_FINE + least
 	var shift := Vector3.ZERO
 	for k in 3:
-		if box.position[k] < 0.0:
-			shift[k] = -box.position[k]
+		if box.position[k] < least[k]:
+			shift[k] = least[k] - box.position[k]
 		elif box.end[k] > most[k]:
 			shift[k] = most[k] - box.end[k]
 	return Transform3D(place.basis, place.origin + shift)
@@ -902,6 +953,7 @@ func _find_spots(later := false) -> void:
 		_spots = Snap.spots_for(design, _holding, _open_spots()) if _holding != "" else []
 	_last_aim = []
 	_last_snap = []
+	_tried_spots = {}
 
 
 ## Every open spot on the kart, kept until the kart changes, since picking

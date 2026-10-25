@@ -167,6 +167,13 @@ static func fit(fraction_r: float, most_cm: float, units: float, scale: float) -
 func units_per_cm() -> float:
 	if per_cm >= 0.0:
 		return per_cm
+	if not is_inside_tree():
+		return 0.0
+	return units_per_cm_in(get_tree().root)
+
+
+## The same for any screen, from its window.
+static func units_per_cm_in(root: Window) -> float:
 	if _dpi < 0.0:
 		_dpi = 0.0
 		var fake := OS.get_environment("SNAPRACERS_DPI")
@@ -176,9 +183,8 @@ func units_per_cm() -> float:
 			_dpi = float(DisplayServer.screen_get_dpi())
 		if _dpi < 100.0 or _dpi > 1000.0:
 			_dpi = 0.0
-	if _dpi <= 0.0 or not is_inside_tree():
+	if _dpi <= 0.0 or root == null:
 		return 0.0
-	var root := get_tree().root
 	var shown := root.get_visible_rect().size.y
 	if shown <= 0.0 or root.size.y <= 0:
 		return 0.0

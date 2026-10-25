@@ -126,6 +126,7 @@ func _ready() -> void:
 	await _camera()
 	await _camera_hole()
 	await _loose_and_new(parts)
+	await _wheel_on_bike(parts)
 	garage.ui.drive_pressed.emit()
 	await frames(6)
 	check(host.get_child(host.get_child_count() - 1) is TestDrive, "drive takes the kart out to the track")
@@ -205,6 +206,53 @@ func _loose_and_new(parts: int) -> void:
 	garage.place()
 	garage.cancel()
 	check(garage.design.parts.size() == 1, "and it goes down")
+	garage.undo()
+	garage.undo()
+	check(garage.design.parts.size() == parts, "undo goes back to the kart before")
+
+
+## A bike frame on the floor takes a wheel on its back axle, from a finger
+## near the dot, and the kart goes up to make room under it.
+func _wheel_on_bike(parts: int) -> void:
+	garage.ui.new_pressed.emit()
+	await frames(2)
+	garage.start_placing("b_frame_sport", Basis.IDENTITY, null, Vector3i(9, 0, 7))
+	garage.place()
+	garage.cancel()
+	garage.show_view("side")
+	await frames(1)
+	garage.start_placing("w_moto_trail")
+	var axles: Array = garage._spots.filter(func(s): return s.type == "axle")
+	check(axles.size() == 5, "a trail bike wheel can go on the sports bike frame's back axle (%d dots)" % axles.size())
+	var camera := get_viewport().get_camera_3d()
+	var near := camera.unproject_position(garage._dot_position(axles[2])) + Vector2(0.0, 40.0)
+	garage._aim_ghost(near)
+	check(not garage._spot.is_empty() and garage._spot.type == "axle", "a finger near the axle snaps the wheel onto it")
+	check(garage._ghost_ok and not garage.ui._place.disabled and not garage.ui._held_note.visible, "and it fits, though the frame sits on the floor (%s)" % garage._ghost_why)
+	var low: float = garage._ghost_place.origin.y
+	garage.nudge(Vector2i(1, 0))
+	check(is_equal_approx(garage._ghost_place.origin.y, low), "nudging it keeps it as far under the floor (%.1f, %.1f)" % [low, garage._ghost_place.origin.y])
+	# On a phone it reaches about a centimetre for a dot.
+	TouchControls._dpi = 432.0
+	var per_cm := TouchControls.units_per_cm_in(get_tree().root)
+	var far := camera.unproject_position(garage._dot_position(axles[2])) + Vector2(0.0, Garage.SNAP_RADIUS * 1.5)
+	garage.cancel()
+	garage.start_placing("w_moto_trail", Basis.IDENTITY, null, Vector3i(0, 0, 0))
+	garage._aim_ghost(far)
+	check(per_cm > Garage.SNAP_RADIUS * 1.5 and garage._spot.get("type", "") == "axle" and garage._ghost_ok, "and on a phone from further, up to a centimetre (%.0f)" % per_cm)
+	TouchControls._dpi = -1.0
+	garage.place()
+	var wheel: Dictionary = garage.design.parts[garage.design.parts.size() - 1]
+	var frame: Dictionary = garage.design.parts[0]
+	check(KartDesign.place_of(frame).origin.y >= 4 * Grid.PLATE_FINE and KartDesign.fine_box(wheel.id, KartDesign.place_of(wheel)).position.y >= -0.01, "putting it down lifts the frame so the wheel's above the floor")
+	check(KartDesign.joined(wheel, frame), "with the wheel on the axle")
+	# A second wheel on what's left of the axle goes through the first.
+	var left: Array = garage._spots.filter(func(s): return s.type == "axle")
+	check(not left.is_empty() and garage.snap_to(left[0]), "a second wheel can snap onto what's left of the axle")
+	check(not garage._ghost_ok and garage.ui._held_note.visible and garage.ui._held_note.text == "Inside another part", "but it's red and says why (%s)" % garage.ui._held_note.text)
+	garage.cancel()
+	check(not garage.ui._held_note.visible or not garage.ui._held_chip.visible, "and the note goes with the part")
+	garage.undo()
 	garage.undo()
 	garage.undo()
 	check(garage.design.parts.size() == parts, "undo goes back to the kart before")

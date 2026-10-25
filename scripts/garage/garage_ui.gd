@@ -116,6 +116,8 @@ var _held_picture: TextureRect
 ## The parts on the drawer's tab that's open.
 var shown: Array = []
 var _held_name: Label
+## Why the part in hand can't go down where it is, under its name.
+var _held_note: Label
 var _placing: PanelContainer
 var _place: Button
 var _turn_buttons: Array[Button] = []
@@ -227,8 +229,11 @@ func set_held_picture(picture: Texture2D) -> void:
 	_held_picture.texture = picture
 
 
-func set_can_place(ok: bool) -> void:
+## `why` says what's stopping it, shown under the part's name.
+func set_can_place(ok: bool, why := "") -> void:
 	_place.disabled = not ok
+	_held_note.text = why
+	_held_note.visible = not ok and why != ""
 
 
 func set_history(can_undo: bool, can_redo: bool) -> void:
@@ -540,9 +545,17 @@ func _build_held_chip() -> void:
 	_held_picture.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_held_picture.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	row.add_child(_held_picture)
+	var words := VBoxContainer.new()
+	words.alignment = BoxContainer.ALIGNMENT_CENTER
+	words.add_theme_constant_override("separation", 0)
+	row.add_child(words)
 	_held_name = Label.new()
 	_held_name.theme_type_variation = "CardTitleLabel"
-	row.add_child(_held_name)
+	words.add_child(_held_name)
+	_held_note = Label.new()
+	_held_note.theme_type_variation = "ProblemLabel"
+	_held_note.visible = false
+	words.add_child(_held_note)
 	var drop := IconButton.new("close", "Put it down")
 	drop.custom_minimum_size = Vector2(40, 40)
 	drop.pressed.connect(func() -> void: cancel_pressed.emit())

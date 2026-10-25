@@ -2,10 +2,12 @@ extends Node
 
 ## Takes a picture of the garage with each drawer tab open, for checking how
 ## the parts look without a phone. Like course_shots, it needs a screen, and
-## saves them in build/shots.
+## saves them in build/shots. With "wheel" it takes a trail bike wheel going
+## onto a sports bike frame instead, saved where the next argument says.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/garage_shots.tscn
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/garage_shots.tscn -- wheel /some/folder
 
-const OUT := "res://build/shots"
+var OUT := "res://build/shots"
 
 
 func _ready() -> void:
@@ -21,6 +23,13 @@ func _ready() -> void:
 			if child is Garage:
 				garage = child
 	await get_tree().create_timer(2.0).timeout
+	var args := OS.get_cmdline_user_args()
+	if args.size() >= 2 and args[0] == "wheel":
+		OUT = args[1]
+		DirAccess.make_dir_recursive_absolute(OUT)
+		await _wheel(garage)
+		get_tree().quit()
+		return
 	for i in GarageUI.CATEGORIES.size():
 		garage.ui._show_category(i)
 		# The part pictures are taken a few at a time.
@@ -55,6 +64,32 @@ func _ready() -> void:
 	garage._new_kart()
 	await _save("new_kart")
 	get_tree().quit()
+
+
+## A trail bike wheel held by the back of a sports bike frame sitting on the
+## floor, then snapped onto its axle from a finger near the dot, then a second
+## one that won't go on.
+func _wheel(garage: Garage) -> void:
+	garage._new_kart()
+	garage.start_placing("b_frame_sport", Basis.IDENTITY, null, Vector3i(9, 0, 7))
+	garage.place()
+	garage.cancel()
+	garage.show_view("angle")
+	garage._distance = 4.0
+	garage._focus = Grid.to_metres(Vector3(10.0, 4.0, 15.0))
+	garage._place_camera()
+	garage.start_placing("w_moto_trail", Basis.IDENTITY, null, Vector3i(10, 0, 14))
+	await _save("wheel_before")
+	var axles: Array = garage._spots.filter(func(s): return s.type == "axle")
+	var dot := garage._camera.unproject_position(garage._dot_position(axles[2]))
+	garage._aim_ghost(dot + Vector2(30.0, 40.0))
+	await _save("wheel_snapped")
+	garage.place()
+	await _save("wheel_on")
+	var left: Array = garage._spots.filter(func(s): return s.type == "axle")
+	if not left.is_empty():
+		garage.snap_to(left[0])
+	await _save("wheel_red_note")
 
 
 func _save(name: String) -> void:

@@ -104,7 +104,9 @@ static func apart(a: Basis, b: Basis) -> float:
 
 
 ## The first of these ways on where the part fits, or the first of them
-## anyway if it doesn't fit anywhere. Empty if there are none.
+## anyway if it doesn't fit anywhere. Empty if there are none. A part that
+## goes under the floor fits if the whole kart can go up (see
+## KartDesign.fits_lifted).
 static func best(design: KartDesign, id: String, choices: Array) -> Dictionary:
 	# Only the parts near one of the ways on can be in the way.
 	var area := AABB()
@@ -112,8 +114,15 @@ static func best(design: KartDesign, id: String, choices: Array) -> Dictionary:
 		var box := KartDesign.fine_box(id, choices[i].place)
 		area = box if i == 0 else area.merge(box)
 	var near := design.only_near(area.grow(0.1))
+	# A way on under the floor fits if the kart can go up to make room.
+	var room := -1
 	for way in choices:
-		if near.fits_place(id, way.place):
+		var lift := KartDesign.lift_for(id, way.place)
+		if lift > 0 and room < 0:
+			room = design.headroom()
+		if lift > 0 and lift > room:
+			continue
+		if near.fits_place(id, way.place, -1, lift):
 			way["fits"] = true
 			return way
 	if choices.is_empty():
@@ -183,7 +192,7 @@ static func slid(design: KartDesign, id: String, spot: Dictionary, way: Dictiona
 			moved -= 1.0
 	var on := spot.duplicate()
 	on.at = spot.at + step * moved
-	return { "place": place, "own": way.own, "cost": 0.0, "fits": design.fits_place(id, place), "spot": on }
+	return { "place": place, "own": way.own, "cost": 0.0, "fits": design.fits_lifted(id, place), "spot": on }
 
 
 ## The nearest of the 24 turns to this one.
