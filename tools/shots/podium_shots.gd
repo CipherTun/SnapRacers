@@ -31,6 +31,13 @@ func _ready() -> void:
 	Game.settings.set_value("race", "weather", weather)
 	Game.settings.set_value("race", "time", time)
 	var two := args.size() > 5 and args[5] == "two"
+	if two:
+		var stock := Game.stock_keys()
+		Game.settings.set_value("race", "split", Game.SIDE_BY_SIDE)
+		Game.settings.set_value("race", "kart", stock[0])
+		Game.settings.set_value("race", "player_two", stock[1])
+		Game.settings.set_value("player", "name", "Dan")
+		Game.settings.set_value("player", "name_two", "Gina")
 	Game.start_grand_prix(cup, two)
 	# Straight to the last race, before the first one's loaded.
 	Game.grand_prix.round = Game.grand_prix.track_ids().size() - 1
@@ -46,6 +53,12 @@ func _ready() -> void:
 		await get_tree().process_frame
 	var order := race.racers.map(func(r): return r.name)
 	order.shuffle()
+	# For two, player 2 wins and player 1 comes third, so both are on the steps.
+	if two:
+		var one := Game.player_one_name()
+		var other := Game.player_two_name()
+		order = order.filter(func(n): return n != one and n != other)
+		order = [other, order[0], one] + order.slice(1)
 	Game.finish_grand_prix_race(order)
 	var podium: Podium = race.podium
 	DirAccess.make_dir_recursive_absolute(out)

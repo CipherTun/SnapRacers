@@ -69,7 +69,7 @@ func _ready() -> void:
 	table.add_theme_constant_override("v_separation", 6)
 	column.add_child(table)
 	for i in standings.size():
-		for text in [RaceHud.ordinal(i + 1), standings[i][0], "%d points" % standings[i][1]]:
+		for text in [RaceHud.ordinal(i + 1), standings[i][0], ("%d point" if standings[i][1] == 1 else "%d points") % standings[i][1]]:
 			var cell := Label.new()
 			cell.text = text
 			cell.theme_type_variation = "LeadLabel"

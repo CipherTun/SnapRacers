@@ -48,6 +48,10 @@ const SWEEP := 4.0
 const HOLD := 4.0
 ## How long the camera takes to move over for the standings (see settle()).
 const SETTLE := 0.8
+## How much of the clear part's width the steps and karts fill then, and how
+## high over the top step the camera is.
+const SETTLE_FILL := 0.88
+const SETTLE_HIGH := 1.5
 ## How tall a number is, row by row from the top, for 1, 2 and 3.
 const DIGITS := {
 	1: ["010", "110", "010", "010", "111"],
@@ -369,15 +373,56 @@ func settle(clear := 1.0) -> void:
 	finish()
 	_from = camera.global_transform
 	_shift_from = camera.h_offset
-	var out := _camera_distance(clear)
-	_to = _looking(Vector3(0.0, _top + 2.1, out), _look)
-	# Shifting the camera sideways moves the middle of the picture into the
-	# middle of the clear part without turning it.
+	# Close enough that the steps and karts fill most of the clear part. The
+	# rows either side can go off its edges.
 	var size := get_viewport().get_visible_rect().size
+	var was_shift := camera.h_offset
+	camera.h_offset = 0.0
+	var fit := _fit(_core_points(), clear * SETTLE_FILL, _top + SETTLE_HIGH)
+	camera.h_offset = was_shift
+	_to = _looking(Vector3(0.0, _top + SETTLE_HIGH, fit[0]), _look)
+	# Shifting the camera sideways moves the middle of what's fitted into the
+	# middle of the clear part without turning it.
 	var half_across := tan(deg_to_rad(camera.fov) * 0.5) * size.x / maxf(size.y, 1.0)
 	var away := _to.origin.distance_to(_placed(_look, 0.0).origin)
-	_shift_to = (1.0 - clear) * away * half_across
+	_shift_to = (1.0 - clear + fit[1]) * away * half_across
 	_settled = 0.0
+
+
+## The corners of the steps and the parked karts, in the world.
+func _core_points() -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	for x in [-1.5, 1.5]:
+		for z in [-0.5, 0.5]:
+			points.append(_placed(Vector3(x * STEP_WIDTH, _top, z * STEP_DEPTH), 0.0).origin)
+	for place in karts.size():
+		var box := KartModel.bounds(order[place][1])
+		for i in 8:
+			points.append(karts[place].global_transform * box.get_endpoint(i))
+	return points
+
+
+## How far out the camera goes in front of the steps, at `high`, so `points`
+## fill `fill` of the screen's width, and where their middle is then across
+## the screen, from -1 at the left edge to 1 at the right. Measured through
+## the camera, as the karts are further back than the steps and lopsided.
+func _fit(points: Array[Vector3], fill: float, high: float) -> Array:
+	var was := camera.global_transform
+	var width := get_viewport().get_visible_rect().size.x
+	var out := CAMERA_OUT
+	var centre := 0.0
+	for i in 4:
+		camera.global_transform = _looking(Vector3(0.0, high, out), _look)
+		var low := INF
+		var top := -INF
+		for p in points:
+			var x := camera.unproject_position(p).x
+			low = minf(low, x)
+			top = maxf(top, x)
+		centre = (low + top) / width - 1.0
+		out = clampf((out - STEP_DEPTH) * (top - low) / width / fill + STEP_DEPTH, STEP_DEPTH + 2.0, CAMERA_FAR)
+	camera.global_transform = was
+	return [out, centre]
 
 
 ## Whether the camera has stopped moving.
