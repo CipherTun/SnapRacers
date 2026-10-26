@@ -1449,11 +1449,11 @@ def pop_race_beach():
     return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0)
 
 
-# The new style's demos, kept apart from TUNES until they replace them.
+# The tunes in the new style.
 POP = {"menu": pop_menu, "race_one": pop_race_one, "race_beach": pop_race_beach}
 
 
-TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
+TUNES = {"menu": pop_menu, "race_one": pop_race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
          "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
-         "race_beach": race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
+         "race_beach": pop_race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
          "race_jungle": race_jungle, "race_city": race_city, "race_sky": race_sky}
