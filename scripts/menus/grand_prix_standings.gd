@@ -20,6 +20,12 @@ const SIDE_MARGIN := 24.0
 const SIDE_CLEAR := 0.4
 const SIDE_ASPECT := 1.2
 const TITLE_SIZE := 36
+## Presses over the podium are ignored this long after it appears.
+const IGNORE_INPUT := 0.4
+
+## Sent when the panel has been laid out again for a new window size, with
+## `clear` changed.
+signal laid_out
 
 var grand_prix: GrandPrix
 ## Shown over the podium rather than as a screen of its own.
@@ -27,6 +33,9 @@ var over_podium := false
 ## How much of the screen's width, from the left, the panel leaves clear
 ## over the podium. 1 when it's over the middle.
 var clear := 1.0
+var _age := 0.0
+var _recorded := false
+var _relaying := false
 
 
 func _init(gp: GrandPrix, over := false) -> void:
@@ -35,6 +44,53 @@ func _init(gp: GrandPrix, over := false) -> void:
 
 
 func _ready() -> void:
+	if over_podium:
+		get_viewport().size_changed.connect(_relay)
+	_build()
+
+
+func _exit_tree() -> void:
+	var port := get_viewport()
+	if port != null and port.size_changed.is_connected(_relay):
+		port.size_changed.disconnect(_relay)
+
+
+func _process(delta: float) -> void:
+	_age += delta
+
+
+## Whether presses count yet, once the panel has finished appearing.
+func accepting() -> bool:
+	return not over_podium or _age >= IGNORE_INPUT
+
+
+func _input(event: InputEvent) -> void:
+	if accepting():
+		return
+	var press: bool = (event is InputEventScreenTouch or event is InputEventMouseButton or event is InputEventKey or event is InputEventJoypadButton) and event.pressed
+	if press or event.is_action_pressed("ui_accept") or event.is_action_pressed("ui_cancel"):
+		get_viewport().set_input_as_handled()
+
+
+## Lays the panel out again for the window's new size, once the frame's
+## resizing is done.
+func _relay() -> void:
+	if _relaying:
+		return
+	_relaying = true
+	await get_tree().process_frame
+	_relaying = false
+	if not is_inside_tree():
+		return
+	for child in get_children():
+		remove_child(child)
+		child.queue_free()
+	modulate.a = 1.0
+	_build()
+	laid_out.emit()
+
+
+func _build() -> void:
 	var done := grand_prix.finished()
 	var races := grand_prix.track_ids().size()
 	var level := Difficulty.name_of(grand_prix.difficulty)
@@ -61,7 +117,8 @@ func _ready() -> void:
 		banner.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		banner.theme_type_variation = "BannerLabel"
 		column.add_child(banner)
-		if not Game.net.is_online():
+		if not Game.net.is_online() and not _recorded:
+			_recorded = true
 			Records.add_cup_place(grand_prix.cup.id, place, grand_prix.difficulty, grand_prix.two)
 	var table := GridContainer.new()
 	table.columns = 3
@@ -98,7 +155,7 @@ func _ready() -> void:
 		button.custom_minimum_size.y = 84.0
 		column.add_child(button)
 
-	if over_podium and UiMotion.enabled(self):
+	if over_podium and UiMotion.enabled(self) and _age < IGNORE_INPUT:
 		modulate.a = 0.0
 		create_tween().tween_property(self, "modulate:a", 1.0, UiMotion.FADE * 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 

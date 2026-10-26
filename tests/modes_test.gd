@@ -57,6 +57,7 @@ func _past_podium(race: Race) -> void:
 	if not Game.grand_prix.finished():
 		return
 	check(race.podium != null and screen() == race, "after the last race the podium goes up")
+	race.podium._time = Podium.IGNORE_INPUT
 	Game._go_back()
 	check(screen() == race and race.cup_standings != null, "then the standings come up over it")
 

@@ -886,6 +886,7 @@ func show_standings(gp: GrandPrix) -> GrandPrixStandings:
 	layer.add_child(cup_standings)
 	if podium != null:
 		podium.settle(cup_standings.clear)
+		cup_standings.laid_out.connect(func() -> void: podium.settle(cup_standings.clear))
 	Sounds.music("menu")
 	PadFocus.focus_first.call_deferred(cup_standings)
 	return cup_standings
@@ -923,7 +924,7 @@ func go_back() -> void:
 		cup_standings.go_back()
 		return
 	if podium != null:
-		podium.finish()
+		podium.skip()
 		return
 	if not _menus.is_empty():
 		for racer in _menus.keys():

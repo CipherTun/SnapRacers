@@ -90,6 +90,7 @@ var _top := 0.0
 var _settled := -1.0
 var _shift_from := 0.0
 var _shift_to := 0.0
+var _clear := 1.0
 
 
 func _init(everyone: Array, cup_colour: Color, spot: Array, ground_at: Variant = null) -> void:
@@ -358,6 +359,12 @@ func _process(delta: float) -> void:
 		finish()
 
 
+## Skips to the end, unless it only just went up.
+func skip() -> void:
+	if _time >= IGNORE_INPUT:
+		finish()
+
+
 ## Skips to the end.
 func finish() -> void:
 	if _done:
@@ -371,22 +378,49 @@ func finish() -> void:
 ## standings over the rest.
 func settle(clear := 1.0) -> void:
 	finish()
+	_clear = clear
 	_from = camera.global_transform
 	_shift_from = camera.h_offset
+	_aim()
+	_settled = 0.0
+	if not get_viewport().size_changed.is_connected(_resized):
+		get_viewport().size_changed.connect(_resized)
+
+
+func _exit_tree() -> void:
+	var port := get_viewport()
+	if port != null and port.size_changed.is_connected(_resized):
+		port.size_changed.disconnect(_resized)
+
+
+## Fits the camera again for the window's new size, without moving it on.
+func _resized() -> void:
+	if _settled < 0.0:
+		return
+	_from = camera.global_transform
+	_shift_from = camera.h_offset
+	_aim()
+	_settled = SETTLE
+	camera.global_transform = _to
+	camera.h_offset = _shift_to
+
+
+## Works out where the camera ends up, `_to` and `_shift_to`, for the
+## screen's size now.
+func _aim() -> void:
 	# Close enough that the steps and karts fill most of the clear part. The
 	# rows either side can go off its edges.
 	var size := get_viewport().get_visible_rect().size
 	var was_shift := camera.h_offset
 	camera.h_offset = 0.0
-	var fit := _fit(_core_points(), clear * SETTLE_FILL, _top + SETTLE_HIGH)
+	var fit := _fit(_core_points(), _clear * SETTLE_FILL, _top + SETTLE_HIGH)
 	camera.h_offset = was_shift
 	_to = _looking(Vector3(0.0, _top + SETTLE_HIGH, fit[0]), _look)
 	# Shifting the camera sideways moves the middle of what's fitted into the
 	# middle of the clear part without turning it.
 	var half_across := tan(deg_to_rad(camera.fov) * 0.5) * size.x / maxf(size.y, 1.0)
 	var away := _to.origin.distance_to(_placed(_look, 0.0).origin)
-	_shift_to = (1.0 - clear + fit[1]) * away * half_across
-	_settled = 0.0
+	_shift_to = (1.0 - _clear + fit[1]) * away * half_across
 
 
 ## The corners of the steps and the parked karts, in the world.

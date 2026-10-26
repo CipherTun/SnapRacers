@@ -117,6 +117,8 @@ func _cup(id: String) -> void:
 	podium.finished.connect(func(): skipped[0] = true)
 	podium._unhandled_input(tap)
 	check(not skipped[0], "a tap right after it goes up doesn't skip it")
+	race.go_back()
+	check(not skipped[0] and race.cup_standings == null, "and an early Back doesn't skip it either")
 	podium._time = Podium.IGNORE_INPUT + 0.1
 	# A narrow screen pulls the camera back to fit the rows.
 	var wide := await _distance_in(podium, Vector2i(1280, 720))
@@ -130,6 +132,13 @@ func _cup(id: String) -> void:
 		return
 	check(standings.find_children("*", "Label", true, false).any(func(l): return l.text.contains("trophy")), "with the trophy")
 	check(not standings.find_children("*", "Control", true, false).any(func(c): return c is UiKit.Backdrop), "and no backdrop over it")
+	check(not standings.accepting(), "presses on the standings are ignored at first")
+	var press := InputEventKey.new()
+	press.pressed = true
+	press.keycode = KEY_ENTER
+	standings._input(press)
+	check(get_viewport().is_input_handled(), "and swallowed")
+	get_viewport().set_input_as_handled()
 	var first := PadFocus.pick(standings)
 	check(PadFocus._race_part(race) == standings and first != null and standings.is_ancestor_of(first), "a controller picks out their buttons (%s)" % (first.text if first is Button else "none"))
 	race._open_any()
@@ -140,6 +149,16 @@ func _cup(id: String) -> void:
 	var held := podium.camera.global_transform
 	await frames(10)
 	check(podium.still() and podium.camera.global_transform.is_equal_approx(held), "the camera holds still behind them")
+	check(standings.accepting(), "then they count")
+	var laid := [0]
+	standings.laid_out.connect(func(): laid[0] += 1)
+	var was_shift := podium.camera.h_offset
+	var was_window := get_window().size
+	get_window().size = Vector2i(900, 1100)
+	await frames(4)
+	check(laid[0] == 1 and not is_equal_approx(podium.camera.h_offset, was_shift), "a resize lays the panel and camera out again")
+	get_window().size = was_window
+	await frames(3)
 	race.go_back()
 	await frames(2)
 	check(not is_instance_valid(race) or race.is_queued_for_deletion(), "Back leaves, and the race goes with it")
