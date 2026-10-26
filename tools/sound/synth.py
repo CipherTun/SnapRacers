@@ -15,7 +15,7 @@ import tempfile
 import wave
 
 import numpy as np
-from scipy import signal
+from scipy import ndimage, signal
 
 RATE = 32000
 
@@ -68,6 +68,41 @@ def square(freq, length, width=0.5, harmonics=None):
 def triangle(freq, length):
     p = phase_of(freq, length)
     return 2.0 * np.abs(2.0 * (p - np.floor(p + 0.5))) - 1.0
+
+
+def blep_saw(freq, length, phase=0.0):
+    """A saw with its jumps smoothed (polyBLEP), so it barely aliases and is
+    quick to make even for many voices at once."""
+    freq = np.broadcast_to(np.asarray(freq, dtype=float), (length,))
+    t = (phase_of(freq, length) + phase) % 1.0
+    dt = np.clip(freq / RATE, 1e-6, 0.5)
+    out = 2.0 * t - 1.0
+    low = t < dt
+    x = t[low] / dt[low]
+    out[low] -= x + x - x * x - 1.0
+    high = t > 1.0 - dt
+    x = (t[high] - 1.0) / dt[high]
+    out[high] -= x * x + x + x + 1.0
+    return out
+
+
+def blep_square(freq, length, width=0.5, phase=0.0):
+    """A pulse wave from two smoothed saws."""
+    return (blep_saw(freq, length, phase) - blep_saw(freq, length, phase + width)) * 0.5
+
+
+def supersaw(freq, length, voices=7, spread=0.01, seed=0, width=0.8):
+    """Detuned saws spread across the stereo field, as (2, n). `spread` is
+    how far the outer voices are out of tune, as a fraction of the pitch."""
+    r = rng(seed)
+    out = np.zeros((2, length))
+    for k, offset in enumerate(np.linspace(-1.0, 1.0, voices)):
+        pan = offset * width
+        gain = 1.0 if k == voices // 2 else 0.7
+        tone = blep_saw(np.asarray(freq) * (1.0 + offset * spread), length, r.uniform()) * gain
+        out[0] += tone * np.cos((pan + 1.0) * np.pi / 4.0)
+        out[1] += tone * np.sin((pan + 1.0) * np.pi / 4.0)
+    return out / np.sqrt(voices)
 
 
 def noise(length, seed):
@@ -186,6 +221,56 @@ def reverb(x, wet=0.2, size=1.0, seed=0):
         out = signal.lfilter(b, a, out)
     out = lowpass(out, 6000)
     return x * (1.0 - wet) + out * wet
+
+
+def echo(x, delay, feedback=0.35, taps=6, ping_pong=True):
+    """A loop's echo, wrapping around the end. `x` is (2, n) and `delay` is
+    in samples. Ping pong sends each repeat to the other side."""
+    soft = np.stack([circular_filter(side, high=5000.0) for side in x])
+    out = np.zeros_like(x)
+    gain = 1.0
+    for k in range(1, taps + 1):
+        gain *= feedback
+        moved = np.roll(soft, k * delay, axis=1)
+        if ping_pong and k % 2:
+            moved = moved[::-1]
+        out += moved * gain
+    return out
+
+
+def compress(x, threshold=-18.0, ratio=3.0, attack=0.01, release=0.15):
+    """A bus compressor for a loop, (2, n). The level is read from both
+    sides together, and the loop is run through twice so the end and the
+    start are squeezed the same."""
+    level = np.max(np.abs(x), axis=0) ** 2
+    twice = np.concatenate([level, level])
+    k = 1.0 - np.exp(-1.0 / (RATE * attack))
+    env = signal.lfilter([k], [1.0, k - 1.0], twice)[len(level):]
+    db = 10.0 * np.log10(np.maximum(env, 1e-10))
+    cut = np.maximum(db - threshold, 0.0) * (1.0 - 1.0 / ratio)
+    cut2 = np.concatenate([cut, cut])
+    r = 1.0 - np.exp(-1.0 / (RATE * release))
+    cut = signal.lfilter([r], [1.0, r - 1.0], cut2)[len(cut):]
+    return x * 10.0 ** (-cut / 20.0)
+
+
+def limit(x, ceiling=0.88, hold=0.01):
+    """A brick wall limiter for a loop, (2, n): the gain drops ahead of any
+    peak over `ceiling` and comes back smoothly, wrapping around the end."""
+    peak = np.max(np.abs(x), axis=0)
+    gain = np.minimum(1.0, ceiling / np.maximum(peak, 1e-9))
+    n = max(4, seconds(hold))
+    gain = ndimage.minimum_filter1d(gain, 2 * n + 1, mode="wrap")
+    gain = ndimage.uniform_filter1d(gain, n, mode="wrap")
+    return x * gain
+
+
+def widen(x, amount=1.2, below=180.0):
+    """Widens a (2, n) mix by turning up the difference between the sides,
+    keeping everything under `below` Hz in the middle."""
+    mid = (x[0] + x[1]) * 0.5
+    side = circular_filter((x[0] - x[1]) * 0.5, low=below) * amount
+    return np.stack([mid + side, mid - side])
 
 
 def mix(*parts):

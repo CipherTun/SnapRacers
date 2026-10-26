@@ -6,6 +6,7 @@ Every sound and tune in SnapRacers is made here by a little synthesizer written 
 - `effects.py` makes the sound effects. An engine is a pulse for each time a cylinder fires, each one ringing the exhaust like a bell, and the number of cylinders, how evenly they fire and how the exhaust rings make a diesel sound different from a V8. The loops (engines, tire squeal and wind) wrap around from the end to the start without a click.
 - `music.py` is a little tracker. The melodies are written out by hand, note by note, and the bass, arpeggios and chords come from the chord for each bar. Every tune loops.
 - `make_sounds.py` runs them all and writes the files into `sound`.
+- `music_demo.py` writes the arcade pop demos in `music.POP` to a folder you name, as `new_*.ogg` next to `old_*.ogg` copies of the tunes they'd replace.
 
 It needs numpy and scipy, and ffmpeg for the Ogg files. `uv` fetches the Python parts:
 

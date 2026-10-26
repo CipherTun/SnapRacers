@@ -8,13 +8,18 @@ patterns of steps.
 
 Every tune loops. Anything still ringing past the end (the reverb, a long
 note) is folded back onto the start, so it goes around without a gap.
+
+The arcade pop tunes further down are written in sections (intro, verse,
+pre chorus, chorus, breakdown) and mixed on a bus with a pumping sidechain,
+glue compression and a limiter, by render_pop.
 """
 
 import numpy as np
 
 from synth import (
-    RATE, adsr, bandpass, decay, drive, highpass, lowpass, noise, normalise, note_freq,
-    reverb, sine, saw, square, sweep_lowpass, ramp, seconds, times, triangle,
+    RATE, adsr, bandpass, blep_saw, blep_square, circular_filter, compress, decay, drive, echo,
+    highpass, limit, lowpass, noise, normalise, note_freq, reverb, sine, saw, square, supersaw,
+    sweep_lowpass, ramp, seconds, times, triangle, widen,
 )
 
 # Chords by name, as the notes in them from the root up, in semitones.
@@ -962,6 +967,490 @@ def race_sky():
         (chime, [(at, f, n) for at, f, n in tune], 0.1, -0.15, 0.4),
     ]
     return render(bpm, bars, parts, wet=0.28)
+
+
+# Arcade kart pop. One shared palette: a tight punchy kick, a snappy snare
+# and clap, ticking hats, a fat synth bass or slap bass, synth brass stabs,
+# a bright detuned supersaw lead and pads that pump with the kick. Each cup
+# adds its own flavour on top. Instruments here may give back (2, n) stereo.
+
+def punch_kick(_f, _d, v):
+    n = seconds(0.4)
+    t = times(n)
+    body = sine(48.0 + 150.0 * np.exp(-t / 0.025), n) * np.exp(-t / 0.12)
+    knock = sine(np.geomspace(330, 120, n), n) * decay(n, 0.03) * 0.3
+    click = highpass(noise(n, 21), 3000) * decay(n, 0.005) * 0.4
+    return drive(body * 1.3 + knock + click, 2.2) * adsr(n, 0.0005, 0.0, 1.0, 0.03) * 0.9 * v
+
+
+def snap_snare(_f, _d, v):
+    n = seconds(0.3)
+    body = sine(np.geomspace(280, 185, n), n) * decay(n, 0.09)
+    rattle = bandpass(noise(n, 22), 1500, 9000) * decay(n, 0.16)
+    snap = highpass(noise(n, 23), 5000) * decay(n, 0.02)
+    return drive(body * 0.8 + rattle * 0.9 + snap * 0.6, 1.8) * 0.8 * v
+
+
+def pop_clap(_f, _d, v):
+    """A clap a little wide: each side its own burst of hands."""
+    n = seconds(0.35)
+    env = np.zeros(n)
+    for at in (0.0, 0.008, 0.016, 0.026):
+        s = seconds(at)
+        env[s:] += decay(n - s, 0.006 if at < 0.02 else 0.18)
+    sides = [bandpass(noise(n, seed), 1100, 7000) * env for seed in (24, 124)]
+    return np.stack(sides) * 0.6 * v
+
+
+def tick(_f, _d, v):
+    """A closed hat."""
+    n = seconds(0.08)
+    return highpass(noise(n, 25), 8000, order=4) * decay(n, 0.025) * 0.6 * v
+
+
+def open_hat(_f, _d, v):
+    n = seconds(0.4)
+    return highpass(noise(n, 26), 7000, order=4) * decay(n, 0.25) * adsr(n, 0.001, 0.0, 1.0, 0.05) * 0.45 * v
+
+
+def crash(_f, _d, v):
+    n = seconds(2.5)
+    metal = sum(blep_square(f, n) for f in (421.0, 563.0, 789.0, 1043.0, 1381.0))
+    metal = highpass(metal, 3000) * decay(n, 1.0) * 0.12
+    sides = [highpass(noise(n, seed), 4500) * decay(n, 2.2) + metal for seed in (27, 127)]
+    return np.stack(sides) * adsr(n, 0.001, 0.0, 1.0, 0.1) * 0.4 * v
+
+
+def riser(_f, d, v):
+    """Noise that rises and brightens over the note, into the next section."""
+    n = seconds(d)
+    curve = np.linspace(0.0, 1.0, n) ** 2
+    sides = []
+    for seed in (28, 128):
+        x = noise(n, seed)
+        sides.append(bandpass(x, 300, 1500) * (1.0 - curve) + highpass(x, 2500) * curve)
+    return np.stack(sides) * (0.05 + curve) * adsr(n, 0.0, 0.0, 1.0, 0.02) * 0.35 * v
+
+
+def shaker(_f, _d, v):
+    n = seconds(0.09)
+    t = times(n)
+    env = np.clip(t / 0.012, 0.0, 1.0) * np.exp(-t / 0.03)
+    return bandpass(noise(n, 29), 5000, 12000) * env * 0.7 * v
+
+
+def cowbell(_f, _d, v):
+    n = seconds(0.3)
+    tone = blep_square(560.0, n) + blep_square(845.0, n)
+    return bandpass(tone, 500, 3000) * decay(n, 0.2) * adsr(n, 0.001, 0.0, 1.0, 0.02) * 0.35 * v
+
+
+def pop_bass(f, d, v):
+    """A fat synth bass: a sub sine under a saw that's bright as it starts."""
+    n = seconds(d)
+    tone = sine(f, n) * 0.4 + blep_saw(f, n) * 0.6
+    env = decay(n, 0.09)
+    tone = lowpass(tone, 350) * (1.0 - env) + lowpass(tone, 2400) * env
+    return drive(tone * adsr(n, 0.003, 0.06, 0.85, 0.02), 1.8) * 0.8 * v
+
+
+def slap_bass(f, d, v):
+    """A slap bass: a thumb on the string, bright for a moment and round
+    after."""
+    n = seconds(max(d, 0.1))
+    tone = blep_saw(f, n) * 0.55 + sine(f, n) * 0.5 + blep_square(f * 2.0, n, 0.3) * 0.15 * decay(n, 0.05)
+    env = decay(n, 0.05)
+    tone = lowpass(tone, 500) * (1.0 - env) + lowpass(tone, 4000) * env
+    thumb = bandpass(noise(n, 30), 800, 4000) * decay(n, 0.006) * 0.5
+    return drive((tone + thumb) * adsr(n, 0.001, 0.12, 0.6, 0.03), 2.0) * 0.8 * v
+
+
+def super_lead(f, d, v):
+    """The hook lead: seven detuned saws spread wide, with a square in the
+    middle to hold the pitch."""
+    n = seconds(d + 0.08)
+    t = times(n)
+    vib = 1.0 + 0.005 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.18) * 4.0, 0.0, 1.0)
+    tone = supersaw(f * vib, n, 7, 0.012, seed=int(f) % 97) + blep_square(f * vib, n, 0.5) * 0.35
+    return lowpass(tone, 6500) * adsr(n, 0.004, 0.12, 0.8, 0.07) * 0.7 * v
+
+
+def square_lead(f, d, v):
+    """A lighter lead for the verses: a thin pulse with a little vibrato."""
+    n = seconds(d + 0.05)
+    t = times(n)
+    vib = 1.0 + 0.006 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.15) * 4.0, 0.0, 1.0)
+    tone = blep_square(f * vib, n, 0.3) * 0.8 + blep_saw(f * 1.003 * vib, n) * 0.25
+    return lowpass(tone, 4000) * adsr(n, 0.004, 0.1, 0.75, 0.05) * 0.7 * v
+
+
+def brass(f, d, v):
+    """Synth brass: three saws that scoop up into the note and open bright
+    for a moment."""
+    n = seconds(d + 0.1)
+    t = times(n)
+    scoop = 1.0 - 0.015 * np.exp(-t / 0.03)
+    tone = supersaw(f * scoop, n, 3, 0.005, seed=int(f) % 89) * 1.2
+    bright = np.clip(t / 0.025, 0.0, 1.0) * (0.5 + 0.5 * np.exp(-t / 0.12))
+    tone = lowpass(tone, 700) * (1.0 - bright) + lowpass(tone, 4200) * bright
+    return drive(tone * adsr(n, 0.008, 0.1, 0.75, 0.06), 1.4) * 0.6 * v
+
+
+def pump_pad(f, d, v):
+    n = seconds(d + 0.3)
+    tone = lowpass(supersaw(f, n, 5, 0.007, seed=int(f) % 83), 2200)
+    return tone * adsr(n, 0.03, 0.3, 0.75, 0.3) * 0.35 * v
+
+
+def pop_pluck(f, d, v):
+    n = seconds(max(d, 0.18))
+    tone = blep_saw(f, n) * 0.5 + blep_square(f * 2.0, n) * 0.2
+    env = decay(n, 0.06)
+    tone = lowpass(tone, 900) * (1.0 - env) + lowpass(tone, 6000) * env
+    return tone * decay(n, 0.2) * adsr(n, 0.001, 0.0, 1.0, 0.02) * 0.8 * v
+
+
+# Writing songs in sections.
+
+def bars(*lines):
+    """Bars written as text, like "E5:2 A5:2 .:4", to (note, steps) pairs."""
+    return [[(w.split(":")[0], int(w.split(":")[1])) for w in line.split()] for line in lines]
+
+
+def song(*sections):
+    """Sections as (name, chords), to [(name, first bar, chords)] and every
+    chord in order."""
+    out = []
+    chords = []
+    for name, ch in sections:
+        out.append((name, len(chords), ch))
+        chords = chords + ch
+    return out, chords
+
+
+def shift(notes, steps):
+    return [(n[0] + steps,) + tuple(n[1:]) for n in notes]
+
+
+def octave(notes, k):
+    return [(n[0], n[1] * 2.0 ** k) + tuple(n[2:]) for n in notes]
+
+
+def tune_at(bar, lines):
+    """A hand written melody placed from `bar`."""
+    return shift(melody(16, *lines), bar * 16)
+
+
+def part(instrument, notes, loud, pan=0.0, verb=0.0, echo_send=0.0, duck=0.0):
+    """One part of a pop tune. `duck` is how far it drops with each kick."""
+    return {"instrument": instrument, "notes": notes, "loud": loud, "pan": pan,
+            "verb": verb, "echo": echo_send, "duck": duck}
+
+
+def pump(kicks, step, length, total):
+    """How much a part drops after each kick (notes from drums()), 0 to 1,
+    a value a sample. It wraps around the loop's end."""
+    beat = step * 4.0
+    n = seconds(beat * 0.6)
+    t = times(n)
+    shape = np.minimum(t / 0.004, 1.0) * (1.0 - np.clip(t / (beat * 0.6), 0.0, 1.0) ** 2) ** 2
+    out = np.zeros(total)
+    for note in kicks:
+        idx = (seconds(note[0] * step) + np.arange(n)) % total
+        out[idx] = np.maximum(out[idx], shape)
+    return out[np.arange(length) % total]
+
+
+def render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0):
+    """Plays a pop tune's parts and mixes them on a bus: reverb and a dotted
+    eighth echo, the tail folded back onto the start, then width, glue
+    compression and a limiter, all wrapping around so it loops. `level` is
+    the RMS it comes out at, in dBFS."""
+    step = 60.0 / bpm / 4.0
+    total = seconds(bar_count * 16 * step)
+    spill = seconds(3.0)
+    length = total + spill
+    bus = np.zeros((2, length))
+    verb = np.zeros((2, length))
+    echoes = np.zeros((2, length))
+    for p in parts:
+        mono = np.zeros(length)
+        wide = np.zeros((2, length))
+        for note in p["notes"]:
+            at, f, steps = note[0], note[1], note[2]
+            v = note[3] if len(note) > 3 else 1.0
+            sound = p["instrument"](f, steps * step, v)
+            s = seconds(at * step) % total
+            end = min(s + sound.shape[-1], length)
+            if sound.ndim == 1:
+                mono[s:end] += sound[: end - s]
+            else:
+                wide[:, s:end] += sound[:, : end - s]
+        pan = p["pan"]
+        track = np.stack([mono * np.cos((pan + 1.0) * np.pi / 4.0), mono * np.sin((pan + 1.0) * np.pi / 4.0)]) * np.sqrt(2.0)
+        track += wide * np.array([[min(1.0, 1.0 - pan)], [min(1.0, 1.0 + pan)]])
+        if p["duck"]:
+            track *= 1.0 - p["duck"] * pump(kicks, step, length, total)
+        track *= p["loud"]
+        bus += track
+        verb += track * p["verb"]
+        echoes += track * p["echo"]
+    bus[0] += reverb(verb[0], 1.0, 1.0) * wet * 3.0
+    bus[1] += reverb(verb[1], 1.0, 0.93) * wet * 3.0
+    # Fold what rings on past the end back onto the start.
+    for x in (bus, echoes):
+        x[:, :spill] += x[:, total:total + spill]
+    out = bus[:, :total] + echo(echoes[:, :total], seconds(3 * step), 0.4, 6)
+    out = np.stack([circular_filter(side, low=28.0) for side in out])
+    out = widen(out, 1.15)
+    out = compress(out / np.max(np.abs(out)), -14.0, 2.5, 0.005, 0.12)
+    for _ in range(3):
+        out *= 10.0 ** (level / 20.0) / np.sqrt(np.mean(out ** 2))
+        out = limit(out, 0.84)
+    return out
+
+
+def drum_parts(form, rules):
+    """Puts drum patterns into the sections named for them. `rules` is
+    (sections, pattern) pairs, and a pattern can be one bar or a bar per
+    step of the section."""
+    out = []
+    for name, start, chords in form:
+        for names, pattern in rules:
+            if name in names:
+                out += drums(pattern, len(chords), start * 16)
+    return out
+
+
+def in_sections(form, names, make):
+    """Notes from `make(first step, chords)` for each section named."""
+    out = []
+    for name, start, chords in form:
+        if name in names:
+            out += make(start * 16, chords)
+    return out
+
+
+def starts(form, names, bar=0):
+    """A one note hit at the start of each section named, or `bar` bars in
+    (negative counts from the section's end)."""
+    out = []
+    for name, start, chords in form:
+        if name in names:
+            b = start + (bar if bar >= 0 else len(chords) + bar)
+            out.append((b * 16, 0.0, 16))
+    return out
+
+
+def pop_menu():
+    """The garage and the menus: a relaxed groove in G, toy bells on top of
+    slap bass and brass, with the main theme's hook shape in its chorus."""
+    bpm = 118
+    verse = ["G", "Em", "C", "D"] * 2
+    hook_chords = ["Cmaj7", "D", "Bm7", "Em7", "Cmaj7", "D", "G", "G6"]
+    form, chords = song(("intro", ["Cmaj7", "D", "G", "G6"]), ("verse", verse), ("hook", hook_chords),
+                        ("break", ["Cmaj7", "D", "Bm7", "Em7"]), ("verse2", verse), ("hook2", hook_chords))
+    a = bars(
+        "D5:2 G5:2 .:2 B5:2 .:2 A5:2 G5:4",
+        "E5:2 G5:2 .:2 B5:2 .:2 A5:2 G5:4",
+        "E5:2 G5:2 C6:4 B5:2 A5:2 G5:4",
+        "F#5:6 .:2 A5:4 F#5:4",
+        "D5:2 G5:2 .:2 B5:2 .:2 D6:2 B5:4",
+        "E6:2 D6:2 .:2 B5:2 .:2 A5:2 G5:4",
+        "A5:3 B5:3 C6:2 E6:4 D6:2 C6:2",
+        "A5:8 .:4 F#5:2 A5:2",
+    )
+    hook = bars(
+        "B5:3 A5:3 G5:2 E5:3 G5:3 A5:2",
+        "A5:3 G5:3 F#5:2 D5:6 .:2",
+        "B5:3 A5:3 G5:2 E5:3 G5:3 B5:2",
+        "D6:6 B5:2 A5:4 G5:4",
+        "B5:3 A5:3 G5:2 E5:3 G5:3 A5:2",
+        "A5:3 G5:3 F#5:2 A5:4 D6:4",
+        "B5:3 A5:3 G5:2 D5:3 E5:3 G5:2",
+        "G5:8 .:4 D5:2 E5:2",
+    )
+    bar_count = len(chords)
+    groove = ("verse", "hook", "verse2", "hook2")
+    kicks = drum_parts(form, [(groove, "x.....x...x....."), (("intro",), "x.......x.......")])
+    melody_notes = (in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+                    + in_sections(form, ("hook", "hook2"), lambda at, _c: shift(melody(16, *hook), at))
+                    + in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+                    + in_sections(form, ("break",), lambda at, _c: shift(melody(16, *hook[:4]), at)))
+    parts = [
+        part(punch_kick, kicks, 0.5),
+        part(snap_snare, drum_parts(form, [(groove, "....x.......x...")]), 0.3, 0.05, 0.12),
+        part(pop_clap, drum_parts(form, [(("hook", "hook2"), "....x.......x...")]), 0.25, 0.0, 0.15),
+        part(tick, drum_parts(form, [(groove + ("intro",), "x.xox.xox.xox.xo")]), 0.22, 0.35),
+        part(shaker, drum_parts(form, [(groove + ("break",), "oxoxoxoxoxoxoxox")]), 0.12, -0.35),
+        part(crash, starts(form, ("verse", "hook", "verse2", "hook2")), 0.22, 0.0, 0.1),
+        part(riser, [(n[0] + 8, 0.0, 8) for n in starts(form, ("break",), -1)], 0.3, 0.0, 0.1),
+        part(slap_bass, in_sections(form, groove + ("intro",), lambda at, c: bassline(c, "r..r..o.r.5..o.r", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.5, 0.0, 0.0, 0.0, 0.3),
+        part(pump_pad, in_sections(form, ("hook", "hook2", "break", "intro"), lambda at, c: held(c, 3, at)), 0.35, 0.0, 0.3, 0.0, 0.35),
+        part(brass, in_sections(form, ("hook2", "verse2"), lambda at, c: comp(c, "..x..x....x.....", 4, at)), 0.22, -0.25, 0.2),
+        part(keys, in_sections(form, ("verse", "verse2", "hook"), lambda at, c: comp(c, "..x...x...x...x.", 4, at)), 0.35, -0.35, 0.2),
+        part(chime, melody_notes, 0.52, 0.15, 0.3, 0.15),
+        part(pop_pluck, octave(melody_notes, -1), 0.18, -0.15, 0.2, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.18, level=-13.7)
+
+
+def pop_race_one():
+    """The Baseplate Cup and the main theme: big and bright in D, a 3 3 2
+    hook on the supersaw over a pumping four on the floor."""
+    bpm = 150
+    verse = ["D", "Bm", "G", "A"] * 2
+    pre = ["Em", "F#m", "G", "A"] * 2
+    chorus = ["G", "A", "Bm", "D", "G", "A", "D", "Asus"]
+    form, chords = song(("intro", ["G", "A", "D", "Asus"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["G", "A", "Bm", "A"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "A5:2 .:2 F#5:2 A5:2 .:2 B5:2 A5:4",
+        "F#5:2 .:2 D5:2 F#5:2 .:2 E5:2 D5:4",
+        "B5:2 .:2 G5:2 B5:2 D6:2 C#6:2 B5:2 A5:2",
+        "A5:6 .:2 E5:2 F#5:2 G5:2 A5:2",
+        "A5:2 .:2 F#5:2 A5:2 .:2 D6:2 C#6:4",
+        "B5:2 .:2 F#5:2 B5:2 .:2 C#6:2 D6:4",
+        "E6:3 D6:3 B5:2 G5:3 A5:3 B5:2",
+        "A5:8 .:4 C#6:2 E6:2",
+    )
+    b = bars(
+        "B5:3 B5:3 B5:2 A5:4 G5:4",
+        "C#6:3 C#6:3 C#6:2 B5:4 A5:4",
+        "D6:3 D6:3 D6:2 C#6:4 B5:4",
+        "C#6:4 E6:4 A5:8",
+        "B5:3 B5:3 B5:2 E6:4 D6:4",
+        "C#6:3 C#6:3 C#6:2 F#6:4 E6:4",
+        "D6:4 E6:4 F#6:4 G6:4",
+        "A6:8 .:8",
+    )
+    hook = bars(
+        "F#6:3 E6:3 D6:2 B5:3 D6:3 E6:2",
+        "E6:3 D6:3 C#6:2 A5:6 .:2",
+        "F#6:3 E6:3 D6:2 B5:3 D6:3 F#6:2",
+        "A6:6 F#6:2 E6:4 D6:4",
+        "F#6:3 E6:3 D6:2 B5:3 D6:3 E6:2",
+        "E6:3 D6:3 C#6:2 E6:4 A6:4",
+        "F#6:3 E6:3 D6:2 A5:3 B5:3 D6:2",
+        "D6:8 .:4 A5:2 C#6:2",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(full + ("intro",), "x...x...x...x...")])
+    roll = "....x.......x...", "x.x.x.x.xxxxXXXX"
+    snares = []
+    for name, start, ch in form:
+        if name in ("pre", "verse2"):
+            snares += drums(roll[0], len(ch) - 1, start * 16) + drums(roll[1], 1, (start + len(ch) - 1) * 16)
+        elif name in ("verse", "chorus", "chorus2", "intro"):
+            snares += drums(roll[0], len(ch), start * 16)
+    hooks = in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+    parts = [
+        part(punch_kick, kicks, 0.52),
+        part(snap_snare, snares, 0.4, 0.05, 0.12),
+        part(pop_clap, drum_parts(form, [(("chorus", "chorus2", "verse2"), "....x.......x...")]), 0.3, 0.0, 0.15),
+        part(tick, drum_parts(form, [(("verse", "pre", "intro"), "x.o.x.o.x.o.x.o."), (("chorus", "chorus2", "verse2"), "xoxoxoxoxoxoxoxo")]), 0.22, 0.35),
+        part(open_hat, drum_parts(form, [(full, "..x...x...x...x.")]), 0.2, -0.3),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")), 0.25, 0.0, 0.1),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.35, 0.0, 0.1),
+        part(pop_bass, in_sections(form, ("chorus", "chorus2", "intro"), lambda at, c: bassline(c, "r.o.r.o.r.o.r.o.", 2, at))
+             + in_sections(form, ("verse", "verse2"), lambda at, c: bassline(c, "r..r..r.r..r.5o.", 2, at))
+             + in_sections(form, ("pre",), lambda at, c: bassline(c, "r-r-r-r-r-r-o-o-", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.55, 0.0, 0.0, 0.0, 0.45),
+        part(pump_pad, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.4, 0.0, 0.3, 0.0, 0.5),
+        part(pop_pluck, in_sections(form, ("verse", "verse2", "break"), lambda at, c: arps(c, 4, (0, 1, 2, 3, 2, 1, 0, 2), 1, at)), 0.18, -0.4, 0.15, 0.25, 0.4),
+        part(brass, in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+             + in_sections(form, ("chorus2", "pre"), lambda at, c: comp(c, "x..x..x.....x...", 4, at)), 0.3, -0.2, 0.2),
+        part(square_lead, in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+             + in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at)), 0.44, 0.1, 0.2, 0.2),
+        part(super_lead, hooks, 0.5, 0.0, 0.25, 0.15),
+        part(chime, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), 1)
+             + in_sections(form, ("break",), lambda at, _c: shift(melody(16, *(hook[:3] + bars("C#6:4 E6:4 A6:8"))), at)), 0.22, 0.25, 0.35, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0)
+
+
+def pop_race_beach():
+    """The Island Cup: a quick soca beat in F, steel drums on the hook with
+    congas, cowbell, a shaker and slap bass under the shared pop sound."""
+    bpm = 152
+    verse = ["F", "C", "Dm", "Bb"] * 2
+    pre = ["Gm", "Am", "Bb", "C"] * 2
+    chorus = ["Bb", "C", "F", "Dm", "Bb", "C", "F", "F"]
+    form, chords = song(("intro", ["Bb", "C", "F", "F"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["Bb", "C", "F", "Dm"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "C6:2 .:1 A5:1 C6:2 F6:2 .:2 E6:2 C6:4",
+        "G5:2 .:1 E5:1 G5:2 C6:2 .:2 Bb5:2 G5:4",
+        "A5:2 .:1 F5:1 A5:2 D6:2 .:2 C6:2 A5:4",
+        "Bb5:3 C6:3 D6:2 F5:8",
+        "C6:2 .:1 A5:1 C6:2 F6:2 .:2 G6:2 A6:4",
+        "G6:2 .:1 E6:1 C6:2 G5:2 .:2 C6:2 E6:4",
+        "F6:3 E6:3 D6:2 A5:3 C6:3 D6:2",
+        "D6:6 C6:2 Bb5:4 C6:4",
+    )
+    b = bars(
+        "Bb5:3 Bb5:3 Bb5:2 D6:4 G5:4",
+        "C6:3 C6:3 C6:2 E6:4 A5:4",
+        "D6:3 D6:3 D6:2 F6:4 D6:4",
+        "E6:4 C6:4 G5:8",
+        "Bb5:3 Bb5:3 Bb5:2 D6:4 G6:4",
+        "A6:3 G6:3 E6:2 C6:4 E6:4",
+        "F6:4 D6:4 Bb5:4 D6:4",
+        "C6:2 E6:2 G6:4 .:8",
+    )
+    hook = bars(
+        "D6:2 D6:1 F6:3 D6:2 C6:2 Bb5:2 C6:4",
+        "E6:2 E6:1 G6:3 E6:2 C6:2 Bb5:2 G5:4",
+        "A5:2 C6:2 F6:2 A6:3 G6:3 F6:4",
+        "F6:6 E6:2 D6:4 A5:4",
+        "D6:2 D6:1 F6:3 D6:2 C6:2 Bb5:2 C6:4",
+        "E6:2 E6:1 G6:3 E6:2 G6:2 Bb6:2 G6:4",
+        "A6:3 G6:3 F6:2 C6:3 D6:3 F6:2",
+        "F6:8 .:4 C6:2 D6:2",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(full + ("intro",), "x...x...x...x...")])
+    snares = []
+    for name, start, ch in form:
+        if name == "pre":
+            snares += drums("....x.......x...", len(ch) - 1, start * 16) + drums("x.x.x.x.xxxxXXXX", 1, (start + len(ch) - 1) * 16)
+    steel_notes = (in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+                   + in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at))
+                   + in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+                   + in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+                   + in_sections(form, ("break",), lambda at, _c: shift(melody(16, *hook[:4]), at)))
+    congas_low = [(at, 98.0, n, v) for at, _f, n, v in drum_parts(form, [(full + ("break",), "x......x..x.....")])]
+    congas_high = [(at, 165.0, n, v) for at, _f, n, v in drum_parts(form, [(full + ("break",), "..x..x.x....x.ox")])]
+    parts = [
+        part(punch_kick, kicks, 0.5),
+        part(snap_snare, snares, 0.35, 0.05, 0.12),
+        part(pop_clap, drum_parts(form, [(("verse", "chorus", "verse2", "chorus2", "intro"), "....x.......x...")]), 0.3, 0.0, 0.15),
+        part(tick, drum_parts(form, [(full, "x.o.x.o.x.o.x.o.")]), 0.16, 0.35),
+        part(shaker, drum_parts(form, [(full + ("break", "intro"), "oxoxoxoxoxoxoxox")]), 0.18, -0.35),
+        part(cowbell, drum_parts(form, [(("chorus", "chorus2"), "x..x..x.x..x..x."), (("verse2",), "x...x...x...x...")]), 0.2, 0.4, 0.05),
+        part(hand_drum, congas_low, 0.3, -0.3, 0.08),
+        part(hand_drum, congas_high, 0.24, 0.3, 0.08),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")), 0.22, 0.0, 0.1),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.3, 0.0, 0.1),
+        part(slap_bass, in_sections(form, full + ("intro",), lambda at, c: bassline(c, "r..o..r.r..o.5o.", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.52, 0.0, 0.0, 0.0, 0.35),
+        part(pump_pad, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.3, 0.0, 0.3, 0.0, 0.5),
+        part(marimba, in_sections(form, ("verse", "verse2"), lambda at, c: arps(c, 4, (0, 2, 1, 3), 2, at)), 0.2, -0.35, 0.15),
+        part(brass, in_sections(form, ("chorus", "chorus2", "intro"), lambda at, c: comp(c, "..x..x....x..x..", 4, at)), 0.22, -0.2, 0.2),
+        part(steel, steel_notes, 0.68, 0.15, 0.25, 0.15),
+        part(steel, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), -1), 0.25, -0.25, 0.25, 0.1),
+        part(super_lead, octave(in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at)), -1), 0.16, 0.0, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0)
+
+
+# The new style's demos, kept apart from TUNES until they replace them.
+POP = {"menu": pop_menu, "race_one": pop_race_one, "race_beach": pop_race_beach}
 
 
 TUNES = {"menu": menu_tune, "race_one": race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
