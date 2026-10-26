@@ -23,6 +23,16 @@ const BUMP := 180.0
 const CRASH := 700.0
 ## Once a knock's made a sound, the next one waits this long.
 const KNOCK_GAP := 0.25
+## A drift's tire sound: its level at full, seconds to fade in and out, and
+## the surfaces' loops (anything else sounds like tarmac).
+const DRIFT_LEVEL := -10.0
+const DRIFT_IN := 0.15
+const DRIFT_OUT := 0.3
+const WHOOSH_LEVEL := -8.0
+const DRIFT_SURFACE := {
+	"dirt": "dirt", "gravel": "dirt", "mud": "dirt", "grass": "dirt",
+	"snow": "snow", "ice": "snow",
+}
 
 var kart: Kart
 ## Whether to play the wind, which only the karts people drive do.
@@ -32,6 +42,12 @@ var _jet: AudioStreamPlayer3D
 var _skid: AudioStreamPlayer3D
 var _rumble: AudioStreamPlayer3D
 var _wind: AudioStreamPlayer3D
+var _drift_soft: AudioStreamPlayer3D
+var _drift_hard: AudioStreamPlayer3D
+var _drift_surface := ""
+var _drift_gain := 0.0
+var _drift_pitch := 1.0
+var _boosts_seen := 0
 var _top_speed := 20.0
 var _rev := 0.0
 var _knock := 0.0
@@ -47,6 +63,9 @@ func _ready() -> void:
 	_engine = _loop(null, 0.0)
 	_jet = _loop(null, -2.0)
 	_skid = _loop(Sounds.stream("loop/skid"), -6.0)
+	_drift_soft = _loop(null, DRIFT_LEVEL)
+	_drift_hard = _loop(null, DRIFT_LEVEL)
+	_boosts_seen = kart.boost_count
 	_rumble = _loop(Sounds.stream("loop/rumble"), -4.0)
 	_wind = _loop(Sounds.stream("loop/wind"), -10.0)
 	if kart.stats != null:
@@ -112,7 +131,8 @@ func _process(delta: float) -> void:
 	var on_ground := grounded >= 2
 	var sideways := absf(velocity.dot(kart.global_basis.x))
 	var skid := clampf((sideways - 1.5) / 5.0, 0.0, 1.0) if on_ground else 0.0
-	_set_level(_skid, 0.0 if hushed else skid, -6.0)
+	var drifting := _drift(delta, velocity, speed, on_ground, hushed)
+	_set_level(_skid, 0.0 if hushed or drifting else skid, -6.0)
 	_skid.pitch_scale = 0.9 + skid * 0.2
 	var rumble := kart.rough * clampf(speed / 6.0, 0.0, 1.0) if on_ground else 0.0
 	_set_level(_rumble, 0.0 if hushed else rumble, -4.0)
@@ -127,6 +147,55 @@ func _process(delta: float) -> void:
 		var loud := clampf(_knock / CRASH, 0.3, 1.0)
 		Sounds.play_at("fx/crash" if _knock > CRASH else "fx/bump", self, linear_to_db(loud), randf_range(0.9, 1.1))
 	_knock = 0.0
+
+
+## The tire sound of a drift, soft fading to hard with how hard and fast it
+## slips, and the whoosh when its boost starts. Returns whether a drift is
+## being heard, so the plain skid keeps quiet. Only played, never fed back
+## into the kart.
+func _drift(delta: float, velocity: Vector3, speed: float, on_ground: bool, hushed: bool) -> bool:
+	var sideways := absf(velocity.dot(kart.global_basis.x))
+	var slipping := (sideways > 3.0) if kart.remote else kart.sliding
+	var want := slipping and on_ground and not hushed
+	var before := _drift_gain
+	_drift_gain = move_toward(_drift_gain, 1.0 if want else 0.0, delta / (DRIFT_IN if want else DRIFT_OUT))
+	if not kart.remote and kart.boost_count != _boosts_seen:
+		_boosts_seen = kart.boost_count
+		if kart.boost_level > 0 and not hushed:
+			Sounds.play_at("fx/drift_whoosh_%d" % clampi(kart.boost_level, 1, 3), self, WHOOSH_LEVEL)
+	if _drift_gain <= 0.0:
+		if before > 0.0:
+			_drift_soft.stop()
+			_drift_hard.stop()
+		return false
+	var surface := _drift_surface_now()
+	if surface != _drift_surface or before <= 0.0:
+		if before <= 0.0:
+			_drift_pitch = randf_range(0.95, 1.05)
+		_drift_surface = surface
+		_set_stream(_drift_soft, Sounds.stream("loop/drift_%s_soft" % surface))
+		_set_stream(_drift_hard, Sounds.stream("loop/drift_%s_hard" % surface))
+	var slip := clampf(sideways / 7.0, 0.0, 1.0) * (0.5 + 0.5 * clampf(speed / 20.0, 0.0, 1.0))
+	var loud := _drift_gain * (0.45 + 0.55 * slip)
+	_drift_soft.volume_db = DRIFT_LEVEL + linear_to_db(maxf(loud * (1.0 - slip), 0.0001))
+	_drift_hard.volume_db = DRIFT_LEVEL + linear_to_db(maxf(loud * slip, 0.0001))
+	var pitch := _drift_pitch * (0.92 + 0.16 * slip)
+	_drift_soft.pitch_scale = pitch
+	_drift_hard.pitch_scale = pitch
+	for player in [_drift_soft, _drift_hard]:
+		if not player.playing and player.stream != null and Sounds.audible():
+			player.play(randf() * player.stream.get_length())
+	return true
+
+
+## Which set of drift loops the drive wheels are on.
+func _drift_surface_now() -> String:
+	for w in kart.wheels:
+		if w.driven and w.grounded:
+			if w.snow > 0.05:
+				return "snow"
+			return DRIFT_SURFACE.get(w.surface, "tarmac")
+	return _drift_surface if _drift_surface != "" else "tarmac"
 
 
 func _loop(stream: AudioStream, level: float) -> AudioStreamPlayer3D:

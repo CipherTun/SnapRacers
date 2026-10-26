@@ -203,7 +203,97 @@ def gale():
     return normalise((air + whistle) * gusts, 0.55)
 
 
-LOOPS = {"skid": skid, "rumble": rumble, "wind": wind, "rain": rain, "storm": storm, "gale": gale}
+# Drifting. Each surface has a soft loop for a gentle drift and a hard one
+# for a fast hard drift, which the game fades between by how much the tires
+# slip. The loops are 2 s, and anything that wobbles does so a whole number
+# of times in that, so they wrap without a click.
+
+DRIFT_LOOP = 2.0
+
+
+def _wobble(total, seed, rate, depth):
+    """Slow random flutter that loops: noise smoothed down below `rate` Hz."""
+    w = circular_filter(noise(total, seed), high=rate)
+    return 1.0 + depth * w / max(np.max(np.abs(w)), 1e-9)
+
+
+def _grit(total, seed, count, low, high, ring, loud=(0.2, 1.0)):
+    """Little bits of grit or snow crunching, scattered round a loop."""
+    r = rng(seed)
+    hits = np.zeros(total)
+    for i in r.integers(0, total, count):
+        hits[i] += r.uniform(*loud)
+    n = seconds(ring * 3)
+    kernel = bandpass(noise(n, seed + 1), low, high) * decay(n, ring)
+    return circular_convolve(hits, kernel)
+
+
+def drift_tarmac(hard):
+    """Rubber on tarmac: a soft hiss, and on a hard drift a squeal over it
+    that wavers and breaks up so it doesn't ring like a whistle."""
+    total = seconds(DRIFT_LOOP)
+    t = times(total)
+    hiss = normalise(circular_filter(noise(total, 81), low=1400.0, high=5500.0)) * _wobble(total, 82, 6.0, 0.35)
+    if not hard:
+        return normalise(hiss, 0.5)
+    wander = 25 * np.sin(2 * np.pi * 1.5 * t) + 14 * np.sin(2 * np.pi * 4.0 * t + 0.6) + 8 * np.sin(2 * np.pi * 9.5 * t)
+    p = np.cumsum(820 + wander) / RATE
+    tone = np.sin(2 * np.pi * p) + 0.35 * np.sin(4 * np.pi * p + 0.3) + 0.12 * np.sin(6 * np.pi * p)
+    # The squeal catches and lets go, a few times a second.
+    catch = np.clip(_wobble(total, 83, 14.0, 1.0) - 0.6, 0.0, None)
+    tone = tone * catch / max(np.max(catch), 1e-9)
+    rough = circular_filter(noise(total, 84), low=600.0, high=2600.0)
+    return normalise(normalise(tone) * 0.45 + hiss * 0.6 + normalise(rough) * 0.25, 0.6)
+
+
+def drift_dirt(hard):
+    """Tires scrabbling on dirt and mud: a low scrape with grit crunching
+    through it, denser and with stones flicking up on a hard drift."""
+    total = seconds(DRIFT_LOOP)
+    scrape = normalise(circular_filter(noise(total, 91), low=120.0, high=900.0)) * _wobble(total, 92, 5.0, 0.3)
+    grit = normalise(_grit(total, 93, 260 if hard else 110, 500.0, 2500.0, 0.006))
+    out = scrape * 0.7 + grit * 0.6
+    if hard:
+        stones = normalise(_grit(total, 94, 40, 2000.0, 6000.0, 0.004, (0.3, 1.0)))
+        out += stones * 0.3 + normalise(circular_filter(noise(total, 95), low=40.0, high=200.0)) * 0.4
+    return normalise(out, 0.6 if hard else 0.5)
+
+
+def drift_snow(hard):
+    """Tires through snow: an airy hiss, and on a hard drift a fuller spray
+    with the soft squeak and crunch of packed snow."""
+    total = seconds(DRIFT_LOOP)
+    air = normalise(circular_filter(noise(total, 101), low=2500.0, high=9000.0)) * _wobble(total, 102, 3.0, 0.3)
+    if not hard:
+        return normalise(air, 0.45)
+    spray = normalise(circular_filter(noise(total, 103), low=500.0, high=6000.0, tilt=-1.5)) * _wobble(total, 104, 8.0, 0.4)
+    crunch = normalise(_grit(total, 105, 180, 300.0, 1400.0, 0.012))
+    return normalise(air * 0.5 + spray * 0.6 + crunch * 0.4, 0.6)
+
+
+DRIFTS = {"tarmac": drift_tarmac, "dirt": drift_dirt, "snow": drift_snow}
+
+
+def drift_whoosh(level):
+    """Letting a boost go: a rush of air, longer, fuller and brighter for a
+    higher level, with a low thump under the top one."""
+    time = [0.35, 0.55, 0.8][level - 1]
+    n = seconds(time)
+    top = [2500, 4000, 6000][level - 1]
+    air = bandpass(noise(n, 110 + level), 150, 7000)
+    air = sweep_lowpass(air, ramp(n, [(0.0, 400), (0.25, top), (1.0, 600)])) * ramp(n, [(0.0, 0.0), (0.12, 1.0), (1.0, 0.0)])
+    rise = sine(np.geomspace(200 + 60 * level, 500 + 200 * level, n), n) * ramp(n, [(0.0, 0.0), (0.15, 0.15), (1.0, 0.0)])
+    out = normalise(air) + rise
+    if level == 3:
+        m = seconds(0.25)
+        out[:m] += sine(np.geomspace(90, 45, m), m) * decay(m, 0.25) * 0.6
+    return normalise(out, 0.45 + 0.12 * level)
+
+
+LOOPS = {"skid": skid,"rumble": rumble, "wind": wind, "rain": rain, "storm": storm, "gale": gale}
+for _surface, _make in DRIFTS.items():
+    LOOPS["drift_%s_soft" % _surface] = lambda m=_make: m(False)
+    LOOPS["drift_%s_hard" % _surface] = lambda m=_make: m(True)
 
 
 # One shots.
@@ -483,7 +573,7 @@ ONE_SHOTS = {
     "lap": lap, "final_lap": final_lap, "finish": finish, "win": win,
     "reset": reset, "turbo": turbo, "rope": rope, "wall": wall, "shockwave": shockwave, "marbles": marbles, "spikes": spikes, "drop": drop, "cannon": cannon,
     "hit": hit, "repair": repair, "shield": shield, "ghost": ghost, "lightning": lightning, "thunder": thunder, "ram": ram,
-    "crossing_bell": crossing_bell, "train_horn": train_horn,
+    "crossing_bell": crossing_bell, "drift_whoosh_1": lambda: drift_whoosh(1), "drift_whoosh_2": lambda: drift_whoosh(2), "drift_whoosh_3": lambda: drift_whoosh(3), "train_horn": train_horn,
     "click": click, "back": back, "snap": snap, "unsnap": unsnap, "pick": pick, "nope": nope,
 }
 
