@@ -34,7 +34,11 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_current = screen
 	get_viewport().gui_focus_changed.connect(_remember)
-	tree_exiting.connect(func() -> void: _current = Callable())
+
+
+## A lambda left in a static when the game quits frees memory twice.
+func _exit_tree() -> void:
+	_current = Callable()
 
 
 func _input(event: InputEvent) -> void:
