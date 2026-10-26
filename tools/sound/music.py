@@ -1763,8 +1763,337 @@ def pop_race_beach():
     return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0)
 
 
+
+def pop_race_two():
+    """The Axle Cup, works and foundries: a funky groove in E minor, the hook
+    on a clavinet over slap bass, with anvil clanks in the drums."""
+    bpm = 144
+    verse = ["Em7", "A7", "Em7", "A7", "Cmaj7", "Bm7", "Am7", "B7"]
+    pre = ["Am7", "Bm7", "Cmaj7", "D"] * 2
+    chorus = ["Em7", "C", "D", "Bm7", "Em7", "C", "D", "B7"]
+    form, chords = song(("intro", ["Em7", "C", "D", "B7"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["Em7", "C", "D", "B7"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "B4:2 .:1 B4:1 D5:2 E5:2 .:2 D5:1 E5:1 G5:2 E5:2",
+        "C#5:2 .:2 E5:2 G5:2 .:2 F#5:2 E5:4",
+        "B4:2 .:1 B4:1 D5:2 E5:2 .:2 G5:1 A5:1 B5:2 G5:2",
+        "A5:3 G5:3 E5:2 C#5:8",
+        "G5:2 .:1 E5:1 G5:2 B5:2 .:2 A5:2 G5:4",
+        "F#5:2 .:1 D5:1 F#5:2 A5:2 .:2 B5:2 F#5:4",
+        "E5:3 G5:3 A5:2 C6:4 B5:4",
+        "D#5:4 F#5:4 A5:4 B5:4",
+    )
+    b = bars(
+        "E5:1 .:1 A5:1 .:1 E5:1 A5:2 C6:2 .:1 B5:2 A5:2 G5:2",
+        "F#5:1 .:1 B5:1 .:1 F#5:1 B5:2 D6:2 .:1 B5:2 A5:2 F#5:2",
+        "G5:1 .:1 C6:1 .:1 G5:1 C6:2 E6:2 .:1 D6:2 C6:2 B5:2",
+        "A5:4 B5:4 C6:4 D6:4",
+        "E5:1 .:1 A5:1 .:1 E5:1 A5:2 C6:2 .:1 B5:2 A5:2 G5:2",
+        "F#5:1 .:1 B5:1 .:1 F#5:1 B5:2 D6:2 .:1 B5:2 A5:2 F#5:2",
+        "G5:1 .:1 C6:1 .:1 G5:1 C6:2 E6:2 .:1 G6:2 E6:2 C6:2",
+        "B5:4 C6:4 D6:4 .:4",
+    )
+    hook = bars(
+        "E5:3 G5:3 A5:2 B5:1 .:1 D6:2 B5:2 A5:2",
+        "G5:2 A5:1 G5:1 E5:4 .:2 D5:2 E5:4",
+        "E5:3 G5:3 A5:2 B5:1 .:1 D6:2 E6:2 G6:2",
+        "F#6:3 E6:3 D6:2 B5:8",
+        "E5:3 G5:3 A5:2 B5:1 .:1 D6:2 B5:2 A5:2",
+        "G5:2 A5:1 G5:1 E5:4 .:2 B5:2 D6:4",
+        "E6:3 D6:3 B5:2 A5:3 G5:3 F#5:2",
+        "F#5:6 D#5:2 E5:4 .:2 B4:2",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(("chorus", "chorus2", "pre", "intro"), "x...x...x...x..."),
+                              (("verse", "verse2"), "x..x..x...x.x...")])
+    snares = []
+    for name, start, ch in form:
+        if name in ("pre", "verse2"):
+            snares += drums("....x..o....x.o.", len(ch) - 1, start * 16) + drums("x.x.x.x.xxxxXXXX", 1, (start + len(ch) - 1) * 16)
+        elif name in ("verse", "chorus", "chorus2", "intro"):
+            snares += drums("....x..o....x.o.", len(ch), start * 16)
+    hooks = in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+    teaser = in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+    parts = [
+        part(punch_kick, kicks, 0.52),
+        part(snap_snare, snares, 0.4, 0.05, 0.12),
+        part(pop_clap, drum_parts(form, [(("chorus", "chorus2", "verse2"), "....x.......x...")]), 0.28, 0.0, 0.15),
+        part(tick, drum_parts(form, [(("verse", "pre", "intro"), "x.oxx.o.x.oxx.o."), (("chorus", "chorus2", "verse2"), "xoxoxoxoxoxoxoxo")]), 0.2, 0.35),
+        part(open_hat, drum_parts(form, [(("chorus", "chorus2", "pre"), "..x...x...x...x.")]), 0.18, -0.3),
+        part(anvil, drum_parts(form, [(("verse", "verse2", "intro"), "..............x."),
+                                      (("chorus", "chorus2"), "......x.......x.")]), 0.22, 0.3, 0.15),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")), 0.25, 0.0, 0.1),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.33, 0.0, 0.1),
+        part(slap_bass, in_sections(form, ("verse", "verse2", "intro"), lambda at, c: bassline(c, "r..o.rr.r.o..5o.", 2, at))
+             + in_sections(form, ("chorus", "chorus2"), lambda at, c: bassline(c, "r.o.r.oor.o.r.o5", 2, at))
+             + in_sections(form, ("pre",), lambda at, c: bassline(c, "r-r-r-r-r-r-o-o-", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.55, 0.0, 0.0, 0.0, 0.35),
+        part(pump_pad, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.32, 0.0, 0.3, 0.0, 0.5),
+        part(clavinet, in_sections(form, ("verse", "verse2", "pre", "chorus", "chorus2"), lambda at, c: comp(c, "x.xx..x.x.xx..x.", 4, at)),
+             0.2, 0.35, 0.08),
+        part(brass, in_sections(form, ("chorus", "chorus2"), lambda at, c: comp(c, "x..x..x.....x...", 4, at)), 0.22, -0.25, 0.2),
+        part(square_lead, in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+             + in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at)), 0.4, 0.1, 0.2, 0.2),
+        part(clavinet, hooks + teaser, 0.62, -0.05, 0.12, 0.12),
+        part(super_lead, octave(hooks, 1), 0.26, 0.0, 0.25, 0.15),
+        part(brass, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), -1), 0.2, 0.2, 0.2),
+        part(chime, octave(in_sections(form, ("break",), lambda at, _c: shift(melody(16, *(hook[:3] + bars("F#6:4 D#6:4 B5:8"))), at)), 1),
+             0.24, 0.25, 0.35, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.3)
+
+
+def pop_race_three():
+    """The Gearbox Cup, woods, snow and dunes: bouncy and sunny in A, a banjo
+    picking under somebody whistling the hook over the pop beat."""
+    bpm = 162
+    verse = ["A", "D", "A", "E", "A", "D", "E", "A"]
+    pre = ["Bm", "C#m", "D", "E"] * 2
+    chorus = ["A", "E", "F#m", "D", "A", "E", "D", "E"]
+    form, chords = song(("intro", ["A", "E", "D", "E"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["A", "E", "F#m", "E"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "A4:1 .:1 C#5:1 E5:1 .:1 A5:2 E5:1 C#5:2 E5:2 A5:4",
+        "F#5:2 .:1 D5:1 F#5:2 A5:2 .:2 F#5:2 D5:4",
+        "E5:2 .:1 C#5:1 E5:2 A5:2 .:2 B5:2 C#6:4",
+        "B5:3 A5:3 G#5:2 E5:8",
+        "A4:1 .:1 C#5:1 E5:1 .:1 A5:2 E5:1 C#5:2 E5:2 A5:4",
+        "F#5:2 .:1 D5:1 F#5:2 A5:2 .:2 F#5:2 D5:4",
+        "G#5:2 .:1 E5:1 G#5:2 B5:2 .:2 D6:2 B5:4",
+        "C#6:3 B5:3 A5:2 E5:8",
+    )
+    b = bars(
+        "B4:2 D5:2 F#5:2 B5:2 .:2 A5:2 F#5:4",
+        "C#5:2 E5:2 G#5:2 C#6:2 .:2 B5:2 G#5:4",
+        "D5:2 F#5:2 A5:2 D6:2 .:2 C#6:2 A5:4",
+        "E5:2 G#5:2 B5:2 E6:2 .:2 D6:2 B5:4",
+        "D6:3 C#6:3 B5:2 F#5:8",
+        "E6:3 C#6:3 G#5:2 C#6:8",
+        "F#6:3 E6:3 D6:2 A5:4 D6:4",
+        "B5:4 D6:4 E6:8",
+    )
+    hook = bars(
+        "E5:3 A5:3 C#6:2 E6:2 C#6:2 A5:2 B5:2",
+        "B5:3 G#5:3 E5:2 G#5:2 B5:2 E6:4",
+        "F#5:3 A5:3 C#6:2 F#6:2 E6:2 C#6:2 A5:2",
+        "D6:6 C#6:2 B5:4 A5:4",
+        "E5:3 A5:3 C#6:2 E6:2 C#6:2 A5:2 B5:2",
+        "B5:3 G#5:3 E5:2 G#5:2 B5:2 D6:2 E6:2",
+        "F#6:2 F#6:1 E6:1 D6:2 F#6:2 .:2 E6:2 D6:2 B5:2",
+        "B5:6 G#5:2 E5:4 .:4",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(full + ("intro",), "x...x...x...x...")])
+    snares = []
+    for name, start, ch in form:
+        if name == "pre":
+            snares += drums("....x.......x...", len(ch) - 1, start * 16) + drums("x...x...x.x.xxxx", 1, (start + len(ch) - 1) * 16)
+        elif name in ("verse", "verse2", "chorus", "chorus2", "intro"):
+            snares += drums("....x.......x..o", len(ch), start * 16)
+    hooks = in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+    teaser = in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+    parts = [
+        part(punch_kick, kicks, 0.5),
+        part(snap_snare, snares, 0.38, 0.05, 0.12),
+        part(pop_clap, drum_parts(form, [(("chorus", "chorus2", "verse2"), "....x.......x...")]), 0.28, 0.0, 0.15),
+        part(tick, drum_parts(form, [(full + ("intro",), "x.o.x.o.x.o.x.o.")]), 0.18, 0.35),
+        part(open_hat, drum_parts(form, [(("chorus", "chorus2"), "..x...x...x...x.")]), 0.2, -0.3),
+        part(shaker, drum_parts(form, [(("verse", "verse2", "pre", "break"), "oxoxoxoxoxoxoxox")]), 0.16, -0.35),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")), 0.22, 0.0, 0.1),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.3, 0.0, 0.1),
+        part(pop_bass, in_sections(form, ("verse", "verse2", "intro"), lambda at, c: bassline(c, "r...5...r..r5...", 2, at))
+             + in_sections(form, ("chorus", "chorus2"), lambda at, c: bassline(c, "r.o.r.o.r.o.r.o.", 2, at))
+             + in_sections(form, ("pre",), lambda at, c: bassline(c, "r-r-r-r-r-r-o-o-", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.52, 0.0, 0.0, 0.0, 0.45),
+        part(pump_pad, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.3, 0.0, 0.3, 0.0, 0.5),
+        part(banjo, in_sections(form, ("verse", "verse2", "chorus", "chorus2", "intro", "pre"), lambda at, c: arps(c, 4, (0, 1, 2, 3, 1, 2, 0, 3), 1, at)),
+             0.26, -0.4, 0.12),
+        part(brass, in_sections(form, ("chorus2",), lambda at, c: comp(c, "..x...x...x...x.", 4, at)), 0.18, 0.3, 0.2),
+        part(banjo, in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at)), 0.55, 0.15, 0.15, 0.15),
+        part(square_lead, in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at)), 0.4, 0.1, 0.2, 0.2),
+        part(pop_whistle, hooks + teaser, 0.62, 0.05, 0.22, 0.15),
+        part(banjo, hooks, 0.3, 0.3, 0.12),
+        part(super_lead, octave(hooks, -1), 0.18, 0.0, 0.2),
+        part(pop_whistle, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), -1), 0.3, -0.25, 0.25, 0.1),
+        part(chime, octave(in_sections(form, ("break",), lambda at, _c: shift(melody(16, *(hook[:3] + bars("E6:4 B5:4 G#5:8"))), at)), 1),
+             0.22, 0.25, 0.35, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.4)
+
+
+def pop_race_four():
+    """The Keystone Cup, launchpads, lava and castles: big and dramatic in C
+    minor, the hook on brass with timpani under it and a choir behind."""
+    bpm = 140
+    verse = ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Fm", "G"]
+    pre = ["Fm", "Gm", "Ab", "Bb"] * 2
+    chorus = ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Bb", "G"]
+    form, chords = song(("intro", ["Cm", "Ab", "Bb", "G"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["Cm", "Ab", "Eb", "G"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "G4:2 .:1 G4:1 C5:2 Eb5:2 .:2 D5:2 C5:4",
+        "C5:2 .:1 C5:1 Eb5:2 Ab5:2 .:2 G5:2 Eb5:4",
+        "Bb4:2 .:1 Bb4:1 Eb5:2 G5:2 .:2 F5:2 Eb5:4",
+        "F5:3 Eb5:3 D5:2 Bb4:8",
+        "G5:2 .:1 G5:1 Eb5:2 C5:2 .:2 D5:2 Eb5:4",
+        "Ab5:2 .:1 Ab5:1 Eb5:2 C5:2 .:2 Eb5:2 Ab5:4",
+        "C6:3 Ab5:3 F5:2 C5:4 F5:4",
+        "D5:4 F5:4 G5:4 B4:4",
+    )
+    b = bars(
+        "F5:2 F5:1 Ab5:3 C6:2 .:2 Ab5:2 F5:4",
+        "G5:2 G5:1 Bb5:3 D6:2 .:2 Bb5:2 G5:4",
+        "Ab5:2 Ab5:1 C6:3 Eb6:2 .:2 C6:2 Ab5:4",
+        "Bb5:4 C6:4 D6:4 F6:4",
+        "C6:3 Ab5:3 F5:2 C6:4 Ab5:4",
+        "D6:3 Bb5:3 G5:2 D6:4 Bb5:4",
+        "Eb6:3 C6:3 Ab5:2 Eb6:4 C6:4",
+        "Bb5:4 C6:4 D6:8",
+    )
+    hook = bars(
+        "C5:3 G5:3 Eb5:2 C6:4 Bb5:2 G5:2",
+        "Ab5:3 G5:3 Eb5:2 C5:6 .:2",
+        "Eb5:3 Bb5:3 G5:2 Eb6:4 D6:2 Bb5:2",
+        "D6:6 C6:2 Bb5:4 F5:4",
+        "C5:3 G5:3 Eb5:2 C6:4 Bb5:2 G5:2",
+        "Ab5:3 G5:3 Eb5:2 Ab5:4 C6:4",
+        "D6:2 Eb6:2 F6:4 Eb6:2 D6:2 Bb5:4",
+        "B5:6 D6:2 .:4 G5:2 B5:2",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(("chorus", "chorus2", "pre", "intro"), "x...x...x...x..."),
+                              (("verse", "verse2"), "x.....x.x.....x.")])
+    snares = []
+    for name, start, ch in form:
+        if name in ("pre", "verse2"):
+            snares += drums("....x.......x...", len(ch) - 1, start * 16) + drums("x.x.x.x.xxxxXXXX", 1, (start + len(ch) - 1) * 16)
+        elif name in ("verse", "chorus", "chorus2", "intro"):
+            snares += drums("....x.......x...", len(ch), start * 16)
+    hooks = in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+    teaser = in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+    timps = (in_sections(form, ("chorus", "chorus2", "intro"), lambda at, c: bassline(c, "r-------r-r-----", 2, at))
+             + in_sections(form, ("verse", "verse2"), lambda at, c: bassline(c, "r---------------", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r---------------", 2, at)))
+    for name, start, ch in form:
+        if name == "pre":
+            last = (start + len(ch) - 1) * 16
+            root = chord_notes(ch[-1], 2)[0]
+            timps += [(last + k, root, 1, 0.4 + 0.04 * k) for k in range(0, 16, 1)]
+    parts = [
+        part(punch_kick, kicks, 0.52),
+        part(snap_snare, snares, 0.4, 0.05, 0.15),
+        part(pop_clap, drum_parts(form, [(("chorus", "chorus2"), "....x.......x...")]), 0.26, 0.0, 0.2),
+        part(tick, drum_parts(form, [(("verse", "pre", "intro"), "x.o.x.o.x.o.x.o."), (("chorus", "chorus2", "verse2"), "xoxoxoxoxoxoxoxo")]), 0.18, 0.35),
+        part(open_hat, drum_parts(form, [(("chorus", "chorus2"), "..x...x...x...x.")]), 0.17, -0.3),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")) + starts(form, ("chorus", "chorus2"), 4), 0.27, 0.0, 0.15),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.33, 0.0, 0.1),
+        part(timpani, timps, 0.5, 0.0, 0.25),
+        part(pop_bass, in_sections(form, ("chorus", "chorus2", "intro"), lambda at, c: bassline(c, "r.o.r.o.r.o.r.o.", 2, at))
+             + in_sections(form, ("verse", "verse2"), lambda at, c: bassline(c, "r.rr.rr.r.rr.rr.", 2, at))
+             + in_sections(form, ("pre",), lambda at, c: bassline(c, "r-r-r-r-r-r-o-o-", 2, at)), 0.5, 0.0, 0.0, 0.0, 0.45),
+        part(choir, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.4, 0.0, 0.35, 0.0, 0.25),
+        part(pump_pad, in_sections(form, ("chorus", "chorus2"), lambda at, c: held(c, 3, at)), 0.22, 0.0, 0.3, 0.0, 0.5),
+        part(pop_pluck, in_sections(form, ("verse", "verse2", "pre"), lambda at, c: arps(c, 4, (0, 2, 1, 2, 0, 3, 1, 2), 1, at)), 0.18, -0.4, 0.15, 0.25, 0.4),
+        part(brass, in_sections(form, ("pre", "chorus", "chorus2"), lambda at, c: comp(c, "x.....x.....x.x.", 3, at)), 0.2, -0.3, 0.2),
+        part(square_lead, in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+             + in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at)), 0.4, 0.1, 0.2, 0.2),
+        part(brass, hooks + teaser, 0.48, -0.05, 0.25, 0.12),
+        part(super_lead, hooks, 0.3, 0.05, 0.25, 0.15),
+        part(choir, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), -1), 0.35, 0.0, 0.3),
+        part(chime, in_sections(form, ("break",), lambda at, _c: shift(melody(16, *(hook[:3] + bars("D6:4 B5:4 G5:8"))), at)),
+             0.26, 0.25, 0.35, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.17, level=-12.9)
+
+
+def pop_race_legends():
+    """The Legends Cup, the famous circuits: a proud anthem in E flat, the
+    hook on a guitar-ish lead with a stadium clapping along."""
+    bpm = 156
+    verse = ["Eb", "Bb", "Cm", "Ab", "Eb", "Bb", "Ab", "Bb"]
+    pre = ["Ab", "Bb", "Gm", "Cm", "Fm", "Gm", "Ab", "Bb"]
+    chorus = ["Eb", "Bb", "Cm", "Ab", "Eb", "Bb", "Ab", "Bb"]
+    form, chords = song(("intro", ["Eb", "Bb", "Ab", "Bb"]), ("verse", verse), ("pre", pre), ("chorus", chorus),
+                        ("break", ["Eb", "Bb", "Cm", "Bb"]), ("verse2", verse), ("chorus2", chorus))
+    a = bars(
+        "G5:2 .:2 G5:2 F5:2 Eb5:2 F5:2 G5:4",
+        "F5:2 .:2 F5:2 D5:2 Bb4:2 D5:2 F5:4",
+        "G5:2 .:2 G5:2 Bb5:2 C6:2 Bb5:2 G5:4",
+        "Ab5:3 G5:3 Eb5:2 C5:8",
+        "G5:2 .:2 Bb5:2 G5:2 Eb6:4 D6:2 Bb5:2",
+        "F5:2 .:2 Bb5:2 F5:2 D6:4 C6:2 Bb5:2",
+        "C6:3 Bb5:3 Ab5:2 Eb5:4 C5:4",
+        "D5:4 F5:4 Bb5:8",
+    )
+    b = bars(
+        "C5:2 Eb5:2 Ab5:4 .:2 G5:2 Ab5:4",
+        "D5:2 F5:2 Bb5:4 .:2 Ab5:2 Bb5:4",
+        "D5:2 G5:2 Bb5:4 .:2 C6:2 D6:4",
+        "Eb6:3 D6:3 C6:2 G5:8",
+        "C5:2 F5:2 Ab5:4 .:2 G5:2 Ab5:4",
+        "Bb5:2 D6:2 G5:4 .:2 F5:2 G5:4",
+        "Ab5:3 Bb5:3 C6:2 Eb6:8",
+        "D6:4 C6:4 Bb5:4 .:4",
+    )
+    hook = bars(
+        "Bb4:3 Eb5:3 G5:2 Bb5:6 G5:2",
+        "Ab5:3 G5:3 F5:2 D5:4 Bb4:4",
+        "Bb4:3 Eb5:3 G5:2 C6:6 Bb5:2",
+        "Ab5:4 G5:4 Eb5:4 C5:4",
+        "Bb4:3 Eb5:3 G5:2 Bb5:6 G5:2",
+        "Ab5:3 G5:3 F5:2 Bb5:4 D6:4",
+        "Eb6:6 D6:2 C6:4 Ab5:4",
+        "Bb5:10 .:2 F5:2 G5:2",
+    )
+    bar_count = len(chords)
+    full = ("verse", "pre", "chorus", "verse2", "chorus2")
+    kicks = drum_parts(form, [(("chorus", "chorus2", "pre", "verse2"), "x...x...x...x..."),
+                              (("verse", "intro"), "x.x.....x.x.....")])
+    snares = []
+    for name, start, ch in form:
+        if name in ("pre", "verse2"):
+            snares += drums("....x.......x...", len(ch) - 1, start * 16) + drums("x.x.x.x.xxxxXXXX", 1, (start + len(ch) - 1) * 16)
+        elif name in ("chorus", "chorus2"):
+            snares += drums("....x.......x...", len(ch), start * 16)
+    hooks = in_sections(form, ("chorus", "chorus2"), lambda at, _c: shift(melody(16, *hook), at))
+    teaser = in_sections(form, ("intro",), lambda at, _c: shift(melody(16, *[hook[0], hook[1], hook[6], hook[7]]), at))
+    parts = [
+        part(punch_kick, kicks, 0.52),
+        part(snap_snare, snares, 0.38, 0.05, 0.12),
+        part(stadium_clap, drum_parts(form, [(("intro", "verse", "chorus", "chorus2", "verse2"), "....x.......x...")]), 0.5, 0.0, 0.2),
+        part(tick, drum_parts(form, [(("verse", "pre", "intro"), "x.o.x.o.x.o.x.o."), (("chorus", "chorus2", "verse2"), "xoxoxoxoxoxoxoxo")]), 0.18, 0.35),
+        part(open_hat, drum_parts(form, [(("chorus", "chorus2", "pre"), "..x...x...x...x.")]), 0.18, -0.3),
+        part(crash, starts(form, ("intro", "verse", "chorus", "verse2", "chorus2")) + starts(form, ("chorus", "chorus2"), 4), 0.25, 0.0, 0.12),
+        part(riser, [(n[0], 0.0, 32) for n in starts(form, ("break",), -2)]
+             + [(n[0], 0.0, 16) for n in starts(form, ("pre",), -1)], 0.33, 0.0, 0.1),
+        part(pop_bass, in_sections(form, ("chorus", "chorus2"), lambda at, c: bassline(c, "r.o.r.o.r.o.r.o.", 2, at))
+             + in_sections(form, ("verse", "verse2", "intro"), lambda at, c: bassline(c, "r-r-r-r-r-r-r-5-", 2, at))
+             + in_sections(form, ("pre",), lambda at, c: bassline(c, "rrrrrrrrrrrrrrrr", 2, at))
+             + in_sections(form, ("break",), lambda at, c: bassline(c, "r-------5-------", 2, at)), 0.52, 0.0, 0.0, 0.0, 0.45),
+        part(pump_pad, in_sections(form, ("pre", "chorus", "chorus2", "break"), lambda at, c: held(c, 3, at)), 0.36, 0.0, 0.3, 0.0, 0.5),
+        part(pop_pluck, in_sections(form, ("verse", "verse2"), lambda at, c: arps(c, 4, (0, 1, 2, 3, 2, 1), 2, at)), 0.18, -0.4, 0.15, 0.25, 0.4),
+        part(brass, in_sections(form, ("chorus", "chorus2", "intro"), lambda at, c: comp(c, "x.......x..x....", 4, at))
+             + in_sections(form, ("pre",), lambda at, c: comp(c, "x.....x.....x...", 4, at)), 0.24, -0.25, 0.2),
+        part(square_lead, in_sections(form, ("verse", "verse2"), lambda at, _c: shift(melody(16, *a), at))
+             + in_sections(form, ("pre",), lambda at, _c: shift(melody(16, *b), at)), 0.4, 0.1, 0.2, 0.2),
+        part(anthem_guitar, hooks + teaser, 0.6, -0.05, 0.22, 0.18),
+        part(super_lead, octave(in_sections(form, ("chorus2",), lambda at, _c: shift(melody(16, *hook), at)), 1), 0.24, 0.1, 0.25, 0.15),
+        part(super_lead, in_sections(form, ("chorus",), lambda at, _c: shift(melody(16, *hook), at)), 0.18, 0.1, 0.2),
+        part(chime, octave(in_sections(form, ("break",), lambda at, _c: shift(melody(16, *(hook[:3] + bars("Bb5:4 F5:4 D5:8"))), at)), 1),
+             0.24, 0.25, 0.35, 0.2),
+    ]
+    return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.3)
+
+
 # The tunes in the new style.
-POP = {"menu": pop_menu, "race_one": pop_race_one, "race_beach": pop_race_beach}
+POP = {"menu": pop_menu, "race_one": pop_race_one, "race_beach": pop_race_beach, "race_two": pop_race_two,
+       "race_three": pop_race_three, "race_four": pop_race_four, "race_legends": pop_race_legends}
 
 
 TUNES = {"menu": pop_menu, "race_one": pop_race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
