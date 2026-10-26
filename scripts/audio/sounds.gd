@@ -36,7 +36,7 @@ const ALL := [
 	"fx/bump", "fx/crash", "fx/bricks", "fx/powerup", "fx/beep", "fx/go", "fx/lap", "fx/final_lap",
 	"fx/finish", "fx/win", "fx/reset", "fx/turbo", "fx/rope", "fx/wall", "fx/shockwave", "fx/marbles", "fx/spikes", "fx/drop", "fx/cannon", "fx/hit",
 	"fx/repair", "fx/shield", "fx/ghost", "fx/lightning", "fx/thunder", "fx/ram", "fx/crossing_bell", "fx/train_horn", "fx/click", "fx/back", "fx/snap", "fx/unsnap",
-	"fx/pick", "fx/nope",
+	"fx/pick", "fx/nope", "fx/podium", "fx/cheer",
 	"engine/engine_small", "engine/engine_micro", "engine/engine_big", "engine/engine_twin",
 	"engine/engine_diesel", "engine/engine_v8", "engine/electric_motor", "engine/jet",
 	"loop/skid", "loop/drift_tarmac_soft", "loop/drift_tarmac_hard", "loop/drift_dirt_soft", "loop/drift_dirt_hard", "loop/drift_snow_soft", "loop/drift_snow_hard", "fx/drift_whoosh_1", "fx/drift_whoosh_2", "fx/drift_whoosh_3", "loop/rumble", "loop/wind", "loop/rain", "loop/storm", "loop/gale",

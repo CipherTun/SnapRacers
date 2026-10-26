@@ -567,6 +567,97 @@ def nope():
     return normalise(mix((one, 0.0), (one, 0.15)), 0.5)
 
 
+def _brass(name, beats, tempo, bright=4500.0):
+    """One brassy note: a pulse wave that opens up as it's blown, with a
+    little vibrato coming in as it's held."""
+    n = seconds(beats * tempo + 0.08)
+    t = times(n)
+    vibrato = 1.0 + 0.006 * np.sin(2 * np.pi * 5.5 * t) * np.clip(t / 0.4, 0.0, 1.0)
+    tone = square(note_freq(name) * vibrato, n, 0.32, harmonics=14) * adsr(n, 0.015, 0.1, 0.75, 0.07)
+    return sweep_lowpass(tone, ramp(n, [(0.0, 1200), (0.08, bright), (1.0, bright * 0.6)]))
+
+
+def _drum(time, seed):
+    """A big round drum, for the fanfare."""
+    return thud(95, 70, time, seed) * 0.9
+
+
+def podium():
+    """The fanfare on the podium: a call on the brass, answered up to a big
+    held chord, with drums under it."""
+    tempo = 0.14
+    lead = [("G5", 1), ("G5", 1), ("G5", 1), ("C6", 3), ("G5", 1), ("C6", 1), ("E6", 3),
+            ("D6", 1), ("C6", 1), ("D6", 1), ("E6", 1), ("F6", 1), ("G6", 8)]
+    under = [("E5", 1), ("E5", 1), ("E5", 1), ("G5", 3), ("E5", 1), ("G5", 1), ("C6", 3),
+             ("B5", 1), ("A5", 1), ("B5", 1), ("C6", 1), ("D6", 1), ("E6", 8)]
+    parts = []
+    for melody, loud, bright in ((lead, 1.0, 4500.0), (under, 0.55, 3000.0)):
+        at = 0.0
+        for name, beats in melody:
+            parts.append((_brass(name, beats, tempo, bright) * loud, at))
+            at += beats * tempo
+    end = at
+    # A low chord under the last note, swelling.
+    hold = end - 8 * tempo
+    n = seconds(8 * tempo + 0.9)
+    chord = sum(_brass(c, 8 + 6, tempo, 2000.0)[:n] for c in ["C4", "G4", "C5"]) * 0.35
+    parts.append((chord * ramp(len(chord), [(0.0, 0.4), (0.3, 1.0), (1.0, 1.0)]), hold))
+    # Drums on the big notes, and a roll into the last one.
+    for beat in [3, 9]:
+        parts.append((_drum(0.5, 200 + beat), beat * tempo))
+    roll = hold - 6 * 0.045
+    for i in range(6):
+        parts.append((_drum(0.12, 220 + i) * (0.35 + i * 0.08), roll + i * 0.045))
+    parts.append((_drum(1.0, 230), hold))
+    n_cym = seconds(1.6)
+    cymbal = highpass(noise(n_cym, 240), 5000) * decay(n_cym, 1.4) * 0.25
+    parts.append((cymbal, hold))
+    return normalise(reverb(mix(*parts), 0.25, 0.9), 0.85)
+
+
+def cheer():
+    """A crowd cheering: lots of voices calling out "yay" and "woo" at once,
+    clapping and a whistle or two, swelling up and dying away."""
+    r = rng(300)
+    length = 4.6
+    total = seconds(length)
+    parts = []
+    for i in range(36):
+        start = r.uniform(0.0, 0.7)
+        time = r.uniform(1.2, 3.2)
+        n = seconds(time)
+        base = r.uniform(170, 420)
+        # Up as they shout, then falling away.
+        pitch = base * ramp(n, [(0.0, 0.8), (0.15, 1.15), (0.5, 1.05), (1.0, 0.75)])
+        pitch = pitch * (1.0 + 0.02 * np.sin(2 * np.pi * r.uniform(4, 7) * times(n)))
+        voice = saw(pitch, n, harmonics=24)
+        breath = noise(n, 400 + i) * 0.5
+        # Two formants, opening from "oo" to "ay".
+        low = r.uniform(500, 800)
+        high = low * r.uniform(1.6, 2.4)
+        vowel = bandpass(voice + breath, low * 0.7, low * 1.3) + bandpass(voice + breath, high * 0.8, high * 1.2) * 0.6
+        envelope = adsr(n, r.uniform(0.05, 0.25), 0.3, 0.6, min(0.8, time * 0.5))
+        parts.append((vowel * envelope * r.uniform(0.3, 1.0), start))
+    # Clapping, coming in thick and thinning out.
+    claps = []
+    at = 0.2
+    while at < length - 0.3:
+        density = np.interp(at, [0.0, 0.8, 2.5, length], [20, 90, 60, 10])
+        n = seconds(0.03)
+        clap = bandpass(noise(n, int(at * 1000)), r.uniform(900, 1500), r.uniform(2500, 5000)) * decay(n, 0.02)
+        claps.append((clap * r.uniform(0.2, 0.6), at))
+        at += r.exponential(1.0 / density)
+    parts += claps
+    # A couple of whistles.
+    for start, seed in [(0.6, 1), (1.7, 2)]:
+        n = seconds(0.7)
+        glide = ramp(n, [(0.0, 1800), (0.3, 2900), (0.6, 2600), (1.0, 3100)])
+        parts.append((sine(glide, n) * adsr(n, 0.03, 0.1, 0.8, 0.2) * 0.12, start))
+    out = mix(*parts)[:total]
+    out = lowpass(out, 7000) * ramp(len(out), [(0.0, 0.3), (0.12, 1.0), (0.55, 0.8), (1.0, 0.0)])
+    return normalise(reverb(out, 0.3, 1.0), 0.6)
+
+
 ONE_SHOTS = {
     "bump": bump, "crash": crash, "bricks": bricks, "powerup": powerup,
     "beep": lambda: beep("A5", 0.16), "go": lambda: beep("A6", 0.5),
@@ -575,6 +666,7 @@ ONE_SHOTS = {
     "hit": hit, "repair": repair, "shield": shield, "ghost": ghost, "lightning": lightning, "thunder": thunder, "ram": ram,
     "crossing_bell": crossing_bell, "drift_whoosh_1": lambda: drift_whoosh(1), "drift_whoosh_2": lambda: drift_whoosh(2), "drift_whoosh_3": lambda: drift_whoosh(3), "train_horn": train_horn,
     "click": click, "back": back, "snap": snap, "unsnap": unsnap, "pick": pick, "nope": nope,
+    "podium": podium, "cheer": cheer,
 }
 
 
