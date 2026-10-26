@@ -845,7 +845,9 @@ func show_podium(gp: GrandPrix) -> Podium:
 	# Anyone else in the standings stands in a stock kart as the plain racer.
 	var everyone := []
 	for row in gp.standings():
-		everyone.append([row[0]] + raced.get(row[0], [Game.stock_kart(Game.DEFAULT_STOCK), Kart.default_driver()]))
+		if not raced.has(row[0]):
+			raced[row[0]] = [Game.stock_kart(Game.DEFAULT_STOCK), Kart.default_driver()]
+		everyone.append([row[0]] + raced[row[0]])
 	# The people playing here, in their colours from the standings.
 	var playing := {}
 	for i in humans.size():

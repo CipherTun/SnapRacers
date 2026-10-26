@@ -145,7 +145,7 @@ func _cup(id: String, place: int) -> void:
 		race.go_back()
 		await frames(3)
 		check(skipped[0], "Back skips to the end")
-	check(podium.skip_button == null and not is_instance_valid(skip) or not skip.is_inside_tree(), "and the skip button goes")
+	check(podium.skip_button == null and (not is_instance_valid(skip) or not skip.is_inside_tree()), "and the skip button goes")
 	var feet := []
 	var across := []
 	for rig in podium.drivers:
