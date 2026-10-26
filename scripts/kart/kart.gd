@@ -198,10 +198,19 @@ const PUDDLE_DRAG := 1.8
 const LEAST_GRIP := 0.25
 ## In a snow drift as deep as it gets, the grip is this much of the snowy
 ## road's, and the snow holds a wheel back by this much of its load, plus
-## this much more for every m/s it's going (see Drifts).
+## this much more for every m/s it's going. That goes with the square of the
+## depth, so a dusting is barely felt. Ploughing into deeper snow takes this
+## share of the wheel's speed for going from none to full (also by the
+## square), so crossing a drift costs about the same however wide it is,
+## and rolling on through it costs less. The snow also pulls a wheel
+## sideways toward the drift's middle line by this much of its load, in
+## full once the kart's going DRIFT_PULL_SPEED in m/s (see Drifts).
 const DRIFT_GRIP := 0.8
-const DRIFT_PUSH := 0.08
-const DRIFT_DRAG := 0.03
+const DRIFT_PUSH := 0.03
+const DRIFT_DRAG := 0.045
+const DRIFT_PLOUGH := 0.35
+const DRIFT_PULL := 0.15
+const DRIFT_PULL_SPEED := 8.0
 ## Off the road the ground also drags with speed, so the engine can't hold
 ## racing speed there the way rolling resistance alone would let you.
 const OFFROAD_DRAG := 0.01
@@ -1201,9 +1210,11 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		# slicks on ice.
 		var dry_grip := ground_grip(grip_here, w.offroad)
 		var drift := 0.0
+		var snow := Vector4.ZERO
 		if ground == null or not ground.has_meta("trap"):
 			var puddle := puddles.factor_at(contact) if puddles != null else 0.0
-			drift = drifts.factor_at(contact) if drifts != null else 0.0
+			snow = drifts.snow_at(contact) if drifts != null else Vector4.ZERO
+			drift = snow.w
 			grip_here = maxf(grip_here * weather_grip * lerpf(1.0, PUDDLE_GRIP, puddle) * lerpf(1.0, DRIFT_GRIP, drift), LEAST_GRIP)
 			drag_here *= weather_drag * lerpf(1.0, PUDDLE_DRAG, puddle)
 		grip_here = maxf(ground_grip(grip_here, w.offroad), minf(dry_grip, LEAST_GRIP))
@@ -1217,8 +1228,6 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var resist := w.rolling * load * drag_here
 		if off:
 			resist += load * maxf(drag_here - 1.0, 0.0) * OFFROAD_DRAG * absf(v_long)
-		if drift > 0.0:
-			resist += load * drift * (DRIFT_PUSH + DRIFT_DRAG * absf(v_long))
 		if braking:
 			resist += BRAKE_FORCE * (1.0 if locked else controls.brake) / wheels.size()
 		elif slide_kick and not w.steered:
@@ -1256,6 +1265,21 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		state.apply_force(_ok(side * tire.y), _ok(contact + up * height * lerpf(ROLL_HELP, 1.0, upright) - origin))
 		state.apply_force(_ok(heading * tire.x), _ok(contact + up * height - origin))
 		applied += push * load + side * tire.y + heading * tire.x
+		# The snow holds the wheel back however it's moving, never so hard it
+		# would push it back the other way, and pulls it toward the middle,
+		# less right by it (see Drifts.snow_at()).
+		if drift > 0.0:
+			var through := v - normal * v.dot(normal)
+			var going := through.length()
+			var snow_force := Vector3.ZERO
+			if going > 0.01:
+				# How much deeper it is here than where the wheel was a step ago.
+				var was := drifts.factor_at(contact - through * dt)
+				var plough := maxf(drift * drift - was * was, 0.0) * DRIFT_PLOUGH * going / dt * share
+				snow_force = -through / going * minf(load * drift * drift * (DRIFT_PUSH + DRIFT_DRAG * going) + plough, going * stop_force)
+			snow_force += side * side.dot(Vector3(snow.x, snow.y, snow.z)) * load * DRIFT_PULL * drift * minf(absf(v_long) / DRIFT_PULL_SPEED, 1.0)
+			state.apply_force(_ok(snow_force), _ok(contact + up * height - origin))
+			applied += snow_force
 
 	rough = float(on_rough) / on_any if on_any > 0 else 0.0
 	if on_any > 0:

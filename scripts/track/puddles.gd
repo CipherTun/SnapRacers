@@ -62,6 +62,14 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 	_track = track
 	var rng := RandomNumberGenerator.new()
 	rng.seed = hash(_seed_key(chance_seed, track))
+	_scatter(rng, track, amount)
+	_level_sizes()
+	_draw()
+
+
+## Places them all from the seeded `rng`, `amount` from a light rain to a
+## storm.
+func _scatter(rng: RandomNumberGenerator, track: TrackPath, amount: float) -> void:
 	var sizes := _sizes()
 	var count := roundi(track.length / 100.0 * lerpf(_per_100m()[0], _per_100m()[1], amount))
 	var placed: Array = []
@@ -72,8 +80,7 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 	while placed.size() < count and tries < count * 20:
 		tries += 1
 		var offset := rng.randf() * track.length
-		var type := track.piece_type_at(offset)
-		if NOT_ON.has(type) or track.up_at(offset).y < 0.97 or track.pieces[track.piece_of[track._index_before(offset)]].sticky:
+		if not _flat_road(track, offset):
 			continue
 		var radius := rng.randf_range(sizes[0], sizes[1]) * 0.5
 		var across := _across(rng, radius, track)
@@ -90,8 +97,11 @@ func _init(track: TrackPath = null, chance_seed := 0, amount := 0.0) -> void:
 	placed.sort_custom(func(a: Array, b: Array) -> bool: return a[2] < b[2])
 	for s in placed:
 		add(s[0], s[1], s[2])
-	_level_sizes()
-	_draw()
+
+
+## Whether the road here is flat and plain enough to have one on it.
+static func _flat_road(track: TrackPath, offset: float) -> bool:
+	return not NOT_ON.has(track.piece_type_at(offset)) and track.up_at(offset).y >= 0.97 and not track.pieces[track.piece_of[track._index_before(offset)]].sticky
 
 
 ## Whether one this big here would be too close to one already placed. `near`
@@ -108,11 +118,14 @@ func _crowded(near: Dictionary, placed: Array, middle: Vector3, radius: float, r
 
 
 ## Puts one here, this big when full, starting to grow at `start`. Tests
-## make their own this way, already full size.
-func add(middle: Vector3, radius: float, start := -1.0) -> void:
+## make their own this way, already full size. Left out of `_cells`, it's
+## only drawn.
+func add(middle: Vector3, radius: float, start := -1.0, in_cells := true) -> void:
 	spots.append([middle, radius, start])
 	radius_now.append(_size_now(spots.size() - 1))
 	_drawn.append(0.0)
+	if not in_cells:
+		return
 	var low := _cell(middle - Vector3(radius, 0.0, radius))
 	var high := _cell(middle + Vector3(radius, 0.0, radius))
 	for x in range(low.x, high.x + 1):
@@ -255,8 +268,8 @@ func _draw() -> void:
 	_multi.instance_count = spots.size()
 	var shown := 0
 	for i in spots.size():
-		_ups.append(_track.up_at(_track.offset_of(spots[i][0])))
-		_multi.set_instance_color(i, _colour())
+		_ups.append(_up_of(i))
+		_multi.set_instance_color(i, _colour_of(i))
 		_multi.set_instance_custom_data(i, Color(float(_surface()), 0.0, 0.0, 0.0))
 		_place(i)
 		if radius_now[i] > 0.0:
@@ -269,9 +282,18 @@ func _draw() -> void:
 	_multi.custom_aabb = box
 	var draw := MultiMeshInstance3D.new()
 	draw.multimesh = _multi
-	draw.material_override = SceneryKit.material()
+	draw.material_override = _material()
 	draw.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(draw)
+
+
+func _material() -> Material:
+	return SceneryKit.material()
+
+
+## Which way is up at this one.
+func _up_of(i: int) -> Vector3:
+	return _track.up_at(_track.offset_of(spots[i][0]))
 
 
 func _mesh() -> Mesh:
@@ -280,6 +302,10 @@ func _mesh() -> Mesh:
 
 func _colour() -> Color:
 	return WATER
+
+
+func _colour_of(_i: int) -> Color:
+	return _colour()
 
 
 func _surface() -> int:

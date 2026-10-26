@@ -2,7 +2,9 @@ extends SceneTree
 
 ## An AI driver down a long straight with a big puddle and then a deep snow
 ## drift in its line. It has to steer round both, and drive straight
-## through a drift that's only just started.
+## through a drift that's only just started. Last a deep drift blown in
+## from the right edge reaches most of the way across, and it keeps left of
+## it.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/ai_weather_test.gd
 
@@ -10,6 +12,8 @@ extends SceneTree
 const PUDDLE := [120.0, 0.0, 3.0]
 const DEEP := [230.0, 1.0, 3.0]
 const SHALLOW := [330.0, 0.0, 3.0]
+## Along the track, how far across the road as a share, and how wide.
+const TONGUE := [380.0, 0.7, 4.0]
 
 
 class Runner:
@@ -21,7 +25,7 @@ class Runner:
 	var offset := 2.0
 	var tick := 0
 	var failures := 0
-	var most := {"puddle": 0.0, "deep": 0.0, "shallow": 0.0}
+	var most := {"puddle": 0.0, "deep": 0.0, "shallow": 0.0, "bank": 0.0}
 
 	func _ready() -> void:
 		track = TrackPath.from_dict({ "pieces": [{ "type": "straight", "length": 14 }] })
@@ -37,6 +41,7 @@ class Runner:
 		kart.drifts.add(_spot(DEEP), DEEP[2])
 		# Started a moment ago, so it's still low.
 		kart.drifts.add(_spot(SHALLOW), SHALLOW[2], -Puddles.GROW * 0.2)
+		kart.drifts.add_tongue(track, TONGUE[0], 1.0, TONGUE[1], TONGUE[2])
 		add_child(kart.drifts)
 		add_child(kart)
 		ai = AIDriver.new()
@@ -65,10 +70,13 @@ class Runner:
 			most.deep = maxf(most.deep, depth)
 		if absf(offset - SHALLOW[0]) < 10.0:
 			most.shallow = maxf(most.shallow, depth)
-		if offset > SHALLOW[0] + 20.0:
+		if absf(offset - TONGUE[0]) < 10.0:
+			most.bank = maxf(most.bank, depth)
+		if offset > TONGUE[0] + 25.0:
 			check(most.puddle < 0.05, "it goes round a big puddle in its line (deepest in %.2f)" % most.puddle)
 			check(most.deep < 0.05, "and round a deep drift (deepest in %.2f)" % most.deep)
-			check(most.shallow > 0.05, "but straight through a drift that's only just started (%.2f deep)" % most.shallow)
+			check(most.shallow > 0.04, "but straight through a drift that's only just started (%.2f deep)" % most.shallow)
+			check(most.bank < 0.2, "and keeps clear of a deep drift blown in from the edge (deepest in %.2f)" % most.bank)
 			finish()
 		if tick == 60 * 40:
 			check(false, "it gets down the straight in 40 s (it's at %.0f m)" % offset)

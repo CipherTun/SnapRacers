@@ -138,7 +138,7 @@ void fragment() {
 		// road below). Rain makes it shinier.
 		rough = mix(0.9, mix(0.8, 0.65, wet), w);
 		spec = mix(0.1, mix(0.14, 0.22, wet), w);
-		col = mix(col, SNOW, snow * 0.7 * smoothstep(0.78, 0.95, blotches(p * 0.6)));
+		col = mix(col, SNOW, snow * 0.06 * smoothstep(0.75, 0.95, blotches(p * 1.3)));
 	} else if (kind < 0.5 || kind > 4.5) {
 		// The road is smooth 2x4 tiles, staggered, each a little different.
 		// Its white edge lines are the same tiles, painted.
@@ -149,10 +149,11 @@ void fragment() {
 		col *= 1.0 - 0.5 * s;
 		rough = 0.85;
 		// Wet, it's darker and shines. In snow it's been cleared, so it's wet
-		// with only a few flecks of snow left.
+		// with only a faint dusting left, and the drifts lie on it (see
+		// Drifts).
 		col *= mix(1.0, 0.62, wet);
 		rough = mix(rough, 0.25, wet);
-		col = mix(col, SNOW, snow * 0.7 * smoothstep(0.78, 0.95, blotches(p * 0.6)));
+		col = mix(col, SNOW, snow * 0.06 * smoothstep(0.75, 0.95, blotches(p * 1.3)));
 	} else if (kind < 1.5) {
 		// The curbs are smooth blocks with ridges across them, which catch the
 		// light, and a seam where one block meets the next.

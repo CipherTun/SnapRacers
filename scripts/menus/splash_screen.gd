@@ -122,6 +122,11 @@ func _warm_race(weather: String, time: String) -> Node:
 	race.add_child(BrickShot.fire(kart))
 	_gadget_glows(race)
 	if weather == "snow":
+		# A snow drift, with its own see-through shader, just ahead.
+		var drift := Drifts.sample(Vector3(3.0, 0.4, 4.0))
+		drift.position = Vector3(0.0, -0.3, -5.0)
+		drift.rotation.y = PI
+		kart.add_child(drift)
 		_clear_later = race
 	return race
 
