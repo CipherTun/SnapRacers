@@ -29,6 +29,8 @@ var _camera_button: Button
 var _map_button: Button
 var _resume: Button
 
+const COLUMN := 440.0
+
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -50,20 +52,29 @@ func _ready() -> void:
 	scroll.follow_focus = true
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	panel.add_child(scroll)
+	var body := HBoxContainer.new()
+	body.add_theme_constant_override("separation", UiKit.GAP_XL)
+	scroll.add_child(body)
+	# The title and the buttons, then the settings. On a wide view they sit side
+	# by side, otherwise in one column with Quit last.
+	var main := VBoxContainer.new()
+	main.add_theme_constant_override("separation", UiKit.GAP_M)
+	main.custom_minimum_size = Vector2(COLUMN, 0.0)
 	var column := VBoxContainer.new()
 	column.add_theme_constant_override("separation", UiKit.GAP_M)
-	column.custom_minimum_size = Vector2(440.0, 0.0)
-	scroll.add_child(column)
+	column.custom_minimum_size = Vector2(COLUMN, 0.0)
 
 	var title := Label.new()
 	title.text = "Paused" if pauses else "Menu"
 	title.theme_type_variation = "HeadingLabel"
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	column.add_child(title)
+	main.add_child(title)
+	var restart: Button = null
 	_resume = BuilderStyle.main_pill("Resume", func() -> void: resume_pressed.emit())
-	column.add_child(_resume)
+	main.add_child(_resume)
 	if can_restart:
-		column.add_child(BuilderStyle.dark_pill("Restart", func() -> void: restart_pressed.emit()))
+		restart = BuilderStyle.dark_pill("Restart", func() -> void: restart_pressed.emit())
+		main.add_child(restart)
 
 	for bus in [[Sounds.MUSIC_BUS, "Music"], [Sounds.EFFECTS_BUS, "Effects"]]:
 		var name: String = bus[0]
@@ -128,14 +139,81 @@ func _ready() -> void:
 	fps.toggled.connect(func(on: bool) -> void: Game.set_setting("display", "show_fps", on))
 	column.add_child(_row("Frame rate", fps))
 
-	column.add_child(BuilderStyle.dark_pill("Quit the race", func() -> void: quit_pressed.emit()))
+	var quit := BuilderStyle.dark_pill("Quit the race", func() -> void: quit_pressed.emit())
+	main.add_child(quit)
+
+	# Two columns when the view is wide enough for them, else one.
+	var view := get_viewport_rect().size
+	var gap := float(UiKit.GAP_XL)
+	var margins := 34.0 + 24.0 + 40.0
+	var two := view.x > view.y and view.x >= 2.0 * COLUMN + gap + margins
+	if two:
+		body.add_child(main)
+		body.add_child(column)
+		_link_columns(main, column)
+	else:
+		main.remove_child(quit)
+		var buttons := HBoxContainer.new()
+		buttons.add_theme_constant_override("separation", UiKit.GAP_M)
+		if restart != null:
+			main.remove_child(restart)
+			restart.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			buttons.add_child(restart)
+		quit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		buttons.add_child(quit)
+		var column_count := column.get_child_count()
+		var all := VBoxContainer.new()
+		all.add_theme_constant_override("separation", UiKit.GAP_M)
+		all.custom_minimum_size = Vector2(COLUMN, 0.0)
+		for child in main.get_children():
+			main.remove_child(child)
+			all.add_child(child)
+		all.add_child(buttons)
+		for child in column.get_children():
+			column.remove_child(child)
+			all.add_child(child)
+		var first := _focusable(all.get_child(all.get_child_count() - column_count))
+		if not first.is_empty():
+			for button in _focusable(buttons):
+				button.focus_neighbor_bottom = button.get_path_to(first[0])
+			first[0].focus_neighbor_top = first[0].get_path_to(quit)
+		main.free()
+		column.free()
+		body.add_child(all)
 	# No taller than the view it's in, scrolling if it has to.
-	var room := get_viewport_rect().size.y - 40.0
-	scroll.custom_minimum_size = Vector2(440.0, minf(column.get_combined_minimum_size().y, room))
+	var room := view.y - 40.0
+	scroll.custom_minimum_size = Vector2(body.get_combined_minimum_size().x, minf(body.get_combined_minimum_size().y, room))
 	panel.reset_size()
-	panel.position = (get_viewport_rect().size - panel.size) * 0.5
+	panel.position = (view - panel.size) * 0.5
 	if PadFocus.using_pad and focus_on_open:
 		_resume.grab_focus.call_deferred()
+
+
+## Lets left and right cross between the two columns. A slider keeps left and
+## right for itself, so the way back from there is up from the first setting.
+func _link_columns(left: Control, right: Control) -> void:
+	var mine := _focusable(left)
+	var theirs := _focusable(right)
+	if mine.is_empty() or theirs.is_empty():
+		return
+	for control in mine:
+		control.focus_neighbor_right = control.get_path_to(theirs[0])
+	for control in theirs:
+		if not control is Slider and control.get_parent() is HBoxContainer:
+			var row := control.get_parent()
+			if _focusable(row)[0] == control:
+				control.focus_neighbor_left = control.get_path_to(mine[0])
+	theirs[0].focus_neighbor_top = theirs[0].get_path_to(mine[-1])
+	mine[-1].focus_neighbor_bottom = mine[-1].get_path_to(theirs[0])
+
+
+func _focusable(root: Node) -> Array[Control]:
+	var out: Array[Control] = []
+	for child in root.get_children():
+		if child is Control and child.focus_mode == Control.FOCUS_ALL:
+			out.append(child)
+		out.append_array(_focusable(child))
+	return out
 
 
 ## Every player's touch controls in this race, which share their size and
