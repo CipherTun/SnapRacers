@@ -163,16 +163,37 @@ static func _marble(item: CanvasItem, at: Vector2, r: float, colour: Color, w: f
 
 
 static func _cannon(item: CanvasItem, at: Vector2, s: float, w: float) -> void:
-	# The barrel tipped up to the right, the ball flying out, and a wheel.
-	var dir := Vector2.from_angle(deg_to_rad(-30.0))
-	var side := dir.orthogonal()
-	var back := at + Vector2(-s * 0.55, s * 0.3)
-	var front := back + dir * s * 1.25
-	_shape(item, PackedVector2Array([back + side * s * 0.32, front + side * s * 0.24, front - side * s * 0.24, back - side * s * 0.32]), DARK, w)
-	_shape(item, _circle(front + dir * s * 0.05, s * 0.28, 16), DARK.lightened(0.15), w)
-	_shape(item, _circle(at + Vector2(-s * 0.3, s * 0.55), s * 0.34, 16), BROWN, w)
-	item.draw_circle(at + Vector2(-s * 0.3, s * 0.55), s * 0.1, OUTLINE)
-	_shape(item, _circle(at + Vector2(s * 0.7, -s * 0.72), s * 0.2, 14), OUTLINE.lightened(0.15), w)
+	# A short wide barrel tipped up to the right on a wheeled carriage, with a
+	# muzzle band, a puff of smoke and the ball flying out along its line.
+	var dir := Vector2.from_angle(deg_to_rad(-35.0))
+	var up := dir.orthogonal()
+	var back := at + Vector2(-s * 0.66, s * 0.34)
+	var front := back + dir * s * 0.7
+	var half := s * 0.3
+	_shape(item, PackedVector2Array([
+		at + Vector2(-s * 0.95, s * 0.86), at + Vector2(-s * 0.62, s * 0.86), at + Vector2(s * 0.18, s * 0.5),
+		at + Vector2(s * 0.12, s * 0.22), at + Vector2(-s * 0.35, s * 0.42)]), BROWN, w)
+	_shape(item, PackedVector2Array([back + up * half, front + up * half, front - up * half, back - up * half]), GREY, w)
+	var band := back + dir * s * 0.14
+	_shape(item, PackedVector2Array([band + up * half, band + dir * s * 0.12 + up * half, band + dir * s * 0.12 - up * half, band - up * half]), GREY.darkened(0.4), w)
+	var rim := half * 1.35
+	var lip := front + dir * s * 0.14
+	_shape(item, PackedVector2Array([front + up * rim, lip + up * rim, lip - up * rim, front - up * rim]), GREY.lightened(0.35), w)
+	# The smoke is one cloud: every outline first, then every fill.
+	var puffs := [[dir * 0.26, 0.18], [dir * 0.17 + up * 0.19, 0.13], [dir * 0.17 - up * 0.19, 0.13]]
+	for p in puffs:
+		item.draw_circle(lip + p[0] * s, s * p[1] + w, OUTLINE)
+	for p in puffs:
+		item.draw_circle(lip + p[0] * s, s * p[1], WHITE)
+	var wheel := at + Vector2(-s * 0.2, s * 0.56)
+	_shape(item, _circle(wheel, s * 0.36, 18), BROWN.lightened(0.2), w)
+	for i in 2:
+		var d := Vector2.from_angle(PI * 0.5 * i + 0.4) * s * 0.3
+		item.draw_line(wheel - d, wheel + d, OUTLINE, w * 0.9)
+	item.draw_circle(wheel, s * 0.1, OUTLINE)
+	var ball := lip + dir * s * 0.8
+	_shape(item, _circle(ball, s * 0.25, 16), GREY.darkened(0.3), w)
+	item.draw_circle(ball + Vector2(-s * 0.08, -s * 0.08), s * 0.07, Color(1, 1, 1, 0.8))
 
 
 static func _tow(item: CanvasItem, at: Vector2, s: float, w: float) -> void:

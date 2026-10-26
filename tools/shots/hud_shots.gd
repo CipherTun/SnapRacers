@@ -16,7 +16,8 @@ extends Node
 ## With "screens" it takes the whole race screen with the touch controls up
 ## and two gadgets held, then the race's menu, then the results, alone, side
 ## by side and face to face, into a folder at a window size. SNAPRACERS_CUTOUT
-## tries a camera hole, drawn in black on the pictures.
+## tries a camera hole, drawn in black on the pictures. SNAPRACERS_HELD picks
+## the two gadgets held, like "cannon,shield".
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --windowed --path . res://tools/shots/hud_shots.tscn -- screens /srv/downloads/temp/debug/snapracers/ui-looks/m5 1280x800
 
 ##
@@ -162,9 +163,12 @@ func _screens(folder: String, window_size: String) -> void:
 	for split in splits:
 		var race := await _start(host, split)
 		var tag: String = split if split != Game.SOLO else "solo"
+		var held := OS.get_environment("SNAPRACERS_HELD").split(",")
+		if held.size() != 2:
+			held = PackedStringArray(["triple_turbo", "shield"])
 		for racer in race.humans:
-			racer.kart.held = ["triple_turbo", "shield"]
-			racer.kart.held_uses = [3, 1]
+			racer.kart.held = [held[0], held[1]]
+			racer.kart.held_uses = [3 if held[0] == "triple_turbo" else 1, 1]
 			racer.hud.touch.visible = true
 			# The stick on your own and whatever's set in a split screen, so
 			# both kinds get seen.
