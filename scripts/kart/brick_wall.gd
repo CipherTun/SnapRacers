@@ -13,8 +13,11 @@ const HIGH := 2
 const BEHIND := 3.5
 ## Half the wall's width, from the middle to the end of the longer row.
 const HALF := (ACROSS + 0.5) * BRICK.x * 0.5
-const COLOURS := [Color("#c4281c"), Color("#f2cd37"), Color("#0d69ab"), Color("#f2f3f2")]
+const COLOURS := BrickPile.COLOURS
 
+## Picks each brick's colour. Every machine seeds it the same way for the same
+## drop, so the walls look alike online.
+var colour_seed := 0
 var _age := 0.0
 var _bricks: Array[RigidBody3D] = []
 
@@ -32,12 +35,18 @@ static func drop_behind(from: Kart) -> BrickWall:
 	if forward.length() < 0.1:
 		forward = Vector3.FORWARD
 	wall.transform = Transform3D(Basis.looking_at(forward.normalized(), Vector3.UP), ground)
+	# From the kart's grid slot and how many walls it's dropped, which every
+	# machine counts the same since the drops arrive in order.
+	wall.colour_seed = hash([from.grid_slot, from.walls_dropped])
+	from.walls_dropped += 1
 	return wall
 
 
 func _ready() -> void:
 	# So the AI can steer round it.
 	add_to_group("brick_walls")
+	var rng := RandomNumberGenerator.new()
+	rng.seed = colour_seed
 	for row in HIGH:
 		# Every other row is staggered half a brick, like a real wall.
 		var shift := 0.5 * BRICK.x if row % 2 == 1 else 0.0
@@ -53,7 +62,8 @@ func _ready() -> void:
 			box.size = BRICK
 			shape.shape = box
 			brick.add_child(shape)
-			var colour: Color = COLOURS[(i + row) % COLOURS.size()]
+			var colour: Color = COLOURS[rng.randi_range(0, COLOURS.size() - 1)]
+			brick.set_meta("colour", colour)
 			var look := MeshInstance3D.new()
 			look.mesh = MeshKit.rounded_box(BRICK - Vector3.ONE * 0.01, 0.02)
 			look.material_override = PartVisuals.material(colour)

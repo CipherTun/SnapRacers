@@ -321,6 +321,10 @@ class Wheel:
 
 
 var design: KartDesign
+## Its place on the starting grid, the same on every machine online.
+var grid_slot := 0
+## How many brick walls it's dropped, which seeds their colours.
+var walls_dropped := 0
 ## Who's driving. Their weight goes into the kart, and their model sits in
 ## the seat holding the steering wheel.
 var driver: CharacterDesign
@@ -1791,7 +1795,7 @@ func use_gadget(slot: int) -> bool:
 		"triple_turbo":
 			boost_left = TRIPLE_TURBO_TIME
 		"tow":
-			var rope := TowRope.throw(self, BrickShot._kart_ahead(self))
+			var rope := TowRope.throw(self, TowRope.target(self))
 			if rope != null:
 				get_parent().add_child(rope)
 				towed.emit(rope.to)

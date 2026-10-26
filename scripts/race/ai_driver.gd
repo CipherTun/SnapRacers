@@ -688,7 +688,7 @@ func _worth_using(kind: String, speed: float) -> bool:
 		"ghost":
 			return _nearest(2.0, 12.0, 2.5) != null or (speed < 2.0 and not kart.locked)
 		"tow":
-			if _nearest(10.0, TowRope.REACH, 30.0) == null:
+			if TowRope.target(kart) == null:
 				return false
 			# Not into a tight bend, which it would be pulled wide of.
 			var ahead := 0.0

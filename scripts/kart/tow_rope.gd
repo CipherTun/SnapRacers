@@ -14,6 +14,11 @@ const FASTER := 1.15
 const PULL := 2200.0
 ## How far ahead a kart has to be for the rope to reach it.
 const REACH := 60.0
+## How far ahead along the road a kart has to be before the rope can catch it,
+## about two and a half kart lengths.
+const NEAREST := 6.0
+## How far off straight ahead it can be, as the cosine of the angle (50 degrees).
+const CONE := 0.64
 const BURST := 1.0
 
 var from: Kart
@@ -29,6 +34,51 @@ static func throw(kart: Kart, ahead: Kart) -> TowRope:
 	rope.from = kart
 	rope.to = ahead
 	return rope
+
+
+## The kart a rope from this one would catch, or null. It's the nearest one
+## NEAREST to REACH ahead along the road, in front of this kart and going the
+## same way, so not one beside it, behind it or across a hairpin. It only reads
+## the race's karts and their offsets along the track.
+static func target(kart: Kart) -> Kart:
+	# The race is asked without naming it, since Race needs the Game autoload
+	# and the -s tests load karts without one.
+	var race = kart.get_parent()
+	if race == null or not ("racers" in race) or not ("track" in race) or race.track == null:
+		return null
+	var from_offset := -1.0
+	var others := []
+	for racer in race.racers:
+		if racer.kart == kart:
+			from_offset = racer.offset
+		elif is_instance_valid(racer.kart):
+			others.append({"kart": racer.kart, "offset": racer.offset})
+	if from_offset < 0.0:
+		return null
+	return pick(kart, from_offset, others, race.track.length) as Kart
+
+
+## The nearest of these, each {"kart", "offset"}, that a rope from this kart at
+## this offset can catch on a track this long. Offsets wrap at the line, so a
+## kart just over it counts as just ahead, whatever lap either is on. Ties go
+## to the first in the list.
+static func pick(kart: Node3D, from_offset: float, others: Array, track_length: float) -> Node3D:
+	var facing := -kart.global_basis.z
+	var best: Node3D = null
+	var best_gap := INF
+	for other in others:
+		var ahead: Node3D = other.kart
+		var gap := fposmod(float(other.offset) - from_offset, track_length)
+		if gap < NEAREST or gap > REACH or gap >= best_gap:
+			continue
+		var toward := ahead.global_position - kart.global_position
+		if toward.length() < 0.1 or toward.length() > REACH or facing.dot(toward.normalized()) < CONE:
+			continue
+		if facing.dot(-ahead.global_basis.z) < 0.0:
+			continue
+		best = ahead
+		best_gap = gap
+	return best
 
 
 func _init() -> void:

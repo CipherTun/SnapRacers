@@ -86,7 +86,7 @@ class Runner:
 		karts.unzapped = kart_with([], Vector3(-110, 0.05, 115))
 		karts.zap_blocked = kart_with(["shield"], Vector3(-90, 0.05, 115))
 
-		steps = [_start, _turbo, _turbo_check, _others, _tow_check, _others_check, _repair_check, _ram_check, _marbles, _marbles_check, _wall, _wall_check, _shockwave, _shockwave_check, _spikes, _spikes_check, _ghost, _ghost_check, _boxes]
+		steps = [_start, _turbo, _turbo_check, _others, _tow_check, _others_check, _repair_check, _ram_check, _marbles, _marbles_check, _wall, _wall_check, _shockwave, _shockwave_check, _spikes, _spikes_check, _ghost, _ghost_check, _tow_targets, _boxes]
 
 	func _start() -> int:
 		for kart in [karts.turbo, karts.plain, karts.rammer, karts.bumper, karts.zapped, karts.unzapped]:
@@ -225,8 +225,68 @@ class Runner:
 		var loose: int = wall._bricks.filter(func(b): return not b.freeze).size()
 		check(loose > 0, "a kart driving into it sets bricks tumbling (%d)" % loose)
 		check(karts.wall_hitter.forward_speed < 12.0, "and it slows the kart down (%.1f m/s)" % karts.wall_hitter.forward_speed)
+		var colours := wall_colours(wall)
+		var mixed := {}
+		for colour in colours:
+			mixed[colour] = true
+		check(mixed.size() >= 3, "the wall's bricks are a mix of colours (%d)" % mixed.size())
+		var tumbled: Array = wall._bricks.filter(func(b): return not b.freeze)
+		check(tumbled.all(func(b): return b.get_child(1).material_override.albedo_color == b.get_meta("colour")), "and a tumbling brick keeps its colour")
+		var same := BrickWall.new()
+		same.colour_seed = wall.colour_seed
+		add_child(same)
+		var other := BrickWall.new()
+		other.colour_seed = wall.colour_seed + 1
+		add_child(other)
+		check(wall_colours(same) == colours, "a wall from the same drop has the same colours on every machine")
+		check(wall_colours(other) != colours, "and the next drop has different ones")
+		check(karts.waller.walls_dropped == 1, "the kart counts the walls it drops")
+		same.free()
+		other.free()
 		karts.wall_hitter.controls.throttle = 0.0
 		return 0
+
+	func wall_colours(wall: BrickWall) -> Array:
+		return wall._bricks.map(func(b): return b.get_meta("colour"))
+
+	## A stand-in for a kart on the road, at this spot, facing this way.
+	func marker(at: Vector3, facing := Vector3.FORWARD) -> Node3D:
+		var spot := Node3D.new()
+		add_child(spot)
+		spot.global_transform = Transform3D(Basis.looking_at(facing, Vector3.UP), at)
+		return spot
+
+	## A tow rope only catches a kart a few lengths ahead along the road, in
+	## front and going the same way.
+	func _tow_targets() -> int:
+		var from := marker(Vector3(300, 0, 0))
+		var length := 500.0
+		var at := 100.0
+		var beside := {"kart": marker(Vector3(303, 0, 0)), "offset": at}
+		var behind := {"kart": marker(Vector3(300, 0, 10)), "offset": at - 10.0}
+		var close := {"kart": marker(Vector3(300, 0, -4)), "offset": at + 4.0}
+		var far := {"kart": marker(Vector3(300, 0, -20)), "offset": at + 20.0}
+		var further := {"kart": marker(Vector3(300, 0, -30)), "offset": at + 30.0}
+		var out_of_reach := {"kart": marker(Vector3(300, 0, -70)), "offset": at + 70.0}
+		# Across a hairpin, 15 m off to the side, going the other way, but
+		# 50 m ahead along the road.
+		var hairpin := {"kart": marker(Vector3(315, 0, -2), Vector3.BACK), "offset": at + 50.0}
+		check(TowRope.NEAREST >= 5.0 and TowRope.NEAREST <= 8.0, "the rope needs a kart two or three lengths ahead (%.0f m)" % TowRope.NEAREST)
+		check(TowRope.pick(from, at, [beside, behind, close], length) == null, "a tow rope doesn't catch a kart beside, behind or just ahead")
+		check(TowRope.pick(from, at, [beside, further, far, close], length) == far.kart, "it catches the nearest kart far enough ahead")
+		check(TowRope.pick(from, at, [out_of_reach], length) == null, "but not one out of reach")
+		check(TowRope.pick(from, at, [hairpin], length) == null, "or one across a hairpin")
+		# Just behind the line, with the kart ahead just over it, which counts
+		# whatever lap either is on.
+		check(TowRope.pick(from, length - 5.0, [{"kart": far.kart, "offset": 15.0}], length) == far.kart, "it catches a kart ahead over the finish line")
+		check(TowRope.pick(from, 10.0, [{"kart": behind.kart, "offset": length - 5.0}], length) == null, "and not one behind over the line")
+		# Two the same distance ahead go to the first one listed.
+		var twin := {"kart": marker(Vector3(301, 0, -20)), "offset": at + 20.0}
+		check(TowRope.pick(from, at, [twin, far], length) == twin.kart and TowRope.pick(from, at, [far, twin], length) == far.kart, "and a tie goes the same way every time")
+		check(TowRope.target(karts.tower) == null, "with no race around there's nothing to catch")
+		for node in get_children().filter(func(n): return n.get_class() == "Node3D" and n.get_script() == null):
+			node.queue_free()
+		return 1
 
 	## A shockwave shoves the karts near it away, and knocks parts off one
 	## close by, unless its shield's up.
