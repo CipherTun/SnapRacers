@@ -135,16 +135,29 @@ func _cup(id: String) -> void:
 	var trophy := podium.trophy
 	var cup: Dictionary = GrandPrix.cups().filter(func(c): return c.id == id)[0]
 	var pieces := TrophyModel.pieces(cup.get("trophy", {}), Podium.colour_of(cup), "gold").size()
-	check(trophy != null and winner.held() == trophy and trophy.get_parent() == winner.upper() and podium.trophy_spec == cup.get("trophy", {}) and trophy.get_child_count() == pieces,
+	check(trophy != null and winner.held() == trophy and trophy.get_parent() == winner.upper() and podium.trophy_spec == cup.get("trophy", {}) and trophy.get_child_count() == pieces + 1,
 			"the winner holds the cup's trophy (%s)" % cup.get("trophy", {}).get("top", "cup"))
 	if trophy != null:
 		var hand := winner.hand_position(1)
-		var up := winner.to_local(trophy.global_position).y
-		check(up > CharacterRig.HEAD_Y, "up high, its foot by the top of the head (%.2f m up)" % up)
-		var head_box := _box_of(winner.head())
-		var into := trophy.find_children("*", "MeshInstance3D", true, false).filter(func(m): return (m.global_transform * m.get_aabb()).intersects(head_box))
+		var top := winner.to_local(_box_of(trophy).end).y
+		check(top > CharacterRig.HEAD_Y, "up high, its top past the middle of the head (%.2f m up)" % top)
+		# In the head's own space, where its box fits it closely, whether any
+		# corner of the trophy's bricks is inside it.
+		var head := winner.head()
+		var head_box := AABB()
+		var first := true
+		for shown in head.find_children("*", "MeshInstance3D", true, false):
+			var b: AABB = head.global_transform.affine_inverse() * shown.global_transform * shown.get_aabb()
+			head_box = b if first else head_box.merge(b)
+			first = false
+		var into := trophy.find_children("*", "MeshInstance3D", true, false).filter(func(m):
+			var to_head: Transform3D = head.global_transform.affine_inverse() * m.global_transform
+			for v in m.mesh.get_faces():
+				if head_box.has_point(to_head * v):
+					return true
+			return false)
 		check(into.is_empty(), "clear of their head (%d of its bricks in it)" % into.size())
-		check(winner.to_global(hand).distance_to(trophy.global_transform * Podium.TROPHY_GRIP) < 0.01, "and in their hand")
+		check(winner.to_global(hand).distance_to(trophy.global_transform * podium.trophy_grip) < 0.01, "and in their hand")
 	var clapping := range(1, podium.drivers.size()).filter(func(i): return podium.drivers[i]._clap_left > 0.0)
 	var sulking := range(3, podium.drivers.size()).filter(func(i): return podium.drivers[i]._sulk_left > 0.0)
 	check(clapping.size() == podium.drivers.size() - 1 - Podium.SULKING and sulking == range(podium.drivers.size() - Podium.SULKING, podium.drivers.size()),

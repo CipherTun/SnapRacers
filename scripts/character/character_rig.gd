@@ -77,11 +77,19 @@ const MOST_SPREAD := deg_to_rad(60.0)
 const BONES := ["hips", "legs", "upper", "head", "arm_l", "arm_r", "hand_l", "hand_r"]
 ## Leaning back further than this (in radians) wears the reclined back piece.
 const RECLINED := 0.7
-## Holding something up: how far the arms swing up and out to the sides, so
-## the hands clear the head, and how far they pump it up and down.
+## Holding something up: the left arm goes up and out to the side in a cheer,
+## clear of the head, pumping up and down.
 const HOLD_SWING := deg_to_rad(155.0)
 const HOLD_SPREAD := 0.45
 const HOLD_PUMP := 0.14
+## The right arm holds it up beside the head: swung up until the forearm
+## points a little above level, so the hand's hole stands nearly upright,
+## and turned out at the shoulder to keep what's held clear of the head.
+## It bobs it up and down by CARRY_PUMP.
+const CARRY_SWING := deg_to_rad(68.0)
+const CARRY_TURN := deg_to_rad(-62.0)
+const CARRY_SPREAD := 0.3
+const CARRY_PUMP := 0.08
 ## How long the arms take to go up.
 const RAISE := 0.35
 ## Clapping: the arms out in front, turning in at the shoulders from open to
@@ -180,10 +188,11 @@ var _turn_in: Array[float] = [0.0, 0.0]
 var _raised := false
 var _raise := 1.0
 var _raise_from := [0.0, 0.0]
+var _turn_from := [0.0, 0.0]
 ## What's held in the right hand, its size, and the point on it that's in
 ## the hand, in its own space.
 var _held: Node3D
-var _held_basis := Basis.IDENTITY
+var _held_scale := Vector3.ONE
 var _held_grip := Vector3.ZERO
 ## A leap from one spot to another (see leap()), with how long it has left
 ## and takes.
@@ -365,8 +374,9 @@ func leap(to: Vector3, seconds := 0.6) -> void:
 		_leap_left = 0.0
 
 
-## Arms up and out to the sides, ready to hold something up high. `now`
-## puts them there straight away.
+## The left arm up and out to the side in a cheer, and the right one up
+## beside the head, ready to hold something there. `now` puts them there
+## straight away.
 func raise_arms(now := false) -> void:
 	_raised = true
 	_clap_left = 0.0
@@ -374,18 +384,20 @@ func raise_arms(now := false) -> void:
 		position = _hop_from
 	_cheer_left = 0.0
 	_wave_left = 0.0
-	_turn_in = [0.0, 0.0]
 	_raise = 1.0 if now or not lively else 0.0
 	if _upper != null:
+		# From where they are now, turned in for a clap or not.
 		for side in 2:
 			_raise_from[side] = _swing_of(side)
+			_turn_from[side] = _turn_in[side]
 	if _raise >= 1.0 and _upper != null:
 		_pose_raised(0.0)
 
 
 ## Holds `prop` up in the right hand, by the point `grip` on it (in its own
-## space), the right way up and facing the same way as them. It goes on the
-## upper body, keeping its size, and stays there until let_go().
+## space), with its up through the hand's hole and its front the same way as
+## theirs. It goes on the upper body, keeping its size, and stays there until
+## let_go().
 func hold(prop: Node3D, grip: Vector3, now := false) -> void:
 	if not _raised:
 		raise_arms(now)
@@ -393,12 +405,14 @@ func hold(prop: Node3D, grip: Vector3, now := false) -> void:
 		_raise = 1.0
 	_held = prop
 	_held_grip = grip
-	_held_basis = Basis.from_scale(prop.scale)
+	_held_scale = prop.scale
 	if prop.get_parent() == null:
 		_upper.add_child(prop)
 	elif prop.get_parent() != _upper:
 		prop.reparent(_upper, false)
 	_hop_from = position
+	if now:
+		_pose_raised(0.0)
 	_place_held()
 	if lively:
 		feel("laugh", INF)
@@ -409,22 +423,26 @@ func held() -> Node3D:
 	return _held
 
 
-## Puts down whatever's held, with the arms back down.
-func let_go() -> void:
-	if _held != null and _held.get_parent() == _upper:
-		_upper.remove_child(_held)
+## Puts down whatever's held, with the arms back down, and hands it back to
+## the caller, out of the scene, to keep or free.
+func let_go() -> Node3D:
+	var was := _held
+	if was != null and was.get_parent() == _upper:
+		_upper.remove_child(was)
 	_held = null
 	_raised = false
 	_spread = [0.0, 0.0]
+	_turn_in = [0.0, 0.0]
 	rest_hands()
+	return was
 
 
-## Where a prop held by `grip` (in its own space), turned and sized by
-## `basis`, sits in the world with the arms all the way up, for bringing it
-## to the hand.
-func hold_transform(basis: Basis, grip: Vector3) -> Transform3D:
-	var hand := _grip_at(1, HOLD_SWING, -HOLD_SPREAD)
-	return _upper.global_transform * Transform3D(basis, hand - basis * grip)
+## Where a prop held by `grip` (in its own space) and sized by `size` sits in
+## the world with the arms all the way up, for bringing it to the hand.
+func hold_transform(size: Vector3, grip: Vector3) -> Transform3D:
+	var hand := _hand_at(1, CARRY_SWING, Vector3.UP, -CARRY_SPREAD, CARRY_TURN)
+	var basis := _upright(hand.basis.z, size)
+	return _upper.global_transform * Transform3D(basis, hand.origin - basis * grip)
 
 
 ## The lights that go with the toy plastic, for somewhere a driver's shown
@@ -566,22 +584,36 @@ func _process(delta: float) -> void:
 			position = _hop_from
 
 
-## The arms up in the hold pose, pumping up and down, and what's held
-## with them.
+## The arms up in the hold pose, the left one cheering and the right one
+## holding up what's held beside the head, both pumping up and down.
 func _pose_raised(time: float) -> void:
 	var smooth := _raise * _raise * (3.0 - 2.0 * _raise)
-	var pump := (0.5 - 0.5 * cos(time * 4.0)) * HOLD_PUMP if _held != null and lively else 0.0
-	for side in 2:
-		_spread[side] = -HOLD_SPREAD * smooth
-		_set_swing(side, lerpf(_raise_from[side], HOLD_SWING - pump, smooth), Vector3.FORWARD)
+	var beat := 0.5 - 0.5 * cos(time * 4.0) if _held != null and lively else 0.0
+	_spread[0] = -HOLD_SPREAD * smooth
+	_turn_in[0] = lerpf(_turn_from[0], 0.0, smooth)
+	_set_swing(0, lerpf(_raise_from[0], HOLD_SWING - beat * HOLD_PUMP, smooth), Vector3.FORWARD)
+	_spread[1] = -CARRY_SPREAD * smooth
+	_turn_in[1] = lerpf(_turn_from[1], CARRY_TURN, smooth)
+	_set_swing(1, lerpf(_raise_from[1], CARRY_SWING + beat * CARRY_PUMP, smooth), Vector3.UP)
 	_place_held()
 
 
+## What's held, with its grip in the middle of the right hand's hole and its
+## up along the hole.
 func _place_held() -> void:
 	if _held == null or _upper == null:
 		return
-	var hand: Vector3 = _arm[1].transform * _grip_local[1]
-	_held.transform = Transform3D(_held_basis, hand - _held_basis * _held_grip)
+	var hand := _hand[1].transform
+	var basis := _upright(hand.basis.z, _held_scale)
+	_held.transform = Transform3D(basis, hand.origin - basis * _held_grip)
+
+
+## A turn with its up along `up` and its front as near theirs as that
+## allows, sized by `size`.
+static func _upright(up: Vector3, size: Vector3) -> Basis:
+	var y := up.normalized()
+	var z := (Vector3.BACK - y * y.z).normalized()
+	return Basis(y.cross(z), y, z) * Basis.from_scale(size)
 
 
 ## Where each hand is holding right now, in the rig's space. Tests use it.
@@ -625,33 +657,39 @@ func _spread_basis(side: int) -> Basis:
 
 ## How far the arm is swung now.
 func _swing_of(side: int) -> float:
-	var y := _spread_basis(side).inverse() * _arm[side].transform.basis.y
+	var y := (_inward_basis(side, _turn_in[side]) * _spread_basis(side)).inverse() * _arm[side].transform.basis.y
 	return atan2(y.z, y.y)
 
 
 ## Swings the arm about its shoulder to `angle`, and twists the hand to hold
 ## along `along`.
 func _set_swing(side: int, angle: float, along: Vector3) -> void:
-	var pivot := shoulder(side)
-	var swing := _swing_basis(side, angle)
-	_arm[side].transform = Transform3D(swing, pivot)
-	# The hand's hole runs along what it's holding, with the wrist behind.
-	var wrist_dir := swing * _forearm_dir(side)
-	var y := -wrist_dir
+	_arm[side].transform = Transform3D(_swing_basis(side, angle, _spread[side], _turn_in[side]), shoulder(side))
+	_hand[side].transform = _hand_at(side, angle, along, _spread[side], _turn_in[side])
+
+
+## The hand for a swing, a spread and a turn in, with its hole running along
+## what it's holding and the wrist behind.
+func _hand_at(side: int, angle: float, along: Vector3, spread: float, turn: float) -> Transform3D:
+	var swing := _swing_basis(side, angle, spread, turn)
+	var y := -(swing * _forearm_dir(side))
 	var z := along - y * along.dot(y)
 	if z.length() < 0.01:
 		z = Vector3.FORWARD - y * Vector3.FORWARD.dot(y)
 	z = z.normalized()
 	var x := y.cross(z).normalized()
-	var hand_at := pivot + swing * _grip_local[side]
-	_hand[side].transform = Transform3D(Basis(x, y, z), hand_at)
+	return Transform3D(Basis(x, y, z), shoulder(side) + swing * _grip_local[side])
 
 
 ## The arm's turn for a swing, with its spread out to the side and its turn
 ## in at the shoulder.
-func _swing_basis(side: int, angle: float) -> Basis:
-	var inward := Basis(Vector3.UP, _turn_in[side] * (1.0 if side == 1 else -1.0))
-	return inward * _spread_basis(side) * Basis(Vector3.RIGHT, angle)
+func _swing_basis(side: int, angle: float, spread: float, turn: float) -> Basis:
+	var out := Basis(Vector3.BACK, spread * (1.0 if side == 1 else -1.0))
+	return _inward_basis(side, turn) * out * Basis(Vector3.RIGHT, angle)
+
+
+func _inward_basis(side: int, turn: float) -> Basis:
+	return Basis(Vector3.UP, turn * (1.0 if side == 1 else -1.0))
 
 
 ## Where the hand's grip is, in the upper body's space, for a swing and a

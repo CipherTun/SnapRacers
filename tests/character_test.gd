@@ -453,8 +453,8 @@ class Runner:
 		check(off_body >= 0.035, "with the hands clear of the body (%.3f m from it)" % off_body)
 		clapper.queue_free()
 
-		# Holding something up, the hands are out past the head and hair, the
-		# held thing sits in the right hand, and letting go puts it down.
+		# Holding something up, the hands are clear of the head and hair, the
+		# held thing sits upright in the right hand, and letting go hands it back.
 		var in_head := []
 		for file in DirAccess.get_files_at("res://data/characters/roster"):
 			if not file.ends_with(".json"):
@@ -471,16 +471,20 @@ class Runner:
 				first_box = false
 			for side in 2:
 				var hand := holder.hand_position(side)
-				if head_box.grow(CharacterRig.HAND_SIZE * 0.5).has_point(hand) or hand.y < CharacterRig.HEAD_Y:
+				# The left one's up high cheering, the right one beside the head.
+				if head_box.grow(CharacterRig.HAND_SIZE * 0.5).has_point(hand) or (side == 0 and hand.y < CharacterRig.HEAD_Y):
 					in_head.append("%s %d" % [file, side])
 			if holder.to_local(prop.to_global(Vector3(-0.1, 0.0, 0.0))).distance_to(holder.hand_position(1)) > 0.001:
 				in_head.append("%s held off the hand" % file)
-			holder.let_go()
-			if prop.get_parent() != null or holder.held() != null:
+			if holder.to_global(holder.hand_position(1)).distance_to(holder.head().global_position) < 0.25:
+				in_head.append("%s held too near the head" % file)
+			if prop.global_transform.basis.y.normalized().y < 0.9:
+				in_head.append("%s held tipped over" % file)
+			if holder.let_go() != prop or prop.get_parent() != null or holder.held() != null:
 				in_head.append("%s still holding" % file)
 			prop.free()
 			holder.queue_free()
-		check(in_head.is_empty(), "holding something up, the hands are up high, clear of every roster driver's head %s" % [in_head])
+		check(in_head.is_empty(), "holding something up, the hands are clear of every roster driver's head and it's upright in the right hand %s" % [in_head])
 
 		# The roster.
 		var classes := {}

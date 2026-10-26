@@ -62,12 +62,26 @@ const WAITING := 0.75
 const TROPHY_FROM := 3.8
 const REACH := 4.9
 const TROPHY_IN := 5.6
-## How high over the hand the trophy starts, how big it is next to the
-## full size one, and where the winner holds it: the inside edge of its
-## plinth, halfway up the black brick.
+## How high over the hand the trophy starts, how tall it is in the hand
+## (a little taller than a head), how wide it can be there so it clears the
+## head, and how big it can be next to the full size one.
 const TROPHY_HIGH := 3.0
-const TROPHY_SIZE := 0.22
-const TROPHY_GRIP := Vector3(-0.5, 0.15, 0.0)
+const TROPHY_TALL := 0.45
+const TROPHY_WIDE := 0.25
+const TROPHY_MOST := 0.26
+## The bar under the trophy's plinth that sits in the winner's hand, in
+## metres: its radius, a little under the hand's hole, its length and how
+## far down it the hand holds.
+const BAR_RADIUS := 0.016
+const BAR_LENGTH := 0.075
+const BAR_GRIP := 0.04
+## A cup this light gets coloured trim on its steps and mixed confetti, so
+## they show up against snow.
+const VERY_LIGHT := 0.85
+const TRIM := Color("#c4281c")
+const MIXED := [Color("#c4281c"), Color("#0d69ab"), Color("#f5cd2f"), Color("#4b974b"), Color("#e04da0"), TrophyModel.GOLD]
+## How loud the cheer is when it's skipped to over the fanfare.
+const CHEER_SKIPPED := -4.0
 ## How many at the back of the field sulk.
 const SULKING := 2
 ## When the fanfare starts.
@@ -114,6 +128,10 @@ var trophy_colour := Color("#c4281c")
 ## The trophy once it's on its way down, and the confetti.
 var trophy: Node3D
 var confetti: CPUParticles3D
+## The trophy's size next to the full size one, and the point on it, in its
+## own space, that's in the winner's hand: the middle of the bar under it.
+var trophy_size := 0.22
+var trophy_grip := Vector3.ZERO
 ## Where first, second and third stand on their steps, in the world.
 var _on_step: Array[Vector3] = []
 ## How far through the show it's got: who's jumped and reacted, whether the
@@ -124,6 +142,9 @@ var _field := false
 var _reached := false
 var _landed := false
 var _fanfare := false
+## The fanfare and cheer, on the podium so they stop when it goes.
+var _fanfare_player: AudioStreamPlayer
+var _cheered := false
 ## When the confetti stops, in the show's time.
 var _confetti_until := INF
 var _time := 0.0
@@ -249,7 +270,10 @@ func _ready() -> void:
 	for place in 3:
 		var x: float = ACROSS[place] * STEP_WIDTH
 		var height: float = top + HEIGHTS[place]
-		_box(kit, Vector3(x, bottom, 0.0), Vector3(STEP_WIDTH, height - bottom, STEP_DEPTH), colour, SceneryKit.BRICK)
+		_box(kit, Vector3(x, bottom, 0.0), Vector3(STEP_WIDTH, height - bottom, STEP_DEPTH), _step_tint(), SceneryKit.BRICK)
+		if colour.get_luminance() > VERY_LIGHT:
+			# A band round the top, standing a little proud of the sides.
+			_box(kit, Vector3(x, height - 0.1, 0.0), Vector3(STEP_WIDTH + 0.03, 0.08, STEP_DEPTH + 0.03), TRIM, SceneryKit.PLAIN)
 		_number(kit, place + 1, Vector3(x, height - HEIGHTS[place] * 0.5, STEP_DEPTH * 0.5), ink)
 	kit.build(self)
 
@@ -426,7 +450,7 @@ func _run_show() -> void:
 		return
 	if not _fanfare and _time >= FANFARE:
 		_fanfare = true
-		Sounds.play("fx/podium")
+		_fanfare_player = _play("fx/podium")
 	for place in _on_step.size():
 		if not _leapt[place] and _time >= LEAPS[place]:
 			_leap(place, false)
@@ -507,7 +531,24 @@ func _start_field() -> void:
 
 func _make_trophy() -> void:
 	trophy = TrophyModel.make(trophy_spec, trophy_colour, "gold")
-	trophy.scale = Vector3.ONE * TROPHY_SIZE
+	var box := AABB()
+	for piece in TrophyModel.pieces(trophy_spec, trophy_colour, "gold"):
+		box = box.merge(piece.box)
+	trophy_size = minf(minf(TROPHY_TALL / box.end.y, TROPHY_WIDE / box.size.x), TROPHY_MOST)
+	trophy.scale = Vector3.ONE * trophy_size
+	# A bar down from the middle of the plinth for the hand to hold, the way
+	# a toy figure's trophy plugs into its hand.
+	var bar := MeshInstance3D.new()
+	bar.name = "Bar"
+	var rod := CylinderMesh.new()
+	rod.top_radius = BAR_RADIUS / trophy_size
+	rod.bottom_radius = rod.top_radius
+	rod.height = BAR_LENGTH / trophy_size
+	bar.mesh = rod
+	bar.material_override = PartVisuals.material(TrophyModel.PLINTH)
+	bar.position.y = -rod.height * 0.5
+	trophy.add_child(bar)
+	trophy_grip = Vector3(0.0, -BAR_GRIP / trophy_size, 0.0)
 	add_child(trophy)
 	var to := _trophy_in_hand()
 	trophy.global_transform = Transform3D(to.basis, to.origin + Vector3.UP * TROPHY_HIGH)
@@ -515,17 +556,51 @@ func _make_trophy() -> void:
 
 ## Where the trophy is once the winner's holding it up.
 func _trophy_in_hand() -> Transform3D:
-	return drivers[0].hold_transform(Basis.from_scale(Vector3.ONE * TROPHY_SIZE), TROPHY_GRIP)
+	return drivers[0].hold_transform(Vector3.ONE * trophy_size, trophy_grip)
 
 
 ## The trophy into the winner's hand, with confetti and a cheer.
 func _land(now: bool) -> void:
 	_landed = true
-	trophy.scale = Vector3.ONE * TROPHY_SIZE
-	drivers[0].hold(trophy, TROPHY_GRIP, now)
+	trophy.scale = Vector3.ONE * trophy_size
+	drivers[0].hold(trophy, trophy_grip, now)
 	confetti.emitting = true
 	_confetti_until = _time + CONFETTI_FOR
-	Sounds.play("fx/cheer")
+	_cheer(now)
+
+
+## The crowd cheers, once. Skipped to while the fanfare's still going, the
+## fanfare stops and the cheer comes in a little quieter.
+func _cheer(skipped: bool) -> void:
+	if _cheered:
+		return
+	_cheered = true
+	var level := 0.0
+	if skipped and is_instance_valid(_fanfare_player) and _fanfare_player.playing:
+		_fanfare_player.stop()
+		level = CHEER_SKIPPED
+	_play("fx/cheer", level)
+
+
+## Plays a sound once on the podium itself, so it stops when the podium's
+## freed.
+func _play(sound: String, level := 0.0) -> AudioStreamPlayer:
+	var stream := Sounds.stream(sound)
+	if stream == null or Sounds.hushed or not Sounds.audible():
+		return null
+	var player := AudioStreamPlayer.new()
+	player.stream = stream
+	player.bus = Sounds.EFFECTS_BUS
+	player.volume_db = level
+	player.finished.connect(player.queue_free)
+	player.autoplay = true
+	add_child(player)
+	return player
+
+
+## The steps' colour: the cup's, or a little darker for a very light cup.
+func _step_tint() -> Color:
+	return colour.darkened(0.25) if colour.get_luminance() > VERY_LIGHT else colour
 
 
 ## Confetti over the steps, in the cup's colours with white and gold, each
@@ -566,6 +641,9 @@ func _make_confetti(top: float) -> CPUParticles3D:
 	colours.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
 	colours.offsets = PackedFloat32Array([0.0, 0.3, 0.55, 0.8])
 	colours.colors = PackedColorArray([colour, Color.WHITE, TrophyModel.GOLD, colour.lightened(0.4)])
+	if colour.get_luminance() > VERY_LIGHT:
+		colours.offsets = PackedFloat32Array(range(MIXED.size()).map(func(i): return float(i) / MIXED.size()))
+		colours.colors = PackedColorArray(MIXED)
 	bits.color_initial_ramp = colours
 	bits.transform = _placed(Vector3(0.0, top + 2.8, 0.4), 0.0)
 	return bits
