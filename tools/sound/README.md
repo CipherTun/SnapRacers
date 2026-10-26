@@ -7,6 +7,7 @@ Every sound and tune in SnapRacers is made here by a little synthesizer written 
 - `music.py` is a little tracker. The melodies are written out by hand, note by note, and the bass, arpeggios and chords come from the chord for each bar. Every tune loops.
 - `make_sounds.py` runs them all and writes the files into `sound`.
 - `music_demo.py` writes the arcade pop demos in `music.POP` to a folder you name, as `new_*.ogg` next to `old_*.ogg` copies of the tunes they'd replace.
+- `inst_demo.py` plays each cup's flavour instrument (clavinet, banjo, timpani, choir and so on) on a short phrase over a light beat, as `inst_*.ogg` in a folder you name.
 
 It needs numpy and scipy, and ffmpeg for the Ogg files. `uv` fetches the Python parts:
 

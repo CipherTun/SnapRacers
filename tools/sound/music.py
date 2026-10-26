@@ -17,9 +17,9 @@ glue compression and a limiter, by render_pop.
 import numpy as np
 
 from synth import (
-    RATE, adsr, bandpass, blep_saw, blep_square, circular_filter, compress, decay, drive, echo,
-    highpass, limit, lowpass, noise, normalise, note_freq, reverb, sine, saw, square, supersaw,
-    sweep_lowpass, ramp, seconds, times, triangle, widen,
+    RATE, adsr, bandpass, blep_saw, blep_square, circular_filter, compress, decay, drive, drive_clean, echo,
+    highpass, limit, lowpass, noise, normalise, note_freq, partials, phase_of, plucked, reverb, rng, sine,
+    saw, square, supersaw, sweep_lowpass, ramp, seconds, times, triangle, vowel, wah, widen,
 )
 
 # Chords by name, as the notes in them from the root up, in semitones.
@@ -1108,6 +1108,320 @@ def pop_pluck(f, d, v):
     env = decay(n, 0.06)
     tone = lowpass(tone, 900) * (1.0 - env) + lowpass(tone, 6000) * env
     return tone * decay(n, 0.2) * adsr(n, 0.001, 0.0, 1.0, 0.02) * 0.8 * v
+
+
+# Flavour for each cup, played over the shared palette. Some give back
+# (2, n) stereo, like the palette.
+
+def clavinet(f, d, v):
+    """A funky clavinet: a string hit near the pickup, so it's bright and
+    nasal, damped short as the key comes up."""
+    n = seconds(d + 0.03)
+    string = plucked(f, n, 0.07, 1.5, 0.5, harmonics=30)
+    nasal = bandpass(string, 900, 2600)
+    tone = highpass(string, f * 0.7) * 0.6 + nasal * 0.9
+    return drive_clean(tone * adsr(n, 0.001, 0.15, 0.7, 0.025), 1.8) * 0.65 * v
+
+
+def anvil(_f, _d, v):
+    """An anvil clank for the foundry: a hammer on steel, ringing with out of
+    tune overtones."""
+    n = seconds(0.7)
+    ring = partials(1180.0, n, [(1.0, 0.6, 0.6), (1.59, 0.45, 0.4), (2.36, 0.35, 0.3), (3.11, 0.25, 0.18), (4.43, 0.2, 0.1)])
+    hit = bandpass(noise(n, 31), 2000, 9000) * decay(n, 0.008) * 0.6
+    return (ring + hit) * adsr(n, 0.0005, 0.0, 1.0, 0.05) * 0.45 * v
+
+
+def banjo(f, d, v):
+    """A banjo-ish pluck: picked close to the bridge so it twangs, honking
+    through its drum skin and dying away quickly."""
+    n = seconds(max(d, 0.3) + 0.15)
+    string = plucked(f, n, 0.11, 0.8, 1.3, stretch=0.0001)
+    pick = bandpass(noise(n, 32), 2000, 7000) * decay(n, 0.004) * 0.25
+    tone = string + bandpass(string, 1000, 2800) * 0.8 + pick
+    return tone * adsr(n, 0.0008, 0.0, 1.0, 0.04) * 0.4 * v
+
+
+def pop_whistle(f, d, v):
+    """Somebody whistling: a pure note that slides up into place, with a
+    wavering vibrato and a little breath."""
+    n = seconds(d + 0.06)
+    t = times(n)
+    scoop = 1.0 - 0.04 * np.exp(-t / 0.025)
+    vib = 1.0 + 0.009 * np.sin(2 * np.pi * 5.8 * t) * np.clip((t - 0.12) * 4.0, 0.0, 1.0)
+    tone = sine(f * scoop * vib, n) + sine(f * 2.0 * scoop * vib, n) * 0.04
+    breath = bandpass(noise(n, 33), f * 0.85, f * 1.2) * 0.12 + highpass(noise(n, 34), 5000) * 0.015
+    return (tone + breath) * adsr(n, 0.03, 0.05, 0.85, 0.06) * 0.6 * v
+
+
+def timpani(f, d, v):
+    """A timpani: a big skin hit with a soft mallet. Its modes sit near 1,
+    1.5, 2 and 2.5 times the note, and the pitch sags a little as it's hit."""
+    n = seconds(max(d, 1.6))
+    sag = 1.0 + 0.02 * decay(n, 0.08)
+    modes = [(1.0, 1.0, 1.8), (1.5, 0.45, 1.1), (1.99, 0.3, 0.8), (2.44, 0.18 * v, 0.5), (2.98, 0.1 * v, 0.35), (0.62, 0.7, 0.12)]
+    tone = partials(f * sag, n, modes)
+    mallet = lowpass(noise(n, 35), 1500) * decay(n, 0.02) * 0.4
+    return drive(tone + mallet, 1.3) * adsr(n, 0.001, 0.0, 1.0, 0.1) * 0.7 * v
+
+
+def choir(f, d, v):
+    """A choir pad singing "aah": three voices a side, each a little out of
+    tune with its own vibrato, swelling in slowly. Stereo."""
+    n = seconds(d + 0.5)
+    t = times(n)
+    sides = []
+    for seed in (41, 141):
+        r = rng(seed + int(f))
+        buzz = np.zeros(n)
+        for _ in range(3):
+            vib = 1.0 + 0.004 * np.sin(2 * np.pi * r.uniform(4.6, 5.6) * t + r.uniform(0.0, 6.3))
+            buzz += blep_saw(f * (1.0 + r.uniform(-0.005, 0.005)) * vib, n, r.uniform())
+        sides.append(vowel(buzz, "a") + highpass(noise(n, seed), 5000) * 0.01)
+    return np.stack(sides) * adsr(n, 0.25, 0.3, 0.8, 0.4) * 0.5 * v
+
+
+def anthem_guitar(f, d, v):
+    """A guitar-ish lead for anthems: a driven string that bends up into the
+    note, a wide vibrato as it holds and a speaker's dark top."""
+    n = seconds(d + 0.1)
+    t = times(n)
+    bend = 2.0 ** (-np.exp(-t / 0.03) / 12.0)
+    vib = 1.0 + 0.008 * np.sin(2 * np.pi * 5.2 * t) * np.clip((t - 0.25) * 3.0, 0.0, 1.0)
+    string = blep_saw(f * bend * vib, n) * 0.7 + blep_square(f * 1.003 * bend * vib, n, 0.4) * 0.3
+    tone = drive_clean(lowpass(string, 3000) * 2.0, 4.0)
+    tone = highpass(lowpass(tone, 4200, order=4), 150) + bandpass(tone, 1200, 2500) * 0.4
+    return tone * adsr(n, 0.004, 0.2, 0.85, 0.07) * 0.38 * v
+
+
+def stadium_clap(_f, _d, v):
+    """A stadium of hands: a dozen claps a few milliseconds apart spread
+    across both sides, and the stands ringing after. Stereo."""
+    n = seconds(0.6)
+    r = rng(42)
+    out = np.zeros((2, n))
+    for k in range(12):
+        at = seconds(r.uniform(0.0, 0.022))
+        burst = bandpass(noise(n - at, 300 + k), r.uniform(800, 1300), r.uniform(4000, 7000)) * decay(n - at, r.uniform(0.02, 0.04))
+        pan = r.uniform(-1.0, 1.0)
+        out[0, at:] += burst * np.cos((pan + 1.0) * np.pi / 4.0)
+        out[1, at:] += burst * np.sin((pan + 1.0) * np.pi / 4.0)
+    stands = np.stack([bandpass(noise(n, s), 700, 4000) for s in (43, 143)]) * decay(n, 0.4) * adsr(n, 0.01, 0.0, 1.0, 0.0) * 0.12
+    return (out * 0.35 + stands) * adsr(n, 0.0005, 0.0, 1.0, 0.05) * 0.8 * v
+
+
+def chug(f, d, v):
+    """A distorted synth guitar chug: a power chord (the note, its fifth and
+    octave) driven hard and palm muted, so it's short and dark unless held.
+    Two takes, one each side. Stereo."""
+    n = seconds(d + 0.05)
+    mute = decay(n, 0.1 if d < 0.25 else 0.8)
+    sides = []
+    for k, cents in enumerate((-4.0, 5.0)):
+        g = 2.0 ** (cents / 1200.0)
+        x = sum(blep_saw(f * g * ratio, n, 0.37 * j + 0.2 * k) for j, ratio in enumerate((1.0, 1.4983, 2.0)))
+        x = drive_clean(lowpass(x, 2500) * 2.5, 5.0)
+        x = lowpass(x, 700) * (1.0 - mute) + lowpass(x, 4500, order=4) * mute
+        sides.append(highpass(x, 90))
+    return np.stack(sides) * adsr(n, 0.002, 0.05, 0.9, 0.03) * 0.4 * v
+
+
+def tom(f, d, v):
+    """A tom for fills: a skin that drops a little in pitch, with the stick's
+    crack on top. Play them high to low for a roll down the kit."""
+    n = seconds(0.6)
+    t = times(n)
+    body = partials(f * (1.0 + 0.5 * np.exp(-t / 0.03)), n, [(1.0, 1.0, 0.45), (1.6, 0.3, 0.15)])
+    crack = bandpass(noise(n, 36), 1500, 7000) * decay(n, 0.01) * 0.35
+    return drive(body + crack, 1.6) * adsr(n, 0.0005, 0.0, 1.0, 0.05) * 0.75 * v
+
+
+def vocoder_lead(f, d, v):
+    """A robot singer: a buzzy saw sung through a vowel that moves from "oh"
+    to "ee" over each note, with a breath of noise at the start."""
+    n = seconds(d + 0.06)
+    t = times(n)
+    buzz = blep_saw(f, n) * 0.6 + blep_saw(f * 1.005, n, 0.5) * 0.4 + noise(n, 37) * 0.15 * decay(n, 0.03)
+    motion = np.clip(t / max(d, 0.08), 0.0, 1.0)
+    sung = vowel(buzz, "o", motion, "i") * 2.2 + highpass(noise(n, 38), 4000) * decay(n, 0.015) * 0.1
+    return sung * adsr(n, 0.005, 0.08, 0.85, 0.05) * 0.7 * v
+
+
+def fair_organ(f, d, v):
+    """A fairground band organ: flue pipes at the note, the octave and the
+    twelfth, a reedy stop under them and a quick tremolo."""
+    n = seconds(d + 0.04)
+    t = times(n)
+    flue = partials(f, n, [(1.0, 1.0, 99.0), (2.0, 0.6, 99.0), (3.0, 0.35, 99.0), (4.0, 0.25, 99.0), (6.0, 0.1, 99.0), (8.0, 0.06, 99.0)])
+    reed = lowpass(blep_square(f, n, 0.25), 2800) * 0.35
+    chiff = bandpass(noise(n, 39), 1500, 6000) * decay(n, 0.015) * 0.1
+    trem = 1.0 + 0.12 * np.sin(2 * np.pi * 6.5 * t)
+    return (flue * 0.5 + reed + chiff) * trem * adsr(n, 0.006, 0.03, 0.9, 0.03) * 0.5 * v
+
+
+def calliope(f, d, v):
+    """A steam calliope: whistle pipes, each a little out of tune, a pure
+    note with a puff of steam and a quick wide vibrato."""
+    n = seconds(d + 0.05)
+    t = times(n)
+    off = 1.0 + rng(int(f * 10)).uniform(-0.006, 0.006)
+    vib = 1.0 + 0.01 * np.sin(2 * np.pi * 7.0 * t)
+    tone = partials(f * off * vib, n, [(1.0, 1.0, 99.0), (2.0, 0.3, 99.0), (3.0, 0.1, 99.0)])
+    steam = bandpass(noise(n, 40), f * 0.7, f * 1.6) * 0.15 + highpass(noise(n, 44), 3000) * decay(n, 0.03) * 0.15
+    return (tone + steam) * adsr(n, 0.015, 0.05, 0.9, 0.05) * 0.55 * v
+
+
+def pop_accordion(f, d, v):
+    """A musette accordion: three reeds, one in tune and one each a little
+    sharp and flat beating against it, the bellows pushing into each note.
+    Stereo, the out of tune reeds either side."""
+    n = seconds(d + 0.05)
+    t = times(n)
+
+    def reed(cents, ph):
+        g = 2.0 ** (cents / 1200.0)
+        return lowpass(blep_square(f * g, n, 0.32, ph) * 0.7 + blep_saw(f * g, n, ph) * 0.3, 3200)
+    mid, sharp, flat = reed(0.0, 0.0), reed(14.0, 0.3), reed(-12.0, 0.6)
+    bellows = adsr(n, 0.025, 0.12, 0.8, 0.05) * (1.0 + 0.05 * np.sin(2 * np.pi * 4.0 * t))
+    return np.stack([mid + sharp * 0.8 + flat * 0.4, mid + flat * 0.8 + sharp * 0.4]) * bellows * 0.3 * v
+
+
+def yodel(f, d, v):
+    """A yodel-like lead: low notes sung full in the chest ("oh"), high ones
+    flipped up light and pure, and every note cracks in from a third below."""
+    n = seconds(d + 0.08)
+    t = times(n)
+    vib = 1.0 + 0.007 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.15) * 4.0, 0.0, 1.0)
+    pitch = f * 2.0 ** (-3.0 * np.exp(-t / 0.018) / 12.0) * vib
+    chest = vowel(blep_saw(pitch, n), "o") * 1.6
+    head = sine(pitch, n) + sine(pitch * 2.0, n) * 0.12 + bandpass(noise(n, 45), f * 0.9, f * 2.5) * 0.05
+    w = np.clip((f - 500.0) / 60.0, 0.0, 1.0)
+    return (chest * (1.0 - w) + head * w * 0.8) * adsr(n, 0.01, 0.08, 0.85, 0.06) * 0.6 * v
+
+
+def pop_twang(f, d, v):
+    """A twangy guitar: a bridge pickup's bright snappy pluck that rings on,
+    with a gentle wobble from the vibrato arm as it holds."""
+    n = seconds(d + 0.3)
+    t = times(n)
+    wob = 1.0 + 0.006 * np.sin(2 * np.pi * 5.0 * t) * np.clip((t - 0.2) * 3.0, 0.0, 1.0)
+    string = plucked(f * wob, n, 0.09, 2.0, 0.7, harmonics=30)
+    tone = drive_clean(string * 1.4 + bandpass(string, 1400, 3500) * 0.8, 1.6)
+    return tone * adsr(n, 0.0008, 0.3, 0.75, 0.25) * 0.55 * v
+
+
+def brush(_f, _d, v):
+    """A brushed snare for the train beat: soft hits are a swish of wires,
+    accents a slap with the snare buzzing under it."""
+    n = seconds(0.25)
+    t = times(n)
+    swish = np.clip(t / 0.012, 0.0, 1.0) * np.exp(-t / 0.05)
+    wires = bandpass(noise(n, 46), 1500, 9000) * swish
+    slap = bandpass(noise(n, 47), 400, 4000) * decay(n, 0.06) + sine(np.geomspace(220, 180, n), n) * decay(n, 0.05) * 0.4
+    accent = np.clip((v - 0.5) * 2.5, 0.0, 1.0)
+    return (wires * 0.7 + slap * accent) * adsr(n, 0.0005, 0.0, 1.0, 0.03) * 0.6 * v
+
+
+def pop_marimba(f, d, v):
+    """A marimba: a round wooden bar, its overtones (tuned near 4 and 10
+    times the note) ringing for a moment, brighter the harder it's hit."""
+    n = seconds(max(d, 0.6))
+    tone = partials(f, n, [(1.0, 1.0, 0.55), (3.93, 0.3 * v, 0.08), (9.2, 0.08 * v, 0.02)])
+    mallet = bandpass(noise(n, 48), 300, 2500) * decay(n, 0.004) * 0.15
+    return (tone + mallet) * adsr(n, 0.001, 0.0, 1.0, 0.03) * 0.75 * v
+
+
+def conga(f, d, v):
+    """A conga: an open tone that sags a little in pitch, and on accents a
+    slap of fingers on the skin's edge."""
+    n = seconds(0.4)
+    t = times(n)
+    tone = partials(f * (1.0 + 0.06 * np.exp(-t / 0.02)), n, [(1.0, 1.0, 0.3), (1.59, 0.25, 0.08), (2.14, 0.12, 0.05)])
+    accent = np.clip((v - 0.5) * 2.5, 0.0, 1.0)
+    slap = bandpass(noise(n, 49), 1200, 6000) * decay(n, 0.015) * 0.6 * accent
+    thumb = lowpass(noise(n, 50), 600) * decay(n, 0.01) * 0.2
+    return drive(tone + slap + thumb, 1.3) * adsr(n, 0.0008, 0.0, 1.0, 0.04) * 0.7 * v
+
+
+def _flute(f, d, v, air, chiff, attack, seed):
+    """A flute's note: a soft tone that overblows for a moment as it starts,
+    with breath around it and a chiff of air at the start."""
+    n = seconds(d + 0.08)
+    t = times(n)
+    vib = 1.0 + 0.007 * np.sin(2 * np.pi * 5.0 * t) * np.clip((t - 0.15) * 3.0, 0.0, 1.0)
+    tone = partials(f * vib, n, [(1.0, 1.0, 99.0), (2.0, 0.15, 99.0), (3.0, 0.06, 99.0), (2.0, 0.35, 0.05)])
+    breath = bandpass(noise(n, seed), f * 0.8, f * 3.0) * air + highpass(noise(n, seed + 1), 4000) * air * 0.2
+    puff = bandpass(noise(n, seed + 2), 2500, 7000) * decay(n, 0.025) * chiff
+    return (tone + breath + puff) * adsr(n, attack, 0.06, 0.85, 0.08) * 0.55 * v
+
+
+def wood_flute(f, d, v):
+    """A wooden flute for the jungle: hollow and a little breathy, with a
+    clear chiff."""
+    return _flute(f, d, v, 0.12, 0.3, 0.025, 51)
+
+
+def air_flute(f, d, v):
+    """An airy flute for the sky: more breath than note, soft at the start."""
+    return _flute(f, d, v, 0.3, 0.08, 0.06, 54)
+
+
+def open_pad(f, d, v):
+    """An open pad for the sky: soft detuned saws that swell in slowly, an
+    octave up shimmer and a little air on top. Stereo."""
+    n = seconds(d + 0.6)
+    body = lowpass(supersaw(f, n, 5, 0.006, seed=int(f) % 79), 1800)
+    shimmer = lowpass(supersaw(f * 2.0, n, 3, 0.004, seed=int(f) % 73), 5000) * 0.25
+    air = np.stack([highpass(noise(n, s), 6000) for s in (57, 157)]) * 0.02
+    return (body + shimmer + air) * adsr(n, 0.4, 0.4, 0.8, 0.6) * 0.35 * v
+
+
+def wah_guitar(f, d, v):
+    """A funk guitar through a wah that opens with each pick and closes again
+    as the note holds."""
+    n = seconds(d + 0.08)
+    t = times(n)
+    string = drive_clean(plucked(f, n, 0.15, 0.8, 0.8) * 2.0, 2.0)
+    position = np.clip(t / 0.05, 0.0, 1.0) * (0.25 + 0.75 * np.exp(-t / 0.2))
+    tone = wah(string, position) * 1.8 + string * 0.15
+    return tone * adsr(n, 0.001, 0.05, 0.85, 0.03) * 0.6 * v
+
+
+def e_piano(f, d, v):
+    """An electric piano: a sine that barks when hit hard (a little FM), a
+    tine's ping on top and a tremolo that sways between the sides. Stereo."""
+    n = seconds(d + 0.4)
+    t = times(n)
+    p = phase_of(f, n)
+    index = (0.5 + 1.5 * v) * decay(n, 0.4) * min(1.0, 700.0 / f)
+    tone = np.sin(2 * np.pi * p + index * np.sin(2 * np.pi * p))
+    tine = partials(f, n, [(4.0, 0.06, 0.05), (7.0, 0.03, 0.02)])
+    body = (tone + tine) * decay(n, 2.5) * adsr(n, 0.002, 0.0, 1.0, 0.25)
+    sway = 0.3 * np.sin(2 * np.pi * 4.8 * t)
+    return np.stack([body * (1.0 - sway), body * (1.0 + sway)]) * 0.4 * v
+
+
+def horn_section(f, d, v):
+    """A brass section: trumpet and sax on the note either side, a trombone
+    an octave down in the middle, each a moment apart, scooping up and
+    brightening as they push. Stereo."""
+    n = seconds(d + 0.1)
+
+    def horn(g, seed, late, dark):
+        r = rng(seed)
+        m = n - seconds(late)
+        t = times(m)
+        scoop = 1.0 - 0.03 * np.exp(-t / 0.04)
+        vib = 1.0 + 0.004 * np.sin(2 * np.pi * r.uniform(5.0, 6.0) * t) * np.clip((t - 0.2) * 3.0, 0.0, 1.0)
+        x = blep_saw(f * g * scoop * vib, m, r.uniform())
+        bright = np.clip(t / 0.04, 0.0, 1.0) * (0.55 + 0.45 * np.exp(-t / 0.15))
+        x = lowpass(x, 900) * (1.0 - bright) + lowpass(x, 4500 * dark) * bright
+        x = (x + bandpass(x, 1000, 1800) * 0.6) * adsr(m, 0.015, 0.1, 0.8, 0.07)
+        return np.concatenate([np.zeros(n - m), x])
+    trumpet = horn(1.0, 61, 0.0, 1.0)
+    sax = horn(1.003, 62, 0.008, 0.7)
+    bone = horn(0.5, 63, 0.004, 0.8) * 0.8
+    return drive(np.stack([trumpet + sax * 0.5 + bone * 0.7, sax + trumpet * 0.5 + bone * 0.7]), 1.3) * 0.3 * v
 
 
 # Writing songs in sections.

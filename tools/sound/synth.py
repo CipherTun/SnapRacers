@@ -105,6 +105,37 @@ def supersaw(freq, length, voices=7, spread=0.01, seed=0, width=0.8):
     return out / np.sqrt(voices)
 
 
+def partials(freq, length, ratios, phase=0.0):
+    """Sines at `ratios` of `freq`, as (ratio, gain, seconds to die away)
+    triples, for bells, bars and drum skins. Any above 0.45 of RATE are left
+    out so high notes don't alias."""
+    p = phase_of(freq, length) + phase
+    top = float(np.max(np.broadcast_to(freq, (length,))))
+    out = np.zeros(length)
+    for ratio, gain, time in ratios:
+        if ratio * top < RATE * 0.45:
+            out += np.sin(2 * np.pi * ratio * p) * gain * decay(length, time)
+    return out
+
+
+def plucked(freq, length, pluck=0.2, ring=1.0, damping=1.0, stretch=0.0, harmonics=40):
+    """A plucked string added up from its harmonics. `pluck` is where along
+    the string it's picked (small is near the bridge, so brighter), `ring`
+    how long the lowest harmonic sounds in seconds, `damping` how much
+    quicker the higher ones die and `stretch` how far they run sharp."""
+    p = phase_of(freq, length)
+    top = float(np.max(np.broadcast_to(freq, (length,))))
+    t = times(length)
+    out = np.zeros(length)
+    for k in range(1, harmonics + 1):
+        ratio = k * (1.0 + stretch * k * k) ** 0.5
+        if ratio * top >= RATE * 0.45:
+            break
+        gain = abs(np.sin(np.pi * k * pluck)) / k
+        out += np.sin(2 * np.pi * ratio * p) * gain * np.exp(-t * 6.9 / ring * (1.0 + damping * (k - 1) * 0.35))
+    return out
+
+
 def noise(length, seed):
     return rng(seed).uniform(-1.0, 1.0, length)
 
@@ -200,6 +231,47 @@ def resonator(freq, time, length):
 def drive(x, amount):
     """Soft clipping, for grit."""
     return np.tanh(x * amount) / np.tanh(amount)
+
+
+def drive_clean(x, amount):
+    """Soft clipping done at four times the rate, so a hard drive on a high
+    note doesn't fold its harmonics back down as hiss."""
+    up = signal.resample_poly(x, 4, 1)
+    return signal.resample_poly(np.tanh(up * amount) / np.tanh(amount), 1, 4)
+
+
+# Vowels as their first three formants: (Hz, how wide, gain).
+VOWELS = {
+    "a": [(750, 120, 1.0), (1200, 140, 0.55), (2600, 200, 0.3)],
+    "o": [(450, 100, 1.0), (800, 120, 0.5), (2800, 220, 0.12)],
+    "u": [(330, 80, 1.0), (700, 110, 0.25), (2400, 220, 0.06)],
+    "e": [(450, 90, 1.0), (1900, 160, 0.45), (2600, 200, 0.3)],
+    "i": [(290, 70, 1.0), (2250, 180, 0.4), (3000, 240, 0.3)],
+}
+
+
+def vowel(x, shape, motion=None, to=None):
+    """Shapes a buzzy tone into a sung vowel. With `to` and `motion` (0 to 1,
+    a value a sample) it moves from one vowel to the other."""
+    def bank(name):
+        return sum(bandpass(x, f - w, f + w) * g for f, w, g in VOWELS[name])
+    out = bank(shape)
+    if to is not None:
+        out = out * (1.0 - motion) + bank(to) * motion
+    return out
+
+
+def wah(x, position, low=350.0, high=2600.0, bands=7):
+    """A wah pedal: a peak that moves from `low` to `high` Hz as `position`
+    goes from 0 to 1 (a value a sample). Made by fading between fixed bands,
+    which is quick and close enough."""
+    centres = np.geomspace(low, high, bands)
+    where = np.clip(position, 0.0, 1.0) * (bands - 1)
+    out = np.zeros(len(x))
+    for k, c in enumerate(centres):
+        weight = np.clip(1.0 - np.abs(where - k), 0.0, 1.0)
+        out += bandpass(x, c * 0.8, c * 1.25) * weight
+    return out
 
 
 def reverb(x, wet=0.2, size=1.0, seed=0):
