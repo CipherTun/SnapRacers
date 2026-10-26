@@ -9,8 +9,8 @@ extends Control
 ## the garage, then the driver builder, and lets each one draw for a few
 ## frames. That covers the road, grass, walls, pillars, karts with drivers, a
 ## part knocked loose, a ghost, a cannonball, tire smoke and boost flames, a
-## shockwave, lightning, a shield,
-## and the garage's see-through and picked out parts, all with the sun and
+## shockwave, lightning, a shield, a cup's podium with its lamp, trophies
+## and confetti, and the garage's see-through and picked out parts, all with the sun and
 ## shadows. The race is a storm at night and then snow by day, losing its fog
 ## halfway, so fog, clear skies, rain, snow, puddles, lamps and kart lights are
 ## all drawn too.
@@ -124,6 +124,7 @@ func _warm_race(weather: String, time: String) -> Node:
 	# Tire smoke and a boost's glow behind it.
 	kart.fx.show_sample()
 	_gadget_glows(race)
+	_podium_sample(race)
 	if weather == "snow":
 		# A snow drift, with its own see-through shader, just ahead.
 		var drift := Drifts.sample(Vector3(3.0, 0.4, 4.0))
@@ -146,6 +147,32 @@ func _gadget_glows(race: Race) -> void:
 	kart._show_zap()
 	kart.shield_left = Kart.SHIELD_TIME
 	kart._show_bubble()
+
+
+## A podium in front of the camera as it is once the show's over, with the
+## trophy held up, confetti coming down, a place tag and its lamp on, and a
+## trophy in each finish beside it. Its own camera stays off.
+func _podium_sample(race: Race) -> void:
+	var view := get_viewport().get_camera_3d()
+	if view == null:
+		return
+	var everyone := race.racers.slice(0, 4).map(func(r: Race.Racer) -> Array: return [r.name, r.kart.design, r.kart.driver if r.kart.driver != null else Kart.default_driver()])
+	var at := view.global_position - view.global_basis.z * 10.0
+	at.y = race.player.kart.global_position.y
+	var cup: Dictionary = GrandPrix.cups()[0]
+	var podium := Podium.new(everyone, Podium.colour_of(cup), [at, Podium._turns_toward(view.global_position - at), false])
+	podium.lit = true
+	if everyone.size() > 3:
+		podium.players = { everyone[3][0]: UiKit.ACCENT }
+	podium.trophy_spec = cup.get("trophy", {})
+	race.add_child(podium)
+	podium.finish()
+	view.make_current()
+	for i in TrophyModel.FINISHES.size():
+		var trophy := TrophyModel.make(podium.trophy_spec, podium.trophy_colour, TrophyModel.FINISHES[i])
+		trophy.scale = Vector3.ONE * 0.3
+		race.add_child(trophy)
+		trophy.global_position = at + view.global_basis.x * (i - 1.5) * 0.6 + Vector3.UP * 1.0
 
 
 ## Halfway through the snow, the fog goes, so clear weather is covered too,
