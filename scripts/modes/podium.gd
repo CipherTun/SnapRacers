@@ -24,10 +24,8 @@ const HEIGHTS := [0.8, 0.56, 0.38]
 const ACROSS := [0.0, -1.0, 1.0]
 ## The size of a square of the numbers on the fronts, which are 3 by 5.
 const PIXEL := 0.06
-## How far behind the steps the karts are parked, and how far each is
-## turned out from straight ahead, in degrees.
-const PARKED := 0.6
-const TURNED := [0.0, -18.0, 18.0]
+## How far each kart is turned in from straight ahead, in degrees.
+const TURNED := [-25.0, -35.0, 35.0]
 ## How thick the plate under it all is, and its colour.
 const BASE := 0.12
 const BASE_COLOUR := Color("#a3a2a4")
@@ -37,6 +35,11 @@ const SPACING := 0.6
 ## camera ends up at most.
 const ROOM := 6.0
 const CAMERA_OUT := 9.0
+## How far back the camera can go on a narrow screen to fit everyone.
+const CAMERA_FAR := 22.0
+## How long taps and keys are ignored after it goes up, so a double tap on
+## the last screen doesn't skip it.
+const IGNORE_INPUT := 0.7
 ## The lamp over it after dark.
 const LAMP_ENERGY := 3.0
 const LAMP_RANGE := 10.0
@@ -185,10 +188,9 @@ func _ready() -> void:
 		_number(kit, place + 1, Vector3(x, height - HEIGHTS[place] * 0.5, STEP_DEPTH * 0.5), ink)
 	kit.build(self)
 
-	# The karts are parked behind, far enough apart that the biggest fit.
-	var gap := STEP_WIDTH * 1.2
-	for place in mini(3, order.size()):
-		gap = maxf(gap, KartModel.bounds(order[place][1]).size.x + 0.5)
+	# The karts are parked off to the sides at an angle, past the ends of the
+	# steps and a little back. The winner's is behind the second's.
+	var spots := _parking()
 	_reach = STEP_WIDTH * 1.5 + 0.6
 	for place in order.size():
 		var entry: Array = order[place]
@@ -209,8 +211,8 @@ func _ready() -> void:
 			var kart := KartModel.make(entry[1], entry[2], false)
 			kart.name = "Kart%d" % (place + 1)
 			var box := KartModel.bounds(entry[1])
-			var middle_at := Vector3(ACROSS[place] * gap, 0.0, -(STEP_DEPTH * 0.5 + PARKED + box.size.z * 0.5))
-			var where := _placed(middle_at, deg_to_rad(TURNED[place]))
+			var middle_at: Vector3 = spots[place][0]
+			var where := _placed(middle_at, deg_to_rad(spots[place][1]))
 			# The box's middle over the spot, and its bottom on the ground.
 			var centre := box.get_center()
 			where.origin -= where.basis * Vector3(centre.x, 0.0, centre.z)
@@ -218,7 +220,7 @@ func _ready() -> void:
 			kart.transform = where
 			add_child(kart)
 			karts.append(kart)
-			_reach = maxf(_reach, absf(middle_at.x) + box.size.x * 0.5 + 0.3)
+			_reach = maxf(_reach, absf(middle_at.x) + _radius(box) + 0.3)
 
 	if lit:
 		var lamp := OmniLight3D.new()
@@ -242,11 +244,30 @@ func _ready() -> void:
 	camera.make_current()
 
 
+## How far a kart's box reaches from its middle however it's turned.
+func _radius(box: AABB) -> float:
+	return Vector2(box.size.x, box.size.z).length() * 0.5
+
+
+## Where each of the three karts is parked, [middle, yaw in degrees], first
+## place first. Each is turned in toward the camera.
+func _parking() -> Array:
+	var r: Array = []
+	for place in 3:
+		r.append(_radius(KartModel.bounds(order[place][1])) if place < order.size() else 1.0)
+	var edge := STEP_WIDTH * 1.5 + 0.4
+	var back := STEP_DEPTH * 0.5 + 0.2
+	var second := Vector3(-(edge + r[1]), 0.0, -(back + r[1]))
+	var third := Vector3(edge + r[2], 0.0, -(back + r[2]))
+	var first := Vector3(second.x + r[0] * 0.9, 0.0, second.z - (r[0] + r[1]) * 1.1)
+	return [[first, TURNED[0]], [second, TURNED[1]], [third, TURNED[2]]]
+
+
 ## Where the `n`th of the rest of the field stands, by turns either side of
 ## the steps, the nearest first.
 func _in_row(n: int) -> Vector3:
 	var side := -1.0 if n % 2 == 0 else 1.0
-	return Vector3(side * (STEP_WIDTH * 1.5 + 0.5 + (n / 2) * SPACING), 0.0, STEP_DEPTH * 0.5 - 0.1)
+	return Vector3(side * (STEP_WIDTH * 1.5 + 0.5 + (n / 2) * SPACING), 0.0, STEP_DEPTH * 0.5 + 0.9)
 
 
 ## How far out the camera stops, so everyone fits across the screen.
@@ -254,7 +275,7 @@ func _camera_distance() -> float:
 	var size := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(16.0, 9.0)
 	var aspect := size.x / maxf(size.y, 1.0)
 	var across := atan(tan(deg_to_rad(camera.fov) * 0.5) * aspect)
-	return minf(_reach / tan(across) * 1.1 + STEP_DEPTH, CAMERA_OUT)
+	return minf(_reach / tan(across) * 1.1 + STEP_DEPTH, CAMERA_FAR if aspect < 1.7 else CAMERA_OUT)
 
 
 ## The ground's height at a point in the podium's own space, in the world.
@@ -325,6 +346,6 @@ func _unhandled_input(event: InputEvent) -> void:
 	var tapped: bool = event is InputEventScreenTouch and event.pressed
 	var clicked: bool = event is InputEventMouseButton and event.pressed
 	var key: bool = (event is InputEventKey or event is InputEventJoypadButton) and event.pressed and not event.is_echo()
-	if tapped or clicked or key:
+	if (tapped or clicked or key) and _time >= IGNORE_INPUT:
 		get_viewport().set_input_as_handled()
 		finish()

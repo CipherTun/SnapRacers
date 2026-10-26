@@ -317,6 +317,29 @@ func clear_around(at: Vector3, radius: float) -> void:
 		for mover in _movers:
 			if mover[3] == group:
 				mover[4] = false
+	_clear_rubble(here, radius)
+
+
+## Hides the loose rubble lying or tumbling within `radius` of `here` (local).
+func _clear_rubble(here: Vector3, radius: float) -> void:
+	for piece in _rubble:
+		var multi: MultiMesh = _rubble_draw[piece[1]].multimesh
+		var body: RigidBody3D = piece[0]
+		var o: Vector3
+		if is_instance_valid(body) and body.is_inside_tree():
+			o = to_local(body.global_position)
+		else:
+			var drawn := multi.get_instance_transform(piece[2])
+			if drawn.basis.get_scale() == Vector3.ZERO:
+				continue
+			o = drawn.origin
+		if Vector2(o.x - here.x, o.z - here.z).length() >= radius:
+			continue
+		multi.set_instance_transform(piece[2], Transform3D(Basis.from_scale(Vector3.ZERO), Vector3.ZERO))
+		if is_instance_valid(body):
+			body.queue_free()
+		_moving.erase(piece)
+		piece[0] = null
 
 
 ## The whole thing comes down.

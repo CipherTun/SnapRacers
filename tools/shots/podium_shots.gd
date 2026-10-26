@@ -3,7 +3,7 @@ extends Node
 ## Pictures of the podium after a cup's last race, in the weather and at the
 ## time of day asked for: as the camera sweeps in and once it's still. It
 ## needs a screen.
-##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder]
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT]
 
 const OUT := "res://build/shots"
 ## When to take them, in seconds after the podium goes up.
@@ -19,7 +19,10 @@ func _ready() -> void:
 	var time: String = args[2] if args.size() > 2 else "day"
 	var out: String = args[3] if args.size() > 3 else OUT
 	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-	DisplayServer.window_set_size(Vector2i(1280, 720))
+	var size := Vector2i(1280, 720)
+	if args.size() > 4:
+		size = Vector2i(int(args[4].get_slice("x", 0)), int(args[4].get_slice("x", 1)))
+	DisplayServer.window_set_size(size)
 	seed(1)
 	host = Node.new()
 	add_child(host)
@@ -52,8 +55,8 @@ func _ready() -> void:
 		RenderingServer.force_draw.call_deferred()
 		await RenderingServer.frame_post_draw
 		var picture := get_viewport().get_texture().get_image()
-		if picture.get_size() != Vector2i(1280, 720):
-			picture.resize(1280, 720, Image.INTERPOLATE_LANCZOS)
+		if picture.get_size() != size:
+			picture.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
 		picture.save_png("%s/podium_%s_%s_%s_%d.png" % [out, cup, weather, time, i + 1])
 	print("saved podium_%s_%s_%s in %d ms" % [cup, weather, time, Time.get_ticks_msec() - start])
 	get_tree().quit()

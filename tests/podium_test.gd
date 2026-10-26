@@ -110,8 +110,33 @@ func _cup(id: String) -> void:
 	if not Scenery.theme_named(race.track.theme).get("void", false):
 		check(off > race.track.width, "beside the road, off it")
 	check(errors.count == before, "with no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
+	# Taps right after it goes up are ignored.
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	var skipped := [false]
+	podium.finished.connect(func(): skipped[0] = true)
+	podium._unhandled_input(tap)
+	check(not skipped[0], "a tap right after it goes up doesn't skip it")
+	podium._time = Podium.IGNORE_INPUT + 0.1
+	# A narrow screen pulls the camera back to fit the rows.
+	var wide := podium._camera_distance()
+	var narrow := await _distance_in(podium, Vector2i(768, 1024))
+	check(narrow > wide and narrow <= Podium.CAMERA_FAR, "the camera pulls back on a portrait screen (%.1f m, %.1f m wide)" % [narrow, wide])
 	podium.finish()
 	await frames(3)
 	check(screen() is GrandPrixStandings, "then the standings come up")
 	Game.grand_prix = null
 	await frames(2)
+
+
+## How far out a copy of `podium` puts its camera in a viewport of `size`.
+func _distance_in(podium: Podium, size: Vector2i) -> float:
+	var port := SubViewport.new()
+	port.size = size
+	add_child(port)
+	var copy := Podium.new(podium.order, podium.colour, [podium.middle, podium.facing, false])
+	port.add_child(copy)
+	await frames(1)
+	var out := copy._camera_distance()
+	port.queue_free()
+	return out
