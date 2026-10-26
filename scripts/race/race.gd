@@ -841,6 +841,10 @@ func show_podium(gp: GrandPrix) -> Podium:
 	for row in gp.standings():
 		if raced.has(row[0]):
 			everyone.append([row[0]] + raced[row[0]])
+	# The people playing here, in their colours from the standings.
+	var playing := {}
+	for i in humans.size():
+		playing[humans[i].name] = UiKit.PLAYERS[mini(i, UiKit.PLAYERS.size() - 1)] if humans.size() > 1 else UiKit.ACCENT
 	for racer in _menus.keys():
 		close_menu(racer)
 	for racer in racers:
@@ -868,6 +872,7 @@ func show_podium(gp: GrandPrix) -> Podium:
 			child.queue_free()
 	podium = Podium.new(everyone, Podium.colour_of(gp.cup), Podium.find_spot(track, builder), builder.ground_at)
 	podium.lit = conditions.beams()
+	podium.players = playing
 	# Your own cups' trophies are picked from their names, as on the cups page.
 	var cup := gp.cup
 	podium.trophy_spec = cup.get("trophy", TrophyModel.spec_for(str(cup.get("name", ""))))

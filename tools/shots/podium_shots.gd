@@ -3,8 +3,10 @@ extends Node
 ## Pictures of the podium after a cup's last race, in the weather and at the
 ## time of day asked for: through the show (jumping up, the trophy coming
 ## down, held up, clapping and confetti), close ups of the winner and the
-## field, and with the standings over it. "two" at the end is a cup for two. It needs a screen.
-##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT] [two]
+## field, and with the standings over it. "two" after the size is a cup for
+## two ("one" for one), and then where the players finish, like 5 or 2,7.
+## It needs a screen.
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT] [two] [places]
 
 const OUT := "res://build/shots"
 ## When to take them, in seconds after the podium goes up.
@@ -62,11 +64,23 @@ func _ready() -> void:
 		var other := Game.player_two_name()
 		order = order.filter(func(n): return n != one and n != other)
 		order = [other, order[0], one] + order.slice(1)
+	var places := ""
+	if args.size() > 6:
+		places = args[6]
+		var people := [Game.player_one_name(), Game.player_two_name()] if two else [Game.player_name()]
+		var at := Array(places.split(",")).map(func(p): return int(p))
+		people = people.slice(0, at.size())
+		order = order.filter(func(n): return not people.has(n))
+		# Put in the earliest place first, so the later one lands where asked.
+		var by_place := range(people.size())
+		by_place.sort_custom(func(a, b): return at[a] < at[b])
+		for i in by_place:
+			order.insert(at[i] - 1, people[i])
 	Game.finish_grand_prix_race(order)
 	var podium: Podium = race.podium
 	DirAccess.make_dir_recursive_absolute(out)
 	var start := Time.get_ticks_msec()
-	var named := "%s_%s_%s%s_%dx%d" % [cup, weather, time, "_two" if two else "", size.x, size.y]
+	var named := "%s_%s_%s%s%s_%dx%d" % [cup, weather, time, "_two" if two else "", "_" + places.replace(",", "-") if places != "" else "", size.x, size.y]
 	for i in AT.size():
 		while podium._time < AT[i]:
 			await get_tree().process_frame

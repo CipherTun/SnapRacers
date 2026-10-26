@@ -12,7 +12,8 @@ extends Node3D
 ## As it does, third, second and first jump up onto their steps, the cup's
 ## trophy comes down from above to the winner, who holds it up, and confetti
 ## falls in the cup's colours to a fanfare and a cheer. The rest of the
-## field clap, except the last few, who sulk. Once it's over, or on a tap or
+## field clap, except the last few, who sulk. A player who isn't on the
+## steps stands at the front of the crowd with their place over them. Once it's over, or on a tap or
 ## a key, `finished` is sent, and everything jumps to how it ends.
 ##
 ## It's laid out in its own space with the front facing +Z, and turned a
@@ -36,6 +37,15 @@ const BASE := 0.12
 const BASE_COLOUR := Color("#a3a2a4")
 ## The gap between the people standing in the rows either side.
 const SPACING := 0.6
+## How far forward a player off the steps stands, in front of the rows, and
+## how far over their hips their place tag sits.
+const FRONT := 2.6
+const TAG_HIGH := 0.75
+## The tags are drawn under the standings, which are on layer 10.
+const TAG_LAYER := 5
+## How much of the screen's height is kept clear at the top and bottom when
+## the camera fits everyone in.
+const EDGE := 0.04
 ## How much room it needs around its middle, and how far from the middle its
 ## camera ends up at most.
 const ROOM := 6.0
@@ -115,6 +125,11 @@ var facing := 0
 ## How high the ground is anywhere (TrackBuilder.ground_at()), or null for
 ## level with `middle` all round, as on the road.
 var ground: Variant = null
+## The people playing, by name, with the colour their place tag is in,
+## player 1 first. Set it before it goes into the scene.
+var players := {}
+## The place tags over the players off the steps, by place from 0.
+var tags := {}
 ## Each place's driver and kart, first place first, then the rest.
 var drivers: Array[CharacterRig] = []
 var karts: Array[Node3D] = []
@@ -281,6 +296,7 @@ func _ready() -> void:
 	# steps and a little back. The winner's is behind the second's.
 	var spots := _parking()
 	_reach = STEP_WIDTH * 1.5 + 0.6
+	var in_row := 0
 	for place in order.size():
 		var entry: Array = order[place]
 		var rig := CharacterRig.new(entry[2], false)
@@ -293,8 +309,13 @@ func _ready() -> void:
 			var step := Vector3(ACROSS[place] * STEP_WIDTH, top + HEIGHTS[place], 0.0)
 			_on_step.append(_placed(step + Vector3.UP * CharacterRig.FEET_BELOW, 0.0).origin)
 			feet = Vector3(step.x, top, WAITING)
+		elif players.has(entry[0]):
+			# Player 1 on the left, player 2 on the right.
+			feet = _in_front(-1.0 if players.keys().find(entry[0]) == 0 else 1.0)
+			feet.y = _ground_at(feet)
 		else:
-			feet = _in_row(place - 3)
+			feet = _in_row(in_row)
+			in_row += 1
 			feet.y = _ground_at(feet)
 			_reach = maxf(_reach, absf(feet.x) + 0.4)
 		rig.transform = _placed(feet + Vector3.UP * CharacterRig.FEET_BELOW, 0.0)
@@ -324,6 +345,15 @@ func _ready() -> void:
 		lamp.transform = _placed(Vector3(0.0, top + 3.5, 2.5), 0.0)
 		add_child(lamp)
 
+	var layer := CanvasLayer.new()
+	layer.name = "Tags"
+	layer.layer = TAG_LAYER
+	add_child(layer)
+	for place in range(3, order.size()):
+		if players.has(order[place][0]):
+			tags[place] = _make_tag(place, players[order[place][0]])
+			layer.add_child(tags[place])
+
 	confetti = _make_confetti(top)
 	add_child(confetti)
 	Sounds.music("")
@@ -334,7 +364,7 @@ func _ready() -> void:
 	add_child(camera)
 	_top = top
 	_look = Vector3(0.0, top + 0.7, -0.4)
-	var out := _camera_distance()
+	var out := _seeing_all(_camera_distance(), top + 2.1)
 	_to = _looking(Vector3(0.0, top + 2.1, out), _look)
 	var start := Vector3(0.0, top + 7.0, out * 1.8).rotated(Vector3.UP, deg_to_rad(50.0))
 	_from = _looking(start, _look)
@@ -368,13 +398,98 @@ func _in_row(n: int) -> Vector3:
 	return Vector3(side * (STEP_WIDTH * 1.5 + 0.5 + (n / 2) * SPACING), 0.0, STEP_DEPTH * 0.5 + 0.9)
 
 
+## Where a player off the steps stands, on the left or right.
+func _in_front(side: float) -> Vector3:
+	return Vector3(side * (STEP_WIDTH * 1.5 + 0.2), 0.0, FRONT)
+
+
+## A place tag like "5th" in the player's colour.
+func _make_tag(place: int, tint: Color) -> PanelContainer:
+	var tag := PanelContainer.new()
+	tag.name = "Tag%d" % (place + 1)
+	tag.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	tag.add_theme_stylebox_override("panel", UiKit.pad(UiKit.slant(tint), 14, 2, UiKit.LEAN, 36.0))
+	var label := Label.new()
+	label.text = RaceHud.ordinal(place + 1)
+	label.add_theme_font_override("font", UiKit.font("heading"))
+	label.add_theme_font_size_override("font_size", UiKit.LEAD)
+	label.add_theme_color_override("font_color", UiKit.INK)
+	tag.add_child(label)
+	return tag
+
+
+## Where the top of a player's tag is in the world.
+func _tag_point(place: int) -> Vector3:
+	return drivers[place].global_position + Vector3.UP * TAG_HIGH
+
+
+## Keeps each tag over its player's head, hidden when they're off screen or
+## it would be under the standings.
+func _place_tags() -> void:
+	if tags.is_empty():
+		return
+	var view := get_viewport().get_visible_rect().size
+	for place in tags:
+		var tag: Control = tags[place]
+		var at := _tag_point(place)
+		var size := tag.get_combined_minimum_size()
+		var point := camera.unproject_position(at)
+		tag.size = size
+		tag.position = (point - Vector2(size.x * 0.5, size.y)).round()
+		# Kept on screen sideways while their head is.
+		tag.position.x = clampf(tag.position.x, 0.0, view.x - size.x)
+		var box := Rect2(tag.position, size)
+		var shown := not camera.is_position_behind(at) and Rect2(Vector2.ZERO, view).has_point(point) and box.position.y >= 0.0
+		if _settled >= 0.0 and (_clear >= 1.0 or box.end.x > view.x * _clear):
+			shown = false
+		tag.visible = shown
+
+
 ## How far out the camera stops, so everyone fits across the screen, or
 ## across the part of its width that's `clear` from the left.
 func _camera_distance(clear := 1.0) -> float:
 	var size := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(16.0, 9.0)
 	var aspect := size.x * clear / maxf(size.y, 1.0)
 	var across := atan(tan(deg_to_rad(camera.fov) * 0.5) * aspect)
-	return minf(_reach / tan(across) * 1.1 + STEP_DEPTH, CAMERA_FAR if aspect < 1.7 else CAMERA_OUT)
+	var out := _reach / tan(across) * 1.1 + STEP_DEPTH
+	# The players in front are nearer the camera, so they need more room.
+	for place in tags:
+		var local := _in_front(-1.0)
+		out = maxf(out, (absf(local.x) + 0.5) / tan(across) * 1.1 + local.z)
+	return minf(out, CAMERA_FAR if aspect < 1.7 else CAMERA_OUT)
+
+
+## `out`, or further out if that leaves anyone in front, or their tag, off
+## the top or bottom of the screen, with the camera at `high`.
+func _seeing_all(out: float, high: float) -> float:
+	var points := _front_points()
+	if points.is_empty() or not is_inside_tree():
+		return out
+	var was := camera.global_transform
+	var height := get_viewport().get_visible_rect().size.y
+	while out < CAMERA_FAR:
+		camera.global_transform = _looking(Vector3(0.0, high, out), _look)
+		var fits := true
+		for p in points:
+			var y := camera.unproject_position(p).y
+			fits = fits and y > height * EDGE and y < height * (1.0 - EDGE)
+		if fits:
+			break
+		out = minf(out + 0.25, CAMERA_FAR)
+	camera.global_transform = was
+	return out
+
+
+## The feet of the players off the steps and the tops of their tags.
+func _front_points() -> Array[Vector3]:
+	var points: Array[Vector3] = []
+	for place in tags:
+		points.append(drivers[place].global_position - Vector3.UP * CharacterRig.FEET_BELOW)
+		# The tag's top corners, roughly, as it's wider than a head.
+		var across := _turned(Vector3.RIGHT, facing) * 0.35
+		points.append(_tag_point(place) + Vector3.UP * 0.15 - across)
+		points.append(_tag_point(place) + Vector3.UP * 0.15 + across)
+	return points
 
 
 ## The ground's height at a point in the podium's own space, in the world.
@@ -434,12 +549,14 @@ func _process(delta: float) -> void:
 		var turned := _from.basis.get_rotation_quaternion().slerp(_to.basis.get_rotation_quaternion(), smooth)
 		camera.global_transform = Transform3D(Basis(turned), _from.origin.lerp(_to.origin, smooth))
 		camera.h_offset = lerpf(_shift_from, _shift_to, smooth)
+		_place_tags()
 		return
 	var t := clampf(_time / SWEEP, 0.0, 1.0)
 	var eased := 1.0 - pow(1.0 - t, 3.0)
 	var from := _from.origin.lerp(_to.origin, eased)
 	var turn := _from.basis.get_rotation_quaternion().slerp(_to.basis.get_rotation_quaternion(), eased)
 	camera.global_transform = Transform3D(Basis(turn), from)
+	_place_tags()
 	if _time >= SWEEP + HOLD:
 		finish()
 
@@ -699,19 +816,17 @@ func _resized() -> void:
 ## Works out where the camera ends up, `_to` and `_shift_to`, for the
 ## screen's size now.
 func _aim() -> void:
-	# Close enough that the steps and karts fill most of the clear part. The
-	# rows either side can go off its edges.
-	var size := get_viewport().get_visible_rect().size
+	# Close enough that the steps, karts and any players in front fill most of
+	# the clear part. The rows either side can go off its edges.
+	var points := _core_points() + _front_points()
 	var was_shift := camera.h_offset
-	camera.h_offset = 0.0
-	var fit := _fit(_core_points(), _clear * SETTLE_FILL, _top + SETTLE_HIGH)
+	var fit := _fit(points, _top + SETTLE_HIGH)
+	var out := _seeing_all(fit[0], _top + SETTLE_HIGH)
+	if out > fit[0]:
+		fit = _fit(points, _top + SETTLE_HIGH, out)
 	camera.h_offset = was_shift
 	_to = _looking(Vector3(0.0, _top + SETTLE_HIGH, fit[0]), _look)
-	# Shifting the camera sideways moves the middle of what's fitted into the
-	# middle of the clear part without turning it.
-	var half_across := tan(deg_to_rad(camera.fov) * 0.5) * size.x / maxf(size.y, 1.0)
-	var away := _to.origin.distance_to(_placed(_look, 0.0).origin)
-	_shift_to = (1.0 - _clear + fit[1]) * away * half_across
+	_shift_to = fit[1]
 
 
 ## The corners of the steps and the parked karts, in the world.
@@ -728,26 +843,37 @@ func _core_points() -> Array[Vector3]:
 
 
 ## How far out the camera goes in front of the steps, at `high`, so `points`
-## fill `fill` of the screen's width, and where their middle is then across
-## the screen, from -1 at the left edge to 1 at the right. Measured through
-## the camera, as the karts are further back than the steps and lopsided.
-func _fit(points: Array[Vector3], fill: float, high: float) -> Array:
+## fill most of the clear part of the screen's width, or `out` if it's given,
+## and how far it's shifted sideways to put their middle in the clear part's
+## middle without turning. Measured through the camera, as the karts are
+## further back than the steps and lopsided, and a sideways shift moves
+## nearer things more.
+func _fit(points: Array[Vector3], high: float, out := -1.0) -> Array:
 	var was := camera.global_transform
-	var width := get_viewport().get_visible_rect().size.x
-	var out := CAMERA_OUT
-	var centre := 0.0
-	for i in 4:
+	var size := get_viewport().get_visible_rect().size
+	var half_across := tan(deg_to_rad(camera.fov) * 0.5) * size.x / maxf(size.y, 1.0)
+	var fixed := out > 0.0
+	if not fixed:
+		out = CAMERA_OUT
+	var shift := 0.0
+	# How near the camera the nearest of them are, which the scaling turns on.
+	var near := STEP_DEPTH if tags.is_empty() else FRONT + 0.3
+	for i in 8:
 		camera.global_transform = _looking(Vector3(0.0, high, out), _look)
+		camera.h_offset = shift
 		var low := INF
 		var top := -INF
 		for p in points:
 			var x := camera.unproject_position(p).x
 			low = minf(low, x)
 			top = maxf(top, x)
-		centre = (low + top) / width - 1.0
-		out = clampf((out - STEP_DEPTH) * (top - low) / width / fill + STEP_DEPTH, STEP_DEPTH + 2.0, CAMERA_FAR)
+		var centre := (low + top) / size.x - 1.0
+		var away := camera.global_position.distance_to(_placed(_look, 0.0).origin)
+		shift += (centre - (_clear - 1.0)) * away * half_across
+		if not fixed:
+			out = clampf((out - near) * (top - low) / size.x / (_clear * SETTLE_FILL) + near, near + 2.0, CAMERA_FAR)
 	camera.global_transform = was
-	return [out, centre]
+	return [out, shift]
 
 
 ## Whether the camera has stopped moving.

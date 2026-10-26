@@ -6,7 +6,10 @@ extends Node
 ## holding the cup's trophy, the karts cleared away, no errors, and the
 ## standings over it after, with the camera still, until Back frees the race.
 ## The first cup's show is watched all the way through; the others are
-## skipped partway, which jumps to how it ends.
+## skipped partway, which jumps to how it ends. The player finishes 5th, 1st
+## or last by turns: off the steps they stand in front of the crowd with
+## their place over them. Then two cups for two, one with a player on the
+## steps and one with both off them.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tests/podium_test.tscn
 
@@ -51,14 +54,20 @@ func _ready() -> void:
 	Game.start(host, false)
 	Game.settings.set_value("race", "split", Game.SOLO)
 	Game.settings.set_value("race", "difficulty", Difficulty.DEFAULT)
-	for cup in GrandPrix.cups():
-		await _cup(cup.id)
+	var cups := GrandPrix.cups()
+	for i in cups.size():
+		await _cup(cups[i].id, [5, 1, 0][i % 3])
+	Game.settings.set_value("race", "split", Game.SIDE_BY_SIDE)
+	await _two(cups[0].id, [2, 7])
+	await _two(cups[1].id, [5, 7])
+	Game.settings.set_value("race", "split", Game.SOLO)
 	OS.remove_logger(errors)
 	print("All podium checks passed." if failures == 0 else "%d podium checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)
 
 
-func _cup(id: String) -> void:
+## The cup `id`, with the player finishing `place`, or last for 0.
+func _cup(id: String, place: int) -> void:
 	var before := errors.count
 	Game.start_grand_prix(id)
 	var gp := Game.grand_prix
@@ -81,6 +90,9 @@ func _cup(id: String) -> void:
 		who[r.name] = r.kart.driver
 	var order: Array = race.racers.map(func(r): return r.name)
 	order.reverse()
+	var me := Game.player_name()
+	order.erase(me)
+	order.insert(order.size() if place == 0 else place - 1, me)
 	Game.finish_grand_prix_race(order)
 	await frames(3)
 	var podium := race.podium
@@ -104,6 +116,8 @@ func _cup(id: String) -> void:
 	check(not skipped[0] and race.cup_standings == null, "and an early Back doesn't skip it either")
 	if id == GrandPrix.cups()[0].id:
 		await _watch(podium)
+		if podium.tags.size() == 1:
+			check(podium.tags.values()[0].visible, "the player's tag shows while the camera holds still")
 	else:
 		# Partway, with third up and second in the air.
 		podium._time = Podium.LEAPS[1] + 0.2
@@ -131,6 +145,12 @@ func _cup(id: String) -> void:
 		var floor_at: float = race.builder.ground_at(at.x, at.z) if podium.ground != null else podium.middle.y
 		below = below and absf(feet[i] - floor_at) < 0.05 and feet[i] < feet[2]
 	check(below, "and the rest of the field stand on the ground below")
+	var mine: int = names.find(me)
+	if mine >= 3:
+		check(_in_front(podium, [mine]), "the player, %s, stands in front of the crowd" % RaceHud.ordinal(mine + 1))
+		check(podium.tags.keys() == [mine] and podium.tags[mine].get_child(0).text == RaceHud.ordinal(mine + 1), "with their place over them")
+	else:
+		check(podium.tags.is_empty(), "the player's on the steps, %s, with no tag" % RaceHud.ordinal(mine + 1))
 	var winner := podium.drivers[0]
 	var trophy := podium.trophy
 	var cup: Dictionary = GrandPrix.cups().filter(func(c): return c.id == id)[0]
@@ -172,7 +192,10 @@ func _cup(id: String) -> void:
 	check(screen() == race and standings != null and standings.is_visible_in_tree(), "then the standings come up over the podium")
 	if standings == null:
 		return
-	check(standings.find_children("*", "Label", true, false).any(func(l): return l.text.contains("trophy")), "with the trophy")
+	if mine < 3:
+		check(standings.find_children("*", "Label", true, false).any(func(l): return l.text.contains("trophy")), "with the trophy")
+	else:
+		check(standings.find_children("*", "Label", true, false).any(func(l): return l.text.contains("finished %s." % RaceHud.ordinal(mine + 1))), "with where you finished")
 	check(not standings.find_children("*", "Control", true, false).any(func(c): return c is UiKit.Backdrop), "and no backdrop over it")
 	check(not standings.accepting(), "presses on the standings are ignored at first")
 	var press := InputEventKey.new()
@@ -192,6 +215,7 @@ func _cup(id: String) -> void:
 	await frames(10)
 	check(podium.still() and podium.camera.global_transform.is_equal_approx(held), "the camera holds still behind them")
 	check(standings.accepting(), "then they count")
+	check(_tags_clear(podium), "the player's tag isn't under them")
 	var laid := [0]
 	standings.laid_out.connect(func(): laid[0] += 1)
 	var was_shift := podium.camera.h_offset
@@ -253,3 +277,89 @@ func _distance_in(podium: Podium, size: Vector2i) -> float:
 	var out := copy._camera_distance()
 	port.queue_free()
 	return out
+
+
+## Whether the drivers at `places` stand nearer the front than everyone else
+## off the steps, in the podium's own space, on the ground.
+func _in_front(podium: Podium, places: Array) -> bool:
+	var row := -INF
+	for i in range(3, podium.drivers.size()):
+		if not places.has(i):
+			row = maxf(row, _local(podium, podium.drivers[i]).z)
+	for i in places:
+		if _local(podium, podium.drivers[i]).z < row + 0.5:
+			return false
+	return true
+
+
+func _local(podium: Podium, rig: Node3D) -> Vector3:
+	return (rig.global_position - podium.middle).rotated(Vector3.UP, -podium.facing * PI * 0.5)
+
+
+## Whether every tag shown is clear of the standings panel.
+func _tags_clear(podium: Podium) -> bool:
+	var width := get_viewport().get_visible_rect().size.x
+	for tag in podium.tags.values():
+		if tag.visible and (podium._clear >= 1.0 or tag.get_rect().end.x > width * podium._clear):
+			return false
+	return true
+
+
+## A cup for two with the players finishing at `places`, player 1 first,
+## skipped to the end: those off the steps in front of the crowd with their
+## place in their own colour, and none for one on the steps.
+func _two(id: String, places: Array) -> void:
+	var before := errors.count
+	Game.start_grand_prix(id, true)
+	var gp := Game.grand_prix
+	gp.round = gp.track_ids().size() - 1
+	Game.track_path = gp.track_path()
+	var race: Race = null
+	for i in 300:
+		await frames(1)
+		if screen() is Race:
+			race = screen()
+			break
+	if race == null:
+		check(false, "%s for two: the last race starts" % id)
+		return
+	print("-- %s for two, finishing %s" % [id, places])
+	await frames(12)
+	var people := [Game.player_one_name(), Game.player_two_name()]
+	var order: Array = race.racers.map(func(r): return r.name).filter(func(n): return not people.has(n))
+	for i in [0, 1] if places[0] < places[1] else [1, 0]:
+		order.insert(places[i] - 1, people[i])
+	Game.finish_grand_prix_race(order)
+	await frames(3)
+	var podium := race.podium
+	if podium == null:
+		check(false, "the podium goes up")
+		return
+	podium._time = Podium.IGNORE_INPUT + 0.1
+	podium.skip()
+	await frames(3)
+	var off := []
+	for i in 2:
+		if places[i] > 3:
+			off.append(places[i] - 1)
+	off.sort()
+	var keys := podium.tags.keys()
+	keys.sort()
+	check(keys == off, "tags over just the players off the steps (%s)" % [keys.map(func(k): return k + 1)])
+	var right := true
+	for i in 2:
+		var at: int = places[i] - 1
+		if podium.tags.has(at):
+			var tag: PanelContainer = podium.tags[at]
+			right = right and tag.get_child(0).text == RaceHud.ordinal(places[i])
+			right = right and (tag.get_theme_stylebox("panel") as SlantBox).fill == UiKit.PLAYERS[i]
+	check(right, "each with their place in their own colour")
+	check(_in_front(podium, off), "and they stand in front of the crowd")
+	if off.size() == 2:
+		check(_local(podium, podium.drivers[places[0] - 1]).x < 0.0 and _local(podium, podium.drivers[places[1] - 1]).x > 0.0, "player 1 on the left, player 2 on the right")
+	for i in ceili(Podium.SETTLE * 60.0) + 5:
+		await frames(1)
+	check(podium.still() and _tags_clear(podium), "the tags stay clear of the standings")
+	check(errors.count == before, "with no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
+	race.go_back()
+	await frames(3)
