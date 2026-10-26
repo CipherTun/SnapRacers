@@ -29,6 +29,9 @@ var two := false
 var player_two_kart := ""
 ## The names of the people racing, player 1 first, as the races know them.
 var people: Array = []
+## Online, the kart and driver each racer last raced in, as
+## { name: [kart dict, driver dict] }, kept for anyone who leaves mid-cup.
+var designs := {}
 ## The AI drivers' pecking order for the whole cup, as { driver: rank }.
 var ranks := {}
 ## How good the AI drivers are, for the whole cup (see Difficulty).

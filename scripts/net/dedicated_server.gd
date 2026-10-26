@@ -39,6 +39,9 @@ var _state := "lobby"
 var _secure := false
 ## The settings that only take hold when it starts again.
 const NEEDS_RESTART := ["port", "ws_port", "tls_cert", "tls_key"]
+## The least time the cup's final standings stay up after the podium, so a
+## slow device still gets to see them before the lobby.
+const FINAL_STANDINGS_FLOOR := 5.0
 
 
 static func wanted() -> bool:
@@ -206,7 +209,7 @@ func _on_race_over(_order: Array) -> void:
 		_later(float(config.standings_for), net.next_round)
 	else:
 		# After the last race everyone watches the podium first.
-		_later(float(config.standings_for) + Podium.LENGTH, net.back_to_lobby)
+		_later(Podium.LENGTH + maxf(float(config.standings_for), FINAL_STANDINGS_FLOOR), net.back_to_lobby)
 
 
 func _later(seconds: float, what: Callable) -> void:

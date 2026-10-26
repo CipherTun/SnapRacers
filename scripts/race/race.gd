@@ -837,16 +837,15 @@ func show_podium(gp: GrandPrix) -> Podium:
 	var raced := {}
 	for racer in racers:
 		raced[racer.name] = [racer.kart.design, racer.kart.driver if racer.kart.driver != null else Kart.default_driver()]
-	# Online, someone who left during the race is still in the standings,
-	# in what they raced with.
-	if Game.net.is_online():
-		for entry in Game.net.setup.get("entries", []):
-			if not raced.has(entry.name):
-				raced[entry.name] = [KartDesign.from_dict(entry.kart), CharacterDesign.from_dict(entry.driver)]
+	# Online, someone who left during the cup is still in the standings, in
+	# what they last raced with.
+	for name in gp.designs:
+		if not raced.has(name):
+			raced[name] = [KartDesign.from_dict(gp.designs[name][0]), CharacterDesign.from_dict(gp.designs[name][1])]
+	# Anyone else in the standings stands in a stock kart as the plain racer.
 	var everyone := []
 	for row in gp.standings():
-		if raced.has(row[0]):
-			everyone.append([row[0]] + raced[row[0]])
+		everyone.append([row[0]] + raced.get(row[0], [Game.stock_kart(Game.DEFAULT_STOCK), Kart.default_driver()]))
 	# The people playing here, in their colours from the standings.
 	var playing := {}
 	for i in humans.size():

@@ -93,6 +93,10 @@ func _cup(id: String, place: int) -> void:
 	var me := Game.player_name()
 	order.erase(me)
 	order.insert(order.size() if place == 0 else place - 1, me)
+	# In the first cup someone who left earlier is still top of the standings.
+	var gone := "Gone Early" if id == GrandPrix.cups()[0].id else ""
+	if gone != "":
+		gp.points[gone] = 100
 	Game.finish_grand_prix_race(order)
 	await frames(3)
 	var podium := race.podium
@@ -103,7 +107,9 @@ func _cup(id: String, place: int) -> void:
 	var names := gp.standings().map(func(s): return s[0])
 	check(podium.order.map(func(e): return e[0]) == names, "everyone's there in the standings' order")
 	check(podium.drivers.size() == names.size() and podium.karts.size() == 3, "%d drivers and 3 karts" % podium.drivers.size())
-	check(range(names.size()).all(func(i): return podium.drivers[i].design == who[names[i]]), "each in the driver they raced as")
+	check(range(names.size()).all(func(i): return podium.drivers[i].design == who.get(names[i], Kart.default_driver())), "each in the driver they raced as")
+	if gone != "":
+		check(names[0] == gone and podium.order[0][0] == gone and podium.order[0][1] != null and podium.drivers[0].design == Kart.default_driver(), "someone in the standings who didn't race stands in as the plain racer")
 	check(errors.count == before, "with no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
 	# Taps right after it goes up are ignored.
 	var tap := InputEventScreenTouch.new()

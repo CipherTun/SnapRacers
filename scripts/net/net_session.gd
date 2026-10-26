@@ -429,6 +429,8 @@ func _begin(race_setup: Dictionary) -> void:
 		for i in int(race_setup.rounds):
 			gp.cup.paths.append(path)
 		gp.points = race_setup.points.duplicate()
+		for entry in race_setup.get("entries", []):
+			gp.designs[entry.name] = [entry.kart, entry.driver]
 	else:
 		Game.mode = Game.MODE_RACE
 		Game.grand_prix = null
