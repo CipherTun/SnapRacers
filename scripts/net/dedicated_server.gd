@@ -205,7 +205,8 @@ func _on_race_over(_order: Array) -> void:
 	if int(net.setup.round) + 1 < int(net.setup.rounds):
 		_later(float(config.standings_for), net.next_round)
 	else:
-		_later(float(config.standings_for), net.back_to_lobby)
+		# After the last race everyone watches the podium first.
+		_later(float(config.standings_for) + Podium.LENGTH, net.back_to_lobby)
 
 
 func _later(seconds: float, what: Callable) -> void:

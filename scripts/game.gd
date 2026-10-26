@@ -255,8 +255,12 @@ func show_lobby() -> void:
 	_swap(Lobby.new())
 
 
-## The points between the races of a cup raced online.
+## The points between the races of a cup raced online. After the last race
+## the podium comes first, with the standings over it once it's done.
 func show_net_standings() -> void:
+	if grand_prix.finished() and _screen is Race:
+		(_screen as Race).show_podium(grand_prix)
+		return
 	_swap(GrandPrixStandings.new(grand_prix))
 
 
@@ -325,7 +329,8 @@ func start_grand_prix(which: Variant, two := false) -> void:
 
 ## Called when you move on from a Grand Prix race's results. `order` is
 ## everyone's names, winner first.
-## After the cup's last race the podium comes first, except online.
+## After the cup's last race the podium comes first. Online the host's
+## results come in through show_net_standings() instead.
 func finish_grand_prix_race(order: Array) -> void:
 	grand_prix.add_results(order)
 	if grand_prix.finished() and _screen is Race and not net.is_online():

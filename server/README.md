@@ -113,7 +113,7 @@ These settings can be changed with `set`:
 | `difficulty` | `easy`, `normal`, `hard` or `expert`. |
 | `weather` | `random`, `clear`, `rain`, `snow`, `fog`, `storm` or `dust`. |
 | `time` | `random`, `morning`, `day`, `evening`, `dusk` or `night`. |
-| `start_after`, `standings_for` | Seconds before starting and seconds on the standings. |
+| `start_after`, `standings_for` | Seconds before starting and seconds on the standings. After a cup's last race the podium plays for 10 seconds first. |
 | `port`, `ws_port` | Phone and browser ports. Requires a restart. |
 | `tls_cert`, `tls_key` | Certificate and key paths. Requires a restart. |
 

@@ -61,6 +61,8 @@ const LAMP_RANGE := 10.0
 ## The camera's sweep in, then how long it holds still before `finished`.
 const SWEEP := 4.0
 const HOLD := 6.0
+## How long the show runs before the standings come up, if nobody skips it.
+const LENGTH := SWEEP + HOLD
 ## The show, in seconds after it goes up: when first, second and third jump
 ## onto their steps, and how long a jump takes. Before it they stand on the
 ## plate in front.

@@ -135,7 +135,10 @@ func _ready() -> void:
 		leg.add_child(ai)
 		leg.player.ai = ai
 		leg.player.kart.controls = ai.controls
-		check(await until(func(): return screen() is GrandPrixStandings, 180.0), "then the standings")
+		if round == 0:
+			check(await until(func(): return screen() is GrandPrixStandings, 180.0), "then the standings")
+		else:
+			await _podium(leg)
 		print("[%s] points after race %d: %s" % [role, round + 1, Game.grand_prix.standings()])
 		if role == "host":
 			await get_tree().create_timer(1.0).timeout
@@ -148,3 +151,39 @@ func _ready() -> void:
 	net.leave()
 	print("All net checks passed." if failures == 0 else "%d net checks failed." % failures)
 	get_tree().quit(1 if failures > 0 else 0)
+
+
+## After the cup's last race the podium goes up for everyone, with everyone
+## in the standings on it and a tag only over our own player. The host
+## watches it through and the joiner skips it, and then the standings come up
+## over it, with the host's button to carry on and the joiner waiting.
+func _podium(leg: Race) -> void:
+	check(await until(func(): return is_instance_valid(leg) and leg.podium != null, 180.0), "after the last race the podium goes up")
+	if not is_instance_valid(leg) or leg.podium == null:
+		return
+	var podium := leg.podium
+	var names := Game.grand_prix.standings().map(func(s): return s[0])
+	check(podium.order.map(func(e): return e[0]) == names and names.size() == 8, "with everyone in the standings' order (%d)" % podium.order.size())
+	var me := "Host" if role == "host" else "Joiner"
+	var mine: int = names.find(me)
+	check(podium.tags.keys() == ([mine] if mine >= 3 else []), "and a tag over just our own player, %s" % RaceHud.ordinal(mine + 1))
+	check(screen() == leg and leg.net == null and Game.net.race == null, "on the race's course, with the race's network part gone")
+	var started := Time.get_ticks_msec()
+	if role == "join":
+		await get_tree().create_timer(1.0).timeout
+		leg.go_back()
+	check(await until(func(): return is_instance_valid(leg) and leg.cup_standings != null, Podium.LENGTH + 5.0), "then the standings over it")
+	var took := (Time.get_ticks_msec() - started) / 1000.0
+	if role == "host":
+		check(took > Podium.LENGTH - 1.0, "once the show's over (%.1f s)" % took)
+	else:
+		check(took < 3.0, "straight away when it's skipped (%.1f s)" % took)
+	if not is_instance_valid(leg) or leg.cup_standings == null:
+		return
+	var standings := leg.cup_standings
+	var buttons := standings.find_children("*", "Button", true, false).map(func(b): return b.text)
+	var labels := standings.find_children("*", "Label", true, false).map(func(l): return l.text)
+	if role == "host":
+		check(buttons.has("Back to the lobby"), "with the host's button to go back to the lobby (%s)" % [buttons])
+	else:
+		check(labels.has("Waiting for the host to carry on") and not buttons.has("Back to the lobby"), "and the joiner waits for the host")
