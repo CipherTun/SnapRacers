@@ -352,6 +352,8 @@ func _ready() -> void:
 	for place in range(3, order.size()):
 		if players.has(order[place][0]):
 			tags[place] = _make_tag(place, players[order[place][0]])
+			# Hidden until the camera's set and it's placed.
+			tags[place].visible = false
 			layer.add_child(tags[place])
 
 	confetti = _make_confetti(top)
@@ -370,6 +372,7 @@ func _ready() -> void:
 	_from = _looking(start, _look)
 	camera.global_transform = _from
 	camera.make_current()
+	_place_tags()
 
 
 ## How far a kart's box reaches from its middle however it's turned.

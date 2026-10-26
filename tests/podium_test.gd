@@ -223,6 +223,15 @@ func _cup(id: String, place: int) -> void:
 	get_window().size = Vector2i(900, 1100)
 	await frames(4)
 	check(laid[0] == 1 and not is_equal_approx(podium.camera.h_offset, was_shift), "a resize lays the panel and camera out again")
+	# On a wide screen the panel's down the side, and a player off the steps
+	# has their tag showing in the clear part.
+	if mine >= 3:
+		get_window().size = Vector2i(1600, 720)
+		await frames(4)
+		for i in ceili(Podium.SETTLE * 60.0) + 5:
+			await frames(1)
+		var tag: Control = podium.tags[mine]
+		check(podium.still() and podium._clear < 1.0 and tag.visible and _tags_clear(podium), "on a wide screen the player's tag shows beside the standings (%s, clear to %.0f%%)" % [tag.get_rect(), podium._clear * 100.0])
 	get_window().size = was_window
 	await frames(3)
 	race.go_back()
