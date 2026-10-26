@@ -25,10 +25,10 @@ const CRASH := 700.0
 const KNOCK_GAP := 0.25
 ## A drift's tire sound: its level at full, seconds to fade in and out, and
 ## the surfaces' loops (anything else sounds like tarmac).
-const DRIFT_LEVEL := -10.0
+const DRIFT_LEVEL := -6.0
 const DRIFT_IN := 0.15
 const DRIFT_OUT := 0.3
-const WHOOSH_LEVEL := -8.0
+const WHOOSH_LEVEL := -13.0
 const DRIFT_SURFACE := {
 	"dirt": "dirt", "gravel": "dirt", "mud": "dirt", "grass": "dirt",
 	"snow": "snow", "ice": "snow",
