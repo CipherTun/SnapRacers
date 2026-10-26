@@ -120,6 +120,11 @@ func _cup(id: String, place: int) -> void:
 	check(not skipped[0], "a tap right after it goes up doesn't skip it")
 	race.go_back()
 	check(not skipped[0] and race.cup_standings == null, "and an early Back doesn't skip it either")
+	check(race.find_children("*", "RaceHud", true, false).is_empty() and race.find_children("*", "TouchControls", true, false).is_empty(), "nothing of the race's HUD is left")
+	var skip := podium.skip_button
+	check(skip != null and skip.is_visible_in_tree() and skip.get_global_rect().position.x < 100.0 and skip.get_global_rect().position.y < 100.0, "a skip button in the top left")
+	skip.pressed.emit()
+	check(not skipped[0], "which doesn't skip it right away either")
 	if id == GrandPrix.cups()[0].id:
 		await _watch(podium)
 		if podium.tags.size() == 1:
@@ -132,9 +137,15 @@ func _cup(id: String, place: int) -> void:
 	var wide := await _distance_in(podium, Vector2i(1280, 720))
 	var narrow := await _distance_in(podium, Vector2i(768, 1024))
 	check(narrow > wide and narrow <= Podium.CAMERA_FAR, "the camera pulls back on a portrait screen (%.1f m, %.1f m wide)" % [narrow, wide])
-	race.go_back()
-	await frames(3)
-	check(skipped[0], "Back skips to the end")
+	if id == GrandPrix.cups()[1].id:
+		skip.pressed.emit()
+		await frames(3)
+		check(skipped[0], "the skip button skips to the end")
+	else:
+		race.go_back()
+		await frames(3)
+		check(skipped[0], "Back skips to the end")
+	check(podium.skip_button == null and not is_instance_valid(skip) or not skip.is_inside_tree(), "and the skip button goes")
 	var feet := []
 	var across := []
 	for rig in podium.drivers:

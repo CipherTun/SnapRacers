@@ -13,8 +13,9 @@ extends Node3D
 ## trophy comes down from above to the winner, who holds it up, and confetti
 ## falls in the cup's colours to a fanfare and a cheer. The rest of the
 ## field clap, except the last few, who sulk. A player who isn't on the
-## steps stands at the front of the crowd with their place over them. Once it's over, or on a tap or
-## a key, `finished` is sent, and everything jumps to how it ends.
+## steps stands at the front of the crowd with their place over them. Once it's over, or on a tap,
+## a key or the skip button in the top left, `finished` is sent, and
+## everything jumps to how it ends.
 ##
 ## It's laid out in its own space with the front facing +Z, and turned a
 ## whole number of quarter turns, like every prop, so the brick patterns
@@ -132,6 +133,8 @@ var ground: Variant = null
 var players := {}
 ## The place tags over the players off the steps, by place from 0.
 var tags := {}
+## The small skip button in the top left, gone once the show's over.
+var skip_button: IconButton
 ## Each place's driver and kart, first place first, then the rest.
 var drivers: Array[CharacterRig] = []
 var karts: Array[Node3D] = []
@@ -357,6 +360,21 @@ func _ready() -> void:
 			# Hidden until the camera's set and it's placed.
 			tags[place].visible = false
 			layer.add_child(tags[place])
+
+	# The skip button, clear of any camera hole.
+	var corner := CanvasLayer.new()
+	corner.name = "Skip"
+	corner.layer = TAG_LAYER
+	add_child(corner)
+	skip_button = IconButton.new("skip")
+	skip_button.focus_mode = Control.FOCUS_NONE
+	skip_button.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	skip_button.position = Vector2(24.0, 16.0)
+	skip_button.pressed.connect(skip)
+	corner.add_child(skip_button)
+	var safe := SafeArea.new()
+	corner.add_child(safe)
+	safe.watch(skip_button)
 
 	confetti = _make_confetti(top)
 	add_child(confetti)
@@ -783,6 +801,9 @@ func finish() -> void:
 		return
 	_end_show()
 	_done = true
+	if is_instance_valid(skip_button):
+		skip_button.get_parent().queue_free()
+		skip_button = null
 	finished.emit()
 
 

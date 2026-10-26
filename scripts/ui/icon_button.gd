@@ -228,3 +228,8 @@ func _draw() -> void:
 		"shut":
 			draw_line(c + Vector2(4, -8), c + Vector2(-4, 0), ink, w, true)
 			draw_line(c + Vector2(-4, 0), c + Vector2(4, 8), ink, w, true)
+		"skip":
+			# Two arrowheads pointing right up against a bar.
+			for x in [-11.0, -2.0]:
+				draw_colored_polygon(PackedVector2Array([c + Vector2(x, -8), c + Vector2(x + 9, 0), c + Vector2(x, 8)]), ink)
+			draw_line(c + Vector2(9, -8), c + Vector2(9, 8), ink, w)
