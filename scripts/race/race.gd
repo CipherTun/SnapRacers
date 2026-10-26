@@ -514,6 +514,7 @@ func _add_racer(racer_name: String, design: KartDesign, slot: int, who: Characte
 	racer.kart.weather_drag = conditions.drag()
 	racer.kart.puddles = builder.puddles
 	racer.kart.drifts = builder.drifts
+	racer.kart.fx.snow_lies = conditions.snow() > 0.0
 	racer.kart.lights_on = conditions.dark()
 	racer.kart.beams = conditions.beams()
 	var place := track.grid_slot(slot)

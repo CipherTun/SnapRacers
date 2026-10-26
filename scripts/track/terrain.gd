@@ -49,6 +49,7 @@ func _init(path: TrackPath, reach: float) -> void:
 		floor = Scenery.THEMES[track.theme].get("floor", "grass")
 	var grass: Array = track.offroad_grip_and_drag(floor)
 	set_meta("offroad", true)
+	set_meta("surface", floor)
 	set_meta("grip", grass[0])
 	set_meta("drag", grass[1])
 	var lo := Vector2(INF, INF)

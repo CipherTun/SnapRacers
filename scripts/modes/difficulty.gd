@@ -19,7 +19,7 @@ extends RefCounted
 ##   you, as a fraction.
 ## - ease_off: how much they lift off when they're a long way ahead of you.
 ## - slides: whether they slide round the tightest bends (see Kart.sliding),
-##   which only the best drivers do, and only where it's quicker.
+##   which only Hard and Expert drivers do, and only where it's quicker.
 
 const LEVELS := ["easy", "normal", "hard", "expert"]
 const DEFAULT := "normal"
@@ -50,13 +50,14 @@ const SETTINGS := {
 	"hard": {
 		"name": "Hard",
 		"about": "Quick drivers who rarely slip and make the most of their power-ups.",
-		"skill": [0.8, 0.9],
+		"skill": [0.74, 0.84],
 		"pace": 0.89,
 		"mistakes": 0.02,
 		"loop_nerves": 0.0,
 		"gadgets": 1.0,
 		"catch_up": 0.06,
 		"ease_off": 0.0,
+		"slides": true,
 	},
 	"expert": {
 		"name": "Expert",

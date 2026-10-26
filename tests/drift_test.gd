@@ -7,7 +7,8 @@ extends SceneTree
 ## further, and once it's let go and the steering's straightened it grips
 ## and runs straight again. Plain braking still stops straight. And a thumb
 ## slid from GO onto the brake holds both, and onto look back looks behind
-## with the gas still on.
+## with the gas still on. A longer slide gives a longer turbo, up to the top
+## level.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . -s tests/drift_test.gd
 
@@ -23,6 +24,7 @@ class Runner:
 	var slider: Kart
 	var braker: Kart
 	var holder: Kart
+	var short: Kart
 	var held_tail := []
 	var held_slowest := INF
 	var start_yaw := {}
@@ -54,6 +56,7 @@ class Runner:
 		slider = kart_at(0.0)
 		braker = kart_at(60.0)
 		holder = kart_at(-110.0)
+		short = kart_at(110.0)
 
 	func _physics_process(_delta: float) -> void:
 		tick += 1
@@ -62,7 +65,7 @@ class Runner:
 			held_slowest = minf(held_slowest, holder.linear_velocity.length())
 		match tick:
 			40:
-				for kart in [steerer, slider, braker, holder]:
+				for kart in [steerer, slider, braker, holder, short]:
 					kart.linear_velocity = Vector3(0.0, 0.0, -SPEED)
 					kart.controls.throttle = 1.0
 					start_yaw[kart] = kart.global_rotation.y
@@ -74,9 +77,12 @@ class Runner:
 				braker.controls.brake = 1.0
 				holder.controls.steer = 1.0
 				holder.controls.brake = 1.0
+				short.controls.steer = 1.0
+				short.controls.brake = 1.0
 			54:
 				# The kick's done, and it's held on the gas.
 				holder.controls.brake = 0.0
+				short.controls.brake = 0.0
 			46:
 				check(slider.sliding and not steerer.sliding, "gas and brake together at speed slide the kart")
 			53, 60, 70:
@@ -94,6 +100,8 @@ class Runner:
 				check(braked < 3.0 and not braker.sliding, "plain braking still stops straight (%.1f degrees)" % braked)
 			100:
 				slider.controls.steer = 0.0
+				check(short.sliding and short.slide_level == 1, "held a moment it's charged the first boost level (level %d)" % short.slide_level)
+				short.controls.steer = 0.0
 			170:
 				var tail: float = held_tail.reduce(func(a, b): return a + b, 0.0) / maxf(held_tail.size(), 1)
 				var turned := rad_to_deg(absf(angle_difference(start_yaw[holder], holder.global_rotation.y)))
@@ -103,13 +111,35 @@ class Runner:
 				holder.controls.steer = 0.0
 			200:
 				check(not holder.sliding, "straightening up ends it")
-				check(holder.boost_left > 0.0 and holder.boost_left <= Kart.slide_boost_most, "with a little turbo for holding it (%.2f s left)" % holder.boost_left)
+				check(holder.boost_left > 0.0 and holder.boost_given <= Kart.SLIDE_BOOSTS[-1], "with a turbo for holding it (%.2f s, level %d)" % [holder.boost_given, holder.boost_level])
+				check(short.boost_level == 1 and holder.boost_level >= 2 and holder.boost_given > short.boost_given, "a longer slide gives a longer turbo at a higher level (%.2f s level %d against %.2f s level %d)" % [holder.boost_given, holder.boost_level, short.boost_given, short.boost_level])
+				_boost_by_length()
 				check(slider.boost_left == 0.0, "but not for a slide let go of before it was held")
 				check(tail_out(slider) < 8.0, "let go and steered straight, it grips again (%.0f degrees)" % tail_out(slider))
 				check(slider.global_basis.y.y > 0.9, "the right way up")
 				_touch()
 				print("All drift checks passed." if failures == 0 else "%d drift checks failed." % failures)
 				get_tree().quit(1 if failures > 0 else 0)
+
+	## The turbo grows steadily with the steps held, from nothing before the
+	## first level up to the top level's, and no more past it.
+	func _boost_by_length() -> void:
+		var first := Kart.slide_steps_of(Kart.SLIDE_LEVELS[0])
+		var last := Kart.slide_steps_of(Kart.SLIDE_LEVELS[-1])
+		check(Kart.slide_boost_for(first - 1) == 0.0 and Kart.slide_level_for(first - 1) == 0, "no turbo for a slide let go before the first level")
+		var growing := true
+		var steady := true
+		for steps in range(first + 1, last + 1):
+			var step := Kart.slide_boost_for(steps) - Kart.slide_boost_for(steps - 1)
+			growing = growing and step > 0.0
+			steady = steady and step < 0.03
+		check(growing and steady, "from there each step held gives a little more, with no jumps between levels")
+		var levels := []
+		for at: float in Kart.SLIDE_LEVELS:
+			levels.append(Kart.slide_level_for(Kart.slide_steps_of(at)))
+		check(levels == [1, 2, 3], "the levels come at their times (%s)" % [levels])
+		var top := Kart.slide_boost_for(last)
+		check(is_equal_approx(top, Kart.SLIDE_BOOSTS[-1]) and Kart.slide_boost_for(last * 10) == top and Kart.slide_level_for(last * 10) == 3, "and a very long slide gives no more than the top level (%.2f s)" % top)
 
 	## A thumb slid from GO down onto the brake holds both, and back up onto
 	## GO it's just the gas again.

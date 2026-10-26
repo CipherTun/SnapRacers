@@ -210,6 +210,7 @@ func _add_grass() -> void:
 	var body := StaticBody3D.new()
 	body.collision_layer = Kart.LAYER_WORLD
 	body.set_meta("offroad", true)
+	body.set_meta("surface", _theme.get("floor", "grass"))
 	body.set_meta("grip", grass[0])
 	body.set_meta("drag", grass[1])
 	var shape := CollisionShape3D.new()
@@ -307,6 +308,7 @@ func _add_piece(index: int) -> void:
 	var feel: Array = track.grip_and_drag(piece.surface)
 	body.set_meta("grip", feel[0])
 	body.set_meta("drag", feel[1])
+	body.set_meta("surface", piece.surface)
 	body.set_meta("sticky", piece.sticky)
 	# A corkscrew holds karts to its line like a roller coaster's rails, so
 	# its road knows where its middle runs.
@@ -510,6 +512,7 @@ func _add_cut(index: int, piece: TrackPiece) -> void:
 	body.collision_layer = Kart.LAYER_WORLD
 	var feel: Array = track.offroad_grip_and_drag("dirt")
 	body.set_meta("offroad", true)
+	body.set_meta("surface", "dirt")
 	body.set_meta("grip", feel[0])
 	body.set_meta("drag", feel[1])
 	var mesh := tool.commit()

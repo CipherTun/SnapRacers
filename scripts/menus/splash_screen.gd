@@ -8,7 +8,8 @@ extends Control
 ## do it ahead of time. So hidden under the splash this sets up a race, then
 ## the garage, then the driver builder, and lets each one draw for a few
 ## frames. That covers the road, grass, walls, pillars, karts with drivers, a
-## part knocked loose, a ghost, a cannonball, a shockwave, lightning, a shield,
+## part knocked loose, a ghost, a cannonball, tire smoke and boost flames, a
+## shockwave, lightning, a shield,
 ## and the garage's see-through and picked out parts, all with the sun and
 ## shadows. The race is a storm at night and then snow by day, losing its fog
 ## halfway, so fog, clear skies, rain, snow, puddles, lamps and kart lights are
@@ -120,6 +121,8 @@ func _warm_race(weather: String, time: String) -> Node:
 	# A ghost's see-through copies, and a cannonball with its flash and smoke.
 	kart.start_ghost()
 	race.add_child(BrickShot.fire(kart))
+	# Tire smoke and a boost's glow behind it.
+	kart.fx.show_sample()
 	_gadget_glows(race)
 	if weather == "snow":
 		# A snow drift, with its own see-through shader, just ahead.

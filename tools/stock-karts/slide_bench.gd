@@ -32,8 +32,6 @@ func _ready() -> void:
 		Kart.slide_scrub = float(OS.get_environment("SLIDE_SCRUB"))
 	if OS.has_environment("SLIDE_BOOST"):
 		Kart.slide_boost = float(OS.get_environment("SLIDE_BOOST"))
-	if OS.has_environment("SLIDE_BOOST_MOST"):
-		Kart.slide_boost_most = float(OS.get_environment("SLIDE_BOOST_MOST"))
 	if OS.has_environment("SLIDE_PLAN"):
 		AIDriver.slide_plan = float(OS.get_environment("SLIDE_PLAN"))
 	var kart: String = args[2] if args.size() > 2 else "kart_kid"
@@ -47,7 +45,7 @@ func _ready() -> void:
 		total += result[0]
 		slides += result[2]
 		print("%-16s %.2f s, %d resets, %d slides" % [course, result[0], result[1], result[2]])
-	print("TOTAL bend %.3f kick %.2f %s, corner %.2f scrub %.2f plan %.2f boost %.2f most %.2f: %.2f s, %d slides" % [bend, time, kart, Kart.slide_corner, Kart.slide_scrub, AIDriver.slide_plan, Kart.slide_boost, Kart.slide_boost_most, total, slides])
+	print("TOTAL bend %.3f kick %.2f %s, corner %.2f scrub %.2f plan %.2f boost x%.2f: %.2f s, %d slides" % [bend, time, kart, Kart.slide_corner, Kart.slide_scrub, AIDriver.slide_plan, Kart.slide_boost, total, slides])
 	get_tree().quit()
 
 

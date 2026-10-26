@@ -109,15 +109,23 @@ func pull_on(kart: Kart) -> Vector3:
 	return toward.normalized() * PULL
 
 
-func _process(delta: float) -> void:
+## Timed in physics steps, so the rope lets go and the burst starts on the
+## same step on every machine.
+func _physics_process(delta: float) -> void:
 	left -= delta
 	if left <= 0.0 or not is_instance_valid(from) or not is_instance_valid(to):
 		if is_instance_valid(from):
 			if from.tow == self:
 				from.tow = null
 				if not from.remote:
-					from.boost_left = maxf(from.boost_left, BURST)
+					from.start_boost(maxf(from.boost_left, BURST), 1)
+		set_physics_process(false)
+		set_process(false)
 		queue_free()
+
+
+func _process(_delta: float) -> void:
+	if not is_instance_valid(from) or not is_instance_valid(to):
 		return
 	var a := from.global_position + Vector3.UP * 0.6
 	var b := to.global_position + Vector3.UP * 0.6

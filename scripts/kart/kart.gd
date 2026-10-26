@@ -75,7 +75,10 @@ const RESET_LIFT := 1.0
 ## wheels slide with only some of their grip, the engine drives, and the kart
 ## holds its tail out at a steady angle, more the harder you steer, so it
 ## won't spin. Straighten up or let go of the gas and it grips again over
-## SLIDE_RECOVER seconds. Off the road it ends at once.
+## SLIDE_RECOVER seconds. It ends at once when the driven wheels leave the
+## road: both of them with two driven wheels, more than half with more. A
+## driven wheel in the air counts as off the road. A wheel that isn't driven
+## can go off and the slide keeps going.
 ##
 ## A held slide keeps its speed, losing slide_scrub a second, and corners up
 ## to slide_corner times as hard as gripping, so it's quicker round a hairpin
@@ -103,12 +106,15 @@ const SLIDE_CARRY := 10.0
 ## Once it's going, a slide keeps going down to this speed.
 const SLIDE_KEEP_SPEED := 4.0
 static var slide_brake := 1.0
-## A slide held on the gas at least SLIDE_BOOST_AFTER seconds and finished
-## by straightening up gives a turbo of slide_boost seconds for each second
-## held, up to slide_boost_most.
-const SLIDE_BOOST_AFTER := 0.5
-static var slide_boost := 1.5
-static var slide_boost_most := 1.0
+## A slide held on the gas charges a boost, given when it's finished by
+## straightening up. It reaches level 1, 2 and 3 (blue, orange, purple) once
+## held SLIDE_LEVELS seconds, and the boost grows steadily with the time held,
+## through SLIDE_BOOSTS seconds at each level, and no more past the last.
+## Time held is counted in physics steps, so it's the same on every machine.
+const SLIDE_LEVELS := [0.6, 1.3, 2.1]
+const SLIDE_BOOSTS := [0.6, 1.0, 1.5]
+## Scales every slide boost, for tools/stock-karts/slide_bench.gd.
+static var slide_boost := 1.0
 const RESET_SLOWDOWN_TIME := 2.5
 const RESET_SLOWDOWN := 0.5
 
@@ -315,6 +321,13 @@ class Wheel:
 	var spin := 0.0
 	## How far it's rolled along curbs, for counting the ridges.
 	var kerb_travel := 0.0
+	## Where it touched the ground last step, the "surface" it was on and
+	## how deep the snow was there, for the tire smoke (see DriftFx).
+	var contact := Vector3.ZERO
+	var surface := "asphalt"
+	var snow := 0.0
+	## Whether it was on ground tagged off the road last step.
+	var off := false
 	var visual: Node3D
 	## Its ray down to the road, kept and reused each step.
 	var ray: PhysicsRayQueryParameters3D
@@ -459,8 +472,18 @@ var slide_way := 0.0
 var slide_amount := 0.0
 var _slide_straight := 0.0
 var _slide_speed := 0.0
-## How long the slide's been held on the gas, past the kick.
-var _slide_held := 0.0
+## How many physics steps the slide's been held on the gas, past the kick,
+## and the boost level that's charged so far, 0 to 3 (see SLIDE_LEVELS).
+var _slide_steps := 0
+var slide_level := 0
+## Whether the driven wheels are off the road (see SLIDE_SPEED).
+var _drive_off_road := false
+## The boost going now: its level for the colour of the flames (1 to 3, see
+## SLIDE_LEVELS), how long it was when it started, and a count of boosts
+## started, so the looks can tell a new one from the same one.
+var boost_level := 0
+var boost_given := 0.0
+var boost_count := 0
 var _last_flat_velocity := Vector3.ZERO
 var _repair_asked := false
 var _gadget_held: Array[bool] = [false, false]
@@ -483,6 +506,8 @@ var remote := false:
 var remote_velocity := Vector3.ZERO
 ## What the kart sounds like. It stays when the kart's rebuilt.
 var sound: KartSound
+## Its tire smoke, sparks and boost flames. It stays too.
+var fx: DriftFx
 ## How much of the kart's weight is on grass or dirt right now, 0 to 1, for
 ## its rumble.
 var rough := 0.0
@@ -664,8 +689,11 @@ func _assemble() -> void:
 	if sound == null:
 		sound = KartSound.new(self)
 		add_child(sound)
+	if fx == null:
+		fx = DriftFx.new(self)
+		add_child(fx)
 	for child in get_children():
-		if child == _bubble or child == sound or child == _zap:
+		if child == _bubble or child == sound or child == _zap or child == fx:
 			continue
 		remove_child(child)
 		child.queue_free()
@@ -1130,6 +1158,8 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var on_rough := 0
 	var on_off := 0
 	var on_any := 0
+	var drive_off := 0
+	var drive_grass := 0
 	var room := INF
 	var turned := clampf(absf(steer_angle) / maxf(full_lock, 0.001), 0.0, 1.0)
 	var share := mass / maxf(wheels.size(), 1)
@@ -1147,6 +1177,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		if hit.is_empty():
 			w.grounded = false
 			w.load = 0.0
+			w.off = false
+			# A driven wheel in the air counts as off the road for the slide.
+			if w.driven:
+				drive_off += 1
 			w.length = move_toward(w.length, SUSPENSION_TRAVEL * 2.0, dt)
 			continue
 
@@ -1208,6 +1242,12 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 			on_rough += 1
 		if off:
 			on_off += 1
+			if w.driven:
+				drive_off += 1
+				drive_grass += 1
+		w.off = off
+		w.contact = contact
+		w.surface = ground.get_meta("surface", "dirt" if off else "asphalt") if ground != null else "asphalt"
 		# The weather makes any ground slippier, and a puddle more so. A trap
 		# is the same whatever the weather. It never takes a tire below
 		# LEAST_GRIP, unless it was already below that in the dry, like
@@ -1221,6 +1261,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 			drift = snow.w
 			grip_here = maxf(grip_here * weather_grip * lerpf(1.0, PUDDLE_GRIP, puddle) * lerpf(1.0, DRIFT_GRIP, drift), LEAST_GRIP)
 			drag_here *= weather_drag * lerpf(1.0, PUDDLE_DRAG, puddle)
+		w.snow = drift
 		grip_here = maxf(ground_grip(grip_here, w.offroad), minf(dry_grip, LEAST_GRIP))
 		drag_here = ground_drag(drag_here, w.offroad)
 		if ground != null and ground.get_meta("kerb", false):
@@ -1288,6 +1329,16 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	rough = float(on_rough) / on_any if on_any > 0 else 0.0
 	if on_any > 0:
 		off_road = float(on_off) / on_any
+		if _driven_count == 0:
+			_drive_off_road = on_off * 2 > on_any
+		# One drive wheel has to be on the ground off the road, so a hop over a
+		# bump with every drive wheel in the air keeps the slide.
+		elif drive_grass == 0:
+			_drive_off_road = false
+		elif _driven_count <= 2:
+			_drive_off_road = drive_off >= _driven_count
+		else:
+			_drive_off_road = drive_off * 2 > _driven_count
 	_drive_room = room
 
 	# Sticky road. Gravity already pulls everything down, so this cancels that
@@ -1370,10 +1421,12 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	_last_applied = applied
 
 
-## Starts, holds and ends a slide (see SLIDE_SPEED) from the controls. Off
-## the road it ends at once, and you can't start one there.
+## Starts, holds and ends a slide (see SLIDE_SPEED) from the controls. You
+## can only start one with every wheel on the road, and it ends once the
+## driven wheels are off it.
 func _update_slide(dt: float) -> void:
-	var can := not locked and stats.steering != null and forward_speed > (SLIDE_KEEP_SPEED if sliding else SLIDE_SPEED) and not sticking and off_road <= 0.0
+	var on_road := not _drive_off_road if sliding else off_road <= 0.0
+	var can := not locked and stats.steering != null and forward_speed > (SLIDE_KEEP_SPEED if sliding else SLIDE_SPEED) and not sticking and on_road
 	var into := controls.steer * slide_way
 	if not sliding:
 		if can and controls.throttle > 0.5 and controls.brake > 0.5 and absf(controls.steer) > 0.2:
@@ -1381,25 +1434,74 @@ func _update_slide(dt: float) -> void:
 			slide_way = signf(controls.steer)
 			_slide_straight = 0.0
 			_slide_speed = forward_speed
-			_slide_held = 0.0
+			_slide_steps = 0
 	elif not can or controls.throttle < 0.5:
 		sliding = false
 	else:
 		_slide_straight = _slide_straight + dt if into < 0.15 else 0.0
 		if controls.brake <= 0.5:
-			_slide_held += dt
+			_slide_steps += 1
 		if _slide_straight > SLIDE_LET_GO:
 			sliding = false
 			# Straightening up out of a slide held long enough, on the gas
-			# the whole way, gives a little turbo, more the longer it was held.
-			if _slide_held >= SLIDE_BOOST_AFTER:
-				boost_left = maxf(boost_left, minf(_slide_held * slide_boost, slide_boost_most))
+			# the whole way, gives a turbo, more the longer it was held.
+			var level := slide_level_for(_slide_steps)
+			if level > 0:
+				start_boost(maxf(boost_left, slide_boost_for(_slide_steps)), level)
 				Sounds.play_at.call_deferred("fx/turbo", sound, -8.0)
+	if not sliding:
+		_slide_steps = 0
+	slide_level = slide_level_for(_slide_steps)
 	slide_kick = sliding and controls.brake > 0.5
 	# The kick loses speed, which the held slide starts from.
 	if slide_kick:
 		_slide_speed = forward_speed
 	slide_amount = 1.0 if sliding else move_toward(slide_amount, 0.0, dt / SLIDE_RECOVER)
+
+
+## Physics steps in `seconds`, for counting slide time (see SLIDE_LEVELS).
+static func slide_steps_of(seconds: float) -> int:
+	return roundi(seconds * Engine.physics_ticks_per_second)
+
+
+## The boost level a slide held `steps` physics steps has charged, 0 to 3.
+static func slide_level_for(steps: int) -> int:
+	var level := 0
+	for at: float in SLIDE_LEVELS:
+		if steps >= slide_steps_of(at):
+			level += 1
+	return level
+
+
+## How long a boost a slide held `steps` physics steps gives, in seconds: none
+## before the first level, then growing steadily from level to level, and
+## no more past the last.
+static func slide_boost_for(steps: int) -> float:
+	var first := slide_steps_of(SLIDE_LEVELS[0])
+	if steps < first:
+		return 0.0
+	var out: float = SLIDE_BOOSTS[-1]
+	for i in SLIDE_LEVELS.size() - 1:
+		var a := slide_steps_of(SLIDE_LEVELS[i])
+		var b := slide_steps_of(SLIDE_LEVELS[i + 1])
+		if steps < b:
+			out = lerpf(SLIDE_BOOSTS[i], SLIDE_BOOSTS[i + 1], float(steps - a) / (b - a))
+			break
+	return out * slide_boost
+
+
+## Starts a boost lasting `time` seconds, at a level (1 to 3) for its looks.
+func start_boost(time: float, level: int) -> void:
+	boost_left = time
+	boost_level = level
+	boost_given = time
+	boost_count += 1
+
+
+## How far a held slide's charged toward the top level, 0 to 1, for the
+## drift sound.
+func slide_charge() -> float:
+	return clampf(float(_slide_steps) / slide_steps_of(SLIDE_LEVELS[-1]), 0.0, 1.0) if sliding else 0.0
 
 
 ## A held slide: the tail's kept out at its angle, and the kart keeps its
@@ -1789,11 +1891,11 @@ func use_gadget(slot: int) -> bool:
 	_gadget_wait[slot] = GADGET_COOLDOWN
 	match kind:
 		"turbo":
-			boost_left = TURBO_TIME
+			start_boost(TURBO_TIME, 2)
 		"big_turbo":
-			boost_left = BIG_TURBO_TIME
+			start_boost(BIG_TURBO_TIME, 3)
 		"triple_turbo":
-			boost_left = TRIPLE_TURBO_TIME
+			start_boost(TRIPLE_TURBO_TIME, 3)
 		"tow":
 			var rope := TowRope.throw(self, TowRope.target(self))
 			if rope != null:
@@ -1801,7 +1903,7 @@ func use_gadget(slot: int) -> bool:
 				towed.emit(rope.to)
 			else:
 				# With nobody in reach it's a turbo.
-				boost_left = TURBO_TIME
+				start_boost(TURBO_TIME, 2)
 		"wall":
 			get_parent().add_child(BrickWall.drop_behind(self))
 		"spikes":

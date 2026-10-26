@@ -27,7 +27,7 @@ var loop_nerves := 0.0
 ## How often it uses a gadget when the moment's right, from 0 to 1.
 var gadget_sense := 1.0
 ## Whether it slides round the tightest bends instead of braking for them
-## (see Kart.sliding). Only Expert drivers do.
+## (see Kart.sliding). Only Hard and Expert drivers do.
 var slides := false
 ## How tight a bend has to be to slide round it (its curvature, one over its
 ## radius), and how long it kicks the brake to start the slide, tuned with

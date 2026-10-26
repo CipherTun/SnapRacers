@@ -153,6 +153,39 @@ func _run() -> void:
 	on_grass.queue_free()
 	road.queue_free()
 
+	# A slide out of the end of a strip of road onto the grass keeps going
+	# while only the front wheels, which don't drive, are off, and ends once
+	# the back ones are too.
+	var strip_end := off.origin
+	strip_end.y = 0.0
+	var pad := road_pad(strip_end + off.basis.z * 4.0 + Vector3.UP * 0.04, Vector3(6.0, 0.08, 12.0))
+	pad.basis = off.basis
+	var drifter := kart_at(Transform3D(off.basis, strip_end + Vector3.UP * 0.35 + off.basis.z * 1.0), 15.0)
+	drifter.controls.throttle = 1.0
+	drifter.controls.steer = 1.0
+	await frames(3)
+	drifter.sliding = true
+	drifter.slide_way = 1.0
+	drifter.slide_amount = 1.0
+	var kept := false
+	var ended := false
+	for i in 40:
+		await frames(1)
+		if drifter.sliding and drifter.off_road > 0.0 and drifter.off_road < 1.0 and only_steered_off(drifter):
+			kept = true
+		if not drifter.sliding and drifter.off_road >= 1.0:
+			ended = true
+			break
+	check(kept, "a slide keeps going with only the front wheels off the road")
+	check(ended, "and ends once the driven back wheels are off it too")
+	drifter.queue_free()
+	pad.queue_free()
+
+	# With one back wheel in the air, as off a curb, the slide keeps going
+	# while the other back wheel's on the road, and ends with it on the grass.
+	check(await hop_slide(false), "a slide keeps going with one back wheel in the air and the other on the road")
+	check(not await hop_slide(true), "and ends with one back wheel in the air and the other on the grass")
+
 	var sand: Array = TrackPath.OFFROAD["sand"]
 	var grass: Array = TrackPath.OFFROAD["grass"]
 	var snow: Array = TrackPath.OFFROAD["snow"]
@@ -185,6 +218,54 @@ func _run() -> void:
 ## Puts a kart at `at` going at `speed` with its throttle held (so it keeps
 ## going), for two seconds, and says how much of the time its wheels were off
 ## the ground.
+## Whether a kart has wheels off the road and none of them are driven.
+func only_steered_off(kart: Kart) -> bool:
+	var any := false
+	for w in kart.wheels:
+		if w.grounded and w.off:
+			if w.driven:
+				return false
+			any = true
+	return any
+
+
+## Starts a slide high up on little pads, the front wheels on road, the back
+## left one on road or grass and nothing under the back right one, and says
+## whether it's still sliding a few steps later.
+func hop_slide(grass: bool) -> bool:
+	var at := Vector3(160.0, 30.0, 160.0)
+	var kart := kart_at(Transform3D(Basis.IDENTITY, at), 6.0)
+	# Sat with its wheels just touching the pads.
+	kart.position.y = at.y - kart.wheels[0].rest.y + kart.wheels[0].radius
+	var pads: Array[StaticBody3D] = []
+	var driven := 0
+	for w in kart.wheels:
+		if w.driven:
+			driven += 1
+		if not w.steered and w.rest.x > 0.0:
+			continue
+		var pad := road_pad(at + Vector3(w.rest.x, -0.04, w.rest.z - 0.3), Vector3(0.6, 0.08, 1.0))
+		if grass and not w.steered:
+			pad.set_meta("offroad", true)
+			pad.set_meta("grip", 0.6)
+		pads.append(pad)
+	kart.controls.throttle = 1.0
+	kart.controls.steer = 1.0
+	await frames(1)
+	kart.sliding = true
+	kart.slide_way = 1.0
+	kart.slide_amount = 1.0
+	await frames(3)
+	var still := kart.sliding
+	if driven != 2:
+		check(false, "the Starter drives its two back wheels (%d driven)" % driven)
+	kart.queue_free()
+	for pad in pads:
+		pad.queue_free()
+	await frames(2)
+	return still
+
+
 func ride_kerb(at: Vector3, speed: float) -> float:
 	var kart := kart_at(Transform3D(Basis.IDENTITY, at), speed)
 	kart.controls.throttle = 1.0 if speed > 10.0 else 0.15
