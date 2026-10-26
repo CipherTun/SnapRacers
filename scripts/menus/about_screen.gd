@@ -6,11 +6,13 @@ extends Control
 
 func _ready() -> void:
 	var column := MenuStyle.page(self, "About", Game.show_menu)
-	var title := MenuStyle.title("SnapRacers", "Version %s" % ProjectSettings.get_setting("application/config/version", ""))
+	var title := MenuStyle.title("SnapRacers", "Version %s" % ProjectSettings.get_setting("application/config/version", ""), "")
 	title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	for part in title.get_children():
 		if part is Label:
 			part.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		else:
+			part.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	column.add_child(title)
 	var text := Label.new()
 	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

@@ -46,8 +46,16 @@ const HEADING := 30
 const BODY := 22
 const SMALL := 16
 const DIGITS := 34
-## The game's name on the menus.
-const LOGO := 104
+## The game's name on the menus, for its capitals (see Logo).
+const LOGO := 110
+## How much bigger the name's capitals are than the rest, which are small
+## capitals sharing their baseline.
+const LOGO_CAPITAL := 1.22
+## What goes with the name on the splash and the main menu: "panel" puts it
+## on a slanted panel with a yellow stripe under it, "stripes" runs a slanted
+## red band from behind it off to the left edge, "flag" puts a chequered strip
+## and a yellow bar under it.
+const LOGO_LOOK := "stripes"
 ## A page's title, top left.
 const PAGE_TITLE := 44
 ## A heading inside a page, and a card's name.
@@ -798,6 +806,178 @@ static func _line_on(image: Image, points: Array, width: float, ink: Color) -> v
 			var cover := clampf(width * 0.5 - near + 0.5, 0.0, 1.0)
 			if cover > 0.0:
 				image.set_pixel(x, y, image.get_pixel(x, y).blend(Color(ink, ink.a * cover)))
+
+
+# ------------------------------------------------------------------ logo
+
+## The game's name as the menus show it (see Logo).
+static func logo(text := "SnapRacers", look := LOGO_LOOK, capitals := LOGO) -> Logo:
+	var l := Logo.new()
+	l.text = text
+	l.look = look
+	l.capitals = capitals
+	return l
+
+
+## A name in yellow capitals with a black edge and a red copy behind it. The
+## letters that are capitals in `text` are drawn `LOGO_CAPITAL` times the size
+## of the rest, on the same baseline. `look` adds what goes with it (see
+## LOGO_LOOK), and "" draws the name alone. The stripes run off to the
+## left edge of the screen, past this control.
+class Logo extends Control:
+	const SHADOW_AT := Vector2(7, 7)
+	const OUTLINE := 10
+	## Room round the name for the panel, and the gap and height of the strip
+	## under it, at LOGO size.
+	const PANEL_PAD := Vector2(36, 22)
+	## How tall the capitals are for their size, in this font.
+	const CAP := 0.7
+	const STRIP_GAP := 10.0
+	const STRIP := 22.0
+
+	var text := "SnapRacers":
+		set(value):
+			text = value
+			_changed()
+	var look := LOGO_LOOK:
+		set(value):
+			look = value
+			_changed()
+	## The size of the capitals, in UI pixels.
+	var capitals := LOGO:
+		set(value):
+			capitals = value
+			_changed()
+	var _runs: Array = []
+
+	func _init() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_changed()
+		# The stripes reach the screen's edge, so they follow where this is.
+		set_notify_transform(true)
+
+	func _notification(what: int) -> void:
+		if what == NOTIFICATION_TRANSFORM_CHANGED and look == "stripes":
+			queue_redraw()
+
+	func _changed() -> void:
+		_runs.clear()
+		var small := roundi(capitals / LOGO_CAPITAL)
+		for letter in text:
+			var big := letter != letter.to_lower()
+			var want := capitals if big else small
+			if not _runs.is_empty() and _runs[-1][1] == want:
+				_runs[-1][0] += letter.to_upper()
+			else:
+				_runs.append([letter.to_upper(), want])
+		update_minimum_size()
+		queue_redraw()
+
+	func _scale() -> float:
+		return capitals / float(LOGO)
+
+	func _letters_size() -> Vector2:
+		var f := UiKit.font("title")
+		var wide := 0.0
+		for run in _runs:
+			wide += f.get_string_size(run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1]).x
+		var s := _scale()
+		return Vector2(wide + (OUTLINE + SHADOW_AT.x) * s, capitals * CAP + (OUTLINE + SHADOW_AT.y) * s)
+
+	## Where the letters start, inside what this takes up.
+	func _letters_at() -> Vector2:
+		if look == "panel":
+			return PANEL_PAD * _scale() + Vector2(size.y * UiKit.PANEL_LEAN * 0.5, 0)
+		return Vector2.ZERO
+
+	func _get_minimum_size() -> Vector2:
+		var room := _letters_size()
+		var s := _scale()
+		match look:
+			"panel":
+				room.y += PANEL_PAD.y * 2.0 * s
+				room.x += PANEL_PAD.x * 1.6 * s + room.y * UiKit.PANEL_LEAN
+			"flag", "stripes":
+				room.y += (STRIP_GAP + STRIP) * s
+		return room
+
+	func _draw() -> void:
+		var s := _scale()
+		var letters := Rect2(_letters_at(), _letters_size())
+		var f := UiKit.font("title")
+		# The capitals' tops and the baseline, for the bands around them.
+		var cap_top := letters.position.y + OUTLINE * 0.5 * s
+		var base := cap_top + capitals * CAP
+		match look:
+			"panel":
+				var back := Rect2(Vector2.ZERO, size)
+				UiKit.draw_slant(self, Rect2(back.position + UiKit.SHADOW, back.size), UiKit.SHADOW_COLOUR, UiKit.PANEL_LEAN)
+				UiKit.draw_slant(self, back, UiKit.PANEL, UiKit.PANEL_LEAN)
+				var under := 8.0 * s
+				var shift := size.y * UiKit.PANEL_LEAN
+				var tilt := under * UiKit.PANEL_LEAN
+				draw_colored_polygon(PackedVector2Array([
+					Vector2(tilt, size.y - under), Vector2(size.x - shift + tilt, size.y - under),
+					Vector2(size.x - shift, size.y), Vector2(0, size.y)]), UiKit.YELLOW)
+				# A red stripe down the left, like the cards.
+				var wide := 14.0 * s
+				draw_colored_polygon(PackedVector2Array([
+					Vector2(shift, 0), Vector2(shift + wide, 0),
+					Vector2(wide + tilt, size.y - under), Vector2(tilt, size.y - under)]), UiKit.RED)
+			"stripes":
+				# A red stripe and a thin yellow one under the letters, from off
+				# the left edge to past the last letter, then two short chips.
+				var left := -get_global_transform().origin.x - 20.0
+				var top := letters.end.y + STRIP_GAP * 0.5 * s
+				var high := STRIP * 0.75 * s
+				var end := letters.end.x + 30.0 * s
+				UiKit.draw_slant(self, Rect2(left, top, end - left, high), UiKit.RED, UiKit.LEAN)
+				var thin := high * 0.4
+				var under := top + high + 5.0 * s
+				UiKit.draw_slant(self, Rect2(left, under, end - left - 60.0 * s, thin), UiKit.YELLOW, UiKit.LEAN)
+				for i in 2:
+					var x := end + (12.0 + i * 30.0) * s
+					UiKit.draw_slant(self, Rect2(x, top, 18.0 * s, high), Color(UiKit.RED, 0.75 - i * 0.3), UiKit.LEAN)
+			"flag":
+				var y := letters.end.y + STRIP_GAP * s
+				var strip := STRIP * s
+				var square := strip * 0.5
+				var x0 := letters.position.x + 4.0 * s
+				var flag_wide := square * 14.0
+				# A chequered strip leaning like the type, then a yellow bar.
+				var lean := UiKit.LEAN
+				var shift := strip * lean
+				var cols := int(flag_wide / square)
+				draw_colored_polygon(PackedVector2Array([
+					Vector2(x0 + shift, y), Vector2(x0 + shift + cols * square, y),
+					Vector2(x0 + cols * square, y + strip), Vector2(x0, y + strip)]), Color(0, 0, 0, 0.55))
+				# Dark backing, with every other square white on it.
+				for c in cols:
+					for r in 2:
+						if (c + r) % 2 == 0:
+							continue
+						var top_y := y + r * square
+						var x := x0 + c * square + (strip - r * square) * lean
+						draw_colored_polygon(PackedVector2Array([
+							Vector2(x, top_y), Vector2(x + square, top_y),
+							Vector2(x + square - square * lean, top_y + square), Vector2(x - square * lean, top_y + square)]), Color.WHITE)
+				var bar_x := x0 + cols * square + 10.0 * s
+				UiKit.draw_slant(self, Rect2(bar_x, y + strip * 0.25, letters.end.x - bar_x, strip * 0.5), UiKit.YELLOW, UiKit.LEAN)
+		# The red copy, then the black edge, then the yellow letters.
+		for layer in 3:
+			var x := letters.position.x + OUTLINE * 0.5 * s
+			for run in _runs:
+				var at := Vector2(x, base)
+				var edge := roundi(OUTLINE * s)
+				match layer:
+					0:
+						draw_string_outline(f, at + SHADOW_AT * s, run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1], edge, UiKit.RED)
+						draw_string(f, at + SHADOW_AT * s, run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1], UiKit.RED)
+					1:
+						draw_string_outline(f, at, run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1], edge, Color.BLACK)
+					2:
+						draw_string(f, at, run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1], UiKit.YELLOW)
+				x += f.get_string_size(run[0], HORIZONTAL_ALIGNMENT_LEFT, -1, run[1]).x
 
 
 # -------------------------------------------------------------- backdrop

@@ -117,16 +117,12 @@ class Steps extends Container:
 		return out
 
 
-## The game's name in big yellow letters with speed lines trailing off it,
-## and a line under it in yellow when there's a `subtitle`.
-static func title(text := "SnapRacers", subtitle := "") -> VBoxContainer:
+## The game's name (see UiKit.Logo), with a line under it in yellow when
+## there's a `subtitle`.
+static func title(text := "SnapRacers", subtitle := "", look := UiKit.LOGO_LOOK) -> VBoxContainer:
 	var box := VBoxContainer.new()
-	box.add_theme_constant_override("separation", 0)
-	var label := Logo.new()
-	label.text = text
-	label.uppercase = true
-	label.theme_type_variation = "LogoLabel"
-	box.add_child(label)
+	box.add_theme_constant_override("separation", UiKit.GAP_S)
+	box.add_child(UiKit.logo(text, look))
 	if subtitle != "":
 		var sub := Label.new()
 		sub.text = subtitle
@@ -134,17 +130,6 @@ static func title(text := "SnapRacers", subtitle := "") -> VBoxContainer:
 		sub.theme_type_variation = "TaglineLabel"
 		box.add_child(sub)
 	return box
-
-
-## The logo's label, with the speed lines drawn off to its left.
-class Logo extends Label:
-	func _draw() -> void:
-		var middle := size.y * 0.42
-		for i in 6:
-			var y := middle - 50.0 + i * 18.0
-			var long := 90.0 - i * 10.0
-			var colour := UiKit.RED if i % 3 == 0 else UiKit.YELLOW
-			draw_rect(Rect2(-long - 30.0, y, long, 6.0 if i % 2 == 0 else 3.0), Color(colour, 0.9))
 
 
 ## A big menu button with a picture at its left end (see BigButton).
