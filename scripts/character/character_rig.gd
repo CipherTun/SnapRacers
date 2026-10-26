@@ -23,7 +23,8 @@ extends Node3D
 ##
 ## A lively one (in a race or on the driver screen) blinks, pulls faces, looks
 ## at karts beside it and cheers when it wins, and standing it fidgets, looks
-## around and waves now and then. Pictures stay still.
+## around and waves now and then. Pictures stay still. On a podium they can
+## also jump up onto a step, clap, sulk, or hold something up in one hand.
 ##
 ## Astride a motorbike's saddle, the legs swing down toward the footpegs
 ## instead of out in front, the upper body leans forward and the arms swing
@@ -76,6 +77,21 @@ const MOST_SPREAD := deg_to_rad(60.0)
 const BONES := ["hips", "legs", "upper", "head", "arm_l", "arm_r", "hand_l", "hand_r"]
 ## Leaning back further than this (in radians) wears the reclined back piece.
 const RECLINED := 0.7
+## Holding something up: how far the arms swing up and out to the sides, so
+## the hands clear the head, and how far they pump it up and down.
+const HOLD_SWING := deg_to_rad(155.0)
+const HOLD_SPREAD := 0.45
+const HOLD_PUMP := 0.14
+## How long the arms take to go up.
+const RAISE := 0.35
+## Clapping: the arms out in front, turning in at the shoulders from open to
+## where the hands meet, this many times a second.
+const CLAP_SWING := deg_to_rad(80.0)
+const CLAP_OPEN := deg_to_rad(12.0)
+const CLAP_SHUT := deg_to_rad(27.0)
+const CLAP_RATE := 2.6
+## Sulking, how far forward the shoulders slump, in radians.
+const SULK_SLUMP := 0.22
 
 var design: CharacterDesign
 var seated := true
@@ -151,6 +167,30 @@ var _hop_left := 0.0
 var _hop_in := 0.0
 var _hop_from := Vector3.ZERO
 var _time := 0.0
+## Standing about on their own, looking around, waving and hopping now and
+## then. Off leaves them to whoever's posing them.
+var idle := true
+var _clap_left := 0.0
+var _sulk_left := 0.0
+var _slump := 0.0
+## How far each arm's turned in at the shoulder, for clapping.
+var _turn_in: Array[float] = [0.0, 0.0]
+## Arms up holding something, and how far up they've got, 0 to 1, from the
+## swing they started at.
+var _raised := false
+var _raise := 1.0
+var _raise_from := [0.0, 0.0]
+## What's held in the right hand, its size, and the point on it that's in
+## the hand, in its own space.
+var _held: Node3D
+var _held_basis := Basis.IDENTITY
+var _held_grip := Vector3.ZERO
+## A leap from one spot to another (see leap()), with how long it has left
+## and takes.
+var _leap_left := 0.0
+var _leap_time := 0.0
+var _leap_from := Vector3.ZERO
+var _leap_to := Vector3.ZERO
 
 
 func _init(character: CharacterDesign, sitting := true) -> void:
@@ -290,6 +330,103 @@ func hop() -> void:
 		feel("happy", 0.8)
 
 
+## Claps, arms out in front and the hands meeting, looking happy.
+func clap(seconds := 3.0) -> void:
+	if not lively:
+		return
+	_clap_left = seconds
+	_sulk_left = 0.0
+	feel("happy", seconds)
+
+
+## Slumps forward with a cross face, shaking the head now and then.
+func sulk(seconds := 3.0) -> void:
+	if not lively:
+		return
+	_sulk_left = seconds
+	if _clap_left > 0.0:
+		_clap_left = 0.0
+		_turn_in = [0.0, 0.0]
+		rest_hands()
+	feel("cross", seconds)
+
+
+## Jumps from where they are to `to` (in the parent's space) over `seconds`,
+## arms swinging up on the way.
+func leap(to: Vector3, seconds := 0.6) -> void:
+	_leap_from = position
+	_leap_to = to
+	_leap_time = seconds
+	_leap_left = seconds
+	_hop_left = 0.0
+	if not lively or seconds <= 0.0:
+		position = to
+		_hop_from = to
+		_leap_left = 0.0
+
+
+## Arms up and out to the sides, ready to hold something up high. `now`
+## puts them there straight away.
+func raise_arms(now := false) -> void:
+	_raised = true
+	_clap_left = 0.0
+	if _cheer_left > 0.0:
+		position = _hop_from
+	_cheer_left = 0.0
+	_wave_left = 0.0
+	_turn_in = [0.0, 0.0]
+	_raise = 1.0 if now or not lively else 0.0
+	if _upper != null:
+		for side in 2:
+			_raise_from[side] = _swing_of(side)
+	if _raise >= 1.0 and _upper != null:
+		_pose_raised(0.0)
+
+
+## Holds `prop` up in the right hand, by the point `grip` on it (in its own
+## space), the right way up and facing the same way as them. It goes on the
+## upper body, keeping its size, and stays there until let_go().
+func hold(prop: Node3D, grip: Vector3, now := false) -> void:
+	if not _raised:
+		raise_arms(now)
+	elif now:
+		_raise = 1.0
+	_held = prop
+	_held_grip = grip
+	_held_basis = Basis.from_scale(prop.scale)
+	if prop.get_parent() == null:
+		_upper.add_child(prop)
+	elif prop.get_parent() != _upper:
+		prop.reparent(_upper, false)
+	_hop_from = position
+	_place_held()
+	if lively:
+		feel("laugh", INF)
+
+
+## What's held, or null.
+func held() -> Node3D:
+	return _held
+
+
+## Puts down whatever's held, with the arms back down.
+func let_go() -> void:
+	if _held != null and _held.get_parent() == _upper:
+		_upper.remove_child(_held)
+	_held = null
+	_raised = false
+	_spread = [0.0, 0.0]
+	rest_hands()
+
+
+## Where a prop held by `grip` (in its own space), turned and sized by
+## `basis`, sits in the world with the arms all the way up, for bringing it
+## to the hand.
+func hold_transform(basis: Basis, grip: Vector3) -> Transform3D:
+	var hand := _grip_at(1, HOLD_SWING, -HOLD_SPREAD)
+	return _upper.global_transform * Transform3D(basis, hand - basis * grip)
+
+
 ## The lights that go with the toy plastic, for somewhere a driver's shown
 ## close up. There's a cool light from the other side from the sun and a warm
 ## one from behind that picks out their edges.
@@ -309,7 +446,7 @@ static func add_toy_lights(parent: Node) -> void:
 ## Whether the arms are busy (cheering or waving), so whoever's posing them
 ## on a steering wheel should leave them be.
 func busy_hands() -> bool:
-	return _cheer_left > 0.0 or _wave_left > 0.0
+	return _cheer_left > 0.0 or _wave_left > 0.0 or _clap_left > 0.0 or _raised
 
 
 func _process(delta: float) -> void:
@@ -334,7 +471,7 @@ func _process(delta: float) -> void:
 
 	# Standing about, they look around, wave now and then and give a little
 	# hop.
-	if not seated and _cheer_left <= 0.0:
+	if not seated and idle and _cheer_left <= 0.0 and not _raised and _clap_left <= 0.0 and _sulk_left <= 0.0:
 		_idle_look_in -= delta
 		if _idle_look_in <= 0.0:
 			_idle_look_in = _rng.randf_range(1.5, 4.0)
@@ -349,17 +486,49 @@ func _process(delta: float) -> void:
 			_hop_in = _rng.randf_range(8.0, 14.0)
 			hop()
 
-	var turn := _steer_look + _idle_look * (0.0 if seated else 1.0)
+	var turn := _steer_look + _idle_look * (0.0 if seated or not idle else 1.0)
 	if _glancing and seated:
 		turn = _glance
 	if _wave_left > 0.0:
 		turn = 0.0
+	if _sulk_left > 0.0:
+		# A slow shake of the head now and then.
+		turn = sin(_time * 2.2) * 0.35 * maxf(sin(_time * 0.7), 0.0)
+	elif _held != null:
+		# Looking over at what they're holding up.
+		turn = -0.3
 	_head.rotation.y = lerpf(_head.rotation.y, turn, 1.0 - exp(-delta * 8.0))
+
+	# Sulking, the shoulders slump forward from the hips.
+	_sulk_left -= delta
+	var slump := SULK_SLUMP if _sulk_left > 0.0 else 0.0
+	if not is_equal_approx(_slump, slump):
+		_slump = move_toward(_slump, slump, delta * 0.6)
+		_upper.transform = _upper_at(recline - _slump, astride)
 
 	# The arms, when nobody else is posing them. Brick figure arms are too short to
 	# reach over the head, so cheering is pumping both fists out in front, and
 	# waving is one hand up in front of the shoulder, twisting at the wrist.
-	if _cheer_left > 0.0:
+	if _raised:
+		_raise = minf(_raise + delta / RAISE, 1.0)
+		_pose_raised(_time)
+		if _held != null and _leap_left <= 0.0:
+			position = _hop_from + Vector3.UP * absf(sin(_time * 4.0)) * 0.035
+	elif _leap_left > 0.0:
+		# Arms swing up as they jump, and back down as they land.
+		var up := sin(clampf(1.0 - _leap_left / _leap_time, 0.0, 1.0) * PI)
+		for side in 2:
+			_set_swing(side, lerpf(_rest_swing[side], PI * 0.55, up), _rest_along[side])
+	elif _clap_left > 0.0:
+		_clap_left -= delta
+		var shut := 0.5 + 0.5 * sin(_time * TAU * CLAP_RATE)
+		for side in 2:
+			_turn_in[side] = lerpf(CLAP_OPEN, CLAP_SHUT, shut)
+			_set_swing(side, CLAP_SWING + sin(_time * 1.3 + side) * 0.05, Vector3.UP)
+		if _clap_left <= 0.0:
+			_turn_in = [0.0, 0.0]
+			rest_hands()
+	elif _cheer_left > 0.0:
 		_cheer_left -= delta
 		for side in 2:
 			_set_swing(side, PI * 0.6 + sin(_time * 9.0 + side * PI) * 0.12, Vector3.UP)
@@ -373,16 +542,46 @@ func _process(delta: float) -> void:
 		_set_swing(1, PI * 0.62 + sin(_time * 5.0) * 0.06, Vector3.UP + Vector3.RIGHT * sin(_time * 11.0) * 1.2)
 		if _wave_left <= 0.0:
 			rest_hands()
-	elif not seated:
+	elif not seated and _sulk_left <= 0.0:
 		# A gentle sway of the arms while they stand there.
 		for side in 2:
 			_set_swing(side, _rest_swing[side] + sin(_time * 1.6 + side * PI) * 0.06, _rest_along[side])
 
-	if _hop_left > 0.0:
+	if _leap_left > 0.0:
+		_leap_left -= delta
+		var t := clampf(1.0 - _leap_left / _leap_time, 0.0, 1.0)
+		# Up first and across after, so the feet clear the edge of what
+		# they're jumping onto.
+		position = _leap_from.lerp(_leap_to, t * t)
+		position.y = lerpf(_leap_from.y, _leap_to.y, sin(t * PI * 0.5)) + sin(t * PI) * 0.25
+		if _leap_left <= 0.0:
+			position = _leap_to
+			_hop_from = position
+			if not _raised:
+				rest_hands()
+	elif _hop_left > 0.0:
 		_hop_left -= delta
 		position = _hop_from + Vector3.UP * sin(clampf(1.0 - _hop_left / 0.5, 0.0, 1.0) * PI) * 0.05
 		if _hop_left <= 0.0:
 			position = _hop_from
+
+
+## The arms up in the hold pose, pumping up and down, and what's held
+## with them.
+func _pose_raised(time: float) -> void:
+	var smooth := _raise * _raise * (3.0 - 2.0 * _raise)
+	var pump := (0.5 - 0.5 * cos(time * 4.0)) * HOLD_PUMP if _held != null and lively else 0.0
+	for side in 2:
+		_spread[side] = -HOLD_SPREAD * smooth
+		_set_swing(side, lerpf(_raise_from[side], HOLD_SWING - pump, smooth), Vector3.FORWARD)
+	_place_held()
+
+
+func _place_held() -> void:
+	if _held == null or _upper == null:
+		return
+	var hand: Vector3 = _arm[1].transform * _grip_local[1]
+	_held.transform = Transform3D(_held_basis, hand - _held_basis * _held_grip)
 
 
 ## Where each hand is holding right now, in the rig's space. Tests use it.
@@ -434,7 +633,7 @@ func _swing_of(side: int) -> float:
 ## along `along`.
 func _set_swing(side: int, angle: float, along: Vector3) -> void:
 	var pivot := shoulder(side)
-	var swing := _spread_basis(side) * Basis(Vector3.RIGHT, angle)
+	var swing := _swing_basis(side, angle)
 	_arm[side].transform = Transform3D(swing, pivot)
 	# The hand's hole runs along what it's holding, with the wrist behind.
 	var wrist_dir := swing * _forearm_dir(side)
@@ -446,6 +645,20 @@ func _set_swing(side: int, angle: float, along: Vector3) -> void:
 	var x := y.cross(z).normalized()
 	var hand_at := pivot + swing * _grip_local[side]
 	_hand[side].transform = Transform3D(Basis(x, y, z), hand_at)
+
+
+## The arm's turn for a swing, with its spread out to the side and its turn
+## in at the shoulder.
+func _swing_basis(side: int, angle: float) -> Basis:
+	var inward := Basis(Vector3.UP, _turn_in[side] * (1.0 if side == 1 else -1.0))
+	return inward * _spread_basis(side) * Basis(Vector3.RIGHT, angle)
+
+
+## Where the hand's grip is, in the upper body's space, for a swing and a
+## spread, with no turn in.
+func _grip_at(side: int, angle: float, spread: float) -> Vector3:
+	var out := Basis(Vector3.BACK, spread * (1.0 if side == 1 else -1.0))
+	return shoulder(side) + out * Basis(Vector3.RIGHT, angle) * _grip_local[side]
 
 
 func _forearm_dir(side: int) -> Vector3:

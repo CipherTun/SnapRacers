@@ -1,9 +1,12 @@
 extends Node
 
 ## The podium after a cup's last race, on every cup's last course: the top
-## three on the right steps in order with their own drivers, the rest of the
-## field below on the ground, the karts cleared away, no errors, and the
+## three jumping up onto the right steps in order with their own drivers, the
+## rest of the field below on the ground clapping or sulking, the winner
+## holding the cup's trophy, the karts cleared away, no errors, and the
 ## standings over it after, with the camera still, until Back frees the race.
+## The first cup's show is watched all the way through; the others are
+## skipped partway, which jumps to how it ends.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tests/podium_test.tscn
 
@@ -89,6 +92,29 @@ func _cup(id: String) -> void:
 	check(podium.order.map(func(e): return e[0]) == names, "everyone's there in the standings' order")
 	check(podium.drivers.size() == names.size() and podium.karts.size() == 3, "%d drivers and 3 karts" % podium.drivers.size())
 	check(range(names.size()).all(func(i): return podium.drivers[i].design == who[names[i]]), "each in the driver they raced as")
+	check(errors.count == before, "with no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
+	# Taps right after it goes up are ignored.
+	var tap := InputEventScreenTouch.new()
+	tap.pressed = true
+	var skipped := [false]
+	podium.finished.connect(func(): skipped[0] = true)
+	podium._unhandled_input(tap)
+	check(not skipped[0], "a tap right after it goes up doesn't skip it")
+	race.go_back()
+	check(not skipped[0] and race.cup_standings == null, "and an early Back doesn't skip it either")
+	if id == GrandPrix.cups()[0].id:
+		await _watch(podium)
+	else:
+		# Partway, with third up and second in the air.
+		podium._time = Podium.LEAPS[1] + 0.2
+		await frames(3)
+	# A narrow screen pulls the camera back to fit the rows.
+	var wide := await _distance_in(podium, Vector2i(1280, 720))
+	var narrow := await _distance_in(podium, Vector2i(768, 1024))
+	check(narrow > wide and narrow <= Podium.CAMERA_FAR, "the camera pulls back on a portrait screen (%.1f m, %.1f m wide)" % [narrow, wide])
+	race.go_back()
+	await frames(3)
+	check(skipped[0], "Back skips to the end")
 	var feet := []
 	var across := []
 	for rig in podium.drivers:
@@ -105,27 +131,30 @@ func _cup(id: String) -> void:
 		var floor_at: float = race.builder.ground_at(at.x, at.z) if podium.ground != null else podium.middle.y
 		below = below and absf(feet[i] - floor_at) < 0.05 and feet[i] < feet[2]
 	check(below, "and the rest of the field stand on the ground below")
+	var winner := podium.drivers[0]
+	var trophy := podium.trophy
+	var cup: Dictionary = GrandPrix.cups().filter(func(c): return c.id == id)[0]
+	var pieces := TrophyModel.pieces(cup.get("trophy", {}), Podium.colour_of(cup), "gold").size()
+	check(trophy != null and winner.held() == trophy and trophy.get_parent() == winner.upper() and podium.trophy_spec == cup.get("trophy", {}) and trophy.get_child_count() == pieces,
+			"the winner holds the cup's trophy (%s)" % cup.get("trophy", {}).get("top", "cup"))
+	if trophy != null:
+		var hand := winner.hand_position(1)
+		var up := winner.to_local(trophy.global_position).y
+		check(up > CharacterRig.HEAD_Y, "up high, its foot by the top of the head (%.2f m up)" % up)
+		var head_box := _box_of(winner.head())
+		var into := trophy.find_children("*", "MeshInstance3D", true, false).filter(func(m): return (m.global_transform * m.get_aabb()).intersects(head_box))
+		check(into.is_empty(), "clear of their head (%d of its bricks in it)" % into.size())
+		check(winner.to_global(hand).distance_to(trophy.global_transform * Podium.TROPHY_GRIP) < 0.01, "and in their hand")
+	var clapping := range(1, podium.drivers.size()).filter(func(i): return podium.drivers[i]._clap_left > 0.0)
+	var sulking := range(3, podium.drivers.size()).filter(func(i): return podium.drivers[i]._sulk_left > 0.0)
+	check(clapping.size() == podium.drivers.size() - 1 - Podium.SULKING and sulking == range(podium.drivers.size() - Podium.SULKING, podium.drivers.size()),
+			"second and third and the field clap, and the last %d sulk" % Podium.SULKING)
+	check(podium.confetti.emitting, "and the confetti's coming down")
 	var off := race.track.point_at(race.track.offset_of(podium.middle)).distance_to(podium.middle)
 	print("  podium %.0f m from the middle of the road%s" % [off, ", on the start straight" if off < race.track.width else ""])
 	if not Scenery.theme_named(race.track.theme).get("void", false):
 		check(off > race.track.width, "beside the road, off it")
-	check(errors.count == before, "with no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
-	# Taps right after it goes up are ignored.
-	var tap := InputEventScreenTouch.new()
-	tap.pressed = true
-	var skipped := [false]
-	podium.finished.connect(func(): skipped[0] = true)
-	podium._unhandled_input(tap)
-	check(not skipped[0], "a tap right after it goes up doesn't skip it")
-	race.go_back()
-	check(not skipped[0] and race.cup_standings == null, "and an early Back doesn't skip it either")
-	podium._time = Podium.IGNORE_INPUT + 0.1
-	# A narrow screen pulls the camera back to fit the rows.
-	var wide := await _distance_in(podium, Vector2i(1280, 720))
-	var narrow := await _distance_in(podium, Vector2i(768, 1024))
-	check(narrow > wide and narrow <= Podium.CAMERA_FAR, "the camera pulls back on a portrait screen (%.1f m, %.1f m wide)" % [narrow, wide])
-	podium.finish()
-	await frames(3)
+	check(errors.count == before, "and still no errors (%d%s)" % [errors.count - before, ", the last " + errors.last if errors.count > before else ""])
 	var standings := race.cup_standings
 	check(screen() == race and standings != null and standings.is_visible_in_tree(), "then the standings come up over the podium")
 	if standings == null:
@@ -164,6 +193,40 @@ func _cup(id: String) -> void:
 	check(not is_instance_valid(race) or race.is_queued_for_deletion(), "Back leaves, and the race goes with it")
 	check(screen() is CupGrid, "back to the cups")
 	await frames(2)
+
+
+## Watches the show up to the trophy being in the winner's hand: the top
+## three jump up third, second then first, and the trophy comes down to them.
+func _watch(podium: Podium) -> void:
+	var up_at := [INF, INF, INF]
+	var tops := []
+	var was := INF
+	var falling := true
+	for place in 3:
+		tops.append(podium._on_step[place].y)
+	while podium._time < Podium.TROPHY_IN + 0.3:
+		await frames(1)
+		for place in 3:
+			if up_at[place] == INF and absf(podium.drivers[place].position.y - tops[place]) < 0.005:
+				up_at[place] = podium._time
+		if podium.trophy != null and not podium._landed:
+			falling = falling and podium.trophy.global_position.y <= was + 0.0001
+			was = podium.trophy.global_position.y
+	check(up_at[2] < up_at[1] and up_at[1] < up_at[0] and up_at[0] < Podium.TROPHY_IN, "third, second then first jump up onto their steps (%.1f, %.1f, %.1f s)" % [up_at[2], up_at[1], up_at[0]])
+	check(was < INF and falling, "the trophy comes down from above")
+	check(podium.drivers[0].held() == podium.trophy, "into the winner's hand")
+	check(podium.confetti.emitting, "with confetti")
+
+
+## The box round everything drawn under `node`, in the world.
+func _box_of(node: Node3D) -> AABB:
+	var box := AABB()
+	var first := true
+	for shown in node.find_children("*", "MeshInstance3D", true, false):
+		var b: AABB = shown.global_transform * shown.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	return box
 
 
 ## How far out a copy of `podium` puts its camera in a viewport of `size`.

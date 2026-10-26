@@ -422,6 +422,66 @@ class Runner:
 			check(worst >= 0.035, "%s, the hands rest clear of the body (%.3f m from it)" % ["sitting" if sitting else "standing", worst])
 			rig.queue_free()
 
+		# Clapping, the hands meet in front without going into each other or
+		# the body. Sulking, they slump forward with the hands still clear.
+		var clapper := CharacterRig.new(CharacterDesign.load_file("res://data/characters/roster/racer.json"), false)
+		clapper.lively = true
+		clapper.idle = false
+		add_child(clapper)
+		clapper.set_process(false)
+		clapper.clap(INF)
+		var nearest := INF
+		var furthest := 0.0
+		var off_body := INF
+		for i in 90:
+			clapper._process(1.0 / 60.0)
+			var apart := clapper.hand_position(0).distance_to(clapper.hand_position(1))
+			nearest = minf(nearest, apart)
+			furthest = maxf(furthest, apart)
+			for side in 2:
+				off_body = minf(off_body, clearance(clapper.hand_position(side), false))
+		check(nearest > CharacterRig.HAND_SIZE and nearest < CharacterRig.HAND_SIZE * 1.4 and furthest > nearest + 0.08, "clapping, the hands meet and part (%.3f to %.3f m apart)" % [nearest, furthest])
+		check(off_body >= 0.1, "out in front, clear of the body (%.3f m from it)" % off_body)
+		clapper.sulk(INF)
+		for i in 60:
+			clapper._process(1.0 / 60.0)
+		var slumped := clapper.upper().transform.basis.y.z
+		off_body = INF
+		for side in 2:
+			off_body = minf(off_body, clearance(clapper.hand_position(side), false))
+		check(slumped < -0.1 and is_equal_approx(clapper._turn_in[0], 0.0), "sulking, they slump forward (%.2f)" % slumped)
+		check(off_body >= 0.035, "with the hands clear of the body (%.3f m from it)" % off_body)
+		clapper.queue_free()
+
+		# Holding something up, the hands are out past the head and hair, the
+		# held thing sits in the right hand, and letting go puts it down.
+		var in_head := []
+		for file in DirAccess.get_files_at("res://data/characters/roster"):
+			if not file.ends_with(".json"):
+				continue
+			var holder := CharacterRig.new(CharacterDesign.load_file("res://data/characters/roster/" + file), false)
+			add_child(holder)
+			var prop := Node3D.new()
+			holder.hold(prop, Vector3(-0.1, 0.0, 0.0), true)
+			var head_box := AABB()
+			var first_box := true
+			for shown in holder.head().find_children("*", "MeshInstance3D", true, false):
+				var b: AABB = holder.global_transform.affine_inverse() * shown.global_transform * shown.get_aabb()
+				head_box = b if first_box else head_box.merge(b)
+				first_box = false
+			for side in 2:
+				var hand := holder.hand_position(side)
+				if head_box.grow(CharacterRig.HAND_SIZE * 0.5).has_point(hand) or hand.y < CharacterRig.HEAD_Y:
+					in_head.append("%s %d" % [file, side])
+			if holder.to_local(prop.to_global(Vector3(-0.1, 0.0, 0.0))).distance_to(holder.hand_position(1)) > 0.001:
+				in_head.append("%s held off the hand" % file)
+			holder.let_go()
+			if prop.get_parent() != null or holder.held() != null:
+				in_head.append("%s still holding" % file)
+			prop.free()
+			holder.queue_free()
+		check(in_head.is_empty(), "holding something up, the hands are up high, clear of every roster driver's head %s" % [in_head])
+
 		# The roster.
 		var classes := {}
 		var names := []

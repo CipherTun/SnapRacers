@@ -1,13 +1,16 @@
 extends Node
 
 ## Pictures of the podium after a cup's last race, in the weather and at the
-## time of day asked for: as the camera sweeps in, once it's still, and with
-## the standings over it. "two" at the end is a cup for two. It needs a screen.
+## time of day asked for: through the show (jumping up, the trophy coming
+## down, held up, clapping and confetti), close ups of the winner and the
+## field, and with the standings over it. "two" at the end is a cup for two. It needs a screen.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT] [two]
 
 const OUT := "res://build/shots"
 ## When to take them, in seconds after the podium goes up.
-const AT := [0.8, 2.5, 5.0]
+const AT := [1.6, 4.6, 6.0, 8.0]
+## When to take the close ups.
+const CLOSE_AT := 8.5
 
 var host: Node
 
@@ -68,6 +71,30 @@ func _ready() -> void:
 		while podium._time < AT[i]:
 			await get_tree().process_frame
 		await _save("%s/podium_%s_%d.png" % [out, named, i + 1], size)
+	while podium._time < CLOSE_AT:
+		await get_tree().process_frame
+	# Close up on the winner from the front, and on the end of the row with
+	# the sulkers, with the podium's own camera held there for a moment.
+	var close := podium.camera
+	var was := close.global_transform
+	podium.set_process(false)
+	var winner: CharacterRig = podium.drivers[0]
+	var middle := winner.global_position + Vector3.UP * 0.5
+	var front := was.origin - middle
+	front.y = 0.0
+	front = front.normalized()
+	close.global_transform = Transform3D.IDENTITY.translated(middle + front * 2.4 + Vector3.UP * 0.4).looking_at(middle, Vector3.UP)
+	await _settle(close)
+	await _save("%s/close_winner_%s.png" % [out, named], size)
+	var last: CharacterRig = podium.drivers[podium.drivers.size() - 1]
+	var near: CharacterRig = podium.drivers[podium.drivers.size() - 3]
+	middle = (last.global_position + near.global_position) * 0.5 + Vector3.UP * 0.1
+	close.global_transform = Transform3D.IDENTITY.translated(middle + front * 2.8 + Vector3.UP * 0.5).looking_at(middle, Vector3.UP)
+	await _settle(close)
+	await _save("%s/close_field_%s.png" % [out, named], size)
+	close.global_transform = was
+	close.reset_physics_interpolation()
+	podium.set_process(true)
 	podium.finish()
 	while not podium.still():
 		await get_tree().process_frame
@@ -76,6 +103,13 @@ func _ready() -> void:
 	await _save("%s/standings_%s.png" % [out, named], size)
 	print("saved podium_%s_%s_%s in %d ms" % [cup, weather, time, Time.get_ticks_msec() - start])
 	get_tree().quit()
+
+
+## Lets the camera jump to where it's been put, rather than glide there.
+func _settle(camera: Camera3D) -> void:
+	camera.reset_physics_interpolation()
+	for i in 2:
+		await get_tree().physics_frame
 
 
 func _save(path: String, size: Vector2i) -> void:

@@ -868,6 +868,10 @@ func show_podium(gp: GrandPrix) -> Podium:
 			child.queue_free()
 	podium = Podium.new(everyone, Podium.colour_of(gp.cup), Podium.find_spot(track, builder), builder.ground_at)
 	podium.lit = conditions.beams()
+	# Your own cups' trophies are picked from their names, as on the cups page.
+	var cup := gp.cup
+	podium.trophy_spec = cup.get("trophy", TrophyModel.spec_for(str(cup.get("name", ""))))
+	podium.trophy_colour = Color(str(cup.colour)) if cup.has("colour") else TrophyModel.colour_for(str(cup.get("name", "")))
 	add_child(podium)
 	podium.finished.connect(show_standings.bind(gp))
 	return podium

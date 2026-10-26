@@ -7,8 +7,13 @@ extends Node3D
 ## Three stepped blocks in the cup's colour with 1, 2 and 3 on their fronts,
 ## built from the same bricks as the rest of the scenery. The top three stand
 ## on them with their karts parked behind, and everyone else stands in a row
-## either side. The camera sweeps in and then holds still. Once it's held
-## for a while, or on a tap or a key, `finished` is sent.
+## either side. The camera sweeps in and then holds still.
+##
+## As it does, third, second and first jump up onto their steps, the cup's
+## trophy comes down from above to the winner, who holds it up, and confetti
+## falls in the cup's colours to a fanfare and a cheer. The rest of the
+## field clap, except the last few, who sulk. Once it's over, or on a tap or
+## a key, `finished` is sent, and everything jumps to how it ends.
 ##
 ## It's laid out in its own space with the front facing +Z, and turned a
 ## whole number of quarter turns, like every prop, so the brick patterns
@@ -45,7 +50,33 @@ const LAMP_ENERGY := 3.0
 const LAMP_RANGE := 10.0
 ## The camera's sweep in, then how long it holds still before `finished`.
 const SWEEP := 4.0
-const HOLD := 4.0
+const HOLD := 6.0
+## The show, in seconds after it goes up: when first, second and third jump
+## onto their steps, and how long a jump takes. Before it they stand on the
+## plate in front.
+const LEAPS := [2.8, 2.0, 1.2]
+const LEAP := 0.6
+const WAITING := 0.75
+## When the trophy starts down, when the winner's arms go up for it and
+## when it's in their hand.
+const TROPHY_FROM := 3.8
+const REACH := 4.9
+const TROPHY_IN := 5.6
+## How high over the hand the trophy starts, how big it is next to the
+## full size one, and where the winner holds it: the inside edge of its
+## plinth, halfway up the black brick.
+const TROPHY_HIGH := 3.0
+const TROPHY_SIZE := 0.22
+const TROPHY_GRIP := Vector3(-0.5, 0.15, 0.0)
+## How many at the back of the field sulk.
+const SULKING := 2
+## When the fanfare starts.
+const FANFARE := 0.3
+## How long the confetti keeps coming once the trophy's in hand, how many
+## bits are falling at once and how long each falls for.
+const CONFETTI_FOR := 4.0
+const CONFETTI := 260
+const CONFETTI_LIFE := 4.5
 ## How long the camera takes to move over for the standings (see settle()).
 const SETTLE := 0.8
 ## How much of the clear part's width the steps and karts fill then, and how
@@ -76,6 +107,25 @@ var karts: Array[Node3D] = []
 var camera: Camera3D
 ## After dark it has a lamp over it. Set it before it goes into the scene.
 var lit := false
+## The cup's trophy, its "trophy" entry like { "top": "gear" }, and the colour
+## of its plate. Set them before it goes into the scene.
+var trophy_spec := {}
+var trophy_colour := Color("#c4281c")
+## The trophy once it's on its way down, and the confetti.
+var trophy: Node3D
+var confetti: CPUParticles3D
+## Where first, second and third stand on their steps, in the world.
+var _on_step: Array[Vector3] = []
+## How far through the show it's got: who's jumped and reacted, whether the
+## field are going, the trophy's in hand, and the sounds have played.
+var _leapt := [false, false, false]
+var _reacted := [false, false, false]
+var _field := false
+var _reached := false
+var _landed := false
+var _fanfare := false
+## When the confetti stops, in the show's time.
+var _confetti_until := INF
 var _time := 0.0
 var _from: Transform3D
 var _to: Transform3D
@@ -211,10 +261,14 @@ func _ready() -> void:
 		var entry: Array = order[place]
 		var rig := CharacterRig.new(entry[2], false)
 		rig.lively = true
+		rig.idle = false
 		rig.name = "Driver%d" % (place + 1)
 		var feet := Vector3.ZERO
 		if place < 3:
-			feet = Vector3(ACROSS[place] * STEP_WIDTH, top + HEIGHTS[place], 0.0)
+			# On the plate in front of their step, to jump up later.
+			var step := Vector3(ACROSS[place] * STEP_WIDTH, top + HEIGHTS[place], 0.0)
+			_on_step.append(_placed(step + Vector3.UP * CharacterRig.FEET_BELOW, 0.0).origin)
+			feet = Vector3(step.x, top, WAITING)
 		else:
 			feet = _in_row(place - 3)
 			feet.y = _ground_at(feet)
@@ -245,6 +299,10 @@ func _ready() -> void:
 		lamp.shadow_enabled = false
 		lamp.transform = _placed(Vector3(0.0, top + 3.5, 2.5), 0.0)
 		add_child(lamp)
+
+	confetti = _make_confetti(top)
+	add_child(confetti)
+	Sounds.music("")
 
 	camera = Camera3D.new()
 	camera.fov = 45.0
@@ -342,6 +400,9 @@ func _number(kit: SceneryKit, n: int, at: Vector3, ink: Color) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	_run_show()
+	if _time >= _confetti_until:
+		confetti.emitting = false
 	if _settled >= 0.0:
 		_settled += delta
 		var s := clampf(_settled / SETTLE, 0.0, 1.0)
@@ -359,6 +420,157 @@ func _process(delta: float) -> void:
 		finish()
 
 
+## Moves the show on to where it should be by now.
+func _run_show() -> void:
+	if _done:
+		return
+	if not _fanfare and _time >= FANFARE:
+		_fanfare = true
+		Sounds.play("fx/podium")
+	for place in _on_step.size():
+		if not _leapt[place] and _time >= LEAPS[place]:
+			_leap(place, false)
+		if _leapt[place] and not _reacted[place] and _time >= LEAPS[place] + LEAP + 0.05:
+			_react(place)
+	if not _field and _time >= LEAPS.min():
+		_start_field()
+	if order.is_empty():
+		return
+	if trophy == null and _time >= TROPHY_FROM:
+		_make_trophy()
+	if not _reached and _time >= REACH:
+		_reached = true
+		drivers[0].raise_arms()
+	if trophy != null and not _landed:
+		if _time >= TROPHY_IN:
+			_land(false)
+		else:
+			# Down from above, slowing, and spinning round to face the front.
+			var s := clampf((_time - TROPHY_FROM) / (TROPHY_IN - TROPHY_FROM), 0.0, 1.0)
+			var eased := 1.0 - (1.0 - s) * (1.0 - s)
+			var to := _trophy_in_hand()
+			var spin := Basis(Vector3.UP, (1.0 - eased) * TAU * 1.5)
+			trophy.global_transform = Transform3D(spin * to.basis, to.origin + Vector3.UP * TROPHY_HIGH * (1.0 - eased))
+
+
+## Everything at once, as the show ends: the top three up on their steps,
+## the winner holding the trophy, the field clapping and sulking and the
+## confetti coming down.
+func _end_show() -> void:
+	_fanfare = true
+	for place in _on_step.size():
+		_leap(place, true)
+		if not _reacted[place]:
+			_react(place)
+	_start_field()
+	if order.is_empty():
+		return
+	if trophy == null:
+		_make_trophy()
+	_reached = true
+	if not _landed:
+		_land(true)
+
+
+func _leap(place: int, now: bool) -> void:
+	_leapt[place] = true
+	var rig := drivers[place]
+	if now:
+		rig.leap(_on_step[place], 0.0)
+	elif rig.position.distance_to(_on_step[place]) > 0.01:
+		rig.leap(_on_step[place], LEAP)
+
+
+## Once up on their step: second and third clap, and the winner cheers
+## until the trophy comes.
+func _react(place: int) -> void:
+	_reacted[place] = true
+	var rig := drivers[place]
+	if place == 0:
+		if not _reached:
+			rig.cheer(REACH - _time)
+	else:
+		rig.clap(INF)
+
+
+## The rest of the field clap, and the last few sulk.
+func _start_field() -> void:
+	if _field:
+		return
+	_field = true
+	for place in range(3, drivers.size()):
+		if place >= drivers.size() - SULKING:
+			drivers[place].sulk(INF)
+		else:
+			drivers[place].clap(INF)
+
+
+func _make_trophy() -> void:
+	trophy = TrophyModel.make(trophy_spec, trophy_colour, "gold")
+	trophy.scale = Vector3.ONE * TROPHY_SIZE
+	add_child(trophy)
+	var to := _trophy_in_hand()
+	trophy.global_transform = Transform3D(to.basis, to.origin + Vector3.UP * TROPHY_HIGH)
+
+
+## Where the trophy is once the winner's holding it up.
+func _trophy_in_hand() -> Transform3D:
+	return drivers[0].hold_transform(Basis.from_scale(Vector3.ONE * TROPHY_SIZE), TROPHY_GRIP)
+
+
+## The trophy into the winner's hand, with confetti and a cheer.
+func _land(now: bool) -> void:
+	_landed = true
+	trophy.scale = Vector3.ONE * TROPHY_SIZE
+	drivers[0].hold(trophy, TROPHY_GRIP, now)
+	confetti.emitting = true
+	_confetti_until = _time + CONFETTI_FOR
+	Sounds.play("fx/cheer")
+
+
+## Confetti over the steps, in the cup's colours with white and gold, each
+## bit fluttering as it falls. It starts once the trophy's in hand.
+func _make_confetti(top: float) -> CPUParticles3D:
+	var bits := CPUParticles3D.new()
+	bits.name = "Confetti"
+	bits.emitting = false
+	bits.amount = CONFETTI
+	bits.lifetime = CONFETTI_LIFE
+	bits.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
+	bits.emission_box_extents = Vector3(STEP_WIDTH * 2.0, 0.2, 1.4)
+	bits.direction = Vector3.UP
+	bits.spread = 70.0
+	bits.initial_velocity_min = 0.4
+	bits.initial_velocity_max = 1.6
+	# Falling against the air, so they drift down slowly.
+	bits.gravity = Vector3(0.0, -2.4, 0.0)
+	bits.damping_min = 1.4
+	bits.damping_max = 1.9
+	bits.particle_flag_rotate_y = true
+	bits.angle_min = -180.0
+	bits.angle_max = 180.0
+	bits.angular_velocity_min = -540.0
+	bits.angular_velocity_max = 540.0
+	bits.scale_amount_min = 0.7
+	bits.scale_amount_max = 1.2
+	var shape := QuadMesh.new()
+	shape.size = Vector2(0.11, 0.07)
+	var paper := StandardMaterial3D.new()
+	paper.vertex_color_use_as_albedo = true
+	paper.cull_mode = BaseMaterial3D.CULL_DISABLED
+	paper.roughness = 0.8
+	paper.metallic_specular = 0.2
+	shape.material = paper
+	bits.mesh = shape
+	var colours := Gradient.new()
+	colours.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_CONSTANT
+	colours.offsets = PackedFloat32Array([0.0, 0.3, 0.55, 0.8])
+	colours.colors = PackedColorArray([colour, Color.WHITE, TrophyModel.GOLD, colour.lightened(0.4)])
+	bits.color_initial_ramp = colours
+	bits.transform = _placed(Vector3(0.0, top + 2.8, 0.4), 0.0)
+	return bits
+
+
 ## Skips to the end, unless it only just went up.
 func skip() -> void:
 	if _time >= IGNORE_INPUT:
@@ -369,6 +581,7 @@ func skip() -> void:
 func finish() -> void:
 	if _done:
 		return
+	_end_show()
 	_done = true
 	finished.emit()
 
