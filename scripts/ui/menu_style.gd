@@ -296,15 +296,8 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	top.add_theme_constant_override("separation", UiKit.GAP_M)
 	outer.add_child(top)
 	# The title on a red slanted ribbon, with bars trailing off it.
-	var ribbon := PanelContainer.new()
-	ribbon.add_theme_stylebox_override("panel", _ribbon())
-	ribbon.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	top.add_child(ribbon)
-	var label := Label.new()
-	label.text = heading_text
-	label.uppercase = true
-	label.theme_type_variation = "PageTitleLabel"
-	ribbon.add_child(label)
+	var title_box := ribbon(heading_text)
+	top.add_child(title_box)
 	var bars := Bars.new()
 	bars.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(bars)
@@ -312,15 +305,10 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 	back_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	top.add_child(back_button)
 	# A long title is cut short with dots rather than squeezing Back.
-	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	var fit := func() -> void:
-		var font := label.get_theme_font("font")
-		var font_size := label.get_theme_font_size("font_size")
-		var whole := font.get_string_size(heading_text.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + label.get_theme_constant("outline_size")
-		var ribbon_pad := _ribbon().get_minimum_size().x
 		var across := margin.get_viewport_rect().size.x - margin.get_theme_constant("margin_left") - margin.get_theme_constant("margin_right")
-		var room := across - back_button.get_combined_minimum_size().x - bars.custom_minimum_size.x - ribbon_pad - top.get_theme_constant("separation") * 2
-		label.custom_minimum_size.x = clampf(whole, 0.0, maxf(room, 60.0))
+		var room := across - back_button.get_combined_minimum_size().x - bars.custom_minimum_size.x - top.get_theme_constant("separation") * 2
+		fit_ribbon(title_box, heading_text, room)
 	margin.resized.connect(fit)
 	margin.theme_changed.connect(fit)
 	fit.call_deferred()
@@ -342,6 +330,30 @@ static func page(root: Control, heading_text: String, back: Callable, width := 7
 
 
 static var _ribbon_box: StyleBox
+
+
+## A page's title on a red slanted ribbon.
+static func ribbon(text: String) -> PanelContainer:
+	var box := PanelContainer.new()
+	box.add_theme_stylebox_override("panel", _ribbon())
+	box.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	var label := Label.new()
+	label.text = text
+	label.uppercase = true
+	label.theme_type_variation = "PageTitleLabel"
+	label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	box.add_child(label)
+	return box
+
+
+## Makes a ribbon() with `text` on it no wider than `room`, its words cut
+## short with dots if they don't fit.
+static func fit_ribbon(box: PanelContainer, text: String, room: float) -> void:
+	var label := box.get_child(0) as Label
+	var font := label.get_theme_font("font")
+	var font_size := label.get_theme_font_size("font_size")
+	var whole := font.get_string_size(text.to_upper(), HORIZONTAL_ALIGNMENT_LEFT, -1, font_size).x + label.get_theme_constant("outline_size")
+	label.custom_minimum_size.x = clampf(whole, 0.0, maxf(room - _ribbon().get_minimum_size().x, 60.0))
 
 
 static func _ribbon() -> StyleBox:

@@ -46,6 +46,8 @@ const LAMP_RANGE := 10.0
 ## The camera's sweep in, then how long it holds still before `finished`.
 const SWEEP := 4.0
 const HOLD := 4.0
+## How long the camera takes to move over for the standings (see settle()).
+const SETTLE := 0.8
 ## How tall a number is, row by row from the top, for 1, 2 and 3.
 const DIGITS := {
 	1: ["010", "110", "010", "010", "111"],
@@ -76,6 +78,14 @@ var _to: Transform3D
 var _done := false
 ## How far out to the sides everything reaches.
 var _reach := 0.0
+## What the camera looks at, and how high it stands, in the podium's space.
+var _look := Vector3.ZERO
+var _top := 0.0
+## How long since settle(), or -1 before it, and the camera's sideways
+## shift then and at the end.
+var _settled := -1.0
+var _shift_from := 0.0
+var _shift_to := 0.0
 
 
 func _init(everyone: Array, cup_colour: Color, spot: Array, ground_at: Variant = null) -> void:
@@ -235,11 +245,12 @@ func _ready() -> void:
 	camera.fov = 45.0
 	camera.near = 0.05
 	add_child(camera)
-	var look := Vector3(0.0, top + 0.7, -0.4)
+	_top = top
+	_look = Vector3(0.0, top + 0.7, -0.4)
 	var out := _camera_distance()
-	_to = _looking(Vector3(0.0, top + 2.1, out), look)
+	_to = _looking(Vector3(0.0, top + 2.1, out), _look)
 	var start := Vector3(0.0, top + 7.0, out * 1.8).rotated(Vector3.UP, deg_to_rad(50.0))
-	_from = _looking(start, look)
+	_from = _looking(start, _look)
 	camera.global_transform = _from
 	camera.make_current()
 
@@ -270,10 +281,11 @@ func _in_row(n: int) -> Vector3:
 	return Vector3(side * (STEP_WIDTH * 1.5 + 0.5 + (n / 2) * SPACING), 0.0, STEP_DEPTH * 0.5 + 0.9)
 
 
-## How far out the camera stops, so everyone fits across the screen.
-func _camera_distance() -> float:
+## How far out the camera stops, so everyone fits across the screen, or
+## across the part of its width that's `clear` from the left.
+func _camera_distance(clear := 1.0) -> float:
 	var size := get_viewport().get_visible_rect().size if is_inside_tree() else Vector2(16.0, 9.0)
-	var aspect := size.x / maxf(size.y, 1.0)
+	var aspect := size.x * clear / maxf(size.y, 1.0)
 	var across := atan(tan(deg_to_rad(camera.fov) * 0.5) * aspect)
 	return minf(_reach / tan(across) * 1.1 + STEP_DEPTH, CAMERA_FAR if aspect < 1.7 else CAMERA_OUT)
 
@@ -325,6 +337,14 @@ func _number(kit: SceneryKit, n: int, at: Vector3, ink: Color) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	if _settled >= 0.0:
+		_settled += delta
+		var s := clampf(_settled / SETTLE, 0.0, 1.0)
+		var smooth := s * s * (3.0 - 2.0 * s)
+		var turned := _from.basis.get_rotation_quaternion().slerp(_to.basis.get_rotation_quaternion(), smooth)
+		camera.global_transform = Transform3D(Basis(turned), _from.origin.lerp(_to.origin, smooth))
+		camera.h_offset = lerpf(_shift_from, _shift_to, smooth)
+		return
 	var t := clampf(_time / SWEEP, 0.0, 1.0)
 	var eased := 1.0 - pow(1.0 - t, 3.0)
 	var from := _from.origin.lerp(_to.origin, eased)
@@ -342,7 +362,32 @@ func finish() -> void:
 	finished.emit()
 
 
+## Moves the camera from wherever it is to hold still on everyone, fitted
+## into the part of the screen's width that's `clear` from the left, for the
+## standings over the rest.
+func settle(clear := 1.0) -> void:
+	finish()
+	_from = camera.global_transform
+	_shift_from = camera.h_offset
+	var out := _camera_distance(clear)
+	_to = _looking(Vector3(0.0, _top + 2.1, out), _look)
+	# Shifting the camera sideways moves the middle of the picture into the
+	# middle of the clear part without turning it.
+	var size := get_viewport().get_visible_rect().size
+	var half_across := tan(deg_to_rad(camera.fov) * 0.5) * size.x / maxf(size.y, 1.0)
+	var away := _to.origin.distance_to(_placed(_look, 0.0).origin)
+	_shift_to = (1.0 - clear) * away * half_across
+	_settled = 0.0
+
+
+## Whether the camera has stopped moving.
+func still() -> bool:
+	return _settled >= SETTLE
+
+
 func _unhandled_input(event: InputEvent) -> void:
+	if _done:
+		return
 	var tapped: bool = event is InputEventScreenTouch and event.pressed
 	var clicked: bool = event is InputEventMouseButton and event.pressed
 	var key: bool = (event is InputEventKey or event is InputEventJoypadButton) and event.pressed and not event.is_echo()

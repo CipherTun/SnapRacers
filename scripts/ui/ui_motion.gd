@@ -17,12 +17,16 @@ const PRESS_SCALE := 0.95
 const GROW_FROM := 0.88
 
 
-## Whether `node` can move: there's a screen, and it isn't in a race.
+## Whether `node` can move: there's a screen, and it isn't in a race (other
+## than the standings over the podium).
 static func enabled(node: Node) -> bool:
 	if DisplayServer.get_name() == "headless" or node == null or not node.is_inside_tree():
 		return false
 	var up := node
 	while up != null:
+		# The standings over the podium move like any other menu.
+		if up is GrandPrixStandings:
+			return true
 		if up is Race:
 			return false
 		up = up.get_parent()

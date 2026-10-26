@@ -1,9 +1,9 @@
 extends Node
 
 ## Pictures of the podium after a cup's last race, in the weather and at the
-## time of day asked for: as the camera sweeps in and once it's still. It
-## needs a screen.
-##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT]
+## time of day asked for: as the camera sweeps in, once it's still, and with
+## the standings over it. "two" at the end is a cup for two. It needs a screen.
+##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/podium_shots.tscn -- baseplate rain night [folder] [WIDTHxHEIGHT] [two]
 
 const OUT := "res://build/shots"
 ## When to take them, in seconds after the podium goes up.
@@ -30,7 +30,8 @@ func _ready() -> void:
 	Game.settings.set_value("race", "split", Game.SOLO)
 	Game.settings.set_value("race", "weather", weather)
 	Game.settings.set_value("race", "time", time)
-	Game.start_grand_prix(cup)
+	var two := args.size() > 5 and args[5] == "two"
+	Game.start_grand_prix(cup, two)
 	# Straight to the last race, before the first one's loaded.
 	Game.grand_prix.round = Game.grand_prix.track_ids().size() - 1
 	Game.track_path = Game.grand_prix.track_path()
@@ -49,14 +50,25 @@ func _ready() -> void:
 	var podium: Podium = race.podium
 	DirAccess.make_dir_recursive_absolute(out)
 	var start := Time.get_ticks_msec()
+	var named := "%s_%s_%s%s_%dx%d" % [cup, weather, time, "_two" if two else "", size.x, size.y]
 	for i in AT.size():
 		while podium._time < AT[i]:
 			await get_tree().process_frame
-		RenderingServer.force_draw.call_deferred()
-		await RenderingServer.frame_post_draw
-		var picture := get_viewport().get_texture().get_image()
-		if picture.get_size() != size:
-			picture.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
-		picture.save_png("%s/podium_%s_%s_%s_%d.png" % [out, cup, weather, time, i + 1])
+		await _save("%s/podium_%s_%d.png" % [out, named, i + 1], size)
+	podium.finish()
+	while not podium.still():
+		await get_tree().process_frame
+	for i in 10:
+		await get_tree().process_frame
+	await _save("%s/standings_%s.png" % [out, named], size)
 	print("saved podium_%s_%s_%s in %d ms" % [cup, weather, time, Time.get_ticks_msec() - start])
 	get_tree().quit()
+
+
+func _save(path: String, size: Vector2i) -> void:
+	RenderingServer.force_draw.call_deferred()
+	await RenderingServer.frame_post_draw
+	var picture := get_viewport().get_texture().get_image()
+	if picture.get_size() != size:
+		picture.resize(size.x, size.y, Image.INTERPOLATE_LANCZOS)
+	picture.save_png(path)

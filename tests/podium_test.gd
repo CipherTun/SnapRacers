@@ -3,7 +3,7 @@ extends Node
 ## The podium after a cup's last race, on every cup's last course: the top
 ## three on the right steps in order with their own drivers, the rest of the
 ## field below on the ground, the karts cleared away, no errors, and the
-## standings after it.
+## standings over it after, with the camera still, until Back frees the race.
 ##
 ##   tools/godot/Godot_v4.7.2-stable_linux.x86_64 --headless --fixed-fps 60 --path . res://tests/podium_test.tscn
 
@@ -119,13 +119,31 @@ func _cup(id: String) -> void:
 	check(not skipped[0], "a tap right after it goes up doesn't skip it")
 	podium._time = Podium.IGNORE_INPUT + 0.1
 	# A narrow screen pulls the camera back to fit the rows.
-	var wide := podium._camera_distance()
+	var wide := await _distance_in(podium, Vector2i(1280, 720))
 	var narrow := await _distance_in(podium, Vector2i(768, 1024))
 	check(narrow > wide and narrow <= Podium.CAMERA_FAR, "the camera pulls back on a portrait screen (%.1f m, %.1f m wide)" % [narrow, wide])
 	podium.finish()
 	await frames(3)
-	check(screen() is GrandPrixStandings, "then the standings come up")
-	Game.grand_prix = null
+	var standings := race.cup_standings
+	check(screen() == race and standings != null and standings.is_visible_in_tree(), "then the standings come up over the podium")
+	if standings == null:
+		return
+	check(standings.find_children("*", "Label", true, false).any(func(l): return l.text.contains("trophy")), "with the trophy")
+	check(not standings.find_children("*", "Control", true, false).any(func(c): return c is UiKit.Backdrop), "and no backdrop over it")
+	var first := PadFocus.pick(standings)
+	check(PadFocus._race_part(race) == standings and first != null and standings.is_ancestor_of(first), "a controller picks out their buttons (%s)" % (first.text if first is Button else "none"))
+	race._open_any()
+	race._notification(NOTIFICATION_APPLICATION_FOCUS_OUT)
+	check(race._menus.is_empty() and not get_tree().paused, "and the pause menu doesn't open over them")
+	for i in ceili(Podium.SETTLE * 60.0) + 5:
+		await frames(1)
+	var held := podium.camera.global_transform
+	await frames(10)
+	check(podium.still() and podium.camera.global_transform.is_equal_approx(held), "the camera holds still behind them")
+	race.go_back()
+	await frames(2)
+	check(not is_instance_valid(race) or race.is_queued_for_deletion(), "Back leaves, and the race goes with it")
+	check(screen() is CupGrid, "back to the cups")
 	await frames(2)
 
 

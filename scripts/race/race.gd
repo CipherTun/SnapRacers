@@ -127,6 +127,8 @@ var _places := {}
 var _views: CanvasLayer
 ## At the end of a Grand Prix, the podium, once it's up (see show_podium()).
 var podium: Podium
+## The cup's standings over the podium, once it's done.
+var cup_standings: GrandPrixStandings
 
 
 func _init(split_override: Variant = null) -> void:
@@ -829,7 +831,8 @@ func place_of(racer: Racer) -> int:
 
 ## Clears the karts, the power-ups and everyone's view away and puts up the
 ## cup's podium by the start line, with everyone from `gp`'s standings in
-## the karts and drivers they raced with. Its end brings up the standings.
+## the karts and drivers they raced with. Its end brings up the standings
+## over it (see show_standings()).
 func show_podium(gp: GrandPrix) -> Podium:
 	var raced := {}
 	for racer in racers:
@@ -866,8 +869,26 @@ func show_podium(gp: GrandPrix) -> Podium:
 	podium = Podium.new(everyone, Podium.colour_of(gp.cup), Podium.find_spot(track, builder), builder.ground_at)
 	podium.lit = conditions.beams()
 	add_child(podium)
-	podium.finished.connect(Game.show_grand_prix_standings)
+	podium.finished.connect(show_standings.bind(gp))
 	return podium
+
+
+## Puts `gp`'s standings over the podium, and the podium's camera holds still
+## with the podium in the part they leave clear. Leaving them frees the race.
+func show_standings(gp: GrandPrix) -> GrandPrixStandings:
+	if cup_standings != null:
+		return cup_standings
+	var layer := CanvasLayer.new()
+	layer.name = "Standings"
+	layer.layer = 10
+	add_child(layer)
+	cup_standings = GrandPrixStandings.new(gp, true)
+	layer.add_child(cup_standings)
+	if podium != null:
+		podium.settle(cup_standings.clear)
+	Sounds.music("menu")
+	PadFocus.focus_first.call_deferred(cup_standings)
+	return cup_standings
 
 
 ## Back to the menu this race was started from.
@@ -898,6 +919,9 @@ func leave() -> void:
 ## Esc and Back open the menu, or close it again, or once you've finished
 ## leave.
 func go_back() -> void:
+	if cup_standings != null:
+		cup_standings.go_back()
+		return
 	if podium != null:
 		podium.finish()
 		return
@@ -1025,6 +1049,8 @@ func _notification(what: int) -> void:
 
 ## Opens the menu of the first player still racing.
 func _open_any() -> void:
+	if podium != null:
+		return
 	for racer in humans:
 		if not racer.progress.finished:
 			open_menu(racer)

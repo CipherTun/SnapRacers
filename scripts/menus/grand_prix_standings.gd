@@ -7,19 +7,38 @@ extends Control
 ## at the end), and a cup raced online doesn't count toward your trophies.
 ## For two on this phone both players show in their colours, and the trophy
 ## goes by whichever of them did better.
+##
+## At the end of a cup off the network it's shown over the podium, in the
+## race scene (see Race.show_standings()): a see-through panel down the
+## right side, or over the middle on a narrow screen.
+
+## How wide the panel over the podium is, and its gap from the screen's edges.
+const SIDE_WIDTH := 600.0
+const SIDE_MARGIN := 24.0
+## The panel goes to the side if it leaves at least this much of the width
+## clear, on a screen at least this wide for its height.
+const SIDE_CLEAR := 0.4
+const SIDE_ASPECT := 1.2
+const TITLE_SIZE := 36
 
 var grand_prix: GrandPrix
+## Shown over the podium rather than as a screen of its own.
+var over_podium := false
+## How much of the screen's width, from the left, the panel leaves clear
+## over the podium. 1 when it's over the middle.
+var clear := 1.0
 
 
-func _init(gp: GrandPrix) -> void:
+func _init(gp: GrandPrix, over := false) -> void:
 	grand_prix = gp
+	over_podium = over
 
 
 func _ready() -> void:
 	var done := grand_prix.finished()
 	var races := grand_prix.track_ids().size()
 	var level := Difficulty.name_of(grand_prix.difficulty)
-	var column := MenuStyle.page(self, grand_prix.cup.name, go_back, 620.0)
+	var column := _over_podium() if over_podium else MenuStyle.page(self, grand_prix.cup.name, go_back, 620.0)
 	var where := Label.new()
 	where.text = level if done else "%s, after race %d of %d" % [level, grand_prix.round, races]
 	where.uppercase = true
@@ -78,6 +97,100 @@ func _ready() -> void:
 		button.theme_type_variation = "MainButton"
 		button.custom_minimum_size.y = 84.0
 		column.add_child(button)
+
+	if over_podium and UiMotion.enabled(self):
+		modulate.a = 0.0
+		create_tween().tween_property(self, "modulate:a", 1.0, UiMotion.FADE * 2.0).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+
+
+## The page over the podium: a shade over the side the panel's on, and the
+## panel with the cup's name and Back at the top. Returns the column to fill.
+func _over_podium() -> VBoxContainer:
+	theme = MenuStyle.theme()
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var view := get_viewport_rect().size
+	var left := view.x - SIDE_WIDTH - SIDE_MARGIN
+	var side := view.x / maxf(view.y, 1.0) >= SIDE_ASPECT and left >= view.x * SIDE_CLEAR
+	clear = left / view.x if side else 1.0
+	if side:
+		var fade := Gradient.new()
+		fade.set_color(0, Color(UiKit.INK, 0.0))
+		fade.set_color(1, Color(UiKit.INK, 0.55))
+		fade.set_offset(0, clear * 0.75)
+		fade.set_offset(1, clear)
+		var picture := GradientTexture2D.new()
+		picture.gradient = fade
+		picture.width = 256
+		picture.height = 4
+		var shade := TextureRect.new()
+		shade.texture = picture
+		shade.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		shade.stretch_mode = TextureRect.STRETCH_SCALE
+		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(shade)
+		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	else:
+		var shade := ColorRect.new()
+		shade.color = Color(UiKit.INK, 0.45)
+		shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(shade)
+		shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+
+	var margin := MarginContainer.new()
+	var across := left if side else maxf(SIDE_MARGIN, (view.x - SIDE_WIDTH) * 0.5)
+	margin.add_theme_constant_override("margin_left", int(across))
+	margin.add_theme_constant_override("margin_right", int(SIDE_MARGIN if side else across))
+	margin.add_theme_constant_override("margin_top", int(SIDE_MARGIN))
+	margin.add_theme_constant_override("margin_bottom", int(SIDE_MARGIN))
+	add_child(margin)
+	margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	var safe := SafeArea.new()
+	add_child(safe)
+	safe.pad(margin)
+	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", BuilderStyle.scrim(28.0, 18.0, 0.72))
+	panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	margin.add_child(panel)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", UiKit.GAP_M)
+	panel.add_child(outer)
+
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", UiKit.GAP_M)
+	outer.add_child(top)
+	# The cup's name a little smaller than a page's title, to fit the panel.
+	var ribbon := MenuStyle.ribbon(grand_prix.cup.name)
+	ribbon.get_child(0).add_theme_font_size_override("font_size", TITLE_SIZE)
+	top.add_child(ribbon)
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(gap)
+	var back_button := MenuStyle.link("Back", go_back, "back")
+	back_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	top.add_child(back_button)
+	var inside := (view.x - across - margin.get_theme_constant("margin_right")) - panel.get_theme_stylebox("panel").get_minimum_size().x
+	# A long name is cut short with dots rather than squeezing Back.
+	var fit := func() -> void:
+		MenuStyle.fit_ribbon(ribbon, grand_prix.cup.name, inside - back_button.get_combined_minimum_size().x - top.get_theme_constant("separation") * 2)
+	fit.call_deferred()
+
+	# The panel's as tall as what's in it, and scrolls if that's taller
+	# than the screen.
+	var scroll := ScrollContainer.new()
+	scroll.follow_focus = true
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	outer.add_child(scroll)
+	var column := VBoxContainer.new()
+	column.custom_minimum_size.x = inside
+	column.add_theme_constant_override("separation", 14)
+	scroll.add_child(column)
+	var tall := func() -> void:
+		var room := view.y - SIDE_MARGIN * 2.0 - panel.get_theme_stylebox("panel").get_minimum_size().y - top.get_combined_minimum_size().y - outer.get_theme_constant("separation")
+		scroll.custom_minimum_size.y = minf(column.get_combined_minimum_size().y, room)
+	column.minimum_size_changed.connect(tall)
+	tall.call_deferred()
+	return column
 
 
 ## Leaving here quits the cup (and, online, the game).

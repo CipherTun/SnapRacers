@@ -90,8 +90,11 @@ func _drop_focus() -> void:
 
 
 ## The part of a race that's a menu now: someone's open menu, or the results
-## once they're up, or nothing while everyone's driving.
+## once they're up, or the standings over the podium, or nothing while
+## everyone's driving.
 static func _race_part(race: Race) -> Node:
+	if race.cup_standings != null:
+		return race.cup_standings
 	if not race._menus.is_empty():
 		return race._menus.values()[0]
 	for racer in race.humans:

@@ -43,13 +43,22 @@ func wait_for(kind: Variant) -> Node:
 	return null
 
 
+## The standings showing, on a screen of their own or over the podium.
+func _standings() -> GrandPrixStandings:
+	var now := screen()
+	if now is Race:
+		return (now as Race).cup_standings
+	return now as GrandPrixStandings
+
+
 ## After a cup's last race the podium goes up on the course first, and Back
-## skips it.
+## skips it to the standings over it.
 func _past_podium(race: Race) -> void:
 	if not Game.grand_prix.finished():
 		return
 	check(race.podium != null and screen() == race, "after the last race the podium goes up")
 	Game._go_back()
+	check(screen() == race and race.cup_standings != null, "then the standings come up over it")
 
 
 func _ready() -> void:
@@ -129,7 +138,7 @@ func _grand_prix() -> void:
 		Game.finish_grand_prix_race(order)
 		await _past_podium(race)
 		await frames(2)
-		var standings := screen() as GrandPrixStandings
+		var standings := _standings()
 		check(standings != null, "after race %d the standings come up" % (round + 1))
 		if round < 3:
 			var next := standings.find_children("*", "Button", true, false).filter(func(b): return b.text.begins_with("Next race"))
@@ -139,7 +148,7 @@ func _grand_prix() -> void:
 	var place: int = Game.grand_prix.standings().map(func(s): return s[0]).find(me) + 1
 	check(place >= 1 and place <= 3, "and you're on the podium (%s)" % RaceHud.ordinal(place))
 	check(Records.best_cup_place("baseplate") == place, "which is kept as your best in the cup")
-	var labels := screen().find_children("*", "Label", true, false).map(func(l): return l.text)
+	var labels := _standings().find_children("*", "Label", true, false).map(func(l): return l.text)
 	check(labels.any(func(t): return t.contains("trophy")), "and the last screen gives you a trophy")
 
 
@@ -230,7 +239,7 @@ func _grand_prix_for_two() -> void:
 		Game.finish_grand_prix_race(order)
 		await _past_podium(race)
 		await frames(2)
-		var standings := screen() as GrandPrixStandings
+		var standings := _standings()
 		check(standings != null, "after race %d the standings come up" % (round + 1))
 		var coloured := standings.find_children("*", "Label", true, false).filter(func(l): return l.text in [one, two] and l.has_theme_color_override("font_color"))
 		check(coloured.size() == 2 and coloured.all(func(l): return KartPicker.PLAYER_COLOURS.has(l.get_theme_color("font_color"))), "with both people in their colours")
