@@ -24,10 +24,17 @@ var back: Callable
 ## Whether a controller or the keys were used last, rather than a touch or
 ## the mouse.
 static var using_pad := false
+## The item last picked out on each kind of screen (the screen's script path
+## to the item's child numbers down from the screen), kept until the game quits.
+static var _memory := {}
+static var _current: Callable
 
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	_current = screen
+	get_viewport().gui_focus_changed.connect(_remember)
+	tree_exiting.connect(func() -> void: _current = Callable())
 
 
 func _input(event: InputEvent) -> void:
@@ -54,12 +61,16 @@ func _input(event: InputEvent) -> void:
 			viewport.set_input_as_handled()
 			back.call()
 			return
+		if event.button_index == JOY_BUTTON_START and current.has_method("on_start"):
+			viewport.set_input_as_handled()
+			current.on_start()
+			return
 		if event.button_index in [JOY_BUTTON_LEFT_SHOULDER, JOY_BUTTON_RIGHT_SHOULDER] and current.has_method("next_tab"):
 			viewport.set_input_as_handled()
 			current.next_tab(-1 if event.button_index == JOY_BUTTON_LEFT_SHOULDER else 1)
 			return
 	if viewport.gui_get_focus_owner() == null or not viewport.gui_get_focus_owner().is_visible_in_tree():
-		var first := first_button(current)
+		var first := pick(current)
 		if first != null:
 			first.grab_focus()
 			viewport.set_input_as_handled()
@@ -90,9 +101,85 @@ static func _race_part(race: Race) -> Node:
 static func focus_first(root: Node) -> void:
 	if not using_pad or root == null:
 		return
-	var first := first_button(root)
+	var first := pick(root)
 	if first != null:
 		first.grab_focus()
+
+
+## Forgets which item was picked out on every screen.
+static func forget() -> void:
+	_memory.clear()
+
+
+## The screen the control is on, or null.
+static func _screen_of(control: Node) -> Node:
+	var current: Node = _current.call() if _current.is_valid() else null
+	if current != null and is_instance_of(control, Control) and current.is_ancestor_of(control):
+		return current
+	return null
+
+
+func _remember(control: Control) -> void:
+	var current := _screen_of(control)
+	if not using_pad or current == null or current.get_script() == null or not (control is BaseButton or control is Slider):
+		return
+	var path: Array = []
+	var node: Node = control
+	while node != current:
+		path.push_front(node.get_index())
+		node = node.get_parent()
+	_memory[_key(current)] = {"id": _id(control, current), "path": path}
+
+
+## What the remembered items of a screen are filed under: the screen's own
+## `focus_key()` if it has one (for screens that show different things), else
+## its script.
+static func _key(current: Node) -> String:
+	if current.has_method("focus_key"):
+		return current.focus_key()
+	return current.get_script().resource_path
+
+
+## A name for an item that stays the same when the list around it changes:
+## its card's id (cup, course) with the button's words if it's inside the card.
+static func _id(control: Control, current: Node) -> String:
+	var node: Node = control
+	while node != current:
+		for key in ["cup", "track", "make", "add", "yours"]:
+			if node.has_meta(key):
+				var base := "%s:%s" % [key, node.get_meta(key)]
+				if node != control and control is Button:
+					base += "/" + control.text
+				return base
+		node = node.get_parent()
+	return "text:" + control.text if control is Button and control.text != "" else ""
+
+
+## What to pick out when `root` opens: the item that was picked out last time
+## on this screen if it's still there, else the first one.
+static func pick(root: Node) -> Control:
+	var current: Node = _current.call() if _current.is_valid() else null
+	if current != null and current.get_script() != null and _memory.has(_key(current)) and (root == current or current.is_ancestor_of(root)):
+		var saved: Dictionary = _memory[_key(current)]
+		if saved.id != "":
+			for node in root.find_children("*", "Control", true, false):
+				var control := node as Control
+				if _usable(control) and _id(control, current) == saved.id:
+					return control
+		var node: Node = current
+		for index in saved.path:
+			if index >= node.get_child_count():
+				node = null
+				break
+			node = node.get_child(index)
+		var control := node as Control
+		if saved.id == "" and control != null and _usable(control) and (root == control or root.is_ancestor_of(control)):
+			return control
+	return first_button(root)
+
+
+static func _usable(control: Control) -> bool:
+	return control.focus_mode != Control.FOCUS_NONE and not (control is BaseButton and control.disabled) and control.is_visible_in_tree() and not control.is_queued_for_deletion() and (control is BaseButton or control is Slider)
 
 
 ## B closes a window that doesn't close on B by itself, like the share and
@@ -117,17 +204,19 @@ func _navigating(event: InputEvent) -> bool:
 	return false
 
 
-## The button nearest the top left that can be picked out, or null.
+## The button nearest the top left that can be picked out, or null. Back,
+## Close and the other small buttons only count when nothing else is there.
 static func first_button(root: Node) -> Control:
 	var best: Control = null
+	var best_small := true
 	for node in root.find_children("*", "Control", true, false):
 		var control := node as Control
-		if control.focus_mode == Control.FOCUS_NONE or not control.is_visible_in_tree() or control is LineEdit or control.is_queued_for_deletion():
+		if control is LineEdit or not _usable(control):
 			continue
-		if not (control is BaseButton or control is Slider):
-			continue
-		if best == null or _before(control, best):
+		var small := control is Button and control.theme_type_variation == &"SmallButton"
+		if best == null or (best_small and not small) or (small == best_small and _before(control, best)):
 			best = control
+			best_small = small
 	return best
 
 

@@ -30,6 +30,11 @@ static func your_courses() -> Array:
 	return CourseDesign.saved().filter(func(p): return CourseDesign.load_file(p) != null and CourseDesign.load_file(p).problems().is_empty())
 
 
+## Filed apart from the other course pages in the pad's memory.
+func focus_key() -> String:
+	return "CourseGrid/%s/%s/%s" % [mode, alone, cup]
+
+
 func _ready() -> void:
 	Game.cup_shown = cup
 	var paths := []

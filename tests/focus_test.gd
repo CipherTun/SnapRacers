@@ -98,6 +98,59 @@ func _typing() -> void:
 	check(keyboard() == null and not garage.ui._name_dialog.visible and garage.design.name == "Q", "and Start is done, which renames it (%s)" % garage.design.name)
 
 
+## First visit picks out the top left item, not Back, and coming back to a
+## screen picks out what was picked out when leaving.
+func _memory() -> void:
+	PadFocus.forget()
+	var cups := GrandPrix.cups()
+	Game.show_cups()
+	await frames(3)
+	var start := focused()
+	check(start != null and start.get_meta("cup", "") == cups[0].id, "a first visit picks out the top left cup, not Back")
+	await pad(JOY_BUTTON_DPAD_RIGHT)
+	await pad(JOY_BUTTON_DPAD_RIGHT)
+	check(focused().get_meta("cup", "") == cups[2].id, "moved to the third cup")
+	await pad(JOY_BUTTON_A)
+	await frames(3)
+	check(not screen() is CupGrid, "opening it leaves the grid (%s)" % screen().get_class())
+	await pad(JOY_BUTTON_B)
+	await frames(3)
+	check(screen() is CupGrid and focused() != null and focused().get_meta("cup", "") == cups[2].id, "coming back picks out the third cup again")
+	# A cup's course page has its own memory, and so has each cup.
+	Game.show_course_grid(Game.MODE_RACE, false, cups[1].id)
+	await frames(3)
+	var courses := screen().find_children("*", "Button", true, false).filter(func(b): return b.has_meta("track"))
+	check(focused() == courses[0], "a course page starts at its top left course")
+	await pad(JOY_BUTTON_DPAD_RIGHT)
+	var second_track: String = focused().get_meta("track", "")
+	check(second_track == courses[1].get_meta("track"), "moved to the second course")
+	Game.show_menu()
+	await frames(3)
+	Game.show_course_grid(Game.MODE_RACE, false, cups[1].id)
+	await frames(3)
+	check(focused() != null and focused().get_meta("track", "") == second_track, "back on the course page picks out the second course again")
+	Game.show_course_grid(Game.MODE_RACE, false, cups[2].id)
+	await frames(3)
+	var other := screen().find_children("*", "Button", true, false).filter(func(b): return b.has_meta("track"))
+	check(focused() == other[0], "another cup's course page starts top left")
+	# Your cups is kept apart from the Grand Prix cups.
+	Game.show_your_cups()
+	await frames(3)
+	check(focused() != null and not focused().has_meta("cup") or focused().get_meta("cup") != cups[2].id, "Your cups doesn't take the Grand Prix pick")
+	await pad(JOY_BUTTON_DPAD_RIGHT)
+	var mine := focused()
+	var mine_id: String = str(mine.get_meta("cup", mine.get_meta("make", mine.get_meta("add", "?"))))
+	Game.show_menu()
+	await frames(3)
+	Game.show_your_cups()
+	await frames(3)
+	var again := focused()
+	check(again != null and str(again.get_meta("cup", again.get_meta("make", again.get_meta("add", "?")))) == mine_id, "back in Your cups picks out the same one")
+	PadFocus.forget()
+	Game.show_menu()
+	await frames(3)
+
+
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	host = Node.new()
@@ -147,6 +200,13 @@ func _ready() -> void:
 		if down:
 			check(focused() == held, "a button keeps its focus while it's held down")
 	check(focused() == null, "and lets it go once the finger's up")
+	# Start on the kart picker goes on, like the Race button.
+	var went := [0]
+	Game.show_kart_picker(func(): went[0] += 1, Game.show_menu)
+	await frames(3)
+	await pad(JOY_BUTTON_START)
+	check(went[0] == 1, "Start on the kart picker does what Race does")
+	await _memory()
 	# The driver builder's tabs.
 	Game.show_driver()
 	await frames(3)

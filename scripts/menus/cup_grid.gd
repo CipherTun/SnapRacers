@@ -42,6 +42,11 @@ func _init(for_mode := Game.MODE_GRAND_PRIX, for_one := false, your_cups := fals
 	yours = your_cups
 
 
+## Filed apart from the other cup lists in the pad's memory.
+func focus_key() -> String:
+	return "CupGrid/%s/%s/%s" % [mode, alone, yours]
+
+
 func _ready() -> void:
 	Game.cup_shown = ""
 	var title := "Your cups" if yours else _title()

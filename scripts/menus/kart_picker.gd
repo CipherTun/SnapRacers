@@ -44,6 +44,11 @@ func _init(go: Callable, back: Callable, ai := false, for_player := 0) -> void:
 	player = for_player
 
 
+## Filed apart from the other player's picker in the pad's memory.
+func focus_key() -> String:
+	return "KartPicker/%d/%s" % [player, _ai]
+
+
 func _ready() -> void:
 	var title := "Pick a kart" if player == 0 else "Player %d, pick your kart" % player
 	var column := MenuStyle.page(self, title, go_back, CARD.x * COLUMNS + 24.0 * (COLUMNS - 1))
@@ -112,6 +117,13 @@ func _ready() -> void:
 
 func go_back() -> void:
 	_back.call()
+
+
+## Start on a controller does what the Race or Next button does (PadFocus
+## calls this).
+func on_start() -> void:
+	if _race != null and not _race.disabled:
+		_race.pressed.emit()
 
 
 ## A big tag in the player's colour saying whose turn it is to pick.
