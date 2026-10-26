@@ -325,8 +325,16 @@ func start_grand_prix(which: Variant, two := false) -> void:
 
 ## Called when you move on from a Grand Prix race's results. `order` is
 ## everyone's names, winner first.
+## After the cup's last race the podium comes first, except online.
 func finish_grand_prix_race(order: Array) -> void:
 	grand_prix.add_results(order)
+	if grand_prix.finished() and _screen is Race and not net.is_online():
+		(_screen as Race).show_podium(grand_prix)
+		return
+	show_grand_prix_standings()
+
+
+func show_grand_prix_standings() -> void:
 	_swap(GrandPrixStandings.new(grand_prix))
 
 

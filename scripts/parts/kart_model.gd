@@ -4,10 +4,11 @@ extends RefCounted
 ## A kart's looks without any of its physics, for pictures and for showing it
 ## off in menus. It's every part where it goes, with the driver in the seat
 ## holding the steering, and the origin under the middle of the kart like a
-## real Kart's.
+## real Kart's. Without `with_driver` the seat's left empty, for a kart parked
+## by the podium.
 
 
-static func make(design: KartDesign, driver: CharacterDesign = null) -> Node3D:
+static func make(design: KartDesign, driver: CharacterDesign = null, with_driver := true) -> Node3D:
 	var root := Node3D.new()
 	var stats := KartStats.compute(design)
 	var steering: SteeringVisual = null
@@ -26,7 +27,7 @@ static func make(design: KartDesign, driver: CharacterDesign = null) -> Node3D:
 		root.add_child(KartMesh.bake(looks))
 		for look in looks:
 			look.free()
-	if stats.has_seat:
+	if stats.has_seat and with_driver:
 		var rig := CharacterRig.new(driver if driver != null else Kart.default_driver(), true)
 		rig.recline = stats.recline
 		rig.astride = stats.astride

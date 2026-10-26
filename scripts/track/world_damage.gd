@@ -293,6 +293,32 @@ func break_at(group: int, at: Vector3, velocity: Vector3) -> void:
 		_knock_hole(group, at, REACH + speed * REACH_PER_SPEED, velocity)
 
 
+## Takes away every small prop with a piece within `radius` of `at` (across
+## the ground), as if it was never there, to make room for the podium.
+func clear_around(at: Vector3, radius: float) -> void:
+	var here := to_local(at)
+	for group in groups.size():
+		var g: Dictionary = groups[group]
+		if not g.small:
+			continue
+		var near := false
+		for piece in g.pieces:
+			var o: Vector3 = _instances[piece[0]][piece[1]][0].origin
+			if Vector2(o.x - here.x, o.z - here.z).length() < radius:
+				near = true
+				break
+		if not near:
+			continue
+		for piece in g.pieces:
+			_hide(piece[0], piece[1])
+		for shape in g.shapes:
+			shape.set_deferred("disabled", true)
+		g.pieces.clear()
+		for mover in _movers:
+			if mover[3] == group:
+				mover[4] = false
+
+
 ## The whole thing comes down.
 func _bring_down(g: Dictionary, velocity: Vector3) -> void:
 	for piece in g.pieces:

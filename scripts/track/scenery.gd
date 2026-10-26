@@ -648,6 +648,25 @@ func _free(at: Vector3, radius: float) -> bool:
 	return not _on_strip(at, radius)
 
 
+## How many small things (ones that come down whole) stand within `radius`
+## of `at`, or -1 if it isn't clear ground: too near the road, under
+## something big, on a railway, in the sea, outside the hall or up in the sky.
+## Without `off_road` it can be right by the road.
+func clutter_at(at: Vector3, radius: float, off_road := true) -> int:
+	if _floating or (off_road and _distance_at(at) < _road_clear + radius) or _on_strip(at, radius) or not _inside_hall(at, radius):
+		return -1
+	for spot in keep_clear:
+		if Vector2(spot[0].x - at.x, spot[0].z - at.z).length() < spot[1] + radius:
+			return -1
+	var small := 0
+	for spot in _placed:
+		if Vector2(spot[0].x - at.x, spot[0].z - at.z).length() < spot[1] + radius:
+			if spot[1] > SMALL:
+				return -1
+			small += 1
+	return small
+
+
 ## Whether anything within `radius` of `at` is on one of the strips in
 ## `keep_off`.
 func _on_strip(at: Vector3, radius: float) -> bool:

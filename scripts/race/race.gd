@@ -123,6 +123,10 @@ var _watch_in := 0.0
 var _beeped := 4
 ## Where each racer was in the order the last time the drivers looked.
 var _places := {}
+## The layer the views and HUDs are on.
+var _views: CanvasLayer
+## At the end of a Grand Prix, the podium, once it's up (see show_podium()).
+var podium: Podium
 
 
 func _init(split_override: Variant = null) -> void:
@@ -253,9 +257,9 @@ func _finish_setting_up(people: int) -> void:
 	if player == null:
 		return
 	if people == 1:
-		var layer := CanvasLayer.new()
-		add_child(layer)
-		_add_view(player, self, layer)
+		_views = CanvasLayer.new()
+		add_child(_views)
+		_add_view(player, self, _views)
 	else:
 		_add_split_views()
 	hud = player.hud
@@ -409,6 +413,7 @@ func _add_view(racer: Racer, world_parent: Node, layer: CanvasLayer) -> void:
 func _add_split_views() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
+	_views = layer
 	var root := Control.new()
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(root)
@@ -553,6 +558,8 @@ func _physics_process(delta: float) -> void:
 		for racer in racers:
 			if racer.ai != null:
 				racer.ai.clock = train_clock.now
+	if podium != null:
+		return
 	# A beep for each number of the countdown, and a higher one for GO.
 	if not started and ceili(-time) < _beeped and ceili(-time) >= 1:
 		_beeped = ceili(-time)
@@ -820,6 +827,49 @@ func place_of(racer: Racer) -> int:
 	return standings().find(racer) + 1
 
 
+## Clears the karts, the power-ups and everyone's view away and puts up the
+## cup's podium by the start line, with everyone from `gp`'s standings in
+## the karts and drivers they raced with. Its end brings up the standings.
+func show_podium(gp: GrandPrix) -> Podium:
+	var raced := {}
+	for racer in racers:
+		raced[racer.name] = [racer.kart.design, racer.kart.driver if racer.kart.driver != null else Kart.default_driver()]
+	var everyone := []
+	for row in gp.standings():
+		if raced.has(row[0]):
+			everyone.append([row[0]] + raced[row[0]])
+	for racer in _menus.keys():
+		close_menu(racer)
+	for racer in racers:
+		for node in [racer.ai, racer.input, racer.camera, racer.hud, racer.kart]:
+			if node != null:
+				node.queue_free()
+	racers.clear()
+	humans.clear()
+	player = null
+	hud = null
+	camera = null
+	_shared_map = null
+	if _views != null:
+		_views.queue_free()
+	if boxes != null:
+		boxes.queue_free()
+		boxes = null
+	if builder.drifts != null:
+		builder.drifts.karts = []
+	for crossing in builder.crossings:
+		crossing.karts.clear()
+	# Whatever was dropped or fired, and what fell off the karts.
+	for child in get_children():
+		if child is BrickWall or child is BrickTrap or child is BrickPile or child is BrickShot or child is TowRope or child is Debris:
+			child.queue_free()
+	podium = Podium.new(everyone, Podium.colour_of(gp.cup), Podium.find_spot(track, builder), builder.ground_at)
+	podium.lit = conditions.beams()
+	add_child(podium)
+	podium.finished.connect(Game.show_grand_prix_standings)
+	return podium
+
+
 ## Back to the menu this race was started from.
 func leave() -> void:
 	if Game.net.is_online():
@@ -848,6 +898,9 @@ func leave() -> void:
 ## Esc and Back open the menu, or close it again, or once you've finished
 ## leave.
 func go_back() -> void:
+	if podium != null:
+		podium.finish()
+		return
 	if not _menus.is_empty():
 		for racer in _menus.keys():
 			close_menu(racer)

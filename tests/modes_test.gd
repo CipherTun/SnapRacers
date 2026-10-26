@@ -43,6 +43,15 @@ func wait_for(kind: Variant) -> Node:
 	return null
 
 
+## After a cup's last race the podium goes up on the course first, and Back
+## skips it.
+func _past_podium(race: Race) -> void:
+	if not Game.grand_prix.finished():
+		return
+	check(race.podium != null and screen() == race, "after the last race the podium goes up")
+	Game._go_back()
+
+
 func _ready() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(RECORDS))
 	Records.use_file(RECORDS)
@@ -118,6 +127,7 @@ func _grand_prix() -> void:
 		else:
 			order = [order[0], me] + order.slice(2)
 		Game.finish_grand_prix_race(order)
+		await _past_podium(race)
 		await frames(2)
 		var standings := screen() as GrandPrixStandings
 		check(standings != null, "after race %d the standings come up" % (round + 1))
@@ -218,6 +228,7 @@ func _grand_prix_for_two() -> void:
 		var others: Array = race.racers.map(func(r): return r.name).filter(func(n): return n != one and n != two)
 		var order: Array = [two, others[0], one] + others.slice(1)
 		Game.finish_grand_prix_race(order)
+		await _past_podium(race)
 		await frames(2)
 		var standings := screen() as GrandPrixStandings
 		check(standings != null, "after race %d the standings come up" % (round + 1))
