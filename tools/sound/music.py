@@ -2096,7 +2096,8 @@ POP = {"menu": pop_menu, "race_one": pop_race_one, "race_beach": pop_race_beach,
        "race_three": pop_race_three, "race_four": pop_race_four, "race_legends": pop_race_legends}
 
 
-TUNES = {"menu": pop_menu, "race_one": pop_race_one, "race_two": race_two, "race_three": race_three, "race_four": race_four,
-         "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster, "race_legends": race_legends,
+TUNES = {"menu": pop_menu, "race_one": pop_race_one, "race_two": pop_race_two, "race_three": pop_race_three,
+         "race_four": pop_race_four, "race_indoor": race_indoor, "race_rally": race_rally, "race_coaster": race_coaster,
+         "race_legends": pop_race_legends,
          "race_beach": pop_race_beach, "race_alpine": race_alpine, "race_canyon": race_canyon,
          "race_jungle": race_jungle, "race_city": race_city, "race_sky": race_sky}
