@@ -85,6 +85,10 @@ const SNOW := Color("#f2f5f9")
 ## edges are see-through too, so they fade into the road.
 const RIM := Color("#ccd3dc")
 const POWDER := Color("#dfe7f0")
+## The colour of one on ice: a little darker than SNOW so it shows on the
+## pale ice, and warm, which cancels the blue of RIM and the sky to plain
+## grey. It's the instance colour, so the same shader draws both.
+const ON_ICE := Color("#ddd8cf")
 ## For the AI: one at least this deep is worth going round.
 const AVOID_DEPTH := 0.45
 
@@ -621,7 +625,16 @@ func _colour() -> Color:
 
 
 func _colour_of(i: int) -> Color:
-	return Color(SNOW, WISP_SHOW) if _only_looks[i] else SNOW
+	var colour := ON_ICE if _on_ice(i) else SNOW
+	return Color(colour, WISP_SHOW) if _only_looks[i] else colour
+
+
+## Whether the middle of this one, when full, lies on an ice piece.
+func _on_ice(i: int) -> bool:
+	if _track == null or _track.piece_of.is_empty():
+		return false
+	var at := _track.offset_of(spots[i][0], _laid[i], 30.0) if _laid[i] >= 0.0 else _track.offset_of(spots[i][0])
+	return _track.pieces[_track.piece_of[_track._index_before(at)]].surface == "ice"
 
 
 func _material() -> Material:

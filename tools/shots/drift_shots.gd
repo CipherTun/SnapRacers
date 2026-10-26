@@ -4,6 +4,7 @@ extends Node
 ## build-up, from above at two spots along the road where most of them lie
 ## and from low down on the road where the most tongues lie just ahead. It
 ## needs a screen, and saves in build/shots, or in OUT_DIR if that's set.
+## With ON_ICE=1 it looks at one spot on ice, from above and low down.
 ##   DISPLAY=:0 tools/godot/Godot_v4.7.2-stable_linux.x86_64 --path . res://tools/shots/drift_shots.tscn -- frostbite_forest [name] [build-up ...]
 
 const OUT := "res://build/shots"
@@ -37,8 +38,9 @@ func _ready() -> void:
 		await get_tree().process_frame
 	var track := race.track
 	var drifts: Puddles = race.builder.drifts
-	var spots := _spots(track, drifts)
-	var low := _low_spot(track, drifts)
+	var on_ice := OS.get_environment("ON_ICE") == "1"
+	var low := _low_spot(track, drifts, on_ice)
+	var spots := [low] if on_ice else _spots(track, drifts)
 	var cam := Camera3D.new()
 	cam.fov = 60.0
 	race.add_child(cam)
@@ -101,8 +103,9 @@ func _spots(track: TrackPath, drifts: Puddles) -> Array:
 
 
 ## Where on the road, looking along it from low down, the most snow lies
-## in tongues 8 to 26 m ahead on a fairly straight stretch of plain road.
-func _low_spot(track: TrackPath, drifts: Puddles) -> float:
+## in tongues 8 to 26 m ahead on a fairly straight stretch of plain road,
+## or of ice if `on_ice`.
+func _low_spot(track: TrackPath, drifts: Puddles, on_ice := false) -> float:
 	var best := 0.0
 	var most := -1
 	var o := 0.0
@@ -114,10 +117,9 @@ func _low_spot(track: TrackPath, drifts: Puddles) -> float:
 			var ahead := fposmod(drifts._laid[i] - o, track.length)
 			if ahead > 8.0 and ahead < 26.0:
 				count += roundi(drifts._long[i] * drifts._wide[i])
-		# Only where the road runs fairly straight, so they're in the picture,
-		# and isn't ice, which they hardly show on.
-		var plain: bool = track.pieces[track.piece_of[track._index_before(o + 16.0)]].surface != "ice"
-		if count > most and plain and track.forward_at(o).dot(track.forward_at(o + 26.0)) > 0.95:
+		# Only where the road runs fairly straight, so they're in the picture.
+		var ice: bool = track.pieces[track.piece_of[track._index_before(o + 16.0)]].surface == "ice"
+		if count > most and ice == on_ice and track.forward_at(o).dot(track.forward_at(o + 26.0)) > 0.95:
 			most = count
 			best = o
 		o += 5.0
