@@ -11,7 +11,9 @@ note) is folded back onto the start, so it goes around without a gap.
 
 The arcade pop tunes further down are written in sections (intro, verse,
 pre chorus, chorus, breakdown) and mixed on a bus with a pumping sidechain,
-glue compression and a limiter, by render_pop.
+glue compression and a limiter, by render_pop. The chill funk tunes after
+them are played on swung sixteenths and mixed warmer, with no pumping, by
+render_funk.
 """
 
 import numpy as np
@@ -26,6 +28,8 @@ from synth import (
 SHAPES = {
     "": [0, 4, 7], "m": [0, 3, 7], "7": [0, 4, 7, 10], "maj7": [0, 4, 7, 11],
     "m7": [0, 3, 7, 10], "sus": [0, 5, 7], "6": [0, 4, 7, 9], "m6": [0, 3, 7, 9],
+    "9": [0, 4, 7, 10, 14], "m9": [0, 3, 7, 10, 14], "maj9": [0, 4, 7, 11, 14], "69": [0, 4, 7, 9, 14],
+    "13": [0, 4, 10, 14, 21], "7sus": [0, 5, 7, 10], "m11": [0, 3, 10, 14, 17],
 }
 ROOTS = {"C": 0, "C#": 1, "Db": 1, "D": 2, "D#": 3, "Eb": 3, "E": 4, "F": 5, "F#": 6,
          "Gb": 6, "G": 7, "G#": 8, "Ab": 8, "A": 9, "A#": 10, "Bb": 10, "B": 11}
@@ -2419,6 +2423,444 @@ def pop_race_alpine():
              0.2, 0.25, 0.35, 0.2),
     ]
     return render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0)
+
+
+# Chill funk. One soft band for every tune: a round kick, a snare with
+# ghost notes and rimshots, soft hats, a finger bass with slides and dead
+# notes, chicken scratch guitar, e_piano chords and horns on the hooks, all
+# on swung sixteenths and sitting under the tune. Each cup adds its own
+# colour on top. Notes may carry a fifth item, a dict of extras for the
+# instrument (like {"slide": -2.0} or {"dead": True}).
+
+def soft_kick(_f, _d, v):
+    """A round kick: a low sine that drops quickly into its note, with a
+    felt beater on top."""
+    n = seconds(0.35)
+    t = times(n)
+    body = sine(52.0 + 70.0 * np.exp(-t / 0.03), n) * np.exp(-t / 0.16)
+    felt = lowpass(noise(n, 71), 1500) * decay(n, 0.006) * 0.25
+    return drive(body + felt, 1.3) * adsr(n, 0.001, 0.0, 1.0, 0.04) * 0.85 * v
+
+
+def soft_snare(_f, _d, v):
+    """A snare played lightly. Soft hits (ghost notes) are mostly the wires,
+    the backbeat has the drum's body under it."""
+    n = seconds(0.25)
+    accent = np.clip((v - 0.3) * 2.0, 0.0, 1.0)
+    body = sine(np.geomspace(240, 190, n), n) * decay(n, 0.07) * accent
+    wires = lowpass(bandpass(noise(n, 72), 1200, 8000), 6000) * decay(n, 0.05 + 0.08 * accent)
+    return (body * 0.7 + wires * 0.8) * adsr(n, 0.0008, 0.0, 1.0, 0.03) * 0.7 * v
+
+
+def rimshot(_f, _d, v):
+    """A cross stick: the stick laid across the rim, a woody click."""
+    n = seconds(0.12)
+    tone = sine(1750.0, n) * decay(n, 0.012) * 0.5 + sine(520.0, n) * decay(n, 0.03) * 0.6
+    click = bandpass(noise(n, 73), 1500, 5000) * decay(n, 0.008)
+    return (tone + click) * adsr(n, 0.0003, 0.0, 1.0, 0.02) * 0.6 * v
+
+
+def soft_hat(_f, _d, v):
+    """A closed hat played with the tip of the stick, soft and a little dark."""
+    n = seconds(0.07)
+    x = lowpass(highpass(noise(n, 74), 6000, order=4), 12000)
+    return x * decay(n, 0.018 + 0.012 * v) * 0.5 * v
+
+
+def soft_open_hat(_f, _d, v):
+    n = seconds(0.35)
+    x = lowpass(highpass(noise(n, 75), 5500, order=4), 11000)
+    return x * decay(n, 0.16) * adsr(n, 0.002, 0.0, 1.0, 0.04) * 0.35 * v
+
+
+def finger_bass(f, d, v, slide=0.0, dead=False):
+    """A round finger bass, mostly the note itself and a little brighter as
+    it's plucked. `slide` glides in from that many semitones away, and a dead
+    note is just the thump of a muted string."""
+    if dead:
+        n = seconds(0.07)
+        thump = sine(f, n) * 0.6 + lowpass(noise(n, 76), 500) * 0.5
+        return thump * decay(n, 0.02) * adsr(n, 0.001, 0.0, 1.0, 0.01) * 0.7 * v
+    n = seconds(d + 0.03)
+    t = times(n)
+    glide = 2.0 ** (slide / 12.0 * np.exp(-t / 0.035)) if slide else 1.0
+    tone = sine(f * glide, n) * 0.6 + plucked(f * glide, n, 0.25, 1.8, 1.2, harmonics=12) * 0.8
+    finger = lowpass(noise(n, 77), 800) * decay(n, 0.005) * 0.15
+    tone = lowpass(tone + finger, 1400)
+    return drive(tone * adsr(n, 0.004, 0.15, 0.8, 0.03), 1.3) * 0.8 * v
+
+
+def scratch_guitar(f, d, v, dead=False):
+    """A clean funk guitar, no effects. A dead note is the chicken scratch:
+    the strings muted under the hand, just the pick's click and a choked
+    note."""
+    if dead:
+        n = seconds(0.05)
+        string = plucked(f, n, 0.1, 0.05, 1.0, harmonics=25)
+        click = bandpass(noise(n, 78 + int(f) % 7), 1500, 5000) * decay(n, 0.008)
+        return (bandpass(string, 400, 4000) * 0.8 + click * 0.5) * decay(n, 0.015) * 0.6 * v
+    n = seconds(min(d, 0.25) + 0.03)
+    string = plucked(f, n, 0.12, 0.6, 0.9, harmonics=30)
+    tone = highpass(string, 250) + bandpass(string, 1500, 3500) * 0.4
+    return tone * adsr(n, 0.001, 0.08, 0.6, 0.03) * 0.55 * v
+
+
+def vibes(f, d, v):
+    """A vibraphone: soft mallets on metal bars, a pure ring with the motor's
+    slow tremolo swaying between the sides. Stereo."""
+    n = seconds(max(d + 0.6, 1.2))
+    t = times(n)
+    tone = partials(f, n, [(1.0, 1.0, 1.4), (4.0, 0.12, 0.2), (10.0, 0.03, 0.05)])
+    mallet = lowpass(noise(n, 79), 2000) * decay(n, 0.003) * 0.05
+    body = (tone + mallet) * adsr(n, 0.002, 0.0, 1.0, 0.1)
+    sway = 0.25 * np.sin(2 * np.pi * 5.0 * t)
+    return np.stack([body * (1.0 - sway), body * (1.0 + sway)]) * 0.45 * v
+
+
+# The drums, for telling the drum and band levels apart on the bus.
+FUNK_KIT = {soft_kick, soft_snare, rimshot, soft_hat, soft_open_hat, shaker, conga, cowbell, hand_drum}
+
+
+# Writing funk parts.
+
+def kit(pattern, count, offset=0):
+    """A drum pattern repeated for `count` bars. "X" is an accent, "x" a
+    normal hit, "o" soft and "g" a ghost note."""
+    out = []
+    for b in range(count):
+        for i, c in enumerate(pattern):
+            if c in "Xxog":
+                out.append((offset + b * len(pattern) + i, 0.0, 1, {"X": 1.0, "x": 0.75, "o": 0.45, "g": 0.22}[c]))
+    return out
+
+
+def kit_parts(form, rules):
+    """Like drum_parts, with kit()'s ghost notes."""
+    out = []
+    for name, start, chords in form:
+        for names, pattern in rules:
+            if name in names:
+                out += kit(pattern, len(chords), start * 16)
+    return out
+
+
+def pitched(notes, hz):
+    """Drum hits played at one pitch, for congas and the like."""
+    return [(n[0], hz) + tuple(n[2:]) for n in notes]
+
+
+def midi_of(f):
+    return int(round(69 + 12 * np.log2(f / 440.0)))
+
+
+def hz_of(m):
+    return 440.0 * 2.0 ** ((m - 69) / 12.0)
+
+
+def voicing(name, low=55, top=None):
+    """A chord as Hz, rootless when it has four notes or more, each note
+    moved into the octave above MIDI note `low`. `top` keeps only the
+    highest few."""
+    notes = [midi_of(f) for f in chord_notes(name, 0)]
+    if len(notes) >= 4:
+        notes = notes[1:]
+    placed = sorted({low + (m - low) % 12 for m in notes})
+    if top:
+        placed = placed[-top:]
+    return [hz_of(m) for m in placed]
+
+
+def runs(rhythm):
+    """A sixteen step rhythm to (step, character, steps held), each "-"
+    after a hit holding it on."""
+    out = []
+    i = 0
+    while i < len(rhythm):
+        c = rhythm[i]
+        length = 1
+        while i + length < len(rhythm) and rhythm[i + length] == "-":
+            length += 1
+        if c not in ".-":
+            out.append((i, c, length))
+        i += length
+    return out
+
+
+def keys_comp(chords, rhythm, low=55, offset=0):
+    """Chords from voicing() played to a rhythm: "X", "x" and "o" start a
+    chord, hard to soft, "-" holds it and "." rests."""
+    out = []
+    for b, name in enumerate(chords):
+        notes = voicing(name, low)
+        for i, c, length in runs(rhythm):
+            for f in notes:
+                out.append((offset + b * 16 + i, f, length, {"X": 1.0, "x": 0.75, "o": 0.45}[c]))
+    return out
+
+
+def finger_line(chords, rhythm, low=33, offset=0):
+    """A finger bass part from the chords, the root kept in the octave above
+    MIDI note `low`. "r" is the root, "o" the octave, "5" the fifth, "7" the
+    seventh, "3" the third, "s" the root slid into from a tone below, "O" the
+    octave slid up from the root, "x" a dead note, "-" holds and "." rests."""
+    out = []
+    for b, name in enumerate(chords):
+        shape = [midi_of(f) for f in chord_notes(name, 0)]
+        root = low + (shape[0] - low) % 12
+        seventh = shape[3] - shape[0] if len(shape) > 3 else 10
+        pitch = {"r": 0, "o": 12, "5": 7, "7": seventh, "3": shape[1] - shape[0], "s": 0, "O": 12, "x": 0}
+        extra = {"s": {"slide": -2.0}, "O": {"slide": -12.0}, "x": {"dead": True}}
+        for i, c, length in runs(rhythm):
+            v = 0.45 if c == "x" else (1.0 if i == 0 else 0.8)
+            out.append((offset + b * 16 + i, hz_of(root + pitch[c]), length, v, extra.get(c, {})))
+    return out
+
+
+def scratch(chords, rhythm, low=62, offset=0):
+    """Chicken scratch guitar on the top three notes of each chord: "x" and
+    "X" an open stab, "-" a muted scratch, "." rests. Each string sounds a
+    moment after the last, down on the beat and up off it."""
+    out = []
+    for b, name in enumerate(chords):
+        notes = voicing(name, low, 3)
+        for i, c in enumerate(rhythm):
+            if c == ".":
+                continue
+            order = notes if i % 2 == 0 else notes[::-1]
+            v = {"X": 1.0, "x": 0.8, "-": 0.5}[c]
+            for k, f in enumerate(order):
+                out.append((offset + b * 16 + i + k * 0.04, f, 1, v, {"dead": c == "-"}))
+    return out
+
+
+def swing(notes, amount=0.6):
+    """Swung sixteenths: each note on an off sixteenth is pushed late, so the
+    pair splits `amount` to 1 - `amount` instead of half and half."""
+    return [(n[0] + (2.0 * amount - 1.0) * (int(np.floor(n[0])) % 2),) + tuple(n[1:]) for n in notes]
+
+
+def feel(notes, seed, timing=0.02, loud=0.08):
+    """A player's small unevenness, in steps and how hard: each note a touch
+    early or late and a little harder or softer, the same every render."""
+    r = rng(seed)
+    out = []
+    for n in notes:
+        v = n[3] if len(n) > 3 else 1.0
+        out.append((n[0] + r.normal(0.0, timing), n[1], n[2], v * (1.0 + r.uniform(-loud, loud))) + tuple(n[4:]))
+    return out
+
+
+LAST_BALANCE = {}
+
+
+def render_funk(bpm, bar_count, parts, swing_amount=0.6, room=0.12, level=-13.0):
+    """Plays a funk tune's parts on swung sixteenths and mixes them warm: a
+    short room, an echo send, the tail folded back onto the start, a gentle
+    tilt down in the highs, light glue compression and a limiter, all
+    wrapping around so it loops. `level` is the RMS it comes out at, in dBFS.
+    The drums' and the band's RMS before the bus go in LAST_BALANCE."""
+    step = 60.0 / bpm / 4.0
+    total = seconds(bar_count * 16 * step)
+    spill = seconds(3.0)
+    length = total + spill
+    groups = {"drums": np.zeros((2, length)), "band": np.zeros((2, length))}
+    verb = np.zeros((2, length))
+    echoes = np.zeros((2, length))
+    for k, p in enumerate(parts):
+        mono = np.zeros(length)
+        wide = np.zeros((2, length))
+        for note in feel(swing(p["notes"], swing_amount), 100 + k):
+            at, f, steps, v = note[:4]
+            extra = note[4] if len(note) > 4 else {}
+            sound = p["instrument"](f, steps * step, v, **extra)
+            s = seconds(at * step) % total
+            end = min(s + sound.shape[-1], length)
+            if sound.ndim == 1:
+                mono[s:end] += sound[: end - s]
+            else:
+                wide[:, s:end] += sound[:, : end - s]
+        pan = p["pan"]
+        track = np.stack([mono * np.cos((pan + 1.0) * np.pi / 4.0), mono * np.sin((pan + 1.0) * np.pi / 4.0)]) * np.sqrt(2.0)
+        track += wide * np.array([[min(1.0, 1.0 - pan)], [min(1.0, 1.0 + pan)]])
+        track *= p["loud"]
+        groups["drums" if p["instrument"] in FUNK_KIT else "band"] += track
+        verb += track * p["verb"]
+        echoes += track * p["echo"]
+    bus = groups["drums"] + groups["band"]
+    bus[0] += reverb(verb[0], 1.0, 0.75) * room * 3.0
+    bus[1] += reverb(verb[1], 1.0, 0.7) * room * 3.0
+    # Fold what rings on past the end back onto the start.
+    for x in (bus, echoes, groups["drums"], groups["band"]):
+        x[:, :spill] += x[:, total:total + spill]
+    for name, x in groups.items():
+        LAST_BALANCE[name] = 20.0 * np.log10(np.sqrt(np.mean(x[:, :total] ** 2)) + 1e-12)
+    out = bus[:, :total] + echo(echoes[:, :total], seconds(3 * step), 0.3, 4)
+    out = np.stack([circular_filter(side, low=30.0, tilt=-0.5) for side in out])
+    out = widen(out, 1.1)
+    out = compress(out / np.max(np.abs(out)), -18.0, 1.8, 0.02, 0.25)
+    for _ in range(3):
+        out *= 10.0 ** (level / 20.0) / np.sqrt(np.mean(out ** 2))
+        out = limit(out, 0.84)
+    return out
+
+
+def bars_at(form, names, lines):
+    """Hand written bars played from the start of each section named."""
+    return in_sections(form, names, lambda at, _c: shift(melody(16, *lines), at))
+
+
+def last_bar(form, names, rhythm, make):
+    """Notes from `make(chords, rhythm, first step)` on the last bar of each
+    section named."""
+    return in_sections(form, names, lambda at, c: make(c[-1:], rhythm, at + 16 * (len(c) - 1)))
+
+
+def funk_menu():
+    """The garage and the menus: a slow groove in G, the main theme's hook
+    on soft vibes with the e_piano under them."""
+    bpm = 92
+    groove = ["Gmaj9", "Em9", "Am9", "D9"] * 2
+    hook_chords = ["Cmaj9", "D9", "Bm7", "Em9", "Am9", "D9", "Gmaj9", "D7sus"]
+    form, chords = song(("intro", hook_chords[4:]), ("a", groove), ("hook", hook_chords),
+                        ("break", hook_chords[:4]), ("a2", groove[:4]), ("hook2", hook_chords))
+    hook = bars(
+        "B5:2 D6:2 .:1 E6:3 D6:4 .:4",
+        "A5:2 .:2 A5:1 B5:1 A5:2 F#5:4 .:4",
+        "B5:2 D6:2 .:1 E6:3 D6:2 F#6:2 .:4",
+        "G6:3 F#6:1 E6:2 D6:2 B5:4 .:4",
+        "C6:2 E6:2 .:1 G6:3 E6:2 C6:2 .:4",
+        "A5:2 .:2 A5:1 B5:1 C6:2 D6:4 .:4",
+        "B5:2 D6:2 .:1 E6:3 D6:2 B5:2 A5:2 G5:2",
+        "G5:6 .:6 A5:2 B5:2",
+    )
+    answer = bars(".:16", ".:16", ".:16", ".:8 A5:2 B5:1 C6:1 D6:4",
+                  ".:16", ".:16", ".:16", ".:8 F#6:2 E6:1 D6:1 A5:4")
+    bar_count = len(chords)
+    band = ("a", "hook", "a2", "hook2")
+    tune = (bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("intro",), hook[4:])
+            + bars_at(form, ("break",), hook[:4]))
+    parts = [
+        part(soft_kick, kit_parts(form, [(band, "x.......x.x....."), (("intro",), "x...............")]), 0.46),
+        part(rimshot, kit_parts(form, [(("intro", "a", "a2"), "....x.......x...")]), 0.22, 0.1, 0.1),
+        part(soft_snare, kit_parts(form, [(("hook", "hook2"), "....x..g.g..x..g"), (("a", "a2"), ".......g.g.....g")]), 0.26, 0.05, 0.12),
+        part(soft_hat, kit_parts(form, [(band + ("intro",), "xgogxgogxgogxgog")]), 0.15, 0.3),
+        part(soft_open_hat, kit_parts(form, [(("hook2",), "..............o.")]), 0.12, 0.3),
+        part(shaker, kit_parts(form, [(("hook", "hook2"), "ogxgogxgogxgogxg")]), 0.08, -0.35),
+        part(finger_bass, in_sections(form, band + ("intro",), lambda at, c: finger_line(c, "r--.....5-.x7-s.", 33, at))
+             + in_sections(form, ("break",), lambda at, c: finger_line(c, "r-------5---.x..", 33, at)), 0.62),
+        part(e_piano, in_sections(form, ("a", "a2", "intro"), lambda at, c: keys_comp(c, "x--.....o-.x----", 55, at))
+             + in_sections(form, ("hook", "hook2", "break"), lambda at, c: keys_comp(c, "x-------..o-x---", 55, at)), 0.42, -0.1, 0.2),
+        part(scratch_guitar, in_sections(form, ("hook", "hook2"), lambda at, c: scratch(c, "-.-.x.--.-.-x.-.", 62, at)), 0.2, 0.35, 0.08),
+        part(vibes, tune + bars_at(form, ("a", "a2"), answer), 0.5, 0.15, 0.3, 0.15),
+        part(e_piano, octave(bars_at(form, ("hook2",), hook), -1), 0.22, -0.2, 0.2),
+    ]
+    return render_funk(bpm, bar_count, parts, 0.6, 0.14, -15.4)
+
+
+def funk_race_one():
+    """The Baseplate Cup and the main theme: a laid back groove in D, the
+    hook on horns with the e_piano carrying it in the intro."""
+    bpm = 110
+    groove = ["Dmaj9", "Bm9", "Em9", "A9"] * 2
+    lift = ["G9", "F#m7", "Em9", "A7sus"] * 2
+    hook_chords = ["Gmaj9", "A9", "F#m7", "Bm9", "Em9", "A9", "Dmaj9", "A7sus"]
+    form, chords = song(("intro", hook_chords[4:]), ("a", groove), ("b", lift), ("hook", hook_chords),
+                        ("break", hook_chords[:4]), ("a2", groove[:4]), ("hook2", hook_chords))
+    hook = bars(
+        "F#5:2 A5:2 .:1 B5:3 A5:2 F#5:2 .:4",
+        "E5:2 .:2 E5:1 F#5:1 E5:2 C#5:4 .:4",
+        "F#5:2 A5:2 .:1 B5:3 A5:2 C#6:2 .:4",
+        "D6:3 C#6:1 B5:2 A5:2 F#5:4 .:4",
+        "G5:2 B5:2 .:1 D6:3 B5:2 G5:2 .:4",
+        "E5:2 .:2 E5:1 F#5:1 G5:2 A5:4 .:4",
+        "F#5:2 A5:2 .:1 B5:3 A5:2 F#5:2 E5:2 D5:2",
+        "D5:6 .:6 E5:2 F#5:2",
+    )
+    answer = bars(".:16", ".:16", ".:16", ".:8 E5:1 F#5:1 A5:2 B5:2 A5:2",
+                  ".:16", ".:16", ".:16", ".:8 C#6:2 B5:1 A5:1 F#5:2 E5:2")
+    riff = bars(
+        "G4:1 .:1 B4:1 D5:2 .:1 F5:2 .:2 E5:1 D5:1 B4:2 .:2",
+        "F#4:1 .:1 A4:1 C#5:2 .:1 E5:2 .:8",
+        "E4:1 .:1 G4:1 B4:2 .:1 D5:2 .:2 F#5:2 E5:2 .:2",
+        "D5:3 C#5:1 B4:2 A4:2 .:8",
+        "G4:1 .:1 B4:1 D5:2 .:1 F5:2 .:2 E5:1 D5:1 B4:2 .:2",
+        "F#4:1 .:1 A4:1 C#5:2 .:1 E5:2 .:8",
+        "E4:1 .:1 G4:1 B4:2 .:1 D5:2 .:2 F#5:2 E5:2 .:2",
+        "D5:2 E5:2 G5:2 A5:2 .:8",
+    )
+    bar_count = len(chords)
+    band = ("a", "b", "hook", "a2", "hook2")
+    hooks = bars_at(form, ("hook", "hook2"), hook)
+    parts = [
+        part(soft_kick, kit_parts(form, [(band, "x.....x..x......"), (("intro",), "x.......x.......")]), 0.52),
+        part(rimshot, kit_parts(form, [(("intro", "a", "a2"), "....x.......x...")]), 0.3, 0.1, 0.1),
+        part(soft_snare, kit_parts(form, [(("b", "hook", "hook2"), "....x..g.g..x..g"), (("a", "a2"), ".......g.g...g.g")]), 0.34, 0.05, 0.12),
+        part(soft_hat, kit_parts(form, [(band + ("intro",), "xgogxgogxgogxgog")]), 0.16, 0.3),
+        part(soft_open_hat, kit_parts(form, [(("hook", "hook2"), "..............o.")]), 0.14, 0.3),
+        part(finger_bass, in_sections(form, band + ("intro",), lambda at, c: finger_line(c, "r--.x.rO.x5-7.s.", 33, at))
+             + in_sections(form, ("break",), lambda at, c: finger_line(c, "r-----.x5---7-s.", 33, at)), 0.62),
+        part(e_piano, in_sections(form, ("a", "a2", "intro"), lambda at, c: keys_comp(c, "x--.....x-.o....", 55, at))
+             + in_sections(form, ("b",), lambda at, c: keys_comp(c, "..x-...x..x-..o.", 55, at))
+             + in_sections(form, ("hook", "hook2", "break"), lambda at, c: keys_comp(c, "x-------..o.x---", 55, at)), 0.4, -0.15, 0.2),
+        part(e_piano, bars_at(form, ("intro",), hook[4:]) + bars_at(form, ("break",), hook[:4])
+             + octave(bars_at(form, ("hook2",), hook), 1), 0.36, 0.1, 0.25, 0.12),
+        part(scratch_guitar, in_sections(form, ("a", "hook", "a2", "hook2"), lambda at, c: scratch(c, "-.-.x.--.-.-x.-.", 62, at)), 0.24, 0.35, 0.08),
+        part(wah_guitar, bars_at(form, ("b",), riff) + bars_at(form, ("a", "a2"), answer), 0.3, -0.3, 0.12, 0.1),
+        part(horn_section, hooks + last_bar(form, ("b",), "......x..X--....", lambda c, r, at: keys_comp(c, r, 62, at)), 0.5, 0.0, 0.2, 0.08),
+    ]
+    return render_funk(bpm, bar_count, parts, 0.6, 0.12, -14.0)
+
+
+def funk_race_beach():
+    """The Island Cup: a laid back calypso funk in F, steel drums on the hook
+    over congas, a shaker and a lilting finger bass."""
+    bpm = 104
+    groove = ["Fmaj9", "Dm9", "Gm9", "C9"] * 2
+    lift = ["Bbmaj9", "Am7", "Gm9", "C9"]
+    hook_chords = ["Bbmaj9", "C9", "Fmaj9", "Dm9", "Gm9", "C9", "F69", "C9"]
+    form, chords = song(("intro", hook_chords[4:]), ("a", groove), ("b", lift), ("hook", hook_chords),
+                        ("break", hook_chords[:4]), ("a2", groove[:4]), ("hook2", hook_chords))
+    hook = bars(
+        "D6:2 D6:1 F6:3 D6:2 C6:2 .:6",
+        "E6:2 E6:1 G6:3 E6:2 D6:2 C6:4 .:2",
+        "A5:3 C6:3 F6:2 E6:4 .:4",
+        "D6:3 C6:3 A5:2 .:8",
+        "Bb5:2 Bb5:1 D6:3 Bb5:2 A5:2 .:6",
+        "G5:2 G5:1 Bb5:3 C6:2 E6:2 G6:4 .:2",
+        "A6:3 G6:3 F6:2 D6:3 C6:3 A5:2",
+        "C6:8 .:4 A5:2 Bb5:2",
+    )
+    answer = bars(".:16", ".:16", ".:16", ".:8 G5:2 A5:1 Bb5:1 C6:2 .:2",
+                  ".:16", ".:16", ".:16", ".:8 E6:2 D6:1 C6:1 Bb5:2 G5:2")
+    bar_count = len(chords)
+    band = ("a", "b", "hook", "a2", "hook2")
+    tune = (bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("intro",), hook[4:])
+            + bars_at(form, ("break",), hook[:4]))
+    parts = [
+        part(soft_kick, kit_parts(form, [(band, "x..x....x..x...."), (("intro",), "x.......x.......")]), 0.48),
+        part(rimshot, kit_parts(form, [(band + ("intro",), "....x.......x...")]), 0.28, 0.1, 0.1),
+        part(soft_snare, kit_parts(form, [(band, "...g...g.g.....g")]), 0.22, 0.05, 0.12),
+        part(soft_hat, kit_parts(form, [(band, "x.o.x.o.x.o.x.o.")]), 0.12, 0.3),
+        part(shaker, kit_parts(form, [(band + ("intro",), "xgogxgogxgogxgog")]), 0.14, -0.35),
+        part(cowbell, kit_parts(form, [(("hook", "hook2"), "o...o...o...o...")]), 0.1, 0.4, 0.05),
+        part(conga, pitched(kit_parts(form, [(band, "x......x..x.....")]), 180.0), 0.32, -0.3, 0.08),
+        part(conga, pitched(kit_parts(form, [(band + ("intro",), "..o.ox.o....x.og")]), 260.0), 0.26, 0.3, 0.08),
+        part(finger_bass, in_sections(form, band + ("intro",), lambda at, c: finger_line(c, "r--5..r.x.5-o.s.", 33, at))
+             + in_sections(form, ("break",), lambda at, c: finger_line(c, "r-----.x5-----s.", 33, at)), 0.6),
+        part(e_piano, in_sections(form, ("a", "a2", "b", "intro"), lambda at, c: keys_comp(c, "..x-..x-..x-..x-", 55, at))
+             + in_sections(form, ("hook", "hook2", "break"), lambda at, c: keys_comp(c, "x-------..o.x---", 55, at)), 0.34, -0.15, 0.2),
+        part(scratch_guitar, in_sections(form, band, lambda at, c: scratch(c, "..x-..x-..x-.-x-", 62, at)), 0.2, 0.35, 0.08),
+        part(pop_marimba, bars_at(form, ("a", "a2"), answer)
+             + in_sections(form, ("b",), lambda at, c: arps(c, 4, (0, 2, 1, 3), 2, at)), 0.26, -0.35, 0.15),
+        part(steel, tune, 0.62, 0.15, 0.25, 0.12),
+        part(steel, octave(bars_at(form, ("hook2",), hook), -1), 0.22, -0.25, 0.25),
+        part(horn_section, last_bar(form, ("hook2",), "..x..x....x-....", lambda c, r, at: keys_comp(c, r, 62, at)), 0.3, 0.0, 0.2),
+    ]
+    return render_funk(bpm, bar_count, parts, 0.57, 0.12, -14.1)
+
+
+# The chill funk demos.
+FUNK = {"menu": funk_menu, "race_one": funk_race_one, "race_beach": funk_race_beach}
 
 
 # The tunes in the new style.

@@ -2,10 +2,11 @@
 """Makes the arcade pop demos in music.POP into Ogg files to listen to, next
 to copies of the tunes they would replace.
 
-  uv run --with numpy --with scipy tools/sound/music_demo.py OUT_DIR [names...]
+  uv run --with numpy --with scipy tools/sound/music_demo.py [--funk] OUT_DIR [names...]
 
 Each demo comes out as new_<name>.ogg and the shipped tune as old_<name>.ogg.
-Nothing in sound/ is changed.
+With --funk it plays the chill funk demos in music.FUNK instead, as
+funk_<name>.ogg. Nothing in sound/ is changed.
 """
 
 import os
@@ -21,11 +22,18 @@ SOUND = os.path.join(os.path.dirname(__file__), "..", "..", "sound", "music")
 
 
 def main():
-    out = sys.argv[1]
-    only = set(sys.argv[2:])
+    args = sys.argv[1:]
+    funk = "--funk" in args
+    args = [a for a in args if a != "--funk"]
+    out = args[0]
+    only = set(args[1:])
     os.makedirs(out, exist_ok=True)
-    for name, make in music.POP.items():
+    for name, make in (music.FUNK if funk else music.POP).items():
         if only and name not in only:
+            continue
+        if funk:
+            write_ogg(os.path.join(out, "funk_" + name + ".ogg"), make(), 3)
+            print("made", name)
             continue
         write_ogg(os.path.join(out, "new_" + name + ".ogg"), make(), 3)
         shutil.copyfile(os.path.join(SOUND, name + ".ogg"), os.path.join(out, "old_" + name + ".ogg"))
