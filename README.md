@@ -78,9 +78,11 @@ Two players can race one course or a whole Grand Prix from the Multiplayer menu.
 
 There are seven camera views: close chase, far chase, first person, hood, bumper, overhead and TV cameras beside the track. Hold look back to see behind you. After the finish the camera circles your kart and the AI drives it home.
 
-To slide, hold the gas and brake together while steering. On a touch screen you can slide your thumb from GO down onto the brake and back up. Keep the gas on and steer into the bend to hold the slide, then straighten up to grip again. Hold it for at least half a second and straighten up with the gas still on for a little turbo. A longer slide gives more turbo but loses more speed.
+To slide, hold the gas and brake together while steering. On a touch screen you can slide your thumb from GO down onto the brake and back up. Keep the gas on and steer into the bend to hold the slide, then straighten up to grip again. Smoke comes off the drive wheels, and sparks show the turbo charging in blue, then orange, then purple. Hold it for at least half a second and straighten up with the gas still on for a turbo. A longer slide gives a longer turbo, up to one and a half seconds, but loses more speed. Hard and Expert AI drivers slide too.
 
 Grass and sand slow you down, and a slide ends as soon as a wheel leaves the road. Sand slows you more than grass. If you get stuck or lose parts, reset puts you upright and repairs the kart. You slow down briefly and go through other karts for one second.
+
+After the last race of a Grand Prix, a podium goes up by the start line. The top three stand on the steps with their karts parked behind, and the winner holds up the trophy with a fanfare and a cheering crowd. The cup standings come up over it. Online everyone sees the podium. A small skip button in the top left leaves it early.
 
 Tap your place in the top corner, or press Start on a controller, to open the race menu. It pauses a race on your own or in split screen, where either player can carry on. Online the race keeps going while your menu is open.
 
@@ -211,8 +213,8 @@ Use Add a course or Add a cup to paste a code or open a file. Cups include their
 Pick the weather and time beside the difficulty, or leave them to chance. A course can have its own set in the editor.
 
 - Morning, day, evening, dusk and night change the sun, sky and shadows. At night the moon casts fainter shadows.
-- Rain makes the road shiny and slippery. Puddles slow you and grip less again.
-- Snow covers the ground and scenery. The cleared road is wet and slippery.
+- Rain makes the road shiny and slippery. Puddles slow you and grip less again. Puddles and drifts grow over the race, and the AI goes round big ones when there's room.
+- Snow covers the ground and scenery. The cleared road is wet and slippery, and drifts blow across it from the windward side. The deeper a drift, the more it slows you.
 - Fog hides the distance, storms bring heavy rain and lightning, and dust storms cover sandy courses.
 - Course lamps and kart lights come on when it's dark. Headlights light the road and tail lights brighten when you brake.
 
@@ -224,7 +226,9 @@ Outdoor records count only in clear daytime, and indoor runs always count. Other
 
 Touch, controllers and keys work in the menus, races, garage, driver screen and track editor. Each player picks a controller and changes their keys and buttons in Settings. Tap a binding, then press its replacement.
 
-Power-ups start on LB and RB, and on L4 and R4 on a Steam Deck. Pick the Xbox or Switch button layout in Settings. A Switch controller uses the names printed on its buttons. Press A on a name box to open the screen keyboard, X to delete, Y for a space and Start to finish.
+On a phone or tablet the touch controls are capped by the screen's physical size. Pick Small, Medium or Large and slide the controls up or down in Settings or the race menu.
+
+Menus open on their first item, and go back to the last one you picked. Power-ups start on LB and RB, and on L4 and R4 on a Steam Deck. Pick the Xbox or Switch button layout in Settings. A Switch controller uses the names printed on its buttons. Press A on a name box to open the screen keyboard, X to delete, Y for a space and Start to finish.
 
 ## Online
 
@@ -236,13 +240,17 @@ Up to eight karts can race together, with AI in the empty places if the host wan
 - For Bluetooth, pair two or three phones, then host and join over Bluetooth.
 - A dedicated server runs races on your network or the internet, with an admin page. Phones and browsers can join it. See [server/README.md](server/README.md).
 
+Everyone has to be on the same version. Online play between 0.9.0 and older versions doesn't work.
+
 In a browser you can join a server but not host or find games. Web players need the server to have a certificate.
 
 ## Graphics and sound
 
+The menus, HUD and editors share one look, with slanted see-through panels, stripes and Chakra Petch lettering.
+
 Change the graphics in Settings under Display. Medium and Low draw at a lower resolution while keeping the menus sharp. They reduce shadows, distant scenery, crowds, rain and snow. Low draws headlight beams only for your kart, Medium for nearby karts and High for karts up to 40 metres away. Things you can drive into stay in place at every setting.
 
-I made the sounds and music with a little synthesizer in `tools/sound`. Each engine has its own sound. Tires squeal, surfaces rumble, bricks clatter and the wind gets louder as you speed up. There's a menu tune and one for each cup. Music and effects have separate volume controls in Settings.
+I made the sounds and music with a little synthesizer in `tools/sound`. Each engine has its own sound. Tires squeal, surfaces rumble, bricks clatter and the wind gets louder as you speed up. The music is laid back funk, with a menu tune and one for each cup. Drifts have their own tire sound on tarmac, dirt and snow, and a whoosh when the turbo kicks in. Music and effects have separate volume controls in Settings.
 
 ## Building
 
