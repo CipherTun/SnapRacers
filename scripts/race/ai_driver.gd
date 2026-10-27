@@ -9,8 +9,9 @@ extends Node
 ## the road for bends, works out how fast its own kart can take each one from
 ## how well it grips, and brakes in time to be at that speed when it gets
 ## there. A kart in its way it goes round, or sits behind until there's a
-## gap. If it runs into something it backs off it, and if it's still stuck or
-## upside down after a couple of seconds it resets, the same as a player would.
+## gap. If it runs into something, or stops getting anywhere around the
+## track, it backs off or pulls away, and if it's still stuck or upside down
+## after a couple of seconds it resets, the same as a player would.
 
 ## How close to its kart's limit it dares to corner. 1 is right at the limit.
 @export var skill := 0.92
@@ -66,6 +67,20 @@ const BACK_FOR := 1.0
 const WHEEL_GONE_FOR := 1.0
 ## How far on around the track it has to get before it counts as unstuck.
 const FREE_AFTER := 6.0
+## Getting no more than PROGRESS_STEP metres on around the track in
+## PROGRESS_TIME seconds counts as stuck, even if it's moving, like when it's
+## scrubbing along another kart or a wall.
+const PROGRESS_STEP := 3.0
+const PROGRESS_TIME := 2.0
+## Further back than this from where it was, in metres, it's been moved, so
+## it starts counting again from there.
+const MOVED_BACK := 20.0
+## After backing off a kart it was stuck against, it drives away from that
+## kart's side for this long, in seconds, steering this much.
+const PULL_AWAY_FOR := 0.6
+const PULL_AWAY_STEER := 0.6
+## How many goes it has at getting clear of a kart before it resets.
+const KART_TRIES := 2
 ## How far ahead it looks for a loop, so it has its foot down for the whole
 ## run in to it.
 const LOOP_AHEAD := 40.0
@@ -117,10 +132,20 @@ var _on_loop := false
 var _lost_nerve := false
 ## Time left backing away from something it's stuck against.
 var _backing := 0.0
-## Whether it's backed off already this time it got stuck.
-var _backed := false
+## How many times it's tried to get clear this time it got stuck, and
+## whether its last go off a kart was forward.
+var _tries := 0
+var _went_forward := false
 ## Where it was on the track when it got stuck.
 var _stuck_at := 0.0
+## Where it was on the track the last time it got PROGRESS_STEP further on,
+## and how long ago that was, in seconds.
+var _mark := 0.0
+var _mark_time := 0.0
+## Which side the kart it backed off is on, 1 right, -1 left or 0 for none,
+## and how long it has left pulling away from it.
+var _away := 0.0
+var _leaving := 0.0
 ## How long it's been going with a wheel knocked off.
 var _wheel_gone := 0.0
 ## Where each brick wall is along the track, worked out once since a wall
@@ -318,11 +343,20 @@ func _physics_process(delta: float) -> void:
 		controls.throttle = 0.0
 		controls.brake = 0.0
 	elif _backing > 0.0:
-		# Backing off whatever it ran into, steering the other way.
+		# Backing off whatever it ran into, steering the other way. Off a
+		# kart beside it, it steers toward that kart, which in reverse swings
+		# its nose away from it, then pulls away to the free side.
 		_backing -= delta
 		controls.throttle = 0.0
 		controls.brake = 1.0
-		controls.steer = -controls.steer
+		controls.steer = _away if _away != 0.0 else -controls.steer
+		if _backing <= 0.0 and _away != 0.0:
+			_leaving = PULL_AWAY_FOR
+	elif _leaving > 0.0:
+		_leaving -= delta
+		controls.throttle = 1.0
+		controls.brake = 0.0
+		controls.steer = -_away * PULL_AWAY_STEER
 	# Easing off going into a loop or up it is how you fall off the top, so it
 	# keeps its foot down until it's back on the flat and brakes for the next
 	# bend after that.
@@ -728,34 +762,81 @@ func _nearest(from: float, to: float, side_room: float) -> Kart:
 
 
 func _stuck_check(delta: float, speed: float, up: Vector3) -> void:
-	# It's stuck against something, or on its back. Upside down only counts
-	# when it isn't meant to be, so not at the top of a loop. It's free again
-	# once it's a little further around the track.
+	# It's stuck against something, or on its back, or it isn't getting on
+	# around the track. Upside down only counts when it isn't meant to be, so
+	# not at the top of a loop. It's free again once it's a little further
+	# around the track.
 	var upside_down := up.y < 0.3 and not kart.sticking
 	# Just after a reset it's pulling away from a standstill at half power,
 	# which on ice takes a while, so that isn't being stuck.
 	var pulling_away := kart.slowdown_left > 0.0 and not upside_down
 	# Nor is waiting for a train.
 	var waiting := _waiting and not upside_down
-	if not kart.locked and not pulling_away and not waiting and (speed < 1.5 or upside_down):
+	var excused := kart.locked or pulling_away or waiting
+	# Backing off or pulling away it isn't trying to get on, so that doesn't
+	# count, and it starts counting afresh after.
+	var busy := _backing > 0.0 or _leaving > 0.0
+	var along := _along(_mark)
+	if excused or busy or along > PROGRESS_STEP or along < -MOVED_BACK:
+		_mark = offset
+		_mark_time = 0.0
+	else:
+		_mark_time += delta
+	var getting_nowhere := _mark_time > PROGRESS_TIME
+	if not excused and not busy and (speed < 1.5 or upside_down or getting_nowhere):
 		if _stuck == 0.0:
 			_stuck_at = offset
 		_stuck += delta
-	elif _stuck > 0.0 and offset - _stuck_at > FREE_AFTER:
+	elif _stuck > 0.0 and _along(_stuck_at) > FREE_AFTER:
 		_stuck = 0.0
-		_backed = false
-	# The right way up, against a wall or a barrier, it backs off it once,
-	# the way a person would.
-	if not upside_down and _stuck > BACK_AFTER and not _backed:
-		_backed = true
-		_backing = BACK_FOR
+		_tries = 0
+	# The right way up, against a wall or a barrier, it backs off once, the
+	# way a person would. Against a kart it gets two goes, the second the
+	# other way, before it resets.
+	var may_try := _tries == 0 or (_tries < KART_TRIES and _away != 0.0)
+	if not upside_down and may_try and _stuck > BACK_AFTER * (_tries + 1):
+		_tries += 1
+		_back_off()
 	_wheel_gone = _wheel_gone + delta if _lost_a_wheel() and not kart.locked and not kart.held.has("repair") else 0.0
 	if _stuck > STUCK_AFTER or _wheel_gone > WHEEL_GONE_FOR:
 		_stuck = 0.0
 		_wheel_gone = 0.0
-		_backed = false
+		_tries = 0
 		_backing = 0.0
+		_leaving = 0.0
 		controls.reset = true
+
+
+## How far on around the track it is from there, the short way round the
+## lap, in metres. Negative is behind.
+func _along(from: float) -> float:
+	return fposmod(offset - from + track.length * 0.5, track.length) - track.length * 0.5
+
+
+## Gets clear of what it's stuck against. Against a wall it backs off,
+## steering the other way. Against a kart it backs off if the kart's in
+## front of it, or pulls away forward if it's behind, steering away from its
+## side either way, so two karts stuck together go opposite ways. The second
+## go it tries the other way.
+func _back_off() -> void:
+	var nearest: Kart = null
+	for body in kart.get_colliding_bodies():
+		if body is Kart and body != kart and (nearest == null or body.global_position.distance_to(kart.global_position) < nearest.global_position.distance_to(kart.global_position)):
+			nearest = body
+	if nearest == null:
+		_away = 0.0
+		_backing = BACK_FOR
+		return
+	var gap := nearest.global_position - kart.global_position
+	_away = 1.0 if gap.dot(kart.global_basis.x) > 0.0 else -1.0
+	var forward := gap.dot(-kart.global_basis.z) < 0.0
+	if _tries > 1:
+		forward = not _went_forward
+	_went_forward = forward
+	if forward:
+		_leaving = BACK_FOR
+	else:
+		_backing = BACK_FOR
 
 
 ## Whether any of its wheels have been knocked off.
