@@ -2709,6 +2709,17 @@ def bars_at(form, names, lines):
     return in_sections(form, names, lambda at, _c: shift(melody(16, *lines), at))
 
 
+def in_turn(form, names, rhythms, make):
+    """Notes from `make(chords, rhythm, first step)` for each bar of the
+    sections named, taking the rhythms in turn."""
+    out = []
+    for name, start, chords in form:
+        if name in names:
+            for i, c in enumerate(chords):
+                out += make([c], rhythms[i % len(rhythms)], (start + i) * 16)
+    return out
+
+
 def last_bar(form, names, rhythm, make):
     """Notes from `make(chords, rhythm, first step)` on the last bar of each
     section named."""
@@ -2716,13 +2727,15 @@ def last_bar(form, names, rhythm, make):
 
 
 def funk_menu():
-    """The garage and the menus: a slow groove in G, the main theme's hook
-    on soft vibes with the e_piano under them."""
-    bpm = 92
+    """The garage and the menus: a groove in G that builds up over four bars,
+    e_piano and bass first, then hats, kick and a little snare pickup, then
+    busy finger bass and e_piano stabs in the pocket with the main theme's
+    hook on soft vibes."""
+    bpm = 97
     groove = ["Gmaj9", "Em9", "Am9", "D9"] * 2
     hook_chords = ["Cmaj9", "D9", "Bm7", "Em9", "Am9", "D9", "Gmaj9", "D7sus"]
-    form, chords = song(("intro", hook_chords[4:]), ("a", groove), ("hook", hook_chords),
-                        ("break", hook_chords[:4]), ("a2", groove[:4]), ("hook2", hook_chords))
+    form, chords = song(("intro", groove[:4]), ("a", groove), ("hook", hook_chords), ("break", hook_chords[:4]),
+                        ("a2", groove[:4]), ("hook2", hook_chords))
     hook = bars(
         "B5:2 D6:2 .:1 E6:3 D6:4 .:4",
         "A5:2 .:2 A5:1 B5:1 A5:2 F#5:4 .:4",
@@ -2737,24 +2750,34 @@ def funk_menu():
                   ".:16", ".:16", ".:16", ".:8 F#6:2 E6:1 D6:1 A5:4")
     bar_count = len(chords)
     band = ("a", "hook", "a2", "hook2")
-    tune = (bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("intro",), hook[4:])
-            + bars_at(form, ("break",), hook[:4]))
+    drum = lambda c, r, at: kit(r, 1, at)
+    backbeat = ["....X..g.g..X..g", "....X..g.g..Xg.g"]
+    lines = ["r-.xr.5O.xr-x7s.", "r-.x.rO.x.5-7.xs"]
+    quiet = "................"
+    build = lambda rhythms, make: in_turn(form, ("intro",), rhythms, make)
     parts = [
-        part(soft_kick, kit_parts(form, [(band, "x.......x.x....."), (("intro",), "x...............")]), 0.46),
-        part(rimshot, kit_parts(form, [(("intro", "a", "a2"), "....x.......x...")]), 0.22, 0.1, 0.1),
-        part(soft_snare, kit_parts(form, [(("hook", "hook2"), "....x..g.g..x..g"), (("a", "a2"), ".......g.g.....g")]), 0.26, 0.05, 0.12),
-        part(soft_hat, kit_parts(form, [(band + ("intro",), "xgogxgogxgogxgog")]), 0.15, 0.3),
-        part(soft_open_hat, kit_parts(form, [(("hook2",), "..............o.")]), 0.12, 0.3),
-        part(shaker, kit_parts(form, [(("hook", "hook2"), "ogxgogxgogxgogxg")]), 0.08, -0.35),
-        part(finger_bass, in_sections(form, band + ("intro",), lambda at, c: finger_line(c, "r--.....5-.x7-s.", 33, at))
-             + in_sections(form, ("break",), lambda at, c: finger_line(c, "r-------5---.x..", 33, at)), 0.62),
-        part(e_piano, in_sections(form, ("a", "a2", "intro"), lambda at, c: keys_comp(c, "x--.....o-.x----", 55, at))
-             + in_sections(form, ("hook", "hook2", "break"), lambda at, c: keys_comp(c, "x-------..o-x---", 55, at)), 0.42, -0.1, 0.2),
-        part(scratch_guitar, in_sections(form, ("hook", "hook2"), lambda at, c: scratch(c, "-.-.x.--.-.-x.-.", 62, at)), 0.2, 0.35, 0.08),
-        part(vibes, tune + bars_at(form, ("a", "a2"), answer), 0.5, 0.15, 0.3, 0.15),
+        part(soft_kick, in_turn(form, band, ["X.....x...x.....", "X.....x...x..x.."], drum)
+             + build([quiet, quiet, "X.......x.......", "X.....x...x....."], drum), 0.55),
+        part(soft_snare, in_turn(form, ("a", "hook", "a2"), backbeat, drum)
+             + in_turn(form, ("hook2",), backbeat * 3 + [backbeat[0], "....X..g.g.gX.gg"], drum)
+             + build([quiet, quiet, ".......g.g.....g", "....X..g.g..oxox"], drum), 0.34, 0.05, 0.12),
+        part(soft_hat, kit_parts(form, [(band, "xgogxgogxgogxgog")])
+             + build([quiet, "x.o.x.o.x.o.x.o.", "xgogxgogxgogxgog", "xgogxgogxgogxgog"], drum), 0.2, 0.3),
+        part(soft_open_hat, in_turn(form, band, ["................", "..............o."], drum), 0.14, 0.3),
+        part(shaker, kit_parts(form, [(("hook", "hook2"), "ogxgogxgogxgogxg")]), 0.1, -0.35),
+        part(finger_bass, in_turn(form, band, lines, lambda c, r, at: finger_line(c, r, 33, at))
+             + build(["r-.x....5-.x7-s.", lines[1], lines[0], lines[1]], lambda c, r, at: finger_line(c, r, 33, at))
+             + in_sections(form, ("break",), lambda at, c: finger_line(c, "r-.x..5-.x7-..s.", 33, at)), 0.62),
+        part(e_piano, in_sections(form, ("intro", "a", "a2"), lambda at, c: keys_comp(c, "x-.o..x-.o.x-...", 55, at))
+             + in_sections(form, ("hook", "hook2"), lambda at, c: keys_comp(c, "..x-..o.x-..o.x.", 55, at))
+             + in_sections(form, ("break",), lambda at, c: keys_comp(c, "x--.o..x-..o.x--", 55, at)), 0.42, -0.1, 0.2),
+        part(scratch_guitar, in_sections(form, band, lambda at, c: scratch(c, "-.-x-.x.-.-x-.x-", 62, at))
+             + build([quiet, quiet, "-.-x-.x.-.-x-.x-", "-.-x-.x.-.-x-.x-"], lambda c, r, at: scratch(c, r, 62, at)), 0.22, 0.35, 0.08),
+        part(vibes, bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("break",), hook[:4])
+             + bars_at(form, ("a", "a2"), answer) + bars_at(form, ("intro",), answer[:4]), 0.5, 0.15, 0.3, 0.15),
         part(e_piano, octave(bars_at(form, ("hook2",), hook), -1), 0.22, -0.2, 0.2),
     ]
-    return render_funk(bpm, bar_count, parts, 0.6, 0.14, -15.4)
+    return render_funk(bpm, bar_count, parts, 0.6, 0.14, -15.0)
 
 
 def funk_race_one():
