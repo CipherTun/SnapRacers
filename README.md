@@ -1,13 +1,8 @@
 # SnapRacers
 
-SnapRacers is a physics based kart racing game I put together for my son. Build a kart from blocks and race it, then change the parts until it drives how you want. Every part adds weight, drag or power. Crashes knock parts off, and the reset button puts them back with a short slowdown.
+SnapRacers is a physics-based kart racing game I put together for my son. Build a kart from blocks, change the parts and race it. Every part adds weight, drag or power. Crashes knock parts off, and reset puts them back with a short slowdown.
 
-You can race the AI, play with a friend on a split screen or race online. There are fourteen Grand Prix cups and 56 courses, and you can make your own courses and cups too. It needs Android 8.1 or newer, or you can play it in a browser.
-
-It's playable now, but there are still rough edges. Let me know if you find one.
-
-Cheers,<br>
-Dan
+You can race the AI, play with a friend on a split screen or race online. There are 14 Grand Prix cups and 56 courses, and you can make your own courses and cups. It needs Android 8.1 or newer, or you can play it in a browser.
 
 ---
 
@@ -38,7 +33,7 @@ Dan
 
 Add [my F-Droid repo](https://hunke.ws/fdroid/repo?fingerprint=80438B253C257BCCE05CDCB9E3AC9B6174C2250659962B14FCBE7F32FD42D53E), then search for SnapRacers. F-Droid will offer new versions as updates and pick the right build for your phone.
 
-You can also get an APK from [Releases](https://github.com/roge-rm/SnapRacers/releases). Use the usual APK, or the one marked `32bit` for older phones and tablets that need it. Both need Android 8.1 or newer.
+You can also get an APK from [Releases](https://github.com/roge-rm/SnapRacers/releases). Use the usual APK, or the one marked `32bit` for older phones and tablets. Both need Android 8.1 or newer.
 
 ### On a computer
 
@@ -70,7 +65,7 @@ Use the x86_64 AppImage. In Desktop Mode, download it, right-click it and turn o
 
 ## Racing
 
-Grand Prix has fourteen cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
+Grand Prix has 14 cups of four races, with points and trophies. From the second race on, the leader starts at the back. Finish in the top three for a gold, silver or bronze trophy, kept separately for each difficulty. You can also make cups of 2 to 8 races from any courses.
 
 Single race is one race against the AI, time trial keeps your best times and practice lets you drive on your own for as long as you like. There are four AI levels, from Easy drivers who wait for you and make mistakes to Expert drivers who drive on the limit and slide through bends.
 
@@ -82,7 +77,7 @@ To slide, hold the gas and brake together while steering. On a touch screen you 
 
 Grass and sand slow you down, and a slide ends as soon as a wheel leaves the road. Sand slows you more than grass. If you get stuck or lose parts, reset puts you upright and repairs the kart. You slow down briefly and go through other karts for one second.
 
-After the last race of a Grand Prix, a podium goes up by the start line. The top three stand on the steps with their karts parked behind, and the winner holds up the trophy with a fanfare and a cheering crowd. The cup standings come up over it. Online everyone sees the podium. A small skip button in the top left leaves it early.
+After the last race of a Grand Prix, the top three stand on a podium by the start line, with their karts parked behind. The winner holds up the trophy, and the cup standings come up over it. Online everyone sees the podium. A skip button in the top left leaves it early.
 
 Tap your place in the top corner, or press Start on a controller, to open the race menu. It pauses a race on your own or in split screen, where either player can carry on. Online the race keeps going while your menu is open.
 
@@ -111,7 +106,7 @@ Undo and redo changes, save as many karts as you like or start from a stock kart
 
 ### Parts
 
-There are 289 parts. I modelled most of them in `tools/parts`.
+There are 289 parts.
 
 | Parts | What's there |
 |---|---|
@@ -165,7 +160,7 @@ You can pick any of the 24 stock vehicles before a race. The AI uses them too, p
 
 Build a driver from a face, hair, facial hair, headgear, neckwear, a torso, a back piece, arms and legs. There are at least twenty choices for each, and you can change their colours. Heavier clothes and accessories make a heavier driver and a steadier kart. The seven AI drivers use the same parts.
 
-The figures blink, watch nearby karts, grin when they pass someone and look cross when they're passed. The winner throws their fists in the air. On the driver screen they look around, wave and hop when you try a new part.
+The figures blink and look at nearby karts. The winner throws their fists in the air. On the driver screen they look around, wave and hop when you try a new part.
 
 ## Courses
 
@@ -188,15 +183,13 @@ The 56 courses are based on real circuits, with laps of 1.6 to 2.1 km. They're b
 | City | Lantern Lane, Skyline Sprint, Double Decker Dash, Tuk Tuk Turns |
 | Sky | Cumulus Curl, Weathervane Way, Zeppelin Zigzag, Skylark Swoop |
 
-The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel on rallycross circuits. Hangar has indoor tracks, one with an upper deck. Corkscrew follows roller coasters with drops and upside-down bends, Island races beside the sea, and Alpine goes up into the snowy mountains, with switchbacks open at the edge, ice and a ski jump. Canyon runs through the red rock of the desert, along a canyon rim with a drop each side, and over level crossings where a train goes by. Jungle winds through the rainforest past waterfalls, rope bridges and an old stepped pyramid, with mud on the road. City races at night between walls like a street circuit, under lit up towers, neon signs and a clock tower. Sky floats above the clouds on roads with nothing under the edges, past floating islands, airships and hot air balloons, with big jumps and two loops on one course.
+The Legends Cup shrinks famous race tracks to kart size. Gravel mixes tarmac and gravel. Hangar is indoor, and one track has an upper deck. Corkscrew has drops and upside-down bends. Alpine has open switchbacks, ice and a ski jump. Canyon has a drop each side of the road, and a train crosses it. Jungle has mud on the road. City is raced at night. Sky has nothing under the road edges, with big jumps and two loops on one course.
 
 Walls keep you from falling off, and tire stacks stop you cutting between nearby bits of road. Curbs can bounce your wheels into the air. Trees, fences and billboards break apart when you hit them, and crashes knock holes in buildings and grandstands. The loose bricks stay until the race ends. Tire stacks lose their top tires but keep the bottom ones.
 
-Crowds cheer and wave as you pass. Windmills turn, flags wave, cranes swing and boats rock on the water.
-
 ### Track editor
 
-Tap pieces onto the end of the road like a slot car set. There are straights, bends, S bends, humps, ramps, jumps, loops, wall rides, banked bends and shortcuts. Tap a piece to remove it, add pieces after it, change its surface or add and remove walls.
+Tap pieces onto the end of the road. There are straights, bends, S bends, humps, ramps, jumps, loops, wall rides, banked bends and shortcuts. Tap a piece to remove it, add pieces after it, change its surface or add and remove walls.
 
 Close it up joins the road back to the start with as few pieces as it can. The card in the corner says what's stopping the course being raced. Pick the ground, colours, trees and hills, then place landmarks like windmills, castles and lighthouses.
 
@@ -218,7 +211,7 @@ Pick the weather and time beside the difficulty, or leave them to chance. A cour
 - Fog hides the distance, storms bring heavy rain and lightning, and dust storms cover sandy courses.
 - Course lamps and kart lights come on when it's dark. Headlights light the road and tail lights brighten when you brake.
 
-Left to chance, the weather suits the course. Snowy courses mostly get snow, deserts get dust storms and no rain, jungles often get rain or fog, and beaches are mostly sunny. Cities are always raced at night, and up in the sky it's mostly clear with some fog. Indoor courses stay the same. Time trials default to a clear day.
+Left to chance, the weather suits the course. Snowy courses mostly get snow, deserts get dust storms and no rain, jungles often get rain or fog, and beaches are mostly sunny. Cities are always raced at night, and sky courses are mostly clear with some fog. Indoor courses stay the same. Time trials default to a clear day.
 
 Outdoor records count only in clear daytime, and indoor runs always count. Other conditions still show your times. The AI adjusts its driving, and everyone online gets the same weather and puddles.
 
@@ -246,11 +239,9 @@ In a browser you can join a server but not host or find games. Web players need 
 
 ## Graphics and sound
 
-The menus, HUD and editors share one look, with slanted see-through panels, stripes and Chakra Petch lettering.
+Change the graphics in Settings under Display. Medium and Low draw at a lower resolution and keep the menus sharp. They reduce shadows, distant scenery, crowds, rain and snow. Low draws headlight beams only for your kart, Medium for nearby karts and High for karts up to 40 metres away. Things you can drive into stay in place at every setting.
 
-Change the graphics in Settings under Display. Medium and Low draw at a lower resolution while keeping the menus sharp. They reduce shadows, distant scenery, crowds, rain and snow. Low draws headlight beams only for your kart, Medium for nearby karts and High for karts up to 40 metres away. Things you can drive into stay in place at every setting.
-
-I made the sounds and music with a little synthesizer in `tools/sound`. Each engine has its own sound. Tires squeal, surfaces rumble, bricks clatter and the wind gets louder as you speed up. The music is laid back funk, with a menu tune and one for each cup. Drifts have their own tire sound on tarmac, dirt and snow, and a whoosh when the turbo kicks in. Music and effects have separate volume controls in Settings.
+Each engine has its own sound. Tires squeal, surfaces rumble, bricks clatter and the wind gets louder as you speed up. Drifts have their own tire sound on tarmac, dirt and snow, and a whoosh when the turbo kicks in. Effects volume is in Settings.
 
 ## Building
 
@@ -315,5 +306,3 @@ SnapRacers is free software under the GNU General Public License, version 3 or l
 Copyright © 2026 Dan Hunke.
 
 It uses the [Godot Engine](https://godotengine.org), under the MIT licence. Courses are traced from OpenStreetMap map data, © OpenStreetMap contributors, under the Open Database Licence.
-
-Disclaimer: I am not a great programmer and this was made using Claude Opus 5.5
