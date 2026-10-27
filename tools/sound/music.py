@@ -3085,9 +3085,144 @@ def funk_race_legends():
     return render_funk(bpm, len(chords), parts, 0.6, 0.12, -14.1)
 
 
+def funk_race_rally():
+    """The Gravel Cup: rockier funk in B minor, driven guitar chugs and tom
+    fills into each section, the hook on a wah guitar, still in the pocket."""
+    bpm = 114
+    groove = ["Bm9", "G9", "Bm9", "A9", "Bm9", "G9", "Em9", "F#7sus"]
+    lift = ["Gmaj9", "A9", "F#m7", "Bm9"] * 2
+    hook_chords = ["Gmaj9", "A9", "Bm9", "Bm9", "Gmaj9", "A9", "Em9", "F#7sus"]
+    form, chords = funk_form(groove, lift, hook_chords)
+    hook = bars(
+        "B4:2 .:1 B4:1 D5:2 F#5:2 .:2 E5:2 D5:4",
+        "C#5:2 .:1 C#5:1 E5:2 A5:2 .:8",
+        "B5:3 A5:3 F#5:2 .:2 E5:2 D5:4",
+        "B4:6 .:6 F#4:2 A4:2",
+        "B4:2 .:1 B4:1 D5:2 F#5:2 .:2 G5:2 F#5:4",
+        "E5:2 .:1 E5:1 G5:2 B5:2 .:2 A5:2 G5:4",
+        "F#5:3 E5:3 D5:2 B4:3 D5:3 E5:2",
+        "F#5:8 .:8",
+    )
+    answer = bars(".:16", ".:16", ".:16", ".:8 E5:1 F#5:1 A5:2 B5:2 A5:2",
+                  ".:16", ".:16", ".:16", ".:8 A5:2 F#5:1 E5:1 C#5:2 A4:2")
+    parts = funk_kit(form, ["X.....x.x.x.....", "X.....x.x..x..x."], ["....X..g.g..X..g", "....X..g.g..X.gX"], loud=(0.41, 0.26, 0.15)) + [
+        part(tom, fill_down(form, ("b", "hook", "a2")), 0.18, 0.0, 0.12),
+        part(finger_bass, funk_bass(form, ["r-.xr.r.x.5-r.7.", "r-.xr.O.x.5-7.s."]), 0.6),
+        part(chug, in_sections(form, ("b", "hook", "hook2"), lambda at, c: bassline(c, "r..r..r...r.r...", 2, at)), 0.2, 0.0, 0.05),
+        part(e_piano, comping(form, ("intro", "a", "a2"), "x-.o..x-.o.x-...")
+             + comping(form, ("b", "hook", "hook2", "break"), "x-------..o.x---"), 0.34, -0.15, 0.2),
+        part(scratch_guitar, in_sections(form, ("intro", "a", "a2"), lambda at, c: scratch(c, "-.-x-.x.-.-x-.x-", 62, at)), 0.22, 0.35, 0.08),
+        part(wah_guitar, bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("break",), hook[:4])
+             + bars_at(form, ("a", "a2"), answer) + bars_at(form, ("intro",), answer[:4]), 0.42, -0.1, 0.15, 0.1),
+        part(horn_section, bars_at(form, ("hook2",), hook) + last_bar(form, ("b",), "x..x..x...X-----", lambda c, r, at: keys_comp(c, r, 60, at)), 0.36, 0.1, 0.2, 0.08),
+    ]
+    return render_funk(bpm, len(chords), parts, 0.6, 0.12, -13.8)
+
+
+def funk_race_indoor():
+    """The Hangar Cup, a neon hall: electro funk in F minor, tight drums,
+    plucked synth arps and a robot singing the hook."""
+    bpm = 105
+    groove = ["Fm9", "Dbmaj9", "Bbm9", "C7sus"] * 2
+    lift = ["Dbmaj9", "Eb9", "Cm7", "Fm9"]
+    hook_chords = ["Dbmaj9", "Eb9", "Cm7", "Fm9", "Bbm9", "Eb9", "Abmaj9", "C7sus"]
+    form, chords = funk_form(groove, lift, hook_chords)
+    hook = bars(
+        "F5:2 .:1 Ab5:1 .:2 C5:2 Db5:2 F5:2 .:4",
+        "G5:2 .:1 Bb5:1 .:2 G5:2 F5:2 Eb5:2 .:4",
+        "Eb5:2 .:1 G5:1 .:2 Bb5:2 G5:2 Eb5:2 .:4",
+        "F5:6 .:6 C5:2 Eb5:2",
+        "F5:2 .:1 Ab5:1 .:2 C5:2 Db5:2 F5:2 .:4",
+        "G5:2 .:1 Bb5:1 .:2 Bb5:2 Ab5:2 G5:2 .:4",
+        "Ab5:3 G5:3 Eb5:2 C5:3 Eb5:3 G5:2",
+        "F5:8 .:8",
+    )
+    tight = "xoxoxoxoxoxoxoxo"
+    parts = funk_kit(form, ["X...x.....x.x...", "X...x.....x...x."], ["....X.......X..g", "....X..g....X.g."], tight, loud=(0.4, 0.24, 0.13)) + [
+        part(finger_bass, funk_bass(form, ["r.rx..o.r.x.5.7.", "r.rx..o.x.r.7-s."]), 0.6),
+        part(e_piano, comping(form, ("intro", "a", "a2", "b"), "..x-..x-..x-..x-")
+             + comping(form, ("hook", "hook2", "break"), "x-------..o.x---"), 0.32, -0.2, 0.2),
+        part(pop_pluck, in_sections(form, ("intro", "a", "a2", "hook", "hook2"), lambda at, c: arps(c, 4, (0, 2, 1, 3, 4, 2, 1, 3), 1, at)), 0.12, 0.35, 0.12, 0.2),
+        part(vocoder_lead, bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("break",), hook[:4]), 0.36, 0.0, 0.2, 0.15),
+        part(horn_section, last_bar(form, ("b", "hook2"), "......x..X--....", lambda c, r, at: keys_comp(c, r, 60, at)), 0.3, 0.0, 0.2),
+    ]
+    return render_funk(bpm, len(chords), parts, 0.58, 0.12, -13.9)
+
+
+def funk_race_coaster():
+    """The Corkscrew Cup: playful funk in C, a fairground organ on the
+    offbeats and a steam calliope on the hook, with quick runs up and down."""
+    bpm = 111
+    groove = ["Cmaj9", "A9", "Dm9", "G9"] * 2
+    lift = ["Fmaj9", "Em7", "Dm9", "G7sus"] * 2
+    hook_chords = ["Fmaj9", "G9", "Em7", "A9", "Dm9", "G9", "C69", "G7sus"]
+    form, chords = funk_form(groove, lift, hook_chords)
+    hook = bars(
+        "A5:2 .:1 C6:1 A5:2 F5:2 .:2 G5:1 A5:1 C6:4",
+        "B5:2 .:1 D6:1 B5:2 G5:2 .:8",
+        "G5:1 A5:1 B5:1 D6:1 E6:4 D6:2 B5:2 .:4",
+        "C#6:6 .:6 A5:2 B5:2",
+        "C6:2 .:1 A5:1 C6:2 F6:2 .:2 E6:1 D6:1 C6:4",
+        "B5:2 .:1 D6:1 B5:2 G5:2 .:2 F5:1 G5:1 A5:1 B5:1 .:2",
+        "C6:1 D6:1 E6:1 G6:1 A6:2 G6:2 E6:2 D6:2 C6:4",
+        "C6:8 .:8",
+    )
+    runs_up = bars(".:16", ".:16", ".:16", ".:8 G5:1 A5:1 B5:1 C6:1 D6:1 E6:1 F6:2",
+                   ".:16", ".:16", ".:16", ".:8 F6:1 E6:1 D6:1 C6:1 B5:1 A5:1 G5:2")
+    parts = funk_kit(form, ["X.....x...x.....", "X.....x...x..x.."], ["....X..g.g..X..g", "....X..g.g..Xg.g"], loud=(0.46, 0.28, 0.17)) + [
+        part(finger_bass, funk_bass(form, ["r-.xr.5.o.x.5-s.", "r-.x3.5.x.o-7.s."]), 0.6),
+        part(fair_organ, comping(form, ("intro", "a", "a2", "hook", "hook2"), "..x...x...x...x.", 55)
+             + comping(form, ("b", "break"), "x-------x-------", 55), 0.2, -0.2, 0.15),
+        part(e_piano, comping(form, ("a", "a2", "b"), "x-.o..x-.o.x-..."), 0.26, 0.2, 0.2),
+        part(scratch_guitar, in_sections(form, ("a", "a2", "hook", "hook2"), lambda at, c: scratch(c, "-.-x-.x.-.-x-.x-", 62, at)), 0.18, 0.35, 0.08),
+        part(calliope, bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("break",), hook[:4])
+             + bars_at(form, ("a", "a2"), runs_up) + bars_at(form, ("intro",), runs_up[:4]), 0.4, 0.1, 0.22, 0.12),
+        part(pop_marimba, in_sections(form, ("b",), lambda at, c: arps(c, 4, (0, 2, 1, 3), 2, at)), 0.22, -0.35, 0.15),
+        part(horn_section, last_bar(form, ("b",), "x..x..x...X-----", lambda c, r, at: keys_comp(c, r, 60, at)), 0.3, 0.0, 0.2),
+    ]
+    return render_funk(bpm, len(chords), parts, 0.6, 0.12, -14.3)
+
+
+def funk_race_alpine():
+    """The Alpine Cup: a sunny groove in B flat, an accordion on the offbeats
+    and cowbells over the band, the hook yodelled with a leap up in each
+    phrase."""
+    bpm = 103
+    groove = ["Bbmaj9", "Gm9", "Ebmaj9", "F9"] * 2
+    lift = ["Ebmaj9", "Dm7", "Cm9", "F7sus"]
+    hook_chords = ["Ebmaj9", "F9", "Dm7", "Gm9", "Cm9", "F9", "Bb69", "F7sus"]
+    form, chords = funk_form(groove, lift, hook_chords)
+    hook = bars(
+        "Bb4:2 .:1 G5:1 .:2 F5:2 Eb5:2 Bb4:2 .:4",
+        "C5:2 .:1 A5:1 .:2 G5:2 F5:2 .:6",
+        "A4:2 .:1 F5:1 .:2 E5:2 D5:2 A4:2 .:4",
+        "Bb4:6 .:6 F4:2 A4:2",
+        "G4:2 .:1 Eb5:1 .:2 D5:2 C5:2 G4:2 .:4",
+        "A4:2 .:1 F5:1 .:2 A5:2 G5:2 F5:2 .:4",
+        "D5:2 F5:2 Bb5:3 A5:1 G5:2 F5:2 D5:4",
+        "Bb4:8 .:8",
+    )
+    answer = bars(".:16", ".:16", ".:16", ".:8 F5:1 G5:1 A5:2 C6:2 A5:2",
+                  ".:16", ".:16", ".:16", ".:8 Eb5:2 D5:1 C5:1 A4:2 F4:2")
+    parts = funk_kit(form, ["X.....x...x.....", "X.......x.x....."], ["....X..g.g..X..g", "....X..g.g..X.gg"], loud=(0.47, 0.3, 0.18)) + [
+        part(cowbell, kit_parts(form, [(("hook", "hook2", "b"), "o...o...o...o...")]), 0.08, 0.4, 0.08),
+        part(finger_bass, funk_bass(form, ["r-.x5.r.x.5-o.s.", "r-.xr.5.O-.x5.7."]), 0.6),
+        part(e_piano, comping(form, ("intro", "a", "a2"), "x-.o..x-.o.x-...")
+             + comping(form, ("b", "break"), "x-------..o.x---"), 0.34, -0.15, 0.2),
+        part(pop_accordion, comping(form, ("hook", "hook2", "b"), "..x-..x-..x-..x-", 55)
+             + bars_at(form, ("a", "a2"), answer) + bars_at(form, ("intro",), answer[:4]), 0.3, 0.25, 0.15),
+        part(scratch_guitar, in_sections(form, ("a", "a2", "hook2"), lambda at, c: scratch(c, "-.-.x.--.-.-x.-.", 62, at)), 0.18, -0.35, 0.08),
+        part(yodel, bars_at(form, ("hook", "hook2"), hook) + bars_at(form, ("break",), hook[:4]), 0.42, 0.0, 0.25, 0.12),
+        part(horn_section, last_bar(form, ("b", "hook"), "......x..X--....", lambda c, r, at: keys_comp(c, r, 60, at)), 0.28, 0.0, 0.2),
+    ]
+    return render_funk(bpm, len(chords), parts, 0.6, 0.12, -14.2)
+
+
 # The chill funk demos.
 FUNK = {"menu": funk_menu, "race_one": funk_race_one, "race_beach": funk_race_beach, "race_two": funk_race_two,
-        "race_three": funk_race_three, "race_four": funk_race_four, "race_legends": funk_race_legends}
+        "race_three": funk_race_three, "race_four": funk_race_four, "race_legends": funk_race_legends,
+        "race_rally": funk_race_rally, "race_indoor": funk_race_indoor, "race_coaster": funk_race_coaster,
+        "race_alpine": funk_race_alpine}
 
 
 # The tunes in the new style.
