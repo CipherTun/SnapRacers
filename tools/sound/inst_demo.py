@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """Plays each cup's flavour instrument in music.py on a short phrase over a
-light kick and hat beat, through the pop bus, so it can be heard in place.
+light kick and hat beat, through render_pop, so it can be heard in place.
 
   uv run --with numpy --with scipy tools/sound/inst_demo.py OUT_DIR [names...]
 

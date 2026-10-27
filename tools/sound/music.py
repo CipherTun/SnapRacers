@@ -593,7 +593,7 @@ def octave(notes, k):
 
 
 def part(instrument, notes, loud, pan=0.0, verb=0.0, echo_send=0.0, duck=0.0):
-    """One part of a pop tune. `duck` is how far it drops with each kick."""
+    """One part of a tune. `duck` is how far it drops with each kick."""
     return {"instrument": instrument, "notes": notes, "loud": loud, "pan": pan,
             "verb": verb, "echo": echo_send, "duck": duck}
 
@@ -613,9 +613,9 @@ def pump(kicks, step, length, total):
 
 
 def render_pop(bpm, bar_count, parts, kicks, wet=0.15, level=-13.0):
-    """Plays a pop tune's parts and mixes them on a bus: reverb and a dotted
-    eighth echo, the tail folded back onto the start, then width, glue
-    compression and a limiter, all wrapping around so it loops. `level` is
+    """Plays the parts for inst_demo.py and mixes them on a bus: reverb and a
+    dotted eighth echo, the tail folded back onto the start, then width,
+    glue compression and a limiter, all wrapping around so it loops. `level` is
     the RMS it comes out at, in dBFS."""
     step = 60.0 / bpm / 4.0
     total = seconds(bar_count * 16 * step)
@@ -781,7 +781,8 @@ def kit(pattern, count, offset=0):
 
 
 def kit_parts(form, rules):
-    """Like drum_parts, with kit()'s ghost notes."""
+    """Drum parts for each section of the form a rule names, played by kit()
+    with its ghost notes."""
     out = []
     for name, start, chords in form:
         for names, pattern in rules:
