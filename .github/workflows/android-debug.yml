@@ -34,6 +34,8 @@ jobs:
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
 
       - name: Install Android SDK components
         run: |
@@ -56,7 +58,7 @@ jobs:
 
       - name: Install matching Godot export templates
         run: |
-          TEMPLATE_DIR="$HOME/.local/share/godot/export_templates/4.7.2.stable"
+          TEMPLATE_DIR="tools/godot/editor_data/export_templates/4.7.2.stable"
           EXTRACT_DIR="$RUNNER_TEMP/godot-template-extract"
 
           mkdir -p "$TEMPLATE_DIR" "$EXTRACT_DIR"
