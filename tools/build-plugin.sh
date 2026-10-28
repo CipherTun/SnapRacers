@@ -17,5 +17,7 @@ if [ ! -x "$GRADLEW" ]; then
 fi
 export ANDROID_HOME="${ANDROID_HOME:-$HOME/Android/Sdk}"
 "$GRADLEW" -p android-plugin --quiet --project-cache-dir "$BUILD/plugin-gradle" assembleRelease
+test -s "$BUILD/plugin/outputs/aar/snapracers-net-release.aar"
+mkdir -p "$(dirname "$OUT")"
 cp "$BUILD/plugin/outputs/aar/snapracers-net-release.aar" "$OUT"
 echo "Built $OUT ($(du -h "$OUT" | cut -f1))"
