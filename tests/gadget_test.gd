@@ -85,8 +85,9 @@ class Runner:
 		karts.zapped = kart_with([], Vector3(-100, 0.05, 115))
 		karts.unzapped = kart_with([], Vector3(-110, 0.05, 115))
 		karts.zap_blocked = kart_with(["shield"], Vector3(-90, 0.05, 115))
+		karts.popped = kart_with([], Vector3(107.5, 0.05, -10))
 
-		steps = [_start, _turbo, _turbo_check, _others, _tow_check, _others_check, _repair_check, _ram_check, _marbles, _marbles_check, _wall, _wall_check, _shockwave, _shockwave_check, _spikes, _spikes_check, _ghost, _ghost_check, _tow_targets, _boxes]
+		steps = [_start, _turbo, _turbo_check, _others, _tow_check, _others_check, _repair_check, _ram_check, _marbles, _marbles_check, _wall, _wall_check, _shockwave, _shockwave_check, _spikes, _spikes_check, _spike_pops, _spike_pops_check, _ghost, _ghost_check, _tow_targets, _boxes]
 
 	func _start() -> int:
 		for kart in [karts.turbo, karts.plain, karts.rammer, karts.bumper, karts.zapped, karts.unzapped]:
@@ -316,6 +317,7 @@ class Runner:
 		var patch := BrickTrap.new("spikes")
 		add_child(patch)
 		patch.global_position = Vector3(100, 0.03, -16)
+		Kart.spike_pop_chance = 0.0
 		for kart in [karts.spiked, karts.unspiked]:
 			kart.linear_velocity = Vector3(0.0, 0.0, -14.0)
 			kart.set_meta("heading", kart.global_basis.z)
@@ -327,7 +329,28 @@ class Runner:
 		check(stuck < free - 1.5, "a kart over spikes is slowed (%.1f against %.1f m/s)" % [stuck, free])
 		var turned := rad_to_deg(absf(karts.spiked.get_meta("heading").signed_angle_to(karts.spiked.global_basis.z, Vector3.UP)))
 		check(turned < 10.0, "without being spun round (%.0f degrees)" % turned)
-		check(karts.spiked.lost.size() >= 1 and karts.unspiked.lost.is_empty(), "and it knocks a part off a kart that hits it fast (%d lost)" % karts.spiked.lost.size())
+		return 0
+
+	## Spikes hit fast pop the tires that run over them and nothing else.
+	func _spike_pops() -> int:
+		var patch := BrickTrap.new("spikes")
+		add_child(patch)
+		patch.global_position = Vector3(107.5, 0.03, -16)
+		Kart.spike_pop_chance = 1.0
+		karts.popped.linear_velocity = Vector3(0.0, 0.0, -14.0)
+		return 50
+
+	func _spike_pops_check() -> int:
+		Kart.spike_pop_chance = 0.9
+		var wheels := 0
+		var others := 0
+		for i in karts.popped.lost:
+			if PartCatalog.get_part(karts.popped.design.parts[i].id).get("kind", "") == "wheel":
+				wheels += 1
+			else:
+				others += 1
+		check(wheels >= 1 and karts.unspiked.lost.is_empty(), "spikes pop the tires of a kart that hits them fast (%d popped)" % wheels)
+		check(others == 0, "and take nothing else (%d other parts)" % others)
 		return 0
 
 	## A ghost drives straight through a kart parked in its way.

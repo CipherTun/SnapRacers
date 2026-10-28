@@ -162,8 +162,8 @@ const TRAIN_WHEEL_CHANCE := 0.25
 const TRAIN_SHOVE := 14.0
 const TRAIN_ALONG := 8.0
 const TRAIN_HOP := 5.0
-## A kart going over a spike trap faster than this loses a part, and can't
-## lose another to it for SPIKE_EVERY seconds.
+## A wheel going over a spike trap faster than this pops, spike_pop_chance
+## of the time, and can't be tried again for SPIKE_EVERY seconds.
 const SPIKE_SPEED := 10.0
 const SPIKE_EVERY := 1.0
 const SHIELD_TIME := 4.0
@@ -223,6 +223,9 @@ const OFFROAD_DRAG := 0.01
 ## How likely a power-up hit is to take a wheel or the steering, instead of
 ## only bodywork (see knock_off_a_part()). Tests set it.
 static var wheel_knock_chance := 0.2
+## How likely a wheel driven fast over spikes is to pop (see SPIKE_SPEED).
+## Tests set it.
+static var spike_pop_chance := 0.9
 ## Karts' wheels slide off each other instead of hooking together (see
 ## _keep_wheels_apart()). Other karts this close, middle to middle, are
 ## looked at, and wheels this much further apart than touching already
@@ -462,7 +465,8 @@ var tow: TowRope
 ## A shove from a shockwave, to be added to its speed next step, and a spin.
 var _shove := Vector3.ZERO
 var _spin := Vector3.ZERO
-var _spike_wait := 0.0
+## Seconds left before each wheel, by part index, can pop on spikes again.
+var _spike_wait := {}
 ## Whether it's sliding right now (see SLIDE_SPEED), whether that's still the
 ## kick, which way round (1 right, -1 left), and how far into the slide it
 ## still is, from 1 while sliding down to 0 once it's gripping again.
@@ -1079,7 +1083,10 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		_reset(state)
 	_reset_held = controls.reset
 	slowdown_left = maxf(slowdown_left - dt, 0.0)
-	_spike_wait = maxf(_spike_wait - dt, 0.0)
+	for i in _spike_wait.keys():
+		_spike_wait[i] -= dt
+		if _spike_wait[i] <= 0.0:
+			_spike_wait.erase(i)
 	if _shove != Vector3.ZERO:
 		state.linear_velocity += _ok(_shove)
 		_shove = Vector3.ZERO
@@ -1164,6 +1171,7 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 	var turned := clampf(absf(steer_angle) / maxf(full_lock, 0.001), 0.0, 1.0)
 	var share := mass / maxf(wheels.size(), 1)
 	var ground_up := Vector3.ZERO
+	var popped: Array[int] = []
 	for w in wheels:
 		var anchor := state.transform * (w.rest + Vector3.UP * SUSPENSION_TRAVEL)
 		var reach := SUSPENSION_TRAVEL * 2.0 + w.radius
@@ -1230,10 +1238,11 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 		var drag_here: float = ground.get_meta("drag", 1.0) if ground != null else 1.0
 		var off: bool = ground != null and bool(ground.get_meta("offroad", false))
 		# A ghost drives over a trap as if it isn't there, and spikes hit fast
-		# knock a part off.
-		if ground != null and ground.get_meta("trap", "") == "spikes" and speed > SPIKE_SPEED and _spike_wait <= 0.0 and ghost_left <= 0.0 and shield_left <= 0.0 and not remote:
-			_spike_wait = SPIKE_EVERY
-			knock_off_a_part.call_deferred()
+		# mostly pop the wheel that ran over them.
+		if ground != null and ground.get_meta("trap", "") == "spikes" and speed > SPIKE_SPEED and not _spike_wait.has(w.index) and ghost_left <= 0.0 and shield_left <= 0.0 and not remote:
+			_spike_wait[w.index] = SPIKE_EVERY
+			if randf() < spike_pop_chance:
+				popped.append(w.index)
 		if ghost_left > 0.0 and ground != null and ground.has_meta("trap"):
 			grip_here = 1.0
 			drag_here = 1.0
@@ -1326,6 +1335,9 @@ func _integrate_forces(state: PhysicsDirectBodyState3D) -> void:
 			state.apply_force(_ok(snow_force), _ok(contact + up * height - origin))
 			applied += snow_force
 
+	if not popped.is_empty():
+		Sounds.play_at("fx/hit", sound)
+		lose_parts.call_deferred(popped)
 	rough = float(on_rough) / on_any if on_any > 0 else 0.0
 	if on_any > 0:
 		off_road = float(on_off) / on_any
